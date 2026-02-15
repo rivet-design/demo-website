@@ -1,0 +1,6 @@
+name = "rivet-clay-proxy"
+main = "clay-proxy.js"
+compatibility_date = "2024-11-23"
+
+# Deploy to your custom domain or use the workers.dev subdomain
+# routes = [{ pattern = "yourdomain.com/api/clay-webhook", zone_name = "yourdomain.com" }]
