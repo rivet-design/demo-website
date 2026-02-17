@@ -159,7 +159,7 @@ const App = () => {
               ))}
           </span>
         </FadeInText>
-        <FadeInText delay={0.5}>
+        <FadeInText className="hidden sm:block" delay={0.5}>
           <div className="flex items-center gap-4">
             <a
               href="https://discord.gg/qccDTZDBgX"
