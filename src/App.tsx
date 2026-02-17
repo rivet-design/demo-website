@@ -165,12 +165,12 @@ const App = () => {
               Download for Mac
             </DownloadButton>
             <a
-              href="https://docs.rivet.design/"
+              href="https://discord.gg/qccDTZDBgX"
               target="_blank"
               rel="noopener noreferrer"
               className="type-label-lg rounded-lg bg-[#FFF0E6] px-6 py-3 text-primary transition-colors hover:bg-[#FFE4D4]"
             >
-              Read the guide
+              Join the community
             </a>
           </div>
         </FadeInText>
