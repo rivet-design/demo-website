@@ -160,18 +160,18 @@ const App = () => {
           </span>
         </FadeInText>
         <FadeInText delay={0.5}>
-          <div className="hidden items-center gap-4 sm:flex">
-            <DownloadButton className="type-label-lg rounded-lg bg-primary px-6 py-3 text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50">
-              Download for Mac
-            </DownloadButton>
+          <div className="flex items-center gap-4">
             <a
               href="https://discord.gg/qccDTZDBgX"
               target="_blank"
               rel="noopener noreferrer"
-              className="type-label-lg rounded-lg bg-[#FFF0E6] px-6 py-3 text-primary transition-colors hover:bg-[#FFE4D4]"
+              className="type-label-lg rounded-lg bg-primary px-6 py-3 text-white transition-colors hover:bg-primary-hover sm:order-2 sm:bg-[#FFF0E6] sm:text-primary sm:hover:bg-[#FFE4D4]"
             >
               Join the community
             </a>
+            <DownloadButton className="type-label-lg hidden rounded-lg bg-primary px-6 py-3 text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50 sm:inline-block">
+              Download for Mac
+            </DownloadButton>
           </div>
         </FadeInText>
       </div>
@@ -193,9 +193,14 @@ const App = () => {
 
       {/* Mobile sticky button */}
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-content-muted/20 bg-[#FEFFF3]/80 px-4 py-4 backdrop-blur-md sm:hidden">
-        <DownloadButton className="type-label-lg w-full rounded-lg bg-primary px-3 py-3 text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50">
-          Download
-        </DownloadButton>
+        <a
+          href="https://discord.gg/qccDTZDBgX"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="type-label-lg block w-full rounded-lg bg-primary px-3 py-3 text-center text-white transition-colors hover:bg-primary-hover"
+        >
+          Join the community
+        </a>
       </div>
     </div>
   );
