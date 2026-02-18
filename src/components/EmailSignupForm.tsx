@@ -98,7 +98,10 @@ const EmailSignupForm = ({ onSuccessChange }: EmailSignupFormProps) => {
                     setValidationError(null);
                   }
                 }}
-                placeholder="First name"
+                placeholder="First name…"
+                name="firstName"
+                autoComplete="given-name"
+                aria-label="First name"
                 className="min-w-0 flex-1 rounded-lg border border-gray-600 bg-green px-3 py-2 text-left font-main text-white placeholder-gray-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 disabled={isSubmitting}
               />
@@ -111,7 +114,10 @@ const EmailSignupForm = ({ onSuccessChange }: EmailSignupFormProps) => {
                     setValidationError(null);
                   }
                 }}
-                placeholder="Last name"
+                placeholder="Last name…"
+                name="lastName"
+                autoComplete="family-name"
+                aria-label="Last name"
                 className="min-w-0 flex-1 rounded-lg border border-gray-600 bg-green px-3 py-2 text-left font-main text-white placeholder-gray-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 disabled={isSubmitting}
               />
@@ -126,7 +132,11 @@ const EmailSignupForm = ({ onSuccessChange }: EmailSignupFormProps) => {
                   setValidationError(null);
                 }
               }}
-              placeholder="Email"
+              placeholder="Email…"
+              name="email"
+              autoComplete="email"
+              aria-label="Email"
+              spellCheck={false}
               className="w-full rounded-lg border border-gray-600 bg-green px-3 py-2 text-left font-main text-white placeholder-gray-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               disabled={isSubmitting}
             />
@@ -134,7 +144,9 @@ const EmailSignupForm = ({ onSuccessChange }: EmailSignupFormProps) => {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Why do you want to use Rivet? (optional, but helps us prioritize)"
+              placeholder="Why do you want to use Rivet?…"
+              name="description"
+              aria-label="Why do you want to use Rivet? (optional)"
               rows={3}
               className="w-full resize-none rounded-lg border border-gray-600 bg-green px-3 py-2 text-left font-main text-white placeholder-gray-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               disabled={isSubmitting}
@@ -145,7 +157,7 @@ const EmailSignupForm = ({ onSuccessChange }: EmailSignupFormProps) => {
               disabled={isSubmitting}
               className="type-label w-full rounded-lg bg-primary px-4 py-2 text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-90"
             >
-              {isSubmitting ? 'Signing up...' : 'Join waitlist'}
+              {isSubmitting ? 'Signing up\u2026' : 'Join waitlist'}
             </button>
           </form>
         )}

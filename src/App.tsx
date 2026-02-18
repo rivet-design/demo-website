@@ -116,7 +116,7 @@ const App = () => {
             </span>
           </div>
         </FadeInText>
-        <FadeInText className="type-display text-black md:text-5xl md:leading-tight lg:text-5xl lg:leading-tight xl:text-6xl xl:leading-tight">
+        <FadeInText className="type-display text-primary-hover md:text-5xl md:leading-tight lg:text-5xl lg:leading-tight xl:text-6xl xl:leading-tight">
           Rivet is the visual editor{' '}
           <br className="hidden min-[800px]:inline" />
           built for design.

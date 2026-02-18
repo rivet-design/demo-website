@@ -93,7 +93,7 @@ const DownloadButton = ({ children, className }: DownloadButtonProps) => {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
             />
           </svg>
-          Loading...
+          Loading\u2026
         </span>
       ) : (
         children

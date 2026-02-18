@@ -81,7 +81,7 @@ const AuthSuccessPage = () => {
               <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             </div>
             <h1 className="type-heading-2 mb-2 font-bold text-gray-900">
-              Signing you in...
+              Signing you in\u2026
             </h1>
             <p className="text-gray-600">
               Please wait while we complete your authentication.

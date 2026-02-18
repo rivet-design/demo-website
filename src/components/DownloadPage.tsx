@@ -78,7 +78,7 @@ const DownloadPage = () => {
 
         {loading && (
           <p className="type-subtitle text-gray-600">
-            Loading latest version...
+            Loading latest version\u2026
           </p>
         )}
 
