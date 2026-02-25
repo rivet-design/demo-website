@@ -64,9 +64,9 @@ const Footer = () => {
         </div>
 
         <div className="mt-4 flex justify-center pt-4 md:justify-start">
-          <span className="inline-flex items-center gap-2 rounded-md bg-[#FFF0E6] px-4 py-1.5 font-main text-sm text-primary">
+          <span className="inline-flex items-center gap-2 rounded-md bg-[#FFF0E6] px-4 py-1.5 font-main text-sm leading-none text-primary">
             <span className="leading-none">Made with</span>{' '}
-            <span className="font-cta font-bold leading-none">rivet</span>
+            <span className="font-cta font-bold leading-none pt-[1px]">rivet</span>
           </span>
         </div>
       </div>
