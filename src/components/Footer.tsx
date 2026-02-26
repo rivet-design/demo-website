@@ -12,9 +12,6 @@ const Footer = () => {
         <div className="flex flex-col items-start justify-between gap-4 md:flex-row">
           <div className="flex flex-col items-start gap-3">
             <Logo />
-            <span className="font-main text-xs text-content-subtle sm:text-sm">
-              © 2026 Rivet, Inc.
-            </span>
           </div>
 
           <div className="flex gap-12">
@@ -62,10 +59,13 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-4 flex justify-start pt-4">
+        <div className="mt-4 flex flex-col items-start gap-2 pt-4">
           <span className="inline-flex items-center gap-2 rounded-md bg-[#FFF0E6] px-4 py-1.5 font-main text-sm text-primary">
             <span className="leading-none">Made with</span>{' '}
             <span className="font-cta font-bold leading-none pt-[1px]">rivet</span>
+          </span>
+          <span className="font-main text-xs text-content-subtle sm:text-sm">
+            © 2026 Rivet, Inc.
           </span>
         </div>
       </div>
