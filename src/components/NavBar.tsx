@@ -20,7 +20,7 @@ const NavBar = () => {
           <Logo />
           <div className="flex items-center gap-2 sm:gap-3">
             <a
-              href="https://discord.gg/qccDTZDBgX"
+              href="https://discord.gg/Eqn9Fcpuh4"
               target="_blank"
               rel="noopener noreferrer"
               className="type-label flex cursor-pointer items-center gap-2 rounded-lg bg-green px-3 py-1.5 text-white transition-colors hover:bg-green-hover sm:border-2 sm:border-green sm:bg-transparent sm:text-green sm:hover:bg-green/10 sm:px-4 sm:py-2 sm:text-sm"

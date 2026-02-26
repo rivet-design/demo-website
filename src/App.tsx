@@ -54,7 +54,7 @@ const CodePanel = () => {
   }, []);
 
   return (
-    <div className="-mx-4 flex min-h-[24rem] w-screen flex-col items-center justify-center gap-6 bg-green py-8 text-left font-main text-[#FEFFF3] sm:-mx-8 sm:h-96 sm:flex-row sm:gap-0 md:-mx-16 lg:-mx-32 xl:-mx-60">
+    <div className="-mx-4 flex min-h-[24rem] w-screen flex-col items-start justify-center gap-6 bg-green py-8 text-left font-main text-[#FEFFF3] sm:-mx-8 sm:h-96 sm:flex-row sm:items-center sm:gap-0 md:-mx-16 lg:-mx-32 xl:-mx-60">
       <div className="flex max-w-lg flex-col justify-center gap-4 px-8 sm:gap-6">
         <span className="type-heading-3 md:text-2xl lg:text-3xl">
           Rivet is a bridge to your codebase.
@@ -162,7 +162,7 @@ const App = () => {
         <FadeInText className="hidden sm:block" delay={0.5}>
           <div className="flex items-center gap-4">
             <a
-              href="https://discord.gg/qccDTZDBgX"
+              href="https://discord.gg/Eqn9Fcpuh4"
               target="_blank"
               rel="noopener noreferrer"
               className="type-label-lg rounded-lg bg-primary px-6 py-3 text-white transition-colors hover:bg-primary-hover sm:order-2 sm:bg-[#FFF0E6] sm:text-primary sm:hover:bg-[#FFE4D4]"
@@ -180,7 +180,7 @@ const App = () => {
   return (
     <div className="flex min-h-screen flex-col gap-12 bg-[#FEFFF3] px-4 sm:px-8 md:px-16 lg:px-32 xl:px-60">
       <NavBar />
-      <div className="flex w-full items-center justify-center">
+      <div className="flex w-full items-start justify-start sm:items-center sm:justify-center">
         {renderHeroText()}
       </div>
 
