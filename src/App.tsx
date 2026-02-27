@@ -102,13 +102,13 @@ const App = () => {
             </span>
           </div>
         </FadeInText>
-        <FadeInText className="type-display text-black md:text-5xl md:leading-tight lg:text-5xl lg:leading-tight xl:text-6xl xl:leading-tight">
+        <FadeInText className="type-display text-[36px] text-black">
           Give design feedback to agents
         </FadeInText>
         <FadeInText className="w-full" delay={0.3}>
           <div className="flex flex-col gap-1 text-base text-black sm:text-base md:text-base lg:text-lg">
-            <span className="text-[21px] font-light">Rivet helps people who design get visual details exactly right.</span>
-            <span className="mt-4 text-[21px] font-light">Leave as many comments as you&apos;d like and watch your feedback get implemented for you. Then refine any details yourself with visual tools.</span>
+            <span className="text-[18px] font-normal">Rivet helps people who design get visual details exactly right.</span>
+            <span className="mt-4 text-[18px] font-normal">Leave as many comments as you&apos;d like and watch your feedback get implemented for you. Then refine any details yourself with visual tools.</span>
           </div>
         </FadeInText>
         <FadeInText className="hidden sm:block" delay={0.5}>
@@ -117,7 +117,7 @@ const App = () => {
               href="https://discord.gg/Eqn9Fcpuh4"
               target="_blank"
               rel="noopener noreferrer"
-              className="type-label-lg rounded-lg bg-primary px-6 py-3 text-white transition-colors hover:bg-primary-hover sm:order-2 sm:bg-[#FFF0E6] sm:text-primary sm:hover:bg-[#FFE4D4]"
+              className="type-label-lg rounded-lg bg-primary px-6 py-3 text-white transition-colors hover:bg-primary-hover sm:order-2 sm:bg-accent-foreground sm:text-white sm:hover:bg-accent-foreground"
             >
               Join the community
             </a>
@@ -130,7 +130,7 @@ const App = () => {
     );
   };
   return (
-    <div className="flex min-h-screen flex-col gap-12 bg-[#FEFFF3] px-10 sm:px-24 md:px-44 lg:px-64 xl:px-96">
+    <div className="flex min-h-screen flex-col gap-12 bg-main px-10 sm:px-24 md:px-44 lg:px-64 xl:px-96">
       <NavBar />
       <div className="flex w-full items-start justify-start sm:items-center sm:justify-center">
         {renderHeroText()}
