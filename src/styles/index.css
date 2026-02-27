@@ -1,157 +1,121 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&family=Knewave&family=UnifrakturCook:wght@700&display=swap');
+@import "tailwindcss";
 
-@font-face {
-  font-family: 'Satoshi';
-  src: url('/fonts/Satoshi-Variable.woff2') format('woff2-variations');
-  font-weight: 300 900;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'Satoshi';
-  src: url('/fonts/Satoshi-VariableItalic.woff2') format('woff2-variations');
-  font-weight: 300 900;
-  font-style: italic;
-}
-
-@font-face {
-  font-family: 'Bia';
-  src: url('/fonts/bianzhidai_noBG-Ring.woff') format('woff');
-  font-weight: 400;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'Pixel';
-  src: url('/fonts/MisterPixelRegular.otf') format('opentype');
-  font-weight: 400;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'PixelTools';
-  src: url('/fonts/MisterPixelTools.otf') format('opentype');
-  font-weight: 400;
-  font-style: normal;
+@theme {
+  --font-sans: "Satoshi", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Satoshi", sans-serif;
+  --font-cta: "Goldman", sans-serif;
+  --font-knewave: "Knewave", system-ui;
+  --font-unifraktur: "UnifrakturCook", serif;
+  --font-pixel: "Pixel", sans-serif;
+  
+  --color-primary: #FF3300;
+  --color-primary-hover: #CC2900;
+  --color-rivet-bg: #FEFFF3;
+  --color-rivet-dark: #1F2015;
+  --color-rivet-dark-hover: #14150D;
+  --color-rivet-soft-orange: #FFF0E6;
+  
+  --color-secondary: #FFF0E6;
+  
+  --z-index-base: 1;
+  --z-index-content: 10;
+  --z-index-sidebar: 20;
+  --z-index-modal: 30;
+  --z-index-tooltip: 40;
+  --z-index-ui-primary: 50;
+  --z-index-max: 999999;
+  
+  --color-green: #1F2015;
 }
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+  @font-face {
+    font-family: 'Satoshi';
+    src: url('https://cdn.fontshare.com/wf/TTX3ZAA467NC2Y5S66B3STSJTPDYRMMA/VLYS6M63PDBUHU3CCZBNXP7YGM3S3LZM/L7W6Z4X6X6X6X6X6X6X6X6X6X6X6X6X6.woff2') format('woff2');
+    font-weight: 300 900;
+    font-style: normal;
   }
-  .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-  }
-}
 
-@layer base {
-  * {
-    @apply border-border;
+  @font-face {
+    font-family: 'Pixel';
+    src: url('/fonts/MisterPixelRegular.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-rivet-bg text-rivet-dark font-sans antialiased relative;
+  }
+
+  body::before {
+    content: "";
+    @apply pointer-events-none fixed inset-0 z-[999999] opacity-[0.03];
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    filter: contrast(150%) brightness(100%);
   }
 }
 
-/* Typography tokens — encode font-family, size, weight, line-height, and letter-spacing */
 @layer components {
-  /* Display: hero and splash headlines */
-  .type-display-hero {
-    @apply font-cta text-5xl font-bold leading-tight tracking-tight;
+  .container {
+    @apply max-w-7xl mx-auto px-4 sm:px-8 md:px-16 lg:px-32 xl:px-60;
   }
+
+  .brutal-btn {
+    @apply inline-flex items-center justify-center rounded-lg font-bold transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .brutal-btn-primary {
+    @apply inline-flex items-center justify-center rounded-lg font-bold transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primary-hover;
+  }
+
+  .brutal-card {
+    @apply rounded-lg border border-rivet-dark/10 shadow-sm transition-all hover:shadow-md;
+  }
+
+  /* Typography classes matching original and redesigned use cases */
   .type-display {
-    @apply font-main text-4xl font-bold leading-tight tracking-tight;
+    @apply font-bold tracking-tighter leading-[1.1] uppercase;
   }
 
-  /* Headings: section and card titles */
   .type-heading-1 {
-    @apply font-main text-4xl font-bold leading-snug tracking-tight;
+    @apply text-4xl md:text-5xl font-bold leading-[1.375] tracking-tight;
   }
+
   .type-heading-2 {
-    @apply font-main text-2xl font-semibold leading-snug;
+    @apply text-2xl md:text-3xl font-semibold leading-[1.375];
   }
+
   .type-heading-3 {
-    @apply font-main text-xl font-medium leading-snug;
+    @apply text-xl md:text-2xl font-medium leading-[1.375];
   }
 
-  /* Body: paragraphs and descriptions */
   .type-subtitle {
-    @apply font-main text-lg font-normal leading-relaxed;
+    @apply text-lg md:text-xl font-normal leading-[1.625];
   }
+
   .type-body {
-    @apply font-main text-base font-normal leading-relaxed;
+    @apply text-base font-normal leading-[1.625];
   }
 
-  /* UI: buttons, nav links, form labels */
   .type-label {
-    @apply font-main text-sm font-medium leading-normal;
+    @apply text-sm font-medium leading-[1.5];
   }
+
   .type-label-lg {
-    @apply font-main text-base font-medium leading-normal;
+    @apply text-base font-medium leading-[1.5];
   }
 
-  /* Small: captions, badges, helper text */
-  .type-caption {
-    @apply font-main text-sm font-normal leading-normal;
-  }
   .type-overline {
-    @apply font-main text-xs font-semibold leading-normal tracking-wide;
+    @apply text-[10px] font-semibold uppercase tracking-widest leading-[1.5];
   }
 
-  /* Code: monospace text */
-  .type-code {
-    @apply font-mono text-sm font-normal leading-normal;
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
   }
-  .type-code-sm {
-    @apply font-mono text-xs font-normal leading-tight;
+
+  .animate-marquee {
+    animation: marquee 30s linear infinite;
   }
 }

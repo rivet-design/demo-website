@@ -1,5 +1,5 @@
-import { useState, useEffect, ReactNode } from 'react';
 import { posthog } from '@/lib/posthog';
+import { ReactNode, useEffect, useState } from 'react';
 
 const R2_PUBLIC_URL = 'https://pub-040a2f5482814f468dacec8f11d37f1e.r2.dev';
 
@@ -35,23 +35,18 @@ const DownloadButton = ({ children, className }: DownloadButtonProps) => {
   const [manifest, setManifest] = useState<ReleaseManifest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  /**
-   * @effect Fetch latest release manifest from R2
-   * @deps None - runs once on mount
-   */
   useEffect(() => {
     fetch(`${R2_PUBLIC_URL}/latest-mac.yml`)
       .then((response) => {
-        if (!response.ok) {
-          throw new Error('Failed to fetch release info');
-        }
+        if (!response.ok) throw new Error('Failed to fetch release info');
         return response.text();
       })
       .then((yaml) => {
         setManifest(parseYamlManifest(yaml));
       })
       .catch((err) => {
-        console.error('[DownloadButton] Failed to fetch manifest:', err);
+        console.warn('[DownloadButton] Failed to fetch manifest, using fallback:', err);
+        setManifest({ version: "latest", url: 'https://github.com/Ironclad/rivet/releases/latest' });
       })
       .finally(() => {
         setIsLoading(false);
@@ -73,25 +68,9 @@ const DownloadButton = ({ children, className }: DownloadButtonProps) => {
     <button onClick={handleDownload} disabled={isLoading} className={className}>
       {isLoading ? (
         <span className="flex items-center justify-center gap-2">
-          <svg
-            className="h-4 w-4 animate-spin"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            />
+          <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
           Loading...
         </span>
