@@ -51,6 +51,10 @@ const TOTAL = STEPS.length;
  * user scrolls through the card's share of the section scroll budget.
  * Higher z-index cards cover lower ones — stacking effect.
  */
+// Off-white used for the outer section background — sits behind all cards
+// and stays visible in the margins around each inset card.
+const SECTION_BG = '#F0EFE9';
+
 const PanelCard = ({
   step,
   index,
@@ -62,15 +66,14 @@ const PanelCard = ({
 }) => {
   const isLast = index === TOTAL - 1;
 
-  // Entrance: this card slides up from below during its scroll range
+  // Entrance: slides up from below during this card's scroll budget
   const y = useTransform(
     scrollYProgress,
     [(index - 1) / TOTAL, index / TOTAL],
     ['100%', '0%'],
   );
 
-  // Being-covered: blur this card as the *next* card slides in over it.
-  // For the last card the output is always 0px so nothing changes.
+  // Being-covered: blur as the next card slides in. Last card never blurs.
   const blur = useTransform(
     scrollYProgress,
     [index / TOTAL, isLast ? 1 : (index + 1) / TOTAL],
@@ -78,24 +81,34 @@ const PanelCard = ({
   );
 
   return (
+    /*
+     * The card is inset from the off-white viewport — margins on all sides
+     * reveal the section background behind it. `overflow: hidden` on this
+     * wrapper clips both inner sections to the same rounded corners, so the
+     * white header and dark video share one border-radius without needing
+     * their own individual corner radii.
+     */
     <motion.div
       style={{
         position: 'absolute',
-        inset: 0,
-        background: 'white',
-        zIndex: index + 1,
+        top: 0,
+        left: '5vw',
+        right: '5vw',
+        bottom: 0,
         overflow: 'hidden',
-        // Card 0 is the base — always at 0. Cards 1+ slide in from below.
+        display: 'flex',
+        flexDirection: 'column',
+        zIndex: index + 1,
         y: index === 0 ? 0 : y,
         filter: blur,
       }}
     >
-      {/* Text — in the white space above-left of the dark card */}
+      {/* ── White header — number / title / description ─────────────────── */}
       <div
         style={{
-          position: 'absolute',
-          top: '5vh',
-          left: '5vw',
+          background: 'white',
+          padding: '3vh 3vw 2.5vh',
+          flexShrink: 0,
         }}
       >
         <span
@@ -107,14 +120,13 @@ const PanelCard = ({
             textTransform: 'uppercase',
             color: '#999',
             marginBottom: 10,
-            fontFamily: 'Pixel, sans-serif',
           }}
         >
           {step.number}
         </span>
         <h2
           style={{
-            fontSize: 'clamp(26px, 2.8vw, 48px)',
+            fontSize: 'clamp(24px, 2.6vw, 44px)',
             fontWeight: 600,
             color: '#111',
             letterSpacing: '-0.02em',
@@ -126,10 +138,10 @@ const PanelCard = ({
         </h2>
         <p
           style={{
-            fontSize: 'clamp(14px, 1.1vw, 17px)',
+            fontSize: 'clamp(13px, 1.05vw, 16px)',
             color: '#555',
             lineHeight: 1.65,
-            maxWidth: 380,
+            maxWidth: 480,
             margin: 0,
           }}
         >
@@ -137,28 +149,19 @@ const PanelCard = ({
         </p>
       </div>
 
-      {/* Dark video card — inset from all edges */}
+      {/* ── Dark video section — fills remaining height ──────────────────── */}
+      {/* No border-radius here: the parent's overflow:hidden handles corners */}
       <div
         style={{
-          position: 'absolute',
-          top: '24vh',
-          left: '5vw',
-          right: '5vw',
-          bottom: '4vh',
+          flex: 1,
           background: step.bg,
-          borderRadius: 20,
-          overflow: 'hidden',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
+          minHeight: 0,
         }}
       >
-        <div
-          style={{
-            aspectRatio: '1 / 1',
-            height: '90%',
-          }}
-        >
+        <div style={{ aspectRatio: '1 / 1', height: '90%' }}>
           <video
             src={step.videoSrc}
             autoPlay
@@ -166,12 +169,7 @@ const PanelCard = ({
             muted
             playsInline
             preload="auto"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              borderRadius: 12,
-            }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         </div>
       </div>
@@ -195,53 +193,50 @@ const WorkflowPanels = () => {
 
   return (
     <>
-      {/* ── Mobile: stacked sections ────────────────────────────────────── */}
-      <div className="md:hidden">
+      {/* ── Mobile: stacked cards ───────────────────────────────────────── */}
+      <div className="md:hidden" style={{ background: SECTION_BG, padding: '4vw' }}>
         {STEPS.map((step) => (
           <div
             key={step.number}
-            style={{ padding: '6vh 6vw', background: 'white' }}
+            style={{
+              borderRadius: 16,
+              overflow: 'hidden',
+              marginBottom: 16,
+            }}
           >
-            <span
-              style={{
-                display: 'block',
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                color: '#999',
-                marginBottom: 8,
-              }}
-            >
-              {step.number}
-            </span>
-            <h2
-              style={{
-                fontSize: 24,
-                fontWeight: 600,
-                color: '#111',
-                letterSpacing: '-0.02em',
-                lineHeight: 1.2,
-                marginBottom: 6,
-              }}
-            >
-              {step.title}
-            </h2>
-            <p
-              style={{
-                fontSize: 15,
-                color: '#555',
-                lineHeight: 1.6,
-                marginBottom: 20,
-              }}
-            >
-              {step.description}
-            </p>
+            <div style={{ background: 'white', padding: '20px 20px 16px' }}>
+              <span
+                style={{
+                  display: 'block',
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: '#999',
+                  marginBottom: 8,
+                }}
+              >
+                {step.number}
+              </span>
+              <h2
+                style={{
+                  fontSize: 22,
+                  fontWeight: 600,
+                  color: '#111',
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.2,
+                  marginBottom: 6,
+                }}
+              >
+                {step.title}
+              </h2>
+              <p style={{ fontSize: 14, color: '#555', lineHeight: 1.6, margin: 0 }}>
+                {step.description}
+              </p>
+            </div>
             <div
               style={{
                 background: step.bg,
-                borderRadius: 14,
-                overflow: 'hidden',
                 aspectRatio: '1 / 1',
               }}
             >
@@ -263,7 +258,11 @@ const WorkflowPanels = () => {
       <div
         ref={sectionRef}
         className="hidden md:block"
-        style={{ height: `${TOTAL * 100}vh`, position: 'relative' }}
+        style={{
+          height: `${TOTAL * 100}vh`,
+          position: 'relative',
+          background: SECTION_BG,
+        }}
       >
         {/* Single sticky container — pins for the full section scroll range */}
         <div
@@ -272,6 +271,7 @@ const WorkflowPanels = () => {
             top: 0,
             height: '100vh',
             overflow: 'hidden',
+            background: SECTION_BG,
           }}
         >
           {STEPS.map((step, i) => (

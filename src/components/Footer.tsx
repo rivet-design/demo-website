@@ -7,8 +7,8 @@ const EMAIL = 'sam@tryrivet.design';
 const Footer = () => {
   return (
     <footer className="w-full border-t pt-4 sm:pt-5">
-      <div className="w-full max-w-lg">
-        <div className="flex justify-between">
+      <div className="w-full">
+        <div className="flex w-full justify-between">
           <div className="flex flex-col items-start gap-1">
             <span className="font-main text-base font-normal text-foreground">Rivet</span>
             <div className="flex flex-col gap-1.5">
@@ -37,7 +37,7 @@ const Footer = () => {
             </div>
           </div>
 
-          <div className="flex flex-col items-start gap-1">
+          <div className="flex flex-col items-end gap-1">
             <span className="font-main text-base font-normal text-foreground">Social</span>
             <div className="flex flex-col gap-1.5">
               <a
