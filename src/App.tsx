@@ -5,6 +5,30 @@ import FadeInText from './components/FadeInText';
 import WorkflowPanels from './components/WorkflowPanels';
 import DownloadButton from './components/DownloadButton';
 
+const R2_PUBLIC_URL = 'https://pub-040a2f5482814f468dacec8f11d37f1e.r2.dev';
+const RELEASES_LINK = 'https://docs.rivet.design/releases';
+
+/**
+ * Fetch the latest Rivet version string from the R2 release manifest
+ */
+const useLatestVersion = () => {
+  const [version, setVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`${R2_PUBLIC_URL}/latest-mac.yml`)
+      .then((res) => (res.ok ? res.text() : Promise.reject()))
+      .then((yaml) => {
+        const match = yaml.match(/^version:\s*(.+)$/m);
+        if (match) setVersion(match[1].trim());
+      })
+      .catch(() => {
+        // Silently ignore — the chip will still render without a version
+      });
+  }, []);
+
+  return version;
+};
+
 const WAVE_FRAMES = [
   [
     '~~~~~|   |    |   |    |   |    |   |~~~~',
@@ -73,6 +97,8 @@ ${WAVE_FRAMES[waveFrame][2]}`}
 };
 
 const App = () => {
+  const latestVersion = useLatestVersion();
+
   const renderDownloadPanel = () => {
     return (
       <div className="hidden flex-col items-center gap-4 pb-24 sm:flex sm:pb-0">
@@ -92,15 +118,20 @@ const App = () => {
     return (
       <div className="type-heading-3 flex w-full flex-col gap-4 text-left sm:gap-6 sm:text-2xl md:text-2xl">
         <FadeInText>
-          <div className="flex items-center gap-2">
+          <a
+            href={RELEASES_LINK}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 w-fit"
+          >
             <span className="type-overline relative rounded-full bg-green px-2 py-0.5 text-white">
               <span className="absolute inset-0 rounded-full bg-green opacity-20" />
-              New
+              <span className="relative">New</span>
             </span>
-            <span className="text-base text-black">
-              Rivet is now in public beta
+            <span className="text-base text-black hover:underline">
+              See what&apos;s new{latestVersion ? ` in v${latestVersion}` : ''}
             </span>
-          </div>
+          </a>
         </FadeInText>
         <FadeInText className="type-display text-[36px] text-black">
           Give design feedback to agents
@@ -136,7 +167,9 @@ const App = () => {
         {renderHeroText()}
       </div>
 
-      <WorkflowPanels />
+      <div className="-mx-10 sm:-mx-24 md:-mx-44 lg:-mx-64 xl:-mx-96">
+        <WorkflowPanels />
+      </div>
       <CodePanel />
       {renderDownloadPanel()}
       <div className="pb-24 sm:pb-0">

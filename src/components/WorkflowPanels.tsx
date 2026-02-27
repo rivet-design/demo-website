@@ -65,14 +65,14 @@ const WorkflowPanel = ({ step, index }: WorkflowPanelProps) => {
     <motion.div
       ref={panelRef}
       style={{ opacity, backgroundColor: step.backgroundColor }}
-      className="flex w-full items-center justify-center rounded-lg p-6 md:p-8"
+      className="flex w-full items-center justify-center rounded-none p-6 md:p-10 lg:p-14"
     >
       <div
-        className={`flex w-full max-w-7xl flex-col gap-4 sm:gap-6 md:gap-8 ${isVideoLeft ? 'md:flex-row' : 'md:flex-row-reverse'}`}
+        className={`flex w-full flex-col gap-4 sm:gap-6 md:gap-8 ${isVideoLeft ? 'md:flex-row' : 'md:flex-row-reverse'}`}
       >
         {/* Video */}
         <div className="flex flex-[2] items-center justify-center">
-          <div className="relative w-full max-w-2xl">
+          <div className="relative w-full">
             <div className="aspect-square w-full">
               {!isVideoLoaded && (
                 <div className="absolute inset-0 animate-pulse rounded-lg bg-gray-700/50" />
