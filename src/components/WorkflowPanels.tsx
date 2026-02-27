@@ -68,6 +68,12 @@ const PanelCard = ({
 }) => {
   const isLast = index === TOTAL - 1;
 
+  // Top offset: 27px at rest, eases to 55px once scrolling begins
+  const cardTop = useTransform(scrollYProgress, (v) => {
+    const t = Math.max(0, Math.min(1, v / 0.08));
+    return `${27 + t * 28}px`;
+  });
+
   // Entrance: translateY 100% → 0%, then locked at 0% for remaining scroll
   const y = useTransform(scrollYProgress, (v) => {
     const start = (index - 1) / TOTAL;
@@ -89,7 +95,7 @@ const PanelCard = ({
     <motion.div
       style={{
         position: 'absolute',
-        top: 0,
+        top: cardTop,
         left: '5vw',
         right: '5vw',
         bottom: 0,
