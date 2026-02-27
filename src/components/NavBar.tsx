@@ -23,9 +23,8 @@ const NavBar = () => {
               href="https://discord.gg/Eqn9Fcpuh4"
               target="_blank"
               rel="noopener noreferrer"
-              className="type-label flex cursor-pointer items-center gap-2 rounded-lg bg-green px-3 py-1.5 text-white transition-colors hover:bg-green-hover sm:border-2 sm:border-green sm:bg-transparent sm:text-green sm:hover:bg-green/10 sm:px-4 sm:py-2 sm:text-sm"
+              className="type-label flex cursor-pointer items-center gap-2 rounded-lg bg-green px-3 py-1.5 text-white transition-colors hover:bg-green-hover sm:bg-transparent sm:text-green sm:hover:bg-green/10 sm:px-4 sm:py-2 sm:text-sm"
             >
-              <img src="/images/discord-icon.svg" alt="Discord" className="h-5 w-5 brightness-0 invert sm:brightness-100 sm:invert-0" />
               <span className="hidden sm:inline">Join the community</span>
               <span className="sm:hidden">Community</span>
             </a>

@@ -4,6 +4,7 @@ import Footer from './components/Footer';
 import FadeInText from './components/FadeInText';
 import WorkflowPanels from './components/WorkflowPanels';
 import DownloadButton from './components/DownloadButton';
+import { SmoothScroll } from './components/SmoothScroll';
 
 const R2_PUBLIC_URL = 'https://pub-040a2f5482814f468dacec8f11d37f1e.r2.dev';
 const RELEASES_LINK = 'https://docs.rivet.design/releases';
@@ -101,12 +102,12 @@ const App = () => {
 
   const renderDownloadPanel = () => {
     return (
-      <div className="hidden flex-col items-center gap-4 pb-24 sm:flex sm:pb-0">
-        <h2 className="type-heading-2 text-center font-medium">
+      <div className="hidden flex-col items-center gap-6 py-16 pb-24 sm:flex sm:pb-0">
+        <h2 className="type-heading-1 text-center text-4xl font-medium">
           Download Rivet for Mac
         </h2>
-        <div className="w-full max-w-md">
-          <DownloadButton className="type-label-lg w-full rounded-lg bg-primary px-3 py-3 text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50">
+        <div className="w-full max-w-lg">
+          <DownloadButton className="type-label-lg w-full rounded-lg bg-primary px-6 py-4 text-lg text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50">
             Download
           </DownloadButton>
         </div>
@@ -138,8 +139,7 @@ const App = () => {
         </FadeInText>
         <FadeInText className="w-full" delay={0.3}>
           <div className="flex flex-col gap-1 text-base text-black sm:text-base md:text-base lg:text-lg">
-            <span className="text-[18px] font-normal">Rivet helps people who design get visual details exactly right.</span>
-            <span className="mt-4 text-[18px] font-normal">Leave as many comments as you&apos;d like and watch your feedback get implemented for you. Then refine any details yourself with visual tools.</span>
+            <span className="text-[18px] font-normal">Leave as many comments as you&apos;d like and watch your feedback get implemented for you. Then refine any details yourself with visual tools.</span>
           </div>
         </FadeInText>
         <FadeInText className="hidden sm:block" delay={0.5}>
@@ -161,6 +161,7 @@ const App = () => {
     );
   };
   return (
+    <SmoothScroll>
     <div className="flex min-h-screen flex-col gap-12 bg-main px-10 sm:px-24 md:px-44 lg:px-64 xl:px-96">
       <NavBar />
       <div className="flex w-full items-start justify-start sm:items-center sm:justify-center">
@@ -172,7 +173,7 @@ const App = () => {
       </div>
       <CodePanel />
       {renderDownloadPanel()}
-      <div className="pb-24 sm:pb-0">
+      <div>
         <Footer />
       </div>
 
@@ -188,6 +189,7 @@ const App = () => {
         </a>
       </div>
     </div>
+    </SmoothScroll>
   );
 };
 
