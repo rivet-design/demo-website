@@ -45,16 +45,18 @@ const STEPS: Step[] = [
 
 const TOTAL = STEPS.length;
 
-/*
- * Each card is absolutely inset within the single sticky viewport container.
- * Cards 1+ start at translateY(100%) and slide to translateY(0%) as the
- * user scrolls through the card's share of the section scroll budget.
- * Higher z-index cards cover lower ones — stacking effect.
- */
-// Off-white used for the outer section background — sits behind all cards
-// and stays visible in the margins around each inset card.
+// Off-white section background — visible in the margins around each card
 const SECTION_BG = '#F0EFE9';
 
+/*
+ * Each card is absolutely positioned within the single sticky container.
+ * Cards slide up from 100% → 0% during their scroll window, then lock.
+ * A white overlay fades in once the *next* card is ~30% into its slide,
+ * giving the "receding into background" effect on the outgoing card.
+ *
+ * Function-based useTransform is used throughout so clamping is explicit
+ * JS Math — avoiding motion's unreliable string-unit clamp behaviour.
+ */
 const PanelCard = ({
   step,
   index,
@@ -66,28 +68,24 @@ const PanelCard = ({
 }) => {
   const isLast = index === TOTAL - 1;
 
-  // Entrance: slides up from below during this card's scroll budget
-  const y = useTransform(
-    scrollYProgress,
-    [(index - 1) / TOTAL, index / TOTAL],
-    ['100%', '0%'],
-  );
+  // Entrance: translateY 100% → 0%, then locked at 0% for remaining scroll
+  const y = useTransform(scrollYProgress, (v) => {
+    const start = (index - 1) / TOTAL;
+    const end = index / TOTAL;
+    const t = Math.max(0, Math.min(1, (v - start) / (end - start)));
+    return `${(1 - t) * 100}%`;
+  });
 
-  // Being-covered: blur as the next card slides in. Last card never blurs.
-  const blur = useTransform(
-    scrollYProgress,
-    [index / TOTAL, isLast ? 1 : (index + 1) / TOTAL],
-    ['blur(0px)', isLast ? 'blur(0px)' : 'blur(8px)'],
-  );
+  // White overlay: 0 until next card is ~30% visible, then ramps to 0.92
+  const overlayOpacity = useTransform(scrollYProgress, (v) => {
+    if (isLast) return 0;
+    const start = (index + 0.3) / TOTAL;
+    const end = (index + 1) / TOTAL;
+    const t = Math.max(0, Math.min(1, (v - start) / (end - start)));
+    return t * 0.92;
+  });
 
   return (
-    /*
-     * The card is inset from the off-white viewport — margins on all sides
-     * reveal the section background behind it. `overflow: hidden` on this
-     * wrapper clips both inner sections to the same rounded corners, so the
-     * white header and dark video share one border-radius without needing
-     * their own individual corner radii.
-     */
     <motion.div
       style={{
         position: 'absolute',
@@ -95,15 +93,15 @@ const PanelCard = ({
         left: '5vw',
         right: '5vw',
         bottom: 0,
+        borderRadius: '20px 20px 0 0',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         zIndex: index + 1,
         y: index === 0 ? 0 : y,
-        filter: blur,
       }}
     >
-      {/* ── White header — number / title / description ─────────────────── */}
+      {/* ── White header ─────────────────────────────────────────────────── */}
       <div
         style={{
           background: 'white',
@@ -127,7 +125,7 @@ const PanelCard = ({
         <h2
           style={{
             fontSize: 'clamp(24px, 2.6vw, 44px)',
-            fontWeight: 600,
+            fontWeight: 400,
             color: '#111',
             letterSpacing: '-0.02em',
             lineHeight: 1.1,
@@ -138,7 +136,7 @@ const PanelCard = ({
         </h2>
         <p
           style={{
-            fontSize: 'clamp(13px, 1.05vw, 16px)',
+            fontSize: '16px',
             color: '#555',
             lineHeight: 1.65,
             maxWidth: 480,
@@ -149,8 +147,7 @@ const PanelCard = ({
         </p>
       </div>
 
-      {/* ── Dark video section — fills remaining height ──────────────────── */}
-      {/* No border-radius here: the parent's overflow:hidden handles corners */}
+      {/* ── Dark video section ───────────────────────────────────────────── */}
       <div
         style={{
           flex: 1,
@@ -173,6 +170,17 @@ const PanelCard = ({
           />
         </div>
       </div>
+
+      {/* ── White overlay — fades in as next card slides over this one ───── */}
+      <motion.div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'white',
+          opacity: overlayOpacity,
+          pointerEvents: 'none',
+        }}
+      />
     </motion.div>
   );
 };
@@ -180,12 +188,6 @@ const PanelCard = ({
 const WorkflowPanels = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
 
-  /*
-   * scrollYProgress goes 0→1 as the section scrolls from its top edge
-   * aligned with the viewport top to its bottom edge aligned with the
-   * viewport bottom. Section is TOTAL×100vh tall, giving 100vh of scroll
-   * budget per card.
-   */
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ['start start', 'end end'],
@@ -198,11 +200,7 @@ const WorkflowPanels = () => {
         {STEPS.map((step) => (
           <div
             key={step.number}
-            style={{
-              borderRadius: 16,
-              overflow: 'hidden',
-              marginBottom: 16,
-            }}
+            style={{ borderRadius: 16, overflow: 'hidden', marginBottom: 16 }}
           >
             <div style={{ background: 'white', padding: '20px 20px 16px' }}>
               <span
@@ -221,7 +219,7 @@ const WorkflowPanels = () => {
               <h2
                 style={{
                   fontSize: 22,
-                  fontWeight: 600,
+                  fontWeight: 400,
                   color: '#111',
                   letterSpacing: '-0.02em',
                   lineHeight: 1.2,
@@ -234,12 +232,7 @@ const WorkflowPanels = () => {
                 {step.description}
               </p>
             </div>
-            <div
-              style={{
-                background: step.bg,
-                aspectRatio: '1 / 1',
-              }}
-            >
+            <div style={{ background: step.bg, aspectRatio: '1 / 1' }}>
               <video
                 src={step.videoSrc}
                 autoPlay
@@ -255,6 +248,11 @@ const WorkflowPanels = () => {
       </div>
 
       {/* ── Desktop: scroll-driven card stack ───────────────────────────── */}
+      {/*
+        Section is TOTAL×100vh tall. scrollYProgress goes 0→1 over
+        (sectionHeight - viewportHeight) = 200vh of scroll, giving each
+        card ~67vh of scroll budget to enter and settle.
+      */}
       <div
         ref={sectionRef}
         className="hidden md:block"
@@ -262,6 +260,7 @@ const WorkflowPanels = () => {
           height: `${TOTAL * 100}vh`,
           position: 'relative',
           background: SECTION_BG,
+          paddingTop: '8vh',
         }}
       >
         {/* Single sticky container — pins for the full section scroll range */}

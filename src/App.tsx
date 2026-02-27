@@ -103,12 +103,12 @@ const App = () => {
   const renderDownloadPanel = () => {
     return (
       <div className="hidden flex-col items-center gap-6 py-16 pb-24 sm:flex sm:pb-0">
-        <h2 className="type-heading-1 text-center text-4xl font-medium">
-          Download Rivet for Mac
+        <h2 className="type-heading-1 text-center text-4xl font-normal">
+          Own every visual detail.
         </h2>
         <div className="w-full max-w-lg">
           <DownloadButton className="type-label-lg w-full rounded-lg bg-primary px-6 py-4 text-lg text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50">
-            Download
+            Download for Mac
           </DownloadButton>
         </div>
       </div>
@@ -134,12 +134,12 @@ const App = () => {
             </span>
           </a>
         </FadeInText>
-        <FadeInText className="type-display text-[36px] text-black">
-          Give design feedback to agents
+        <FadeInText className="type-display text-[36px] text-black font-normal">
+          Give design feedback to agents.
         </FadeInText>
         <FadeInText className="w-full" delay={0.3}>
           <div className="flex flex-col gap-1 text-base text-black sm:text-base md:text-base lg:text-lg">
-            <span className="text-[18px] font-normal">Leave as many comments as you&apos;d like and watch your feedback get implemented for you. Then refine any details yourself with visual tools.</span>
+            <span className="text-[18px] font-normal">Leave comments and watch your feedback get implemented for you. Then refine any details yourself with visual tools.</span>
           </div>
         </FadeInText>
         <FadeInText className="hidden sm:block" delay={0.5}>
