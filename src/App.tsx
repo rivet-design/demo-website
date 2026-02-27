@@ -55,7 +55,7 @@ const WAVE_FRAMES = [
 
 const FeaturePanel = () => {
   return (
-    <div className="-mx-10 flex min-h-[28rem] w-screen flex-col items-start justify-center gap-8 bg-main px-10 py-12 sm:-mx-24 sm:flex-row sm:items-center sm:gap-12 sm:px-24 md:-mx-44 md:px-44 lg:-mx-64 lg:px-64 xl:-mx-96 xl:px-96">
+    <div className="-mx-[5vw] flex min-h-[28rem] w-screen flex-col items-start justify-center gap-8 bg-main px-[5vw] py-12 sm:flex-row sm:items-center sm:gap-12">
       {/* Left: title + subtitle */}
       <div className="flex max-w-sm flex-col gap-4 text-left font-main">
         <h2 className="type-heading-2 text-3xl font-normal text-foreground md:text-4xl">
@@ -92,7 +92,7 @@ const CodePanel = () => {
   }, []);
 
   return (
-    <div className="-mx-10 flex min-h-[24rem] w-screen flex-col items-start justify-center gap-6 bg-green py-8 text-left font-main text-[#FEFFF3] sm:-mx-24 sm:h-96 sm:flex-row sm:items-center sm:gap-0 md:-mx-44 lg:-mx-64 xl:-mx-96">
+    <div className="-mx-[5vw] flex min-h-[24rem] w-screen flex-col items-start justify-center gap-6 bg-green py-8 text-left font-main text-[#FEFFF3] sm:h-96 sm:flex-row sm:items-center sm:gap-0">
       <div className="flex max-w-lg flex-col justify-center gap-4 px-8 sm:gap-6">
         <span className="type-heading-3 md:text-2xl lg:text-3xl">
           At the end of the day, Rivet is a tool for people who design.
@@ -186,13 +186,13 @@ const App = () => {
   };
   return (
     <SmoothScroll>
-    <div className="flex min-h-screen flex-col gap-12 bg-main px-10 sm:px-24 md:px-44 lg:px-64 xl:px-96">
+    <div className="flex min-h-screen flex-col gap-12 bg-main px-[5vw]">
       <NavBar />
       <div className="flex w-full items-start justify-start sm:items-center sm:justify-center">
         {renderHeroText()}
       </div>
 
-      <div className="-mx-10 sm:-mx-24 md:-mx-44 lg:-mx-64 xl:-mx-96">
+      <div className="-mx-[5vw]">
         <WorkflowPanels />
       </div>
       <CodePanel />
