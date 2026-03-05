@@ -163,7 +163,7 @@ const App = () => {
         </FadeInText>
         <FadeInText className="w-full" delay={0.3}>
           <div className="flex flex-col gap-1 text-base text-black sm:text-base md:text-base lg:text-lg">
-            <span className="text-[18px] font-normal">Turn design feedback into code and get details right with precise visual tools. </span>
+            <span className="text-[18px] font-normal">Turn design feedback into code and get the details right with precise visual tools. </span>
           </div>
         </FadeInText>
         <FadeInText className="hidden sm:block" delay={0.5}>

@@ -20,12 +20,12 @@ const NavBar = () => {
           <Logo />
           <div className="flex items-center gap-2 sm:gap-3">
             <a
-              href="https://docs.rivet.design/"
+              href="https://docs.rivet.design/releases"
               target="_blank"
               rel="noopener noreferrer"
               className="type-label cursor-pointer rounded-lg px-3 py-1.5 text-black transition-colors hover:text-black/50 sm:px-4 sm:py-2 sm:text-sm"
             >
-              Docs
+              Releases
             </a>
             <a
               href="https://discord.gg/Eqn9Fcpuh4"

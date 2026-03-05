@@ -16,7 +16,7 @@ const Footer = () => {
                 href={DOCS_LINK}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-main text-base text-content-subtle transition-colors hover:text-foreground"
+                className="font-main text-base text-[#555555] transition-colors hover:text-foreground"
               >
                 Docs
               </a>
@@ -24,13 +24,13 @@ const Footer = () => {
                 href={RELEASES_LINK}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-main text-base text-content-subtle transition-colors hover:text-foreground"
+                className="font-main text-base text-[#555555] transition-colors hover:text-foreground"
               >
                 Releases
               </a>
               <a
                 href={`mailto:${EMAIL}`}
-                className="font-main text-base text-content-subtle transition-colors hover:text-foreground"
+                className="font-main text-base text-[#555555] transition-colors hover:text-foreground"
               >
                 Email
               </a>
@@ -44,7 +44,7 @@ const Footer = () => {
                 href={DISCORD_LINK}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-main text-base text-content-subtle transition-colors hover:text-foreground"
+                className="font-main text-base text-[#555555] transition-colors hover:text-foreground"
               >
                 Discord
               </a>
@@ -52,7 +52,7 @@ const Footer = () => {
                 href={X_LINK}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-main text-base text-content-subtle transition-colors hover:text-foreground"
+                className="font-main text-base text-[#555555] transition-colors hover:text-foreground"
               >
                 Twitter
               </a>
