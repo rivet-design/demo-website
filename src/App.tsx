@@ -68,7 +68,7 @@ const FeaturePanel = () => {
 
       {/* Right: product image */}
       <div className="flex flex-1 items-center justify-end">
-        <div className="w-full max-w-xs overflow-hidden rounded-lg bg-accent">
+        <div className="w-full max-w-xs overflow-hidden rounded-lg" style={{ backgroundColor: '#2D1B69' }}>
           <img
             src="/images/tokens@2x.png"
             alt="Tokens"
@@ -198,7 +198,7 @@ const App = () => {
         <WorkflowPanels />
         <CodePanel />
       </div>
-      <FeaturePanel />
+      {/* <FeaturePanel /> */}
       {renderDownloadPanel()}
       <div>
         <Footer />
