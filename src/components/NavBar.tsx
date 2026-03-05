@@ -20,15 +20,22 @@ const NavBar = () => {
           <Logo />
           <div className="flex items-center gap-2 sm:gap-3">
             <a
+              href="https://docs.rivet.design/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="type-label cursor-pointer rounded-lg px-3 py-1.5 text-black transition-colors hover:text-black/50 sm:px-4 sm:py-2 sm:text-sm"
+            >
+              Docs
+            </a>
+            <a
               href="https://discord.gg/Eqn9Fcpuh4"
               target="_blank"
               rel="noopener noreferrer"
-              className="type-label flex cursor-pointer items-center gap-2 rounded-lg bg-green px-3 py-1.5 text-white transition-colors hover:bg-green-hover sm:bg-transparent sm:text-green sm:hover:bg-green/10 sm:px-4 sm:py-2 sm:text-sm"
+              className="type-label flex cursor-pointer items-center gap-2 rounded-lg bg-green px-3 py-1.5 text-white transition-colors hover:text-white/60 sm:bg-transparent sm:text-black sm:hover:text-black/50 sm:px-4 sm:py-2 sm:text-sm"
             >
-              <span className="hidden sm:inline">Join the community</span>
-              <span className="sm:hidden">Community</span>
+              Community
             </a>
-            <DownloadButton className="type-label hidden cursor-pointer rounded-lg bg-green px-3 py-1.5 text-white transition-colors hover:bg-green-hover disabled:cursor-not-allowed disabled:opacity-50 sm:inline-block sm:px-4 sm:py-2 sm:text-sm">
+            <DownloadButton className="type-label hidden cursor-pointer rounded-lg bg-accent-foreground px-3 py-1.5 text-white transition-colors hover:bg-[hsl(0_0%_20%)] disabled:cursor-not-allowed disabled:opacity-50 sm:inline-block sm:px-4 sm:py-2 sm:text-sm">
               Download
             </DownloadButton>
           </div>
