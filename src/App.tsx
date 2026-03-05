@@ -53,33 +53,32 @@ const WAVE_FRAMES = [
   ],
 ];
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const FeaturePanel = () => {
-  return (
-    <div className="-mx-[5vw] flex min-h-[28rem] w-screen flex-col items-start justify-center gap-8 bg-main px-[5vw] py-12 sm:flex-row sm:items-center sm:gap-12">
-      {/* Left: title + subtitle */}
-      <div className="flex max-w-sm flex-col gap-4 text-left font-main">
-        <h2 className="type-heading-2 text-3xl font-normal text-foreground md:text-4xl">
-          Use your design context.
-        </h2>
-        <p className="type-subtitle text-[#555555] md:text-lg">
-          View, edit and change your design tokens for typography, color, spacing and more.
-        </p>
-      </div>
+// const FeaturePanel = () => {
+//   return (
+//     <div className="-mx-[5vw] flex min-h-[28rem] w-screen flex-col items-start justify-center gap-8 bg-main px-[5vw] py-12 sm:flex-row sm:items-center sm:gap-12">
+//       {/* Left: title + subtitle */}
+//       <div className="flex max-w-sm flex-col gap-4 text-left font-main">
+//         <h2 className="type-heading-2 text-3xl font-normal text-foreground md:text-4xl">
+//           Use your design context.
+//         </h2>
+//         <p className="type-subtitle text-[#555555] md:text-lg">
+//           View, edit and change your design tokens for typography, color, spacing and more.
+//         </p>
+//       </div>
 
-      {/* Right: product image */}
-      <div className="flex flex-1 items-center justify-end">
-        <div className="w-full max-w-xs overflow-hidden rounded-lg" style={{ backgroundColor: '#2D1B69' }}>
-          <img
-            src="/images/tokens@2x.png"
-            alt="Tokens"
-            className="w-full"
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
+//       {/* Right: product image */}
+//       <div className="flex flex-1 items-center justify-end">
+//         <div className="w-full max-w-xs overflow-hidden rounded-lg" style={{ backgroundColor: '#2D1B69' }}>
+//           <img
+//             src="/images/tokens@2x.png"
+//             alt="Tokens"
+//             className="w-full"
+//           />
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
 
 const CodePanel = () => {
   const [waveFrame, setWaveFrame] = useState(0);
