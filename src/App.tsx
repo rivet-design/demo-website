@@ -53,6 +53,7 @@ const WAVE_FRAMES = [
   ],
 ];
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const FeaturePanel = () => {
   return (
     <div className="-mx-[5vw] flex min-h-[28rem] w-screen flex-col items-start justify-center gap-8 bg-main px-[5vw] py-12 sm:flex-row sm:items-center sm:gap-12">
