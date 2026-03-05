@@ -59,19 +59,21 @@ const FeaturePanel = () => {
       {/* Left: title + subtitle */}
       <div className="flex max-w-sm flex-col gap-4 text-left font-main">
         <h2 className="type-heading-2 text-3xl font-normal text-foreground md:text-4xl">
-          Panel title goes here
+          Use your design context.
         </h2>
-        <p className="type-subtitle text-content-subtle md:text-lg">
-          Subtitle text goes here. Describe the feature or concept in a sentence or two.
+        <p className="type-subtitle text-[#555555] md:text-lg">
+          View, edit and change your design tokens for typography, color, spacing and more.
         </p>
       </div>
 
       {/* Right: product image */}
       <div className="flex flex-1 items-center justify-end">
-        <div className="w-full max-w-md overflow-hidden rounded-lg bg-accent">
-          <div className="flex aspect-video w-full items-center justify-center text-sm text-content-subtle">
-            Product image
-          </div>
+        <div className="w-full max-w-xs overflow-hidden rounded-lg bg-accent">
+          <img
+            src="/images/tokens@2x.png"
+            alt="Tokens"
+            className="w-full"
+          />
         </div>
       </div>
     </div>
@@ -92,13 +94,13 @@ const CodePanel = () => {
   }, []);
 
   return (
-    <div className="-mx-[5vw] flex min-h-[24rem] w-screen flex-col items-start justify-center gap-6 bg-green py-8 text-left font-main text-[#FEFFF3] sm:h-96 sm:flex-row sm:items-center sm:gap-0">
+    <div className="flex min-h-[24rem] w-full flex-col items-start justify-center gap-6 bg-green py-8 text-left font-main text-[#FEFFF3] sm:h-96 sm:flex-row sm:items-center sm:gap-0">
       <div className="flex max-w-lg flex-col justify-center gap-4 px-8 sm:gap-6">
         <span className="type-heading-3 md:text-2xl lg:text-3xl">
-          At the end of the day, Rivet is a tool for people who design.
+          Made for people who design.
         </span>
         <span className="type-subtitle md:text-xl lg:text-2xl" style={{ fontSize: '21px' }}>
-          Rivet is for designers who want to sculpt the software they work on and need the right tools.{' '}
+          Rivet gives visual AI tools for designers who want to sculpt the software they work on.{' '}
         </span>
       </div>
       <div className="flex flex-col justify-center overflow-x-auto px-8 sm:overflow-x-visible">
@@ -194,8 +196,8 @@ const App = () => {
 
       <div className="-mx-[5vw]">
         <WorkflowPanels />
+        <CodePanel />
       </div>
-      <CodePanel />
       <FeaturePanel />
       {renderDownloadPanel()}
       <div>
