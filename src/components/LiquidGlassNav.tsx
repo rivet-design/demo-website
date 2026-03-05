@@ -1,4 +1,3 @@
-import { motion, useMotionValue, useSpring, useTransform } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { getDisplacementFilter } from './glass/getDisplacementFilter';
 
@@ -16,36 +15,8 @@ export const LiquidGlassNav = ({
   className = '',
 }: LiquidGlassNavProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [isChrome, setIsChrome] = useState(false);
-
-  const springConfig = { damping: 35, stiffness: 120 };
-  const x = useSpring(mouseX, springConfig);
-  const y = useSpring(mouseY, springConfig);
-
-  // Create distortion effect - reduced intensity
-  const distortionX = useTransform(x, (value) => value * 0.05);
-  const distortionY = useTransform(y, (value) => value * 0.05);
-
-  // Create percentage transforms for gradients
-  const gradientX1 = useTransform(
-    distortionX,
-    (value) => `${50 + value * 50}%`,
-  );
-  const gradientY1 = useTransform(
-    distortionY,
-    (value) => `${50 + value * 50}%`,
-  );
-  const gradientX2 = useTransform(
-    distortionX,
-    (value) => `${50 + value * 30}%`,
-  );
-  const gradientY2 = useTransform(
-    distortionY,
-    (value) => `${50 + value * 30}%`,
-  );
 
   useEffect(() => {
     // Detect Chromium-based browsers
@@ -61,7 +32,6 @@ export const LiquidGlassNav = ({
     const container = containerRef.current;
     if (!container) return;
 
-    // Set initial dimensions
     const updateDimensions = () => {
       const rect = container.getBoundingClientRect();
       setDimensions({ width: rect.width, height: rect.height });
@@ -70,41 +40,10 @@ export const LiquidGlassNav = ({
     updateDimensions();
     window.addEventListener('resize', updateDimensions);
 
-    // Only track mouse on Chrome
-    if (isChrome) {
-      const handleMouseMove = (e: MouseEvent) => {
-        const rect = container.getBoundingClientRect();
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-
-        // Calculate position relative to center
-        const relativeX = e.clientX - rect.left - centerX;
-        const relativeY = e.clientY - rect.top - centerY;
-
-        // Normalize to -1 to 1 with smoother scaling
-        mouseX.set((relativeX / centerX) * 0.8);
-        mouseY.set((relativeY / centerY) * 0.8);
-      };
-
-      const handleMouseLeave = () => {
-        mouseX.set(0);
-        mouseY.set(0);
-      };
-
-      container.addEventListener('mousemove', handleMouseMove);
-      container.addEventListener('mouseleave', handleMouseLeave);
-
-      return () => {
-        container.removeEventListener('mousemove', handleMouseMove);
-        container.removeEventListener('mouseleave', handleMouseLeave);
-        window.removeEventListener('resize', updateDimensions);
-      };
-    }
-
     return () => {
       window.removeEventListener('resize', updateDimensions);
     };
-  }, [mouseX, mouseY, isChrome]);
+  }, []);
 
   // Generate displacement filter only for Chrome - subtle refraction
   const displacementFilter =
@@ -137,47 +76,35 @@ export const LiquidGlassNav = ({
             : 'blur(8px) brightness(1.01) saturate(1.02)',
       }}
     >
-      {/* Interactive refraction overlay - only on Chrome */}
+      {/* Static refraction overlay - only on Chrome */}
       {isChrome && (
-        <motion.div
+        <div
           className="pointer-events-none absolute inset-0"
-          style={
-            {
-              background: `
-              radial-gradient(
-                300px circle at var(--mouse-x) var(--mouse-y),
-                rgba(255, 255, 255, ${REFRACTION_OVERLAY_OPACITY}),
-                transparent 50%
-              )
-            `,
-              '--mouse-x': gradientX1,
-              '--mouse-y': gradientY1,
-            } as React.CSSProperties
-          }
+          style={{
+            background: `radial-gradient(
+              300px circle at 50% 50%,
+              rgba(255, 255, 255, ${REFRACTION_OVERLAY_OPACITY}),
+              transparent 50%
+            )`,
+          }}
         />
       )}
 
       {/* Content */}
       <div className="relative z-10">{children}</div>
 
-      {/* Dynamic shine effect that follows mouse - only on Chrome */}
+      {/* Static shine effect - only on Chrome */}
       {isChrome && (
-        <motion.div
+        <div
           className="pointer-events-none absolute inset-0"
-          style={
-            {
-              opacity: SHINE_EFFECT_OPACITY,
-              background: `
-              radial-gradient(
-                150px circle at var(--mouse-x) var(--mouse-y),
-                rgba(255, 255, 255, ${SHINE_EFFECT_INTENSITY}),
-                transparent 60%
-              )
-            `,
-              '--mouse-x': gradientX2,
-              '--mouse-y': gradientY2,
-            } as React.CSSProperties
-          }
+          style={{
+            opacity: SHINE_EFFECT_OPACITY,
+            background: `radial-gradient(
+              150px circle at 50% 50%,
+              rgba(255, 255, 255, ${SHINE_EFFECT_INTENSITY}),
+              transparent 60%
+            )`,
+          }}
         />
       )}
     </div>

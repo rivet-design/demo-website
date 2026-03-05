@@ -35,7 +35,7 @@ export default {
           DEFAULT: '#FF3300',
           hover: '#CC2900',
           border: '#ff6b35',
-          foreground: 'hsl(var(--primary-foreground))',
+          foreground: '#FFFFFF',
         },
         yellow: {
           DEFAULT: '#FFC857',
