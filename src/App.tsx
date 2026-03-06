@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Toaster } from 'sonner';
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
 import FadeInText from './components/FadeInText';
@@ -188,6 +189,7 @@ const App = () => {
   };
   return (
     <SmoothScroll>
+    <Toaster position="bottom-right" theme="light" />
     <div className="flex min-h-screen flex-col gap-12 bg-main px-[5vw]">
       <NavBar />
       <div className="flex w-full items-start justify-start sm:items-center sm:justify-center">
