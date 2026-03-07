@@ -195,7 +195,7 @@ const App = () => {
         {renderHeroText()}
       </div>
 
-      <div className="-mx-[5vw]">
+      <div className="-mx-[5vw]" id="demo-panel">
         <WorkflowPanels />
         <CodePanel />
       </div>
