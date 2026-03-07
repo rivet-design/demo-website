@@ -29,15 +29,21 @@ const Footer = () => {
                 Releases
               </a>
               <a
-                href={`mailto:${EMAIL}`}
+                href="/terms"
                 className="font-main text-base text-[#555555] transition-colors hover:text-foreground"
               >
-                Email
+                Terms
+              </a>
+              <a
+                href="/privacy"
+                className="font-main text-base text-[#555555] transition-colors hover:text-foreground"
+              >
+                Privacy
               </a>
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-1">
+          <div className="flex flex-col items-start gap-1">
             <span className="font-main text-base font-normal text-foreground">Social</span>
             <div className="flex flex-col gap-1.5">
               <a
@@ -55,6 +61,12 @@ const Footer = () => {
                 className="font-main text-base text-[#555555] transition-colors hover:text-foreground"
               >
                 Twitter
+              </a>
+              <a
+                href={`mailto:${EMAIL}`}
+                className="font-main text-base text-[#555555] transition-colors hover:text-foreground"
+              >
+                Email
               </a>
             </div>
           </div>

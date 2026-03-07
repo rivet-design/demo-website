@@ -5,7 +5,6 @@ import Footer from './components/Footer';
 import FadeInText from './components/FadeInText';
 import WorkflowPanels from './components/WorkflowPanels';
 import DownloadButton from './components/DownloadButton';
-import { SmoothScroll } from './components/SmoothScroll';
 
 const R2_PUBLIC_URL = 'https://pub-040a2f5482814f468dacec8f11d37f1e.r2.dev';
 const RELEASES_LINK = 'https://docs.rivet.design/releases';
@@ -188,7 +187,7 @@ const App = () => {
     );
   };
   return (
-    <SmoothScroll>
+    <>
     <Toaster position="bottom-right" theme="light" />
     <div className="flex min-h-screen flex-col gap-12 bg-main px-[5vw]">
       <NavBar />
@@ -218,7 +217,7 @@ const App = () => {
         </a>
       </div>
     </div>
-    </SmoothScroll>
+    </>
   );
 };
 
