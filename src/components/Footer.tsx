@@ -29,6 +29,12 @@ const Footer = () => {
                 Releases
               </a>
               <a
+                href="/mcp"
+                className="font-main text-base text-[#555555] transition-colors hover:text-foreground"
+              >
+                MCP
+              </a>
+              <a
                 href="/terms"
                 className="font-main text-base text-[#555555] transition-colors hover:text-foreground"
               >

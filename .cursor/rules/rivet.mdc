@@ -1,0 +1,39 @@
+---
+description: Rivet visual editor — use when the user wants to make visual changes to their web app
+alwaysApply: false
+---
+<!-- rivet-rules-version: 1 -->
+# Rivet Visual Editor
+
+Use these tools to make visual changes to a running web app and apply them to source code.
+
+## Starting a session
+
+1. Call `detect_project` — returns `detectedPort` (the actual running port, may differ from `defaultPort`) and `portActive`
+2. If `portActive` is false, start the dev server in the background:
+   ```bash
+   cd {projectPath} && {packageManager} run {devCommand} &
+   ```
+   Then call `detect_project` again until `portActive` is true
+3. Call `open_visual_editor({ port: detectedPort })` — always pass `detectedPort`, never assume the default
+4. Tell the user: "Rivet is open — make your visual changes and click 'Send to Cursor' when ready."
+
+## Editing loop
+
+1. Call `watch_for_changes({ sessionId })` — blocks until the user clicks "Send to Cursor" (up to 60s by default)
+2. If it times out (`hasChanges: false`), call it again to keep waiting
+3. When `hasChanges: true`, apply the changes to the source files listed in `sourceFiles`
+4. Hot reload happens automatically after file changes
+5. Tell the user what you changed, then loop back to step 1
+
+## Ending a session
+
+When the user says they're done, call `close_visual_editor({ sessionId })`.
+
+## Rules
+
+- **Always call `detect_project` first** — never assume the dev server is running
+- **Never auto-commit** after applying visual changes — let the user decide
+- Use `watch_for_changes` for interactive sessions, not `get_pending_changes`
+- `get_pending_changes` is a non-blocking immediate check — only use it to poll without blocking
+- The dev server stays running after `close_visual_editor`
