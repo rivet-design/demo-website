@@ -6,7 +6,6 @@ import DownloadPage from './components/DownloadPage';
 import AuthSuccessPage from './components/AuthSuccessPage';
 import PrivacyPolicyPage from './components/PrivacyPolicyPage';
 import TermsPage from './components/TermsPage';
-import McpPage from './components/McpPage';
 import { initPostHog } from './lib/posthog';
 
 initPostHog();
@@ -22,7 +21,6 @@ const getComponent = () => {
   if (path === '/auth-success') return AuthSuccessPage;
   if (path === '/privacy') return PrivacyPolicyPage;
   if (path === '/terms') return TermsPage;
-  if (path === '/mcp') return McpPage;
   return App;
 };
 

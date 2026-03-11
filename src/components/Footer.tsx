@@ -20,7 +20,7 @@ const Footer = () => {
               >
                 Docs
               </a>
-              <a
+<a
                 href={RELEASES_LINK}
                 target="_blank"
                 rel="noopener noreferrer"
