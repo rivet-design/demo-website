@@ -2,6 +2,7 @@ const X_LINK = 'https://x.com/designrivet';
 const DISCORD_LINK = 'https://discord.gg/Eqn9Fcpuh4';
 const DOCS_LINK = 'https://docs.rivet.design/';
 const RELEASES_LINK = 'https://docs.rivet.design/releases';
+const MCP_LINK = 'https://docs.rivet.design/mcp-guide';
 const EMAIL = 'sam@tryrivet.design';
 
 const Footer = () => {
@@ -27,6 +28,14 @@ const Footer = () => {
                 className="font-main text-base text-[#555555] transition-colors hover:text-foreground"
               >
                 Releases
+              </a>
+              <a
+                href={MCP_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-main text-base text-[#555555] transition-colors hover:text-foreground"
+              >
+                MCP
               </a>
               <a
                 href="/terms"
