@@ -50,11 +50,22 @@ const NavBar = () => {
             target="_blank"
             rel="noopener noreferrer"
             className={[
-              'type-label cursor-pointer rounded-lg px-3 py-1.5 transition-colors sm:px-4 sm:py-2 sm:text-sm',
+              'type-label hidden cursor-pointer rounded-lg px-3 py-1.5 transition-colors sm:inline-block sm:px-4 sm:py-2 sm:text-sm',
               isDark ? 'text-white hover:text-white/60' : 'text-black hover:text-black/50',
             ].join(' ')}
           >
             Releases
+          </a>
+<a
+            href="https://docs.rivet.design/mcp-guide"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={[
+              'type-label cursor-pointer rounded-lg px-3 py-1.5 transition-colors sm:px-4 sm:py-2 sm:text-sm',
+              isDark ? 'text-white hover:text-white/60' : 'text-black hover:text-black/50',
+            ].join(' ')}
+          >
+            MCP
           </a>
           <a
             href="https://discord.gg/Eqn9Fcpuh4"
@@ -68,17 +79,6 @@ const NavBar = () => {
             ].join(' ')}
           >
             Community
-          </a>
-          <a
-            href="https://docs.rivet.design/mcp-guide"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={[
-              'type-label cursor-pointer rounded-lg px-3 py-1.5 transition-colors sm:px-4 sm:py-2 sm:text-sm',
-              isDark ? 'text-white hover:text-white/60' : 'text-black hover:text-black/50',
-            ].join(' ')}
-          >
-            MCP
           </a>
           <DownloadButton
             className={[
