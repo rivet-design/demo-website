@@ -100,7 +100,11 @@ const PromptInstallButton = () => {
       navigator.clipboard.writeText(current.command).then(() => {
         setCopied(true);
         toast.success('Prompt copied to clipboard', {
-          description: `Paste this into ${current.label} to install Rivet as a visual editor.`,
+          description: `Paste into ${current.label} to get started.`,
+          action: {
+            label: 'Learn more',
+            onClick: () => window.open('https://docs.rivet.design/mcp-guide', '_blank'),
+          },
         });
         setTimeout(() => setCopied(false), 2000);
       });
@@ -137,7 +141,7 @@ const PromptInstallButton = () => {
         type="button"
         onClick={handleMainClick}
         onKeyDown={handleKeyDown}
-        className="type-label-lg relative flex items-center gap-2 rounded-l-lg bg-[hsl(0_0%_9%)] px-4 py-3 text-sm text-white transition-colors hover:bg-[hsl(0_0%_20%)] border border-white/20 border-r-0"
+        className="type-label-lg relative flex items-center gap-2 rounded-l-lg bg-[hsl(0_0%_9%)] px-4 py-3 text-sm text-white transition-colors hover:bg-[hsl(0_0%_20%)] border border-white/20 border-r-0 focus:outline-none"
       >
         {/* Invisible ghost: logo + widest label + copy icon — fixes button width */}
         <img aria-hidden width="16" height="16" className="invisible shrink-0" alt="" />
@@ -161,7 +165,7 @@ const PromptInstallButton = () => {
 
       {/* Chevron trigger — opens the popover */}
       <PopoverTrigger
-        className="flex items-center justify-center rounded-r-lg bg-[hsl(0_0%_9%)] px-2.5 text-white transition-colors hover:bg-[hsl(0_0%_20%)] border border-white/20"
+        className="flex items-center justify-center rounded-r-lg bg-[hsl(0_0%_9%)] px-2.5 text-white transition-colors hover:bg-[hsl(0_0%_20%)] border border-white/20 focus:outline-none"
         onKeyDown={handleKeyDown}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -170,13 +174,13 @@ const PromptInstallButton = () => {
       </PopoverTrigger>
 
       {/* Dropdown via PopoverContent */}
-      <PopoverContent align="end" sideOffset={6} className="min-w-[220px]" onKeyDown={handleKeyDown}>
+      <PopoverContent align="start" sideOffset={6} className="min-w-[calc(100%+2rem)]" onKeyDown={handleKeyDown}>
         {TOOL_OPTIONS.map((tool, i) => (
           <button
             key={tool.id}
             type="button"
             onClick={() => { setSelectedIndex(i); setCommittedIndex(i); setPopoverOpen(false); }}
-            className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white transition-colors hover:bg-[hsl(0_0%_20%)] ${i === selectedIndex ? 'bg-[hsl(0_0%_15%)]' : ''}`}
+            className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white transition-colors hover:bg-[hsl(0_0%_25%)] focus:outline-none ${i === selectedIndex ? 'bg-[hsl(0_0%_22%)]' : ''}`}
           >
             <ToolLogo id={tool.id} label={tool.label} />
             <span className="font-main flex-1">{tool.label}</span>

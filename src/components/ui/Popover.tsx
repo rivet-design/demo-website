@@ -146,7 +146,7 @@ export const PopoverContent = ({
       style={offsetStyle}
       onKeyDown={onKeyDown}
       className={cn(
-        'absolute z-50 overflow-hidden rounded-lg border border-white/10 bg-[hsl(0_0%_9%)] shadow-xl',
+        'absolute z-50 overflow-hidden rounded-lg border border-white/10 bg-[hsl(0_0%_15%)] shadow-xl',
         sideClass[side],
         alignClass[align],
         className,
