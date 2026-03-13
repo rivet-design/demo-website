@@ -124,6 +124,7 @@ const PromptInstallButton = () => {
       setCommittedIndex(selectedIndex);
       setPopoverOpen(false);
     } else if (e.key === 'Escape') {
+      setSelectedIndex(committedIndex);
       setPopoverOpen(false);
     }
   };
@@ -135,7 +136,7 @@ const PromptInstallButton = () => {
   );
 
   return (
-    <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+    <Popover open={popoverOpen} onOpenChange={(open) => { if (!open) setSelectedIndex(committedIndex); setPopoverOpen(open); }}>
       {/* Main action button */}
       <button
         type="button"
