@@ -49,10 +49,13 @@ export const Popover = ({ children, open: controlledOpen, onOpenChange }: Popove
     onOpenChange?.(value);
   };
 
+  const setOpenRef = useRef(setOpen);
+  setOpenRef.current = setOpen;
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
+        setOpenRef.current(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
