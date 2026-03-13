@@ -299,7 +299,7 @@ const App = () => {
               <span className="relative">New</span>
             </span>
             <span className="text-base text-black hover:underline">
-              Try Rivet&apos;s MCP in v0.5.10
+              Try Rivet&apos;s MCP{latestVersion ? ` in v${latestVersion}` : ''}
             </span>
           </a>
         </FadeInText>
