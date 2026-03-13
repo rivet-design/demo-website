@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Toaster } from 'sonner';
+import { toast, Toaster } from 'sonner';
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
 import FadeInText from './components/FadeInText';
 import WorkflowPanels from './components/WorkflowPanels';
 import DownloadButton from './components/DownloadButton';
+import { Popover, PopoverContent, PopoverTrigger } from './components/ui/Popover';
 
 const R2_PUBLIC_URL = 'https://pub-040a2f5482814f468dacec8f11d37f1e.r2.dev';
 const RELEASES_LINK = 'https://docs.rivet.design/releases';
@@ -52,6 +53,144 @@ const WAVE_FRAMES = [
     '~~~~   ~~   ~~   ~~   ~~   ~~   ~~   ~~~',
   ],
 ];
+
+type InstallTool = 'claude' | 'cursor' | 'codex';
+
+const TOOL_LOGOS: Record<InstallTool, string> = {
+  claude: '/images/claude.svg',
+  cursor: '/images/cursor.svg',
+  codex: '/images/codex.svg',
+};
+
+// Logo rendered from public/ image files
+const ToolLogo = ({ id, label }: { id: InstallTool; label: string }) => (
+  <img
+    src={TOOL_LOGOS[id]}
+    alt={label}
+    width={16}
+    height={16}
+    className="shrink-0 brightness-0 invert"
+  />
+);
+
+type ToolOption =
+  | { id: InstallTool; label: string; action: 'copy'; command: string }
+  | { id: InstallTool; label: string; action: 'deeplink'; url: string };
+
+const TOOL_OPTIONS: ToolOption[] = [
+  { id: 'claude', label: 'Claude Code', action: 'copy', command: 'Please install the Rivet MCP server by running: npx rivet-design install claude' },
+  { id: 'cursor', label: 'Cursor', action: 'deeplink', url: 'cursor://anysphere.cursor-deeplink/mcp/install?name=Rivet&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyJyaXZldC1kZXNpZ24iLCJpbnN0YWxsIiwiY3Vyc29yIl19' },
+  { id: 'codex', label: 'Codex', action: 'copy', command: 'Please install the Rivet MCP server by running: npx rivet-design install codex' },
+];
+
+const PromptInstallButton = () => {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [committedIndex, setCommittedIndex] = useState(0);
+
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const current = TOOL_OPTIONS[selectedIndex];
+  const committed = TOOL_OPTIONS[committedIndex];
+
+  const handleMainClick = () => {
+    if (current.action === 'deeplink') {
+      window.location.href = current.url;
+    } else {
+      navigator.clipboard.writeText(current.command).then(() => {
+        setCopied(true);
+        toast.success('Prompt copied to clipboard', {
+          description: `Paste this into ${current.label} to install Rivet as a visual editor.`,
+        });
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!popoverOpen) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex((i) => (i + 1) % TOOL_OPTIONS.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex((i) => (i - 1 + TOOL_OPTIONS.length) % TOOL_OPTIONS.length);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      setCommittedIndex(selectedIndex);
+      setPopoverOpen(false);
+    } else if (e.key === 'Escape') {
+      setPopoverOpen(false);
+    }
+  };
+
+  // Measure the widest label so the main button stays a fixed width
+  const maxLabel = TOOL_OPTIONS.reduce(
+    (longest, tool) => (tool.label.length > longest.length ? tool.label : longest),
+    ''
+  );
+
+  return (
+    <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+      {/* Main action button */}
+      <button
+        type="button"
+        onClick={handleMainClick}
+        onKeyDown={handleKeyDown}
+        className="type-label-lg relative flex items-center gap-2 rounded-l-lg bg-[hsl(0_0%_9%)] px-4 py-3 text-sm text-white transition-colors hover:bg-[hsl(0_0%_20%)] border border-white/20 border-r-0"
+      >
+        {/* Invisible ghost: logo + widest label + copy icon — fixes button width */}
+        <img aria-hidden width="16" height="16" className="invisible shrink-0" alt="" />
+        <span aria-hidden className="invisible whitespace-nowrap">
+          {`Add to ${maxLabel}`}
+        </span>
+        {/* Visible content: logo left · label middle */}
+        <span className="absolute inset-0 flex items-center gap-2 px-4">
+          {copied ? (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+              <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          ) : (
+            <ToolLogo id={committed.id} label={committed.label} />
+          )}
+          <span className="flex-1 whitespace-nowrap">
+            {`Add to ${committed.label}`}
+          </span>
+        </span>
+      </button>
+
+      {/* Chevron trigger — opens the popover */}
+      <PopoverTrigger
+        className="flex items-center justify-center rounded-r-lg bg-[hsl(0_0%_9%)] px-2.5 text-white transition-colors hover:bg-[hsl(0_0%_20%)] border border-white/20"
+        onKeyDown={handleKeyDown}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </PopoverTrigger>
+
+      {/* Dropdown via PopoverContent */}
+      <PopoverContent align="end" sideOffset={6} className="min-w-[220px]" onKeyDown={handleKeyDown}>
+        {TOOL_OPTIONS.map((tool, i) => (
+          <button
+            key={tool.id}
+            type="button"
+            onClick={() => { setSelectedIndex(i); setCommittedIndex(i); setPopoverOpen(false); }}
+            className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white transition-colors hover:bg-[hsl(0_0%_20%)] ${i === selectedIndex ? 'bg-[hsl(0_0%_15%)]' : ''}`}
+          >
+            <ToolLogo id={tool.id} label={tool.label} />
+            <span className="font-main flex-1">{tool.label}</span>
+            {i === committedIndex && (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
+  );
+};
 
 // const FeaturePanel = () => {
 //   return (
@@ -156,7 +295,7 @@ const App = () => {
               <span className="relative">New</span>
             </span>
             <span className="text-base text-black hover:underline">
-              See what&apos;s new{latestVersion ? ` in v${latestVersion}` : ''}
+              Try Rivet&apos;s MCP in v0.5.10
             </span>
           </a>
         </FadeInText>
@@ -169,18 +308,11 @@ const App = () => {
           </div>
         </FadeInText>
         <FadeInText className="hidden sm:block" delay={0.5}>
-          <div className="flex items-center gap-4">
-            <a
-              href="https://discord.gg/Eqn9Fcpuh4"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="type-label-lg rounded-lg bg-primary px-6 py-3 text-white transition-colors hover:bg-primary-hover sm:order-2 sm:bg-accent-foreground sm:text-white sm:hover:bg-[hsl(0_0%_20%)]"
-            >
-              Join the community
-            </a>
+          <div className="flex flex-wrap items-center gap-3">
             <DownloadButton className="type-label-lg hidden rounded-lg bg-primary px-6 py-3 text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50 sm:inline-block">
               Download for Mac
             </DownloadButton>
+            <PromptInstallButton />
           </div>
         </FadeInText>
       </div>
@@ -188,7 +320,7 @@ const App = () => {
   };
   return (
     <>
-    <Toaster position="bottom-right" theme="light" />
+    <Toaster position="bottom-right" theme="light" duration={8000} />
     <div className="flex min-h-screen flex-col gap-12 bg-main px-[5vw]">
       <NavBar />
       <div className="flex w-full items-start justify-start sm:items-center sm:justify-center">
