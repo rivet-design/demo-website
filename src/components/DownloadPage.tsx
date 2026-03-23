@@ -39,15 +39,37 @@ const DownloadPage = () => {
     fetch(`${R2_PUBLIC_URL}/latest-mac.yml`)
       .then((response) => {
         if (!response.ok) {
-          throw new Error('Failed to fetch release info');
+          const err = new Error(`HTTP ${response.status}: Failed to fetch release manifest`);
+          posthog.capture('release_manifest_fetch_failed', {
+            source: 'download_page',
+            error: err.message,
+            status: response.status,
+            url: `${R2_PUBLIC_URL}/latest-mac.yml`,
+          });
+          throw err;
         }
         return response.text();
       })
       .then((yaml) => {
-        setManifest(parseYamlManifest(yaml));
+        try {
+          setManifest(parseYamlManifest(yaml));
+        } catch (err) {
+          posthog.capture('release_manifest_parse_failed', {
+            source: 'download_page',
+            error: err instanceof Error ? err.message : String(err),
+          });
+          setError(err instanceof Error ? err.message : String(err));
+        }
         setLoading(false);
       })
       .catch((err) => {
+        if (!err.message?.startsWith('HTTP')) {
+          posthog.capture('release_manifest_fetch_failed', {
+            source: 'download_page',
+            error: err instanceof Error ? err.message : String(err),
+            url: `${R2_PUBLIC_URL}/latest-mac.yml`,
+          });
+        }
         setError(err.message);
         setLoading(false);
       });
