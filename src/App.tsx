@@ -360,7 +360,7 @@ const App = () => {
   const renderDownloadPanel = () => {
     return (
       <div className="hidden flex-col items-center gap-6 py-16 pb-24 sm:flex sm:pb-0">
-        <h2 className="type-heading-1 text-center text-5xl font-normal">
+        <h2 className="type-heading-1 text-center text-4xl font-normal">
           Own every visual detail.
         </h2>
         <div className="w-full max-w-lg">
