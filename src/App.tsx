@@ -415,7 +415,7 @@ const App = () => {
   };
   return (
     <>
-      <Toaster position="bottom-right" theme="light" />
+      <Toaster position="bottom-right" theme="light" duration={8000} />
       <div className="flex min-h-screen flex-col gap-12 bg-main px-[5vw]">
         <NavBar />
         <div className="flex w-full items-start justify-start sm:items-center sm:justify-center">
