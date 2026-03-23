@@ -1,7 +1,7 @@
 import { useState, useEffect, ReactNode } from 'react';
 import { posthog } from '@/lib/posthog';
 
-const R2_PUBLIC_URL = 'https://pub-040a2f5482814f468dacec8f11d37f1e.r2.dev';
+const R2_PUBLIC_URL = 'https://releases.rivet.design';
 
 type ReleaseManifest = {
   version: string;
