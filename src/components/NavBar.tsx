@@ -33,14 +33,14 @@ const NavBar = () => {
       ref={navRef}
       style={{ width: navWidth }}
       className={[
-        'sticky top-4 z-50 mx-auto rounded-lg border transition-colors duration-150',
+        'sticky top-4 z-50 mx-auto overflow-hidden rounded-lg border transition-colors duration-150',
         isDark
           ? 'border-accent-foreground bg-accent-foreground text-white'
           : 'border-border bg-main text-black',
       ].join(' ')}
     >
       <div
-        className="flex w-full items-center justify-between px-4 py-1"
+        className="flex w-full items-center justify-between px-2 py-1 sm:px-4"
         style={{ height: 78 }}
       >
         <Logo />
@@ -61,7 +61,7 @@ const NavBar = () => {
             target="_blank"
             rel="noopener noreferrer"
             className={[
-              'type-label cursor-pointer rounded-lg px-3 py-1.5 transition-colors sm:px-4 sm:py-2 sm:text-sm',
+              'type-label cursor-pointer rounded-lg px-2 py-1.5 transition-colors sm:px-4 sm:py-2 sm:text-sm',
               isDark ? 'text-white hover:text-white/60' : 'text-black hover:text-black/50',
             ].join(' ')}
           >
@@ -72,7 +72,7 @@ const NavBar = () => {
             target="_blank"
             rel="noopener noreferrer"
             className={[
-              'type-label flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 transition-colors sm:px-4 sm:py-2 sm:text-sm',
+              'type-label flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition-colors sm:px-4 sm:py-2 sm:text-sm',
               isDark
                 ? 'bg-white text-accent-foreground hover:text-accent-foreground/80 sm:bg-transparent sm:text-white sm:hover:text-white/60'
                 : 'bg-green text-white hover:text-white/60 sm:bg-transparent sm:text-black sm:hover:text-black/50',
