@@ -11,6 +11,7 @@ type ReleaseManifest = {
 type DownloadButtonProps = {
   children: ReactNode;
   className?: string;
+  source?: string;
 };
 
 /**
@@ -31,9 +32,10 @@ const parseYamlManifest = (yaml: string): ReleaseManifest => {
   };
 };
 
-const DownloadButton = ({ children, className }: DownloadButtonProps) => {
+const DownloadButton = ({ children, className, source = 'landing' }: DownloadButtonProps) => {
   const [manifest, setManifest] = useState<ReleaseManifest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchFailed, setFetchFailed] = useState(false);
 
   /**
    * @effect Fetch latest release manifest from R2
@@ -43,14 +45,39 @@ const DownloadButton = ({ children, className }: DownloadButtonProps) => {
     fetch(`${R2_PUBLIC_URL}/latest-mac.yml`)
       .then((response) => {
         if (!response.ok) {
-          throw new Error('Failed to fetch release info');
+          const err = new Error(`HTTP ${response.status}: Failed to fetch release manifest`);
+          posthog.capture('release_manifest_fetch_failed', {
+            source,
+            error: err.message,
+            status: response.status,
+            url: `${R2_PUBLIC_URL}/latest-mac.yml`,
+          });
+          throw err;
         }
         return response.text();
       })
       .then((yaml) => {
-        setManifest(parseYamlManifest(yaml));
+        try {
+          setManifest(parseYamlManifest(yaml));
+        } catch (err) {
+          posthog.capture('release_manifest_parse_failed', {
+            source,
+            error: err instanceof Error ? err.message : String(err),
+          });
+          setFetchFailed(true);
+          console.error('[DownloadButton] Failed to parse manifest:', err);
+        }
       })
       .catch((err) => {
+        // Only set failed + log if not already handled in the .then (parse errors set it directly)
+        if (!err.message?.startsWith('HTTP')) {
+          posthog.capture('release_manifest_fetch_failed', {
+            source,
+            error: err instanceof Error ? err.message : String(err),
+            url: `${R2_PUBLIC_URL}/latest-mac.yml`,
+          });
+        }
+        setFetchFailed(true);
         console.error('[DownloadButton] Failed to fetch manifest:', err);
       })
       .finally(() => {
@@ -59,11 +86,17 @@ const DownloadButton = ({ children, className }: DownloadButtonProps) => {
   }, []);
 
   const handleDownload = () => {
-    if (!manifest?.url) return;
+    if (!manifest?.url) {
+      posthog.capture('download_clicked_without_manifest', {
+        source,
+        fetch_failed: fetchFailed,
+      });
+      return;
+    }
 
     posthog.capture('download_clicked', {
       version: manifest.version,
-      source: 'landing',
+      source,
     });
 
     window.location.href = manifest.url;
