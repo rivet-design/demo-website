@@ -173,7 +173,7 @@ const PromptInstallButton = () => {
         type="button"
         onClick={handleMainClick}
         onKeyDown={handleKeyDown}
-        className="type-label-lg relative flex items-center gap-2 rounded-l-lg border border-r-0 border-white/20 bg-[hsl(0_0%_9%)] px-4 py-3 text-sm text-white transition-colors hover:bg-[hsl(0_0%_20%)] focus:outline-none"
+        className="type-label-lg relative flex items-center gap-2 rounded-l-lg border border-r-0 border-primary/20 bg-primary px-4 py-3 text-sm text-white transition-colors hover:bg-primary-hover focus:outline-none"
       >
         {/* Invisible ghost: logo + widest label + copy icon — fixes button width */}
         <img
@@ -216,7 +216,7 @@ const PromptInstallButton = () => {
 
       {/* Chevron trigger — opens the popover */}
       <PopoverTrigger
-        className="flex items-center justify-center rounded-r-lg border border-white/20 bg-[hsl(0_0%_9%)] px-2.5 text-white transition-colors hover:bg-[hsl(0_0%_20%)] focus:outline-none"
+        className="flex items-center justify-center rounded-r-lg border border-primary/20 bg-primary px-2.5 text-white transition-colors hover:bg-primary-hover focus:outline-none"
         onKeyDown={handleKeyDown}
       >
         <svg
@@ -404,10 +404,10 @@ const App = () => {
         </FadeInText>
         <FadeInText className="hidden sm:block" delay={0.5}>
           <div className="flex flex-wrap items-center gap-3">
-            <DownloadButton className="type-label-lg hidden rounded-lg bg-primary px-6 py-3 text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50 sm:inline-block">
+            <PromptInstallButton />
+            <DownloadButton className="type-label-lg hidden rounded-lg bg-black px-6 py-3 text-white transition-colors hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-50 sm:inline-block">
               Download for Mac
             </DownloadButton>
-            <PromptInstallButton />
           </div>
         </FadeInText>
       </div>
