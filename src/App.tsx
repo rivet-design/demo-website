@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast, Toaster } from 'sonner';
+import { posthog } from '@/lib/posthog';
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
 import FadeInText from './components/FadeInText';
@@ -115,6 +116,11 @@ const PromptInstallButton = () => {
   const committed = TOOL_OPTIONS[committedIndex];
 
   const handleMainClick = () => {
+    posthog.capture('download_clicked', {
+      source: 'landing',
+      download_type: current.id,
+    });
+
     if (current.action === 'deeplink') {
       window.location.href = current.url;
     } else {
