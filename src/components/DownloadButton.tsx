@@ -12,6 +12,7 @@ type DownloadButtonProps = {
   children: ReactNode;
   className?: string;
   source?: string;
+  downloadType?: string;
 };
 
 /**
@@ -32,7 +33,7 @@ const parseYamlManifest = (yaml: string): ReleaseManifest => {
   };
 };
 
-const DownloadButton = ({ children, className, source = 'landing' }: DownloadButtonProps) => {
+const DownloadButton = ({ children, className, source = 'landing', downloadType = 'mac' }: DownloadButtonProps) => {
   const [manifest, setManifest] = useState<ReleaseManifest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchFailed, setFetchFailed] = useState(false);
@@ -89,6 +90,7 @@ const DownloadButton = ({ children, className, source = 'landing' }: DownloadBut
     if (!manifest?.url) {
       posthog.capture('download_clicked_without_manifest', {
         source,
+        download_type: downloadType,
         fetch_failed: fetchFailed,
       });
       return;
@@ -97,6 +99,7 @@ const DownloadButton = ({ children, className, source = 'landing' }: DownloadBut
     posthog.capture('download_clicked', {
       version: manifest.version,
       source,
+      download_type: downloadType,
     });
 
     window.location.href = manifest.url;

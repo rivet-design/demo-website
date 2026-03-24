@@ -80,6 +80,7 @@ const DownloadPage = () => {
       posthog.capture('download_clicked', {
         version: manifest.version,
         source: 'download_page',
+        download_type: 'mac',
       });
       window.location.href = manifest.url;
     }
