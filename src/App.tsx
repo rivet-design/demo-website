@@ -94,7 +94,7 @@ const TOOL_OPTIONS: ToolOption[] = [
     id: 'cursor',
     label: 'Cursor',
     action: 'deeplink',
-    url: 'cursor://anysphere.cursor-deeplink/mcp/install?name=Rivet&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyJyaXZldC1kZXNpZ24iLCJpbnN0YWxsIiwiY3Vyc29yIl19',
+    url: 'cursor://anysphere.cursor-deeplink/mcp/install?name=rivet&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsInJpdmV0LWRlc2lnbkBsYXRlc3QiLCJtY3AiLCItLWVkaXRvciIsImN1cnNvciJdfQ==',
   },
   {
     id: 'codex',
