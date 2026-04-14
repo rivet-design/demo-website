@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/demo",
+      "destination": "https://rivet-demo.onrender.com/"
+    },
+    {
+      "source": "/demo/:path*",
+      "destination": "https://rivet-demo.onrender.com/:path*"
+    }
+  ]
+}
