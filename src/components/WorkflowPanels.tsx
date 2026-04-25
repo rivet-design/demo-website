@@ -11,7 +11,7 @@ const WorkflowPanels = () => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: '0 5vw',
+        margin: '0 -28px',
       }}
     >
       <video
