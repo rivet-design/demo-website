@@ -340,7 +340,7 @@ const CodePanel = () => {
           software they work on.{' '}
         </span>
       </div>
-      <div className="flex flex-col justify-center overflow-x-auto px-8 sm:overflow-x-visible">
+      <div className="flex flex-col items-center justify-center overflow-x-auto px-8 sm:items-start sm:overflow-x-visible">
         <pre className="font-mono text-[0.6rem] leading-tight text-[#FEFFF3] sm:text-xs">
           {`        |\\      /|      |\\      /|
         | \\    / |      | \\    / |
