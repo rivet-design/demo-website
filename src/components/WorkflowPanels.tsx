@@ -14,6 +14,11 @@ const WorkflowPanels = () => {
         margin: '0 -28px',
       }}
     >
+      <img
+        src={POSTER_SRC}
+        alt="Rivet demo"
+        className="block w-full sm:hidden"
+      />
       <video
         src={VIDEO_SRC}
         poster={POSTER_SRC}
@@ -23,7 +28,7 @@ const WorkflowPanels = () => {
         playsInline
         preload="metadata"
         aria-label="Rivet demo"
-        style={{ width: '100%', display: 'block' }}
+        className="hidden w-full sm:block"
       />
     </div>
   );

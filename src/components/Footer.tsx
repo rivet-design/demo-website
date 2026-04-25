@@ -7,7 +7,7 @@ const EMAIL = 'sam@tryrivet.design';
 
 const Footer = () => {
   return (
-    <footer className="w-full border-t pt-4 sm:pt-5">
+    <footer className="w-full pt-4 sm:pt-5">
       <div className="w-full">
         <div className="flex w-full justify-between">
           <div className="flex flex-col items-start gap-1">
