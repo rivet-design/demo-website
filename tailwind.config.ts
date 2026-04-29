@@ -33,7 +33,7 @@ export default {
       colors: {
         primary: {
           DEFAULT: '#FF3300',
-          hover: '#CC2900',
+          hover: '#FF5526',
           border: '#ff6b35',
           foreground: '#FFFFFF',
         },

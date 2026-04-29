@@ -52,7 +52,7 @@ const Logo = () => {
         style={{ width: 88.4141, height: 65 }}
         onContextMenu={handleContextMenu}
       >
-        <span ref={logoRef}>rivet</span>
+        <span ref={logoRef} className="font-bold">rivet</span>
       </motion.div>
 
       {createPortal(

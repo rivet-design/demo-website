@@ -365,7 +365,7 @@ const App = () => {
 
   const renderDownloadPanel = () => {
     return (
-      <div className="hidden flex-col items-center gap-6 py-16 pb-24 md:flex md:pb-0">
+      <div className="hidden flex-col items-center gap-6 py-16 md:flex">
         <h2 className="type-heading-1 text-center text-4xl font-normal">
           Own every visual detail.
         </h2>
@@ -386,7 +386,7 @@ const App = () => {
             href={RELEASES_LINK}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex w-fit items-center gap-2"
+            className="no-external-icon flex w-fit items-center gap-2"
           >
             <span className="type-overline relative rounded-full bg-green px-2 py-0.5 text-white">
               <span className="absolute inset-0 rounded-full bg-green opacity-20" />
@@ -444,7 +444,7 @@ const App = () => {
             href="https://discord.gg/qccDTZDBgX"
             target="_blank"
             rel="noopener noreferrer"
-            className="type-label-lg block w-full rounded-lg bg-primary px-3 py-3 text-center text-white transition-colors hover:bg-primary-hover"
+            className="no-external-icon type-label-lg block w-full rounded-lg bg-primary px-3 py-3 text-center text-white transition-colors hover:bg-primary-hover"
           >
             Join the community
           </a>
