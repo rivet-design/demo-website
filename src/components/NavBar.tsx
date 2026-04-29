@@ -40,7 +40,7 @@ const NavBar = () => {
       ].join(' ')}
     >
       <div
-        className="flex w-full items-center justify-between px-2 py-1 md:px-4"
+        className="flex w-full items-center justify-between px-4 py-1"
         style={{ height: 78 }}
       >
         <Logo />
@@ -61,7 +61,7 @@ const NavBar = () => {
             target="_blank"
             rel="noopener noreferrer"
             className={[
-              'no-external-icon type-label cursor-pointer rounded-lg px-2 py-1.5 transition-colors md:px-4 md:py-2 md:text-sm',
+              'no-external-icon type-label hidden cursor-pointer rounded-lg px-2 py-1.5 transition-colors md:inline-block md:px-4 md:py-2 md:text-sm',
               isDark ? 'text-white hover:text-white/60' : 'text-black hover:text-black/50',
             ].join(' ')}
           >

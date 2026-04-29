@@ -35,11 +35,11 @@ const Footer = () => {
         <div className="flex w-full flex-wrap items-start gap-x-16 gap-y-6">
           {/* "Made with rivet" wordmark and social icons on the left */}
           <div className="mt-8 flex flex-col items-start gap-8">
-            <span className="flex items-baseline whitespace-nowrap text-white text-5xl leading-none">
+            <span className="flex items-baseline whitespace-nowrap text-white text-4xl sm:text-5xl leading-none">
               <span className="font-main">Made with&nbsp;</span>
               <span className="font-cta font-bold">rivet</span>
             </span>
-            <div className="flex items-center gap-6">
+            <div className="ml-0.5 flex items-center gap-6">
               <a
                 href={DISCORD_LINK}
                 target="_blank"
