@@ -327,8 +327,8 @@ const CodePanel = () => {
   }, []);
 
   return (
-    <div className="flex min-h-[24rem] w-full flex-col items-start justify-center gap-6 bg-green py-8 text-left font-main text-[#FEFFF3] sm:h-96 sm:flex-row sm:items-center sm:gap-0">
-      <div className="flex max-w-lg flex-col justify-center gap-4 px-8 sm:gap-6">
+    <div className="flex min-h-[24rem] w-full flex-col items-start justify-center gap-6 bg-green py-8 text-left font-main text-[#FEFFF3] md:h-96 md:flex-row md:items-center md:gap-0">
+      <div className="flex max-w-lg flex-col justify-center gap-4 px-8 md:gap-6">
         <span className="type-heading-3 md:text-2xl lg:text-3xl">
           Made for people who design.
         </span>
@@ -340,8 +340,8 @@ const CodePanel = () => {
           software they work on.{' '}
         </span>
       </div>
-      <div className="flex flex-col items-center justify-center overflow-x-auto px-8 sm:items-start sm:overflow-x-visible">
-        <pre className="font-mono text-[0.6rem] leading-tight text-[#FEFFF3] sm:text-xs">
+      <div className="flex flex-col items-center justify-center overflow-x-auto px-8 md:items-start md:overflow-x-visible">
+        <pre className="font-mono text-[0.6rem] leading-tight text-[#FEFFF3] md:text-xs">
           {`        |\\      /|      |\\      /|
         | \\    / |      | \\    / |
         |  \\  /  |      |  \\  /  |
@@ -365,7 +365,7 @@ const App = () => {
 
   const renderDownloadPanel = () => {
     return (
-      <div className="hidden flex-col items-center gap-6 py-16 pb-24 sm:flex sm:pb-0">
+      <div className="hidden flex-col items-center gap-6 py-16 pb-24 md:flex md:pb-0">
         <h2 className="type-heading-1 text-center text-4xl font-normal">
           Own every visual detail.
         </h2>
@@ -380,7 +380,7 @@ const App = () => {
 
   const renderHeroText = () => {
     return (
-      <div className="type-heading-3 flex w-full flex-col gap-4 text-left sm:gap-6 sm:text-2xl md:text-2xl">
+      <div className="type-heading-3 flex w-full flex-col gap-4 text-left md:gap-6 md:text-2xl">
         <FadeInText>
           <a
             href={RELEASES_LINK}
@@ -401,17 +401,17 @@ const App = () => {
           The visual editor to design with agents.
         </FadeInText>
         <FadeInText className="w-full" delay={0.3}>
-          <div className="flex flex-col gap-1 text-base text-black sm:text-base md:text-base lg:text-lg">
+            <div className="flex flex-col gap-1 text-base text-black md:text-base lg:text-lg">
             <span className="text-[18px] font-normal">
               Turn design feedback into code and get the details right with
               precise visual tools.{' '}
             </span>
           </div>
         </FadeInText>
-        <FadeInText className="hidden sm:block" delay={0.5}>
+        <FadeInText className="hidden md:block" delay={0.5}>
           <div className="flex flex-wrap items-center gap-3">
             <PromptInstallButton />
-            <DownloadButton className="type-label-lg hidden rounded-lg bg-black px-6 py-3 text-white transition-colors hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-50 sm:inline-block">
+            <DownloadButton className="type-label-lg hidden rounded-lg bg-black px-6 py-3 text-white transition-colors hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-50 md:inline-block">
               Download for Mac
             </DownloadButton>
           </div>
@@ -424,7 +424,7 @@ const App = () => {
       <Toaster position="bottom-right" theme="light" duration={8000} />
       <div className="flex min-h-screen flex-col gap-12 bg-main px-[5vw]">
         <NavBar />
-        <div className="flex w-full items-start justify-start sm:items-center sm:justify-center">
+        <div className="flex w-full items-start justify-start md:items-center md:justify-center">
           {renderHeroText()}
         </div>
 
@@ -439,7 +439,7 @@ const App = () => {
         </div>
 
         {/* Mobile sticky button */}
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-content-muted/20 bg-[#FEFFF3]/80 px-4 py-4 backdrop-blur-md sm:hidden">
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-content-muted/20 bg-[#FEFFF3]/80 px-4 py-4 backdrop-blur-md md:hidden">
           <a
             href="https://discord.gg/qccDTZDBgX"
             target="_blank"
