@@ -40,28 +40,28 @@ const NavBar = () => {
       ].join(' ')}
     >
       <div
-        className="flex w-full items-center justify-between px-2 py-1 sm:px-4"
+        className="flex w-full items-center justify-between px-2 py-1 md:px-4"
         style={{ height: 78 }}
       >
         <Logo />
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           <a
             href="https://docs.rivet.design/releases"
             target="_blank"
             rel="noopener noreferrer"
             className={[
-              'type-label hidden cursor-pointer rounded-lg px-3 py-1.5 transition-colors sm:inline-block sm:px-4 sm:py-2 sm:text-sm',
+              'type-label hidden cursor-pointer rounded-lg px-3 py-1.5 transition-colors md:inline-block md:px-4 md:py-2 md:text-sm',
               isDark ? 'text-white hover:text-white/60' : 'text-black hover:text-black/50',
             ].join(' ')}
           >
             Releases
           </a>
-<a
+          <a
             href="https://docs.rivet.design/mcp-guide"
             target="_blank"
             rel="noopener noreferrer"
             className={[
-              'type-label cursor-pointer rounded-lg px-2 py-1.5 transition-colors sm:px-4 sm:py-2 sm:text-sm',
+              'type-label cursor-pointer rounded-lg px-2 py-1.5 transition-colors md:px-4 md:py-2 md:text-sm',
               isDark ? 'text-white hover:text-white/60' : 'text-black hover:text-black/50',
             ].join(' ')}
           >
@@ -72,17 +72,17 @@ const NavBar = () => {
             target="_blank"
             rel="noopener noreferrer"
             className={[
-              'type-label flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition-colors sm:px-4 sm:py-2 sm:text-sm',
+              'type-label flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition-colors md:px-4 md:py-2 md:text-sm',
               isDark
-                ? 'bg-white text-accent-foreground hover:text-accent-foreground/80 sm:bg-transparent sm:text-white sm:hover:text-white/60'
-                : 'bg-green text-white hover:text-white/60 sm:bg-transparent sm:text-black sm:hover:text-black/50',
+                ? 'bg-white text-accent-foreground hover:text-accent-foreground/80 md:bg-transparent md:text-white md:hover:text-white/60'
+                : 'bg-green text-white hover:text-white/60 md:bg-transparent md:text-black md:hover:text-black/50',
             ].join(' ')}
           >
             Community
           </a>
           <DownloadButton
             className={[
-              'type-label hidden cursor-pointer rounded-lg px-3 py-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:inline-block sm:px-4 sm:py-2 sm:text-sm',
+              'type-label hidden cursor-pointer rounded-lg px-3 py-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 md:inline-block md:px-4 md:py-2 md:text-sm',
               isDark
                 ? 'bg-white text-accent-foreground hover:bg-white/80'
                 : 'bg-accent-foreground text-white hover:bg-[hsl(0_0%_20%)]',

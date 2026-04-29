@@ -17,7 +17,7 @@ const WorkflowPanels = () => {
       <img
         src={POSTER_SRC}
         alt="Rivet demo"
-        className="block w-full sm:hidden"
+        className="block w-full md:hidden"
       />
       <video
         src={VIDEO_SRC}
@@ -28,7 +28,7 @@ const WorkflowPanels = () => {
         playsInline
         preload="metadata"
         aria-label="Rivet demo"
-        className="hidden w-full sm:block"
+        className="hidden w-full md:block"
       />
     </div>
   );
