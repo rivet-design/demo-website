@@ -50,7 +50,7 @@ const NavBar = () => {
             target="_blank"
             rel="noopener noreferrer"
             className={[
-              'type-label hidden cursor-pointer rounded-lg px-3 py-1.5 transition-colors md:inline-block md:px-4 md:py-2 md:text-sm',
+              'no-external-icon type-label hidden cursor-pointer rounded-lg px-3 py-1.5 transition-colors md:inline-block md:px-4 md:py-2 md:text-sm',
               isDark ? 'text-white hover:text-white/60' : 'text-black hover:text-black/50',
             ].join(' ')}
           >
@@ -61,7 +61,7 @@ const NavBar = () => {
             target="_blank"
             rel="noopener noreferrer"
             className={[
-              'type-label cursor-pointer rounded-lg px-2 py-1.5 transition-colors md:px-4 md:py-2 md:text-sm',
+              'no-external-icon type-label cursor-pointer rounded-lg px-2 py-1.5 transition-colors md:px-4 md:py-2 md:text-sm',
               isDark ? 'text-white hover:text-white/60' : 'text-black hover:text-black/50',
             ].join(' ')}
           >
@@ -72,7 +72,7 @@ const NavBar = () => {
             target="_blank"
             rel="noopener noreferrer"
             className={[
-              'type-label flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition-colors md:px-4 md:py-2 md:text-sm',
+              'no-external-icon type-label flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition-colors md:px-4 md:py-2 md:text-sm',
               isDark
                 ? 'bg-white text-accent-foreground hover:text-accent-foreground/80 md:bg-transparent md:text-white md:hover:text-white/60'
                 : 'bg-green text-white hover:text-white/60 md:bg-transparent md:text-black md:hover:text-black/50',
