@@ -35,8 +35,8 @@ const NavBar = () => {
       className={[
         'sticky top-4 z-50 mx-auto overflow-hidden rounded-lg border transition-colors duration-150',
         isDark
-          ? 'border-accent-foreground bg-accent-foreground text-white'
-          : 'border-border bg-main text-black',
+          ? 'border-green bg-green text-white'
+          : 'border-green/[0.08] bg-[#FAF9F7] text-green',
       ].join(' ')}
     >
       <div
@@ -51,7 +51,7 @@ const NavBar = () => {
             rel="noopener noreferrer"
             className={[
               'no-external-icon type-label hidden cursor-pointer rounded-lg px-3 py-1.5 transition-colors md:inline-block md:px-4 md:py-2 md:text-sm',
-              isDark ? 'text-white hover:text-white/60' : 'text-black hover:text-black/50',
+              isDark ? 'text-white hover:text-white/60' : 'text-green hover:text-green/60',
             ].join(' ')}
           >
             Releases
@@ -62,7 +62,7 @@ const NavBar = () => {
             rel="noopener noreferrer"
             className={[
               'no-external-icon type-label hidden cursor-pointer rounded-lg px-2 py-1.5 transition-colors md:inline-block md:px-4 md:py-2 md:text-sm',
-              isDark ? 'text-white hover:text-white/60' : 'text-black hover:text-black/50',
+              isDark ? 'text-white hover:text-white/60' : 'text-green hover:text-green/60',
             ].join(' ')}
           >
             MCP
@@ -74,8 +74,8 @@ const NavBar = () => {
             className={[
               'no-external-icon type-label flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition-colors md:px-4 md:py-2 md:text-sm',
               isDark
-                ? 'bg-white text-accent-foreground hover:text-accent-foreground/80 md:bg-transparent md:text-white md:hover:text-white/60'
-                : 'bg-green text-white hover:text-white/60 md:bg-transparent md:text-black md:hover:text-black/50',
+                ? 'bg-white text-green hover:text-green/80 md:bg-transparent md:text-white md:hover:text-white/60'
+                : 'bg-primary text-white hover:bg-primary-hover md:bg-transparent md:text-green md:hover:text-green/60',
             ].join(' ')}
           >
             Community
@@ -84,8 +84,8 @@ const NavBar = () => {
             className={[
               'type-label hidden cursor-pointer rounded-lg px-3 py-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 md:inline-block md:px-4 md:py-2 md:text-sm',
               isDark
-                ? 'bg-white text-accent-foreground hover:bg-white/80'
-                : 'bg-accent-foreground text-white hover:bg-[hsl(0_0%_20%)]',
+                ? 'bg-white text-green hover:bg-white/80'
+                : 'bg-green text-white hover:bg-green-hover',
             ].join(' ')}
           >
             Download
