@@ -369,10 +369,18 @@ const App = () => {
         <h2 className="type-heading-1 text-center text-4xl font-normal">
           Own every visual detail.
         </h2>
-        <div className="w-full max-w-lg">
-          <DownloadButton className="type-label-lg w-full rounded-lg bg-primary px-6 py-4 text-lg text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50">
+        <div className="flex w-full max-w-lg flex-col gap-3 sm:flex-row">
+          <DownloadButton className="type-label-lg flex-1 rounded-lg bg-primary px-6 py-4 text-lg text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50">
             Download for Mac
           </DownloadButton>
+          <a
+            href="https://demo.rivet.design/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="type-label-lg flex-1 rounded-lg border border-primary px-6 py-4 text-center text-lg text-primary transition-colors hover:bg-primary/10"
+          >
+            Try Rivet
+          </a>
         </div>
       </div>
     );
@@ -414,6 +422,14 @@ const App = () => {
             <DownloadButton className="type-label-lg hidden rounded-lg bg-black px-6 py-3 text-white transition-colors hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-50 md:inline-block">
               Download for Mac
             </DownloadButton>
+            <a
+              href="https://demo.rivet.design/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="type-label-lg hidden rounded-lg border border-black/20 px-6 py-3 text-black transition-colors hover:bg-black/5 md:inline-block"
+            >
+              Try Rivet
+            </a>
           </div>
         </FadeInText>
       </div>

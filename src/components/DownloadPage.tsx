@@ -122,6 +122,15 @@ const DownloadPage = () => {
               </button>
 
               <a
+                href="https://demo.rivet.design/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="type-label-lg rounded-lg border border-primary px-8 py-4 text-lg text-primary transition-colors hover:bg-primary/10"
+              >
+                Try Rivet
+              </a>
+
+              <a
                 href="https://docs.rivet.design/"
                 target="_blank"
                 rel="noopener noreferrer"
