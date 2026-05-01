@@ -47,13 +47,15 @@ const Logo = () => {
 
   return (
     <>
-      <motion.div
-        className="flex cursor-default items-center font-cta text-4xl text-primary"
+      <motion.a
+        href="/"
+        aria-label="Go to home page"
+        className="no-external-icon flex cursor-pointer items-center font-cta text-4xl text-primary"
         style={{ width: 88.4141, height: 65 }}
         onContextMenu={handleContextMenu}
       >
         <span ref={logoRef} className="font-bold">rivet</span>
-      </motion.div>
+      </motion.a>
 
       {createPortal(
         <AnimatePresence>

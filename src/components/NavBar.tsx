@@ -6,6 +6,7 @@ import DownloadButton from './DownloadButton';
 const NavBar = () => {
   const navRef = useRef<HTMLElement>(null);
   const [isDark, setIsDark] = useState(false);
+  const isDownloadPage = window.location.pathname === '/download';
 
   const { scrollY } = useScroll();
   const navWidth = useTransform(scrollY, [100, 300], ['100%', '80%']);
@@ -80,16 +81,18 @@ const NavBar = () => {
           >
             Community
           </a>
-          <DownloadButton
-            className={[
-              'type-label hidden cursor-pointer rounded-lg px-3 py-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 md:inline-block md:px-4 md:py-2 md:text-sm',
-              isDark
-                ? 'bg-white text-accent-foreground hover:bg-white/80'
-                : 'bg-accent-foreground text-white hover:bg-[hsl(0_0%_20%)]',
-            ].join(' ')}
-          >
-            Download
-          </DownloadButton>
+          {!isDownloadPage && (
+            <DownloadButton
+              className={[
+                'type-label hidden cursor-pointer rounded-lg px-3 py-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 md:inline-block md:px-4 md:py-2 md:text-sm',
+                isDark
+                  ? 'bg-white text-accent-foreground hover:bg-white/80'
+                  : 'bg-accent-foreground text-white hover:bg-[hsl(0_0%_20%)]',
+              ].join(' ')}
+            >
+              Download
+            </DownloadButton>
+          )}
         </div>
       </div>
     </motion.nav>
