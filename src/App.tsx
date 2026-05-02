@@ -292,19 +292,23 @@ const PromptInstallButton = () => {
 
 const CodePanel = () => {
   return (
-    <div className="flex min-h-[24rem] w-full flex-col items-center justify-center gap-10 bg-green px-8 py-20 font-main text-[#FEFFF3] md:py-28">
-      <div className="flex w-full max-w-4xl flex-col gap-10 text-left">
-        <span className="text-left text-[36px] font-normal leading-[1.05] md:text-[52px] lg:text-[64px]">
+    <div className="flex w-full justify-center bg-green px-8 py-20 font-main text-[#FEFFF3] md:py-28">
+      <div className="flex w-full max-w-prose flex-col gap-6 text-left">
+        <span className="text-[28px] font-normal leading-[1.15] md:text-[36px] lg:text-[44px]">
           Made for people who design.
         </span>
-        <span className="text-left text-[30px] font-normal leading-[1.45] md:text-[32px] lg:text-[34px]">
-          Coding agents ask designers to become like engineers. That&apos;s wrong. They should be more like directors.
+        <span className="text-[18px] font-normal leading-[1.65] md:text-[20px]">
+          Coding agents ask designers to become like engineers. That&apos;s
+          wrong. They should be more like directors.
         </span>
-        <span className="text-[22px] font-normal leading-relaxed md:text-[28px] lg:text-[32px]">
-          Product design was never just about the pixels on a page. Details matter. But figuring out what to build matters more.
+        <span className="text-[18px] font-normal leading-[1.65] md:text-[20px]">
+          Product design was never just about the pixels on a page. Details
+          matter. But figuring out what to build matters more.
         </span>
-        <span className="text-[22px] font-normal leading-relaxed md:text-[28px] lg:text-[32px]">
-          Code is an infinitely flexible medium to design in. AI tools have made it abundant. It&apos;s an ideal medium for the next era of design.
+        <span className="text-[18px] font-normal leading-[1.65] md:text-[20px]">
+          Code is an infinitely flexible medium to design in. AI tools have
+          made it abundant. It&apos;s an ideal medium for the next era of
+          design.
         </span>
       </div>
     </div>
