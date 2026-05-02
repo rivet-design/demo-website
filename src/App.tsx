@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, memo } from 'react';
+import { useState, useEffect, useRef, memo, useLayoutEffect } from 'react';
 import { toast, Toaster } from 'sonner';
 import { posthog } from '@/lib/posthog';
 import NavBar from './components/NavBar';
@@ -294,16 +294,16 @@ const CodePanel = () => {
   return (
     <div className="flex min-h-[24rem] w-full flex-col items-center justify-center gap-10 bg-green px-8 py-20 font-main text-[#FEFFF3] md:py-28">
       <div className="flex w-full max-w-4xl flex-col gap-10 text-left">
-        <span className="text-left text-[40px] font-normal leading-[1.05] md:text-[60px] lg:text-[72px]">
+        <span className="text-left text-[36px] font-normal leading-[1.05] md:text-[52px] lg:text-[64px]">
           Made for people who design.
         </span>
-        <span className="text-left text-[36px] font-normal leading-[57px]">
+        <span className="text-left text-[30px] font-normal leading-[1.45] md:text-[32px] lg:text-[34px]">
           Coding agents ask designers to become like engineers. That&apos;s wrong. They should be more like directors.
         </span>
-        <span className="text-[24px] font-normal leading-relaxed md:text-[32px] lg:text-[36px]">
+        <span className="text-[22px] font-normal leading-relaxed md:text-[28px] lg:text-[32px]">
           Product design was never just about the pixels on a page. Details matter. But figuring out what to build matters more.
         </span>
-        <span className="text-[24px] font-normal leading-relaxed md:text-[32px] lg:text-[36px]">
+        <span className="text-[22px] font-normal leading-relaxed md:text-[28px] lg:text-[32px]">
           Code is an infinitely flexible medium to design in. AI tools have made it abundant. It&apos;s an ideal medium for the next era of design.
         </span>
       </div>
@@ -371,13 +371,15 @@ Cell.displayName = 'Cell';
  */
 const CircleGridArt = () => {
   const cols = 12;
-  const rows = 14;
+  const maxRows = 14;
+  const minRows = 3;
   const spacing = 24;
+  const gridPadding = 24;
   // Smaller outerR = thinner max stroke (filled top rows) and smaller dots
   // overall, calibrating against the hairline circles in the peach panel.
   const outerR = 4;
-  const width = cols * spacing;
-  const height = rows * spacing;
+  const fallbackWidth = (cols + 2) * spacing;
+  const fallbackHeight = (maxRows + 2) * spacing;
 
   // Each shape holds for 1.2s — slow enough to feel deliberate.
   const shapeDuration = 1200;
@@ -393,6 +395,51 @@ const CircleGridArt = () => {
   const startTimeRef = useRef(0);
   const lastFrameRef = useRef(0);
   const [, setTick] = useState(0);
+
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [svgSize, setSvgSize] = useState({
+    width: fallbackWidth,
+    height: fallbackHeight,
+  });
+
+  useLayoutEffect(() => {
+    const panel = svgRef.current?.parentElement;
+    if (!panel) return;
+
+    const measure = () => {
+      const { width: rawWidth, height: rawHeight } =
+        panel.getBoundingClientRect();
+      const width = Math.round(rawWidth);
+      const height = Math.round(rawHeight);
+      if (width === 0 || height === 0) return;
+      setSvgSize((current) =>
+        current.width === width && current.height === height
+          ? current
+          : { width, height },
+      );
+    };
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(panel);
+    return () => ro.disconnect();
+  }, []);
+
+  const centerSpan = Math.max(
+    0,
+    svgSize.height - 2 * (gridPadding + outerR),
+  );
+  const rows = Math.max(
+    minRows,
+    Math.min(maxRows, Math.floor(centerSpan / spacing) + 1),
+  );
+  const gridHeight = (rows - 1) * spacing;
+  const startY = (svgSize.height - gridHeight) / 2;
+  const maxColumnSpacing =
+    (svgSize.width - 2 * (gridPadding + outerR)) / (cols - 1);
+  const columnSpacing = Math.min(spacing, Math.max(8, maxColumnSpacing));
+  const gridWidth = (cols - 1) * columnSpacing;
+  const startX = (svgSize.width - gridWidth) / 2;
 
   useEffect(() => {
     let raf = 0;
@@ -435,15 +482,17 @@ const CircleGridArt = () => {
   const cells: React.ReactElement[] = [];
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      // Top filled (t=1) → bottom thin ring (t=0)
-      const norm = r / (rows - 1);
+      // Top filled (t=1) → bottom thin ring (t=0). Gradient adapts to the
+      // currently rendered row count so the full thick→thin sweep is always
+      // visible, even when we shed rows to match the panel aspect.
+      const norm = rows === 1 ? 0 : r / (rows - 1);
       const t = 1 - norm;
       const innerR = (1 - t) * (outerR - 1);
       const strokeWidth = outerR - innerR;
       const pathR = (outerR + innerR) / 2;
 
-      const cx = c * spacing + spacing / 2;
-      const cy = r * spacing + spacing / 2;
+      const cx = startX + c * columnSpacing;
+      const cy = startY + r * spacing;
 
       let shape: RippleShape = 'circle';
       let scale = 1;
@@ -501,9 +550,10 @@ const CircleGridArt = () => {
 
   return (
     <svg
-      viewBox={`0 0 ${width} ${height}`}
-      preserveAspectRatio="xMidYMid meet"
-      className="absolute bottom-8 left-0 right-0 top-3"
+      ref={svgRef}
+      viewBox={`0 0 ${svgSize.width} ${svgSize.height}`}
+      preserveAspectRatio="none"
+      className="absolute inset-0 block h-full w-full"
       aria-hidden
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
