@@ -586,7 +586,7 @@ const App = () => {
       <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-[1fr_360px] md:grid-rows-[1fr_1fr] lg:grid-cols-[1fr_420px]">
         {/* LEFT: White card with badge, title, subtitle, CTAs (spans both rows) */}
         <FadeInText className="md:col-start-1 md:row-span-2">
-          <div className="flex h-full flex-col justify-between gap-8 rounded-2xl border border-divider/20 bg-white px-8 py-10 md:px-12 md:py-12">
+          <div className="flex h-full flex-col justify-between gap-8 rounded-lg border border-divider/20 bg-white px-8 py-10 md:px-12 md:py-12">
             {/* Top: New / MCP badge */}
             <a
               href={RELEASES_LINK}
@@ -606,11 +606,11 @@ const App = () => {
             {/* Bottom: Title, subtitle, CTAs */}
             <div className="flex flex-col gap-6">
               <span className="type-display text-[40px] font-normal leading-[1.05] text-black md:text-[56px] lg:text-[64px]">
-                The visual editor to design with agents.
+                Direct, don&apos;t implement.
               </span>
-              <span className="text-[16px] font-normal leading-relaxed text-content-subtle md:text-[18px]">
-                Turn design feedback into code and get the details right with
-                precise visual tools.
+              <span className="text-[16px] font-normal leading-relaxed text-divider-muted md:text-[18px]">
+                Set the vision and let design agents explore dozens of
+                directions. Then share visual feedback and refine the details.
               </span>
               <div className="mt-2 hidden flex-row flex-wrap items-center gap-3 md:flex">
                 <PromptInstallButton />
@@ -624,14 +624,14 @@ const App = () => {
 
         {/* RIGHT-TOP: peach panel with line art */}
         <FadeInText className="md:col-start-2 md:row-start-1">
-          <div className="relative h-full min-h-[180px] overflow-hidden rounded-2xl bg-[#FCE5DC]">
+          <div className="relative h-full min-h-[180px] overflow-hidden rounded-lg bg-[#FCE5DC]">
             <GeometricLines />
           </div>
         </FadeInText>
 
         {/* RIGHT-BOTTOM: orange panel with circle-grid art */}
         <FadeInText className="md:col-start-2 md:row-start-2" delay={0.3}>
-          <div className="relative h-full min-h-[180px] overflow-hidden rounded-2xl bg-primary">
+          <div className="relative h-full min-h-[180px] overflow-hidden rounded-lg bg-primary">
             <CircleGridArt />
           </div>
         </FadeInText>
@@ -653,7 +653,7 @@ const App = () => {
         </div>
         {/* <FeaturePanel /> */}
         {renderDownloadPanel()}
-        <div>
+        <div className="-mt-12 md:mt-0">
           <Footer />
         </div>
 
