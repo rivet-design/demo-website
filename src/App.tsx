@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import { toast, Toaster } from 'sonner';
 import { posthog } from '@/lib/posthog';
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
-import FadeInText from './components/FadeInText';
+import FadeInText, { GeometricLines } from './components/FadeInText';
 import WorkflowPanels from './components/WorkflowPanels';
 import DownloadButton from './components/DownloadButton';
 import {
@@ -35,29 +35,6 @@ const useLatestVersion = () => {
 
   return version;
 };
-
-const WAVE_FRAMES = [
-  [
-    '~~~~~|   |    |   |    |   |    |   |~~~~',
-    '~~~~~ ~~~ ~~~~ ~~~ ~~~~ ~~~ ~~~~ ~~~ ~~~',
-    '~~~~~   ~~~  ~~~  ~~~  ~~~  ~~~  ~~~  ~~',
-  ],
-  [
-    '~~~~^|   |    |   |    |   |    |   |v~~~',
-    '~~~~  ~~~  ~~~  ~~~  ~~~  ~~~  ~~~  ~~~~',
-    '~~~~   ~~   ~~   ~~   ~~   ~~   ~~   ~~~',
-  ],
-  [
-    '~~~~v|   |    |   |    |   |    |   |^~~~',
-    '~~~   ~~   ~~   ~~   ~~   ~~   ~~   ~~~~',
-    '~~~    ~    ~    ~    ~    ~    ~    ~~~~',
-  ],
-  [
-    '~~~~~|   |    |   |    |   |    |   |~~~~',
-    '~~~~  ~~~  ~~~  ~~~  ~~~  ~~~  ~~~  ~~~~',
-    '~~~~   ~~   ~~   ~~   ~~   ~~   ~~   ~~~',
-  ],
-];
 
 type InstallTool = 'claude' | 'cursor' | 'codex';
 
@@ -314,49 +291,225 @@ const PromptInstallButton = () => {
 // };
 
 const CodePanel = () => {
-  const [waveFrame, setWaveFrame] = useState(0);
-
-  /**
-   * @effect - Rotate through wave frames every 400ms
-   */
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setWaveFrame((prev) => (prev + 1) % 4);
-    }, 400);
-    return () => clearInterval(interval);
-  }, []);
-
   return (
-    <div className="flex min-h-[24rem] w-full flex-col items-start justify-center gap-6 bg-green py-8 text-left font-main text-[#FEFFF3] md:h-96 md:flex-row md:items-center md:gap-0">
-      <div className="flex max-w-lg flex-col justify-center gap-4 px-8 md:gap-6">
-        <span className="type-heading-3 md:text-2xl lg:text-3xl">
+    <div className="flex min-h-[24rem] w-full flex-col items-center justify-center gap-10 bg-green px-8 py-20 font-main text-[#FEFFF3] md:py-28">
+      <div className="flex w-full max-w-4xl flex-col gap-10 text-left">
+        <span className="text-left text-[40px] font-normal leading-[1.05] md:text-[60px] lg:text-[72px]">
           Made for people who design.
         </span>
-        <span
-          className="type-subtitle md:text-xl lg:text-2xl"
-          style={{ fontSize: '21px' }}
-        >
-          Rivet gives visual AI tools for designers who want to sculpt the
-          software they work on.{' '}
+        <span className="text-left text-[36px] font-normal leading-[57px]">
+          Coding agents ask designers to become like engineers. That&apos;s wrong. They should be more like directors.
+        </span>
+        <span className="text-[24px] font-normal leading-relaxed md:text-[32px] lg:text-[36px]">
+          Product design was never just about the pixels on a page. Details matter. But figuring out what to build matters more.
+        </span>
+        <span className="text-[24px] font-normal leading-relaxed md:text-[32px] lg:text-[36px]">
+          Code is an infinitely flexible medium to design in. AI tools have made it abundant. It&apos;s an ideal medium for the next era of design.
         </span>
       </div>
-      <div className="flex flex-col items-center justify-center overflow-x-auto px-8 md:items-start md:overflow-x-visible">
-        <pre className="font-mono text-[0.6rem] leading-tight text-[#FEFFF3] md:text-xs">
-          {`        |\\      /|      |\\      /|
-        | \\    / |      | \\    / |
-        |  \\  /  |      |  \\  /  |
-        |   \\/   |      |   \\/   |
-        |        |      |        |
-     ___|________|______|________|__
-    |_____________________________|
-     |   |    |   |    |   |    |   |
-     |   |    |   |    |   |    |   |
-${WAVE_FRAMES[waveFrame][0]}
-${WAVE_FRAMES[waveFrame][1]}
-${WAVE_FRAMES[waveFrame][2]}`}
-        </pre>
-      </div>
     </div>
+  );
+};
+
+const RIPPLE_SHAPES = ['circle', 'triangle', 'square'] as const;
+type RippleShape = (typeof RIPPLE_SHAPES)[number];
+
+const COS30 = Math.cos(Math.PI / 6);
+const SIN30 = Math.sin(Math.PI / 6);
+
+// Hash-based pseudo-random in [0, 1) — deterministic per seed
+const pseudoRandom = (seed: number) => {
+  const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
+  return x - Math.floor(x);
+};
+
+type CellProps = {
+  cx: number;
+  cy: number;
+  pathR: number;
+  strokeWidth: number;
+  shape: RippleShape;
+  scale: number;
+};
+
+// Memoized so cells whose props don't change skip re-render — critical for
+// keeping rAF-driven hover updates cheap (only the ~dozen cells inside the
+// morph zone re-render each frame).
+const Cell = memo(({ cx, cy, pathR, strokeWidth, shape, scale }: CellProps) => {
+  const common = { fill: 'none', stroke: 'black', strokeWidth };
+  let path: React.ReactElement;
+  if (shape === 'square') {
+    path = (
+      <rect
+        {...common}
+        x={-pathR}
+        y={-pathR}
+        width={pathR * 2}
+        height={pathR * 2}
+      />
+    );
+  } else if (shape === 'triangle') {
+    const points = [
+      `0,${-pathR}`,
+      `${pathR * COS30},${pathR * SIN30}`,
+      `${-pathR * COS30},${pathR * SIN30}`,
+    ].join(' ');
+    path = <polygon {...common} points={points} />;
+  } else {
+    path = <circle {...common} cx={0} cy={0} r={pathR} />;
+  }
+  return <g transform={`translate(${cx} ${cy}) scale(${scale})`}>{path}</g>;
+});
+Cell.displayName = 'Cell';
+
+/**
+ * Decorative grid for the orange hero panel. Stroke weight is heaviest at the
+ * top (filled dots) and thins down to outline rings at the bottom — Mike
+ * Tessier "Unoriginal Idea" inspiration. On hover, an organic blob around the
+ * cursor (radius wobbles by angle + time) cycles its cells through random
+ * shapes at a deliberate pace as long as the user keeps hovering.
+ */
+const CircleGridArt = () => {
+  const cols = 12;
+  const rows = 14;
+  const spacing = 24;
+  // Smaller outerR = thinner max stroke (filled top rows) and smaller dots
+  // overall, calibrating against the hairline circles in the peach panel.
+  const outerR = 4;
+  const width = cols * spacing;
+  const height = rows * spacing;
+
+  // Each shape holds for 1.2s — slow enough to feel deliberate.
+  const shapeDuration = 1200;
+  // Snappy ramp: ~110ms at each stage end; quick easing (cubic) so cells stay
+  // visible most of the window and clip in/out fast.
+  const rampFraction = 0.09;
+  // ~30fps keeps the ramp easings smooth without burning frames during holds.
+  const frameInterval = 1000 / 30;
+  // Organic blob around cursor (angle-based only — no temporal wobble)
+  const baseRadius = 50;
+
+  const cursorRef = useRef<{ x: number; y: number } | null>(null);
+  const startTimeRef = useRef(0);
+  const lastFrameRef = useRef(0);
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    let raf = 0;
+    const loop = (now: number) => {
+      if (
+        cursorRef.current !== null &&
+        now - lastFrameRef.current >= frameInterval
+      ) {
+        lastFrameRef.current = now;
+        setTick((n) => (n + 1) % 1_000_000);
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [frameInterval]);
+
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const svg = e.currentTarget;
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return;
+    const localPt = pt.matrixTransform(ctm.inverse());
+    if (cursorRef.current === null) {
+      startTimeRef.current = performance.now();
+    }
+    cursorRef.current = { x: localPt.x, y: localPt.y };
+  };
+
+  const handleMouseLeave = () => {
+    cursorRef.current = null;
+    setTick((n) => (n + 1) % 1_000_000);
+  };
+
+  const cursor = cursorRef.current;
+  const elapsed = cursor ? performance.now() - startTimeRef.current : 0;
+
+  const cells: React.ReactElement[] = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      // Top filled (t=1) → bottom thin ring (t=0)
+      const norm = r / (rows - 1);
+      const t = 1 - norm;
+      const innerR = (1 - t) * (outerR - 1);
+      const strokeWidth = outerR - innerR;
+      const pathR = (outerR + innerR) / 2;
+
+      const cx = c * spacing + spacing / 2;
+      const cy = r * spacing + spacing / 2;
+
+      let shape: RippleShape = 'circle';
+      let scale = 1;
+
+      if (cursor) {
+        const dx = cx - cursor.x;
+        const dy = cy - cursor.y;
+        const dist = Math.hypot(dx, dy);
+        const angle = Math.atan2(dy, dx);
+        // Pure angular wobble — boundary is stable while cursor is still
+        const wobble = 14 * Math.sin(angle * 3) + 7 * Math.sin(angle * 7);
+        const boundary = baseRadius + wobble;
+        if (dist < boundary) {
+          // Per-cell phase offset desyncs boundaries so cells don't all swap
+          // together — kills the uniform "group fade" look.
+          const cellPhase =
+            pseudoRandom(r * 7 + c * 13) * shapeDuration;
+          const localElapsed = elapsed + cellPhase;
+
+          // Random per (cell, cycle): each shape change rolls a new shape
+          const cycleNum = Math.floor(localElapsed / shapeDuration);
+          const seed = r * 131 + c * 37 + cycleNum * 17;
+          const idx = Math.floor(pseudoRandom(seed) * RIPPLE_SHAPES.length);
+          shape = RIPPLE_SHAPES[idx];
+
+          // Snappy easing: cubic in/out keeps the cell near scale 1 most of
+          // the ramp, then clips quickly to/from 0 at the boundary.
+          const stageProgress =
+            (localElapsed % shapeDuration) / shapeDuration;
+          let ramp = 1;
+          if (stageProgress < rampFraction) {
+            const t = stageProgress / rampFraction;
+            ramp = 1 - (1 - t) ** 3; // easeOutCubic — fast rise
+          } else if (stageProgress > 1 - rampFraction) {
+            const t = (stageProgress - (1 - rampFraction)) / rampFraction;
+            ramp = 1 - t ** 3; // easeInCubic flipped — slow then fast drop
+          }
+          scale = ramp;
+        }
+      }
+
+      cells.push(
+        <Cell
+          key={`${r}-${c}`}
+          cx={cx}
+          cy={cy}
+          pathR={pathR}
+          strokeWidth={strokeWidth}
+          shape={shape}
+          scale={scale}
+        />,
+      );
+    }
+  }
+
+  return (
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="xMidYMid meet"
+      className="absolute bottom-8 left-0 right-0 top-3"
+      aria-hidden
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      {cells}
+    </svg>
   );
 };
 
@@ -380,40 +533,56 @@ const App = () => {
 
   const renderHeroText = () => {
     return (
-      <div className="type-heading-3 flex w-full flex-col gap-4 text-left md:gap-6 md:text-2xl">
-        <FadeInText>
-          <a
-            href={RELEASES_LINK}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="no-external-icon flex w-fit items-center gap-2"
-          >
-            <span className="type-overline relative rounded-full bg-green px-2 py-0.5 text-white">
-              <span className="absolute inset-0 rounded-full bg-green opacity-20" />
-              <span className="relative">New</span>
-            </span>
-            <span className="text-base text-black hover:underline">
-              Try Rivet&apos;s MCP{latestVersion ? ` in v${latestVersion}` : ''}
-            </span>
-          </a>
-        </FadeInText>
-        <FadeInText className="type-display text-[36px] font-normal text-black">
-          The visual editor to design with agents.
-        </FadeInText>
-        <FadeInText className="w-full" delay={0.3}>
-            <div className="flex flex-col gap-1 text-base text-black md:text-base lg:text-lg">
-            <span className="text-[18px] font-normal">
-              Turn design feedback into code and get the details right with
-              precise visual tools.{' '}
-            </span>
+      <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-[1fr_360px] md:grid-rows-[1fr_1fr] lg:grid-cols-[1fr_420px]">
+        {/* LEFT: White card with badge, title, subtitle, CTAs (spans both rows) */}
+        <FadeInText className="md:col-start-1 md:row-span-2">
+          <div className="flex h-full flex-col justify-between gap-8 rounded-2xl border border-divider/20 bg-white px-8 py-10 md:px-12 md:py-12">
+            {/* Top: New / MCP badge */}
+            <a
+              href={RELEASES_LINK}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="no-external-icon flex w-fit items-center gap-2"
+            >
+              <span className="type-overline relative rounded-full bg-green px-2 py-0.5 text-white">
+                <span className="absolute inset-0 rounded-full bg-green opacity-20" />
+                <span className="relative">New</span>
+              </span>
+              <span className="text-base text-black hover:underline">
+                Try Rivet&apos;s MCP{latestVersion ? ` in v${latestVersion}` : ''}
+              </span>
+            </a>
+
+            {/* Bottom: Title, subtitle, CTAs */}
+            <div className="flex flex-col gap-6">
+              <span className="type-display text-[40px] font-normal leading-[1.05] text-black md:text-[56px] lg:text-[64px]">
+                The visual editor to design with agents.
+              </span>
+              <span className="text-[16px] font-normal leading-relaxed text-content-subtle md:text-[18px]">
+                Turn design feedback into code and get the details right with
+                precise visual tools.
+              </span>
+              <div className="mt-2 hidden flex-row flex-wrap items-center gap-3 md:flex">
+                <PromptInstallButton />
+                <DownloadButton className="type-label-lg rounded-lg bg-black px-6 py-3 text-center text-white transition-colors hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-50">
+                  Download for Mac
+                </DownloadButton>
+              </div>
+            </div>
           </div>
         </FadeInText>
-        <FadeInText className="hidden md:block" delay={0.5}>
-          <div className="flex flex-wrap items-center gap-3">
-            <PromptInstallButton />
-            <DownloadButton className="type-label-lg hidden rounded-lg bg-black px-6 py-3 text-white transition-colors hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-50 md:inline-block">
-              Download for Mac
-            </DownloadButton>
+
+        {/* RIGHT-TOP: peach panel with line art */}
+        <FadeInText className="md:col-start-2 md:row-start-1">
+          <div className="relative h-full min-h-[180px] overflow-hidden rounded-2xl bg-[#FCE5DC]">
+            <GeometricLines />
+          </div>
+        </FadeInText>
+
+        {/* RIGHT-BOTTOM: orange panel with circle-grid art */}
+        <FadeInText className="md:col-start-2 md:row-start-2" delay={0.3}>
+          <div className="relative h-full min-h-[180px] overflow-hidden rounded-2xl bg-primary">
+            <CircleGridArt />
           </div>
         </FadeInText>
       </div>
