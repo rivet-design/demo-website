@@ -1,5 +1,6 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { AnimatePresence } from 'motion/react';
+import { telemetry } from '@/lib/telemetry';
 import {
   useVariants,
   VariantPill,
@@ -28,6 +29,45 @@ const VariantsDemoSection = () => {
   // While loading, hold on the Original (index 0) — variants don't render
   // until they're "generated".
   const galleryVariant = v.phase === 'loading' ? VARIANTS[0] : v.variant;
+
+  // Track lifecycle phase changes — fires once on mount for loading,
+  // then once when the demo enters ready.
+  const prevPhaseRef = useRef<typeof v.phase | null>(null);
+  useEffect(() => {
+    if (prevPhaseRef.current === v.phase) return;
+    if (v.phase === 'loading') {
+      telemetry.trackVariantsDemoLoadingStarted({
+        variantCount: VARIANTS.length,
+      });
+    } else if (v.phase === 'ready') {
+      telemetry.trackVariantsDemoReady({ variantCount: VARIANTS.length });
+    }
+    prevPhaseRef.current = v.phase;
+  }, [v.phase]);
+
+  const handlePrev = () => {
+    telemetry.trackVariantsDemoPillNavigation({
+      direction: 'prev',
+      fromIndex: v.activeIndex,
+      fromVariantId: v.variant.id,
+    });
+    v.prev();
+  };
+  const handleNext = () => {
+    telemetry.trackVariantsDemoPillNavigation({
+      direction: 'next',
+      fromIndex: v.activeIndex,
+      fromVariantId: v.variant.id,
+    });
+    v.next();
+  };
+  const handleApply = () => {
+    telemetry.trackVariantsDemoApplyClicked({
+      variantIndex: v.activeIndex,
+      variantId: v.variant.id,
+    });
+    v.applyCurrent();
+  };
 
   return (
     <div
@@ -90,9 +130,9 @@ const VariantsDemoSection = () => {
                     variants={v.variants}
                     activeIndex={v.activeIndex}
                     isSwitching={v.isSwitching}
-                    onPrev={v.prev}
-                    onNext={v.next}
-                    onApply={v.applyCurrent}
+                    onPrev={handlePrev}
+                    onNext={handleNext}
+                    onApply={handleApply}
                   />
                 </div>
               ) : null}
