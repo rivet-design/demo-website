@@ -15,6 +15,9 @@
   --text-muted: #444;
   --skeleton-base: #1e1e1e;
   --skeleton-shine: #282828;
+  /* Declared on the wrapper (not on .gallery-scroll) so variant overrides
+   * applied via inline style on .rivet-gallery actually cascade through. */
+  --gallery-gap: 8px;
 
   height: 100%;
   width: 100%;
@@ -209,6 +212,10 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  /* Reads from the cssVars applied on .content itself so variant palette
+   * changes (e.g. bright theme) actually paint this region. */
+  background: var(--bg);
+  position: relative;
 }
 
 .rivet-gallery .content-header {
@@ -285,7 +292,6 @@
 /* Grid */
 .rivet-gallery .gallery-scroll {
   flex: 1;
-  --gallery-gap: 8px;
   padding: var(--gallery-gap);
 }
 
@@ -301,6 +307,68 @@
 }
 .rivet-gallery .gallery-grid.cols-4 {
   columns: 4;
+}
+
+/*
+ * Bento layout — replaces the masonry CSS columns with a 4-column grid
+ * whose spans tile to exactly 20 cells (5 rows × 4 cols) for the 10
+ * placeholder items. Pattern is intentional, not random:
+ *
+ *   row 1-2:  [ 1  1  2  3 ]   — hero (2×2), two tall sides (1×2)
+ *   row 3:    [ 4  4  5  6 ]   — wide (2×1), small (1×1), tall (1×2)
+ *   row 4:    [ 7  7  8  6 ]   — wide (2×1), small (1×1)
+ *   row 5:    [ 9 10 10 10 ]   — small (1×1), wide (3×1)
+ *
+ * Auto-flow:dense fills any gaps left by the explicit spans below.
+ */
+.rivet-gallery .gallery-grid.bento {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 92px;
+  grid-auto-flow: dense;
+  gap: 6px;
+  /* Reset the masonry-mode rules so they don't fight the grid. */
+  columns: unset;
+  column-gap: unset;
+}
+
+.rivet-gallery .gallery-grid.bento .gallery-item {
+  margin-bottom: 0;
+  break-inside: auto;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Image frame fills the cell minus the meta row. The !important is needed
+ * to beat the inline `height: <px>` set by GalleryItem's ResizeObserver. */
+.rivet-gallery .gallery-grid.bento .image-frame {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  aspect-ratio: auto !important;
+}
+
+/* Hide the meta row in dense bento cells — would dominate at 92px rows. */
+.rivet-gallery .gallery-grid.bento .item-meta {
+  display: none;
+}
+
+/* The pattern. Items not listed are 1×1 by default. */
+.rivet-gallery .gallery-grid.bento > :nth-child(1) {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+.rivet-gallery .gallery-grid.bento > :nth-child(2),
+.rivet-gallery .gallery-grid.bento > :nth-child(3),
+.rivet-gallery .gallery-grid.bento > :nth-child(6) {
+  grid-row: span 2;
+}
+.rivet-gallery .gallery-grid.bento > :nth-child(4),
+.rivet-gallery .gallery-grid.bento > :nth-child(7) {
+  grid-column: span 2;
+}
+.rivet-gallery .gallery-grid.bento > :nth-child(10) {
+  grid-column: span 3;
 }
 
 /* Gallery item */
