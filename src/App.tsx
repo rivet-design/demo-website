@@ -4,7 +4,8 @@ import { posthog } from '@/lib/posthog';
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
 import FadeInText, { GeometricLines } from './components/FadeInText';
-import WorkflowPanels from './components/WorkflowPanels';
+// import WorkflowPanels from './components/WorkflowPanels';
+import CommentDemoSection from './components/CommentDemoSection';
 import DownloadButton from './components/DownloadButton';
 import {
   Popover,
@@ -378,7 +379,10 @@ const CircleGridArt = () => {
   const maxRows = 14;
   const minRows = 3;
   const spacing = 24;
-  const gridPadding = 24;
+  // Uniform inner padding from each panel edge to the outer cell edge.
+  // Same value used vertically and horizontally for equal padding on all 4
+  // sides.
+  const gridPadding = 18;
   // Smaller outerR = thinner max stroke (filled top rows) and smaller dots
   // overall, calibrating against the hairline circles in the peach panel.
   const outerR = 4;
@@ -429,21 +433,29 @@ const CircleGridArt = () => {
     return () => ro.disconnect();
   }, []);
 
-  const centerSpan = Math.max(
+  // Reserve gridPadding + outerR on every side, so the cell edge (not center)
+  // sits exactly gridPadding away from the panel edge — matching on x and y.
+  // Both axes pick a row/col count from the natural spacing, then stretch
+  // their actual spacing to fill the span exactly. That way no leftover gets
+  // tossed into asymmetric centering padding.
+  const verticalSpan = Math.max(
     0,
     svgSize.height - 2 * (gridPadding + outerR),
   );
   const rows = Math.max(
     minRows,
-    Math.min(maxRows, Math.floor(centerSpan / spacing) + 1),
+    Math.min(maxRows, Math.floor(verticalSpan / spacing) + 1),
   );
-  const gridHeight = (rows - 1) * spacing;
-  const startY = (svgSize.height - gridHeight) / 2;
-  const maxColumnSpacing =
-    (svgSize.width - 2 * (gridPadding + outerR)) / (cols - 1);
-  const columnSpacing = Math.min(spacing, Math.max(8, maxColumnSpacing));
-  const gridWidth = (cols - 1) * columnSpacing;
-  const startX = (svgSize.width - gridWidth) / 2;
+  const rowSpacing = rows > 1 ? verticalSpan / (rows - 1) : 0;
+  const startY = gridPadding + outerR;
+
+  const horizontalSpan = Math.max(
+    0,
+    svgSize.width - 2 * (gridPadding + outerR),
+  );
+  const columnSpacing =
+    cols > 1 ? Math.max(8, horizontalSpan / (cols - 1)) : 0;
+  const startX = gridPadding + outerR;
 
   useEffect(() => {
     let raf = 0;
@@ -496,7 +508,7 @@ const CircleGridArt = () => {
       const pathR = (outerR + innerR) / 2;
 
       const cx = startX + c * columnSpacing;
-      const cy = startY + r * spacing;
+      const cy = startY + r * rowSpacing;
 
       let shape: RippleShape = 'circle';
       let scale = 1;
@@ -573,7 +585,7 @@ const App = () => {
   const renderDownloadPanel = () => {
     return (
       <div className="hidden flex-col items-center gap-6 py-16 md:flex">
-        <h2 className="type-heading-1 text-center text-4xl font-normal">
+        <h2 className="type-heading-1 text-center text-[44px] font-normal">
           Own every visual detail.
         </h2>
         <div className="w-full max-w-lg">
@@ -652,7 +664,8 @@ const App = () => {
         </div>
 
         <div className="-mx-[5vw]" id="demo-panel">
-          <WorkflowPanels />
+          {/* <WorkflowPanels /> */}
+          <CommentDemoSection />
           <CodePanel />
         </div>
         {/* <FeaturePanel /> */}

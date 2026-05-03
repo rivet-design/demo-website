@@ -195,3 +195,27 @@
   }
 }
 
+/*
+ * Scoped tokens for the embedded Rivet comment system.
+ * Mirrors src/ui/tailwind.config.ts in the rivet repo. Scoped to .rivet-comments
+ * so it doesn't collide with the host theme's :root --primary, etc.
+ */
+.rivet-comments {
+  --main: #1c1c20;
+  --main-light: #1e1e22;
+  --main-input: #2e2e2e;
+  --main-border: #232328;
+  --content: #ffffff;
+  --content-muted: #d1d5db;
+  --content-subtle: #9ca3af;
+  --divider: #4b5563;
+  --divider-muted: #232323;
+  --primary: #ff3300;
+  --primary-hover: #c2410c;
+  --primary-border: #ff6b35;
+  --primary-soft: rgba(255, 51, 0, 0.1);
+  --accent-success: #10b981;
+  --accent-error: #ef4444;
+  --shadow-pop: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
