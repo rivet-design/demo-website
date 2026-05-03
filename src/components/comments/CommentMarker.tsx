@@ -49,14 +49,26 @@ const CommentMarker = ({
     [comment.id, onEdit],
   );
 
-  const isAbove = position.y / containerHeight > ABOVE_THRESHOLD_PCT;
+  // Two independent flips:
+  // - `markerBelowPin`: place the marker UNDER the pin only when there isn't
+  //   enough room above (pin too close to the top). Default is marker-above-pin
+  //   so the bubble doesn't cover content the pin is anchored to.
+  // - `previewAboveMarker`: float the hover preview ABOVE the marker when the
+  //   pin is in the lower portion of the panel, otherwise it would overflow
+  //   the bottom edge of the (overflow-hidden) panel.
+  // The original Rivet impl uses one `isAbove` for both because it's
+  // position:fixed against the viewport, where overflow is harmless. In a
+  // panel-bounded port, both concerns must be tracked separately.
+  const markerBelowPin = position.y < TOTAL_H;
+  const previewAboveMarker =
+    position.y / containerHeight > ABOVE_THRESHOLD_PCT;
   const previewText = comment.instruction;
 
   return (
     <div
       style={{
         position: 'absolute',
-        top: isAbove ? position.y : position.y - TOTAL_H,
+        top: markerBelowPin ? position.y : position.y - TOTAL_H,
         left: position.x - TIP_X,
         zIndex: isHovered ? 55 : 36,
         pointerEvents: 'auto',
@@ -91,7 +103,7 @@ const CommentMarker = ({
             width: CARET_SIZE,
             height: CARET_SIZE,
             left: (BUBBLE_W - CARET_SIZE) / 2,
-            top: isAbove ? -CARET_HALF : BUBBLE_H - CARET_HALF,
+            top: markerBelowPin ? -CARET_HALF : BUBBLE_H - CARET_HALF,
             transform: 'rotate(45deg)',
             borderRadius: 3,
           }}
@@ -142,8 +154,12 @@ const CommentMarker = ({
             style={{
               position: 'absolute',
               left: TIP_X - PREVIEW_W / 2,
-              top: isAbove ? -POPOVER_OFFSET_Y : TOTAL_H + POPOVER_OFFSET_Y,
-              transformOrigin: isAbove ? 'bottom center' : 'top center',
+              top: previewAboveMarker
+                ? -POPOVER_OFFSET_Y
+                : TOTAL_H + POPOVER_OFFSET_Y,
+              transformOrigin: previewAboveMarker
+                ? 'bottom center'
+                : 'top center',
               width: PREVIEW_W,
               padding: '8px 12px',
               borderRadius: 8,
