@@ -1,0 +1,503 @@
+/*
+ * Scoped styles for the embedded gallery example.
+ * Mirrors examples/gallery/src/{App,index}.css from the rivet repo, but every
+ * selector is wrapped under `.rivet-gallery` so the tokens, body resets and
+ * keyframe-bound shimmer don't leak into the host landing page.
+ */
+
+.rivet-gallery {
+  --bg: #0e0e0e;
+  --surface: #181818;
+  --surface-2: #222222;
+  --border: #2a2a2a;
+  --text-primary: #e8e8e8;
+  --text-secondary: #888;
+  --text-muted: #444;
+  --skeleton-base: #1e1e1e;
+  --skeleton-shine: #282828;
+
+  height: 100%;
+  width: 100%;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.rivet-gallery *,
+.rivet-gallery *::before,
+.rivet-gallery *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.rivet-gallery button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+@keyframes rivet-gallery-shimmer {
+  0% {
+    background-position: -600px 0;
+  }
+  100% {
+    background-position: 600px 0;
+  }
+}
+
+.rivet-gallery .app {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  grid-template-rows: 52px 1fr;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Topbar */
+.rivet-gallery .topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.rivet-gallery .topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.rivet-gallery .wordmark {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.rivet-gallery .topbar-tabs {
+  display: flex;
+  gap: 2px;
+}
+
+.rivet-gallery .tab {
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.rivet-gallery .tab:hover {
+  color: var(--text-primary);
+  background: var(--surface-2);
+}
+
+.rivet-gallery .tab.active {
+  color: var(--text-primary);
+  background: var(--surface-2);
+}
+
+.rivet-gallery .topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rivet-gallery .icon-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.rivet-gallery .icon-btn:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.rivet-gallery .avatar-circle {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+/* Sidebar */
+.rivet-gallery .sidebar {
+  border-right: 1px solid var(--border);
+  background: var(--bg);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+}
+
+.rivet-gallery .sidebar-section-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0 8px;
+  margin-bottom: 4px;
+}
+
+.rivet-gallery .sidebar-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.rivet-gallery .sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  transition:
+    background 0.15s,
+    color 0.15s;
+  cursor: pointer;
+  user-select: none;
+}
+
+.rivet-gallery .sidebar-item:hover {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+.rivet-gallery .sidebar-item.active {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.rivet-gallery .sidebar-item-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.rivet-gallery .sidebar-item-count {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* Main content */
+.rivet-gallery .content {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.rivet-gallery .content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+  border-bottom: 1px solid var(--border);
+}
+
+.rivet-gallery .content-title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.rivet-gallery .content-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.rivet-gallery .view-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rivet-gallery .view-toggle {
+  display: flex;
+  background: var(--surface);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.rivet-gallery .view-toggle-btn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: var(--text-muted);
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.rivet-gallery .view-toggle-btn.active {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.rivet-gallery .sort-select {
+  appearance: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 11px;
+  padding: 5px 22px 5px 10px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+
+/* Grid */
+.rivet-gallery .gallery-scroll {
+  flex: 1;
+  --gallery-gap: 8px;
+  padding: var(--gallery-gap);
+}
+
+.rivet-gallery .gallery-grid {
+  column-gap: var(--gallery-gap);
+}
+
+.rivet-gallery .gallery-grid.cols-2 {
+  columns: 2;
+}
+.rivet-gallery .gallery-grid.cols-3 {
+  columns: 3;
+}
+.rivet-gallery .gallery-grid.cols-4 {
+  columns: 4;
+}
+
+/* Gallery item */
+.rivet-gallery .gallery-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  break-inside: avoid;
+  margin-bottom: var(--gallery-gap);
+}
+
+.rivet-gallery .gallery-item:hover .item-actions {
+  opacity: 1;
+}
+
+.rivet-gallery .image-frame {
+  position: relative;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.rivet-gallery .image-frame.loaded {
+  border-color: transparent;
+}
+
+.rivet-gallery .skeleton {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base) 0px,
+    var(--skeleton-shine) 150px,
+    var(--skeleton-base) 300px
+  );
+  background-size: 600px 100%;
+  animation: rivet-gallery-shimmer 1.6s infinite linear;
+}
+
+.rivet-gallery .placeholder-art {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rivet-gallery .item-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.rivet-gallery .list-thumb-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.rivet-gallery .item-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.rivet-gallery .action-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ccc;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.rivet-gallery .action-btn:hover {
+  background: rgba(0, 0, 0, 0.85);
+  color: white;
+}
+
+.rivet-gallery .item-meta {
+  padding: 0 2px;
+}
+
+.rivet-gallery .item-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rivet-gallery .item-sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rivet-gallery .item-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* List view */
+.rivet-gallery .gallery-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.rivet-gallery .list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 2px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+  border-radius: 4px;
+}
+
+.rivet-gallery .list-item:hover {
+  background: var(--surface);
+}
+
+.rivet-gallery .list-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.rivet-gallery .list-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.rivet-gallery .list-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rivet-gallery .list-sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.rivet-gallery .list-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.rivet-gallery .list-size {
+  font-size: 11px;
+  color: var(--text-muted);
+}
