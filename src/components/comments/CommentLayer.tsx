@@ -30,6 +30,16 @@ type Props = {
   /** When true, defer opening `initialDraft` until the panel is visible. */
   openInitialDraftOnVisible?: boolean;
   /**
+   * Fires whenever a new draft popover is opened. `source` distinguishes the
+   * pre-seeded initial draft (auto-opened) from user-driven drafts created by
+   * a tap/click or by drag-rect. Useful for telemetry without coupling the
+   * layer to any analytics library.
+   */
+  onDraftCreated?: (props: {
+    source: 'initial' | 'click' | 'drag';
+    hasDragBox: boolean;
+  }) => void;
+  /**
    * CSS selector for an internal scrollable element. When provided, wheel
    * events on the layer (which keeps `pointer-events: none` on children, so
    * scroll wouldn't otherwise reach the child) are forwarded to this element
@@ -66,6 +76,7 @@ const CommentLayer = ({
   initialDraft,
   openInitialDraftOnVisible = false,
   scrollableSelector,
+  onDraftCreated,
 }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -132,6 +143,10 @@ const CommentLayer = ({
         },
       });
       didSeedDraftRef.current = true;
+      onDraftCreated?.({
+        source: 'initial',
+        hasDragBox: !!initialDraft.dragBox,
+      });
     };
 
     if (!openInitialDraftOnVisible) {
@@ -152,7 +167,13 @@ const CommentLayer = ({
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [initialDraft, openInitialDraftOnVisible, size.width, size.height]);
+  }, [
+    initialDraft,
+    openInitialDraftOnVisible,
+    size.width,
+    size.height,
+    onDraftCreated,
+  ]);
 
   // Forward wheel events to an internal scrollable element so users can scroll
   // the underlying surface (e.g. a gallery) while comment mode keeps
@@ -220,6 +241,7 @@ const CommentLayer = ({
             pin: { xPct: drag.startX / size.width, yPct: drag.startY / size.height },
             popoverAt: { x: drag.startX, y: drag.startY },
           });
+          onDraftCreated?.({ source: 'click', hasDragBox: false });
         }
         setDrag(null);
         return;
@@ -243,6 +265,7 @@ const CommentLayer = ({
           dragBox,
           popoverAt: { x, y },
         });
+        onDraftCreated?.({ source: 'drag', hasDragBox: true });
       }
       setDrag(null);
     };
@@ -253,7 +276,7 @@ const CommentLayer = ({
       window.removeEventListener('pointermove', handleMove);
       window.removeEventListener('pointerup', handleUp);
     };
-  }, [drag, localPoint, size]);
+  }, [drag, localPoint, size, onDraftCreated]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if (!active) return;

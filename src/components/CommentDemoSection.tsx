@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { telemetry } from '@/lib/telemetry';
 import { CommentLayer } from './comments';
 import type { Comment } from './comments';
 import Gallery from './gallery/Gallery';
@@ -53,6 +54,43 @@ const SEEDED_DRAFT = {
 const CommentDemoSection = () => {
   const [comments, setComments] = useState<Comment[]>(SEEDED_COMMENTS);
 
+  // Diff comments transitions to fire telemetry on user-driven create/edit/
+  // delete actions. We don't capture instruction text (PII-adjacent) — only
+  // its length and a stable comment id.
+  const prevCommentsRef = useRef<Comment[]>(SEEDED_COMMENTS);
+  const handleCommentsChange = (next: Comment[]) => {
+    const prev = prevCommentsRef.current;
+    const prevById = new Map(prev.map((c) => [c.id, c]));
+    const nextById = new Map(next.map((c) => [c.id, c]));
+
+    for (const c of next) {
+      if (!prevById.has(c.id)) {
+        telemetry.trackCommentDemoCommentCreated({
+          commentId: c.id,
+          instructionLength: c.instruction.length,
+          hasDragBox: !!c.dragBox,
+        });
+      }
+    }
+    for (const c of prev) {
+      if (!nextById.has(c.id)) {
+        telemetry.trackCommentDemoCommentDeleted({ commentId: c.id });
+      }
+    }
+    for (const c of next) {
+      const prior = prevById.get(c.id);
+      if (prior && prior.instruction !== c.instruction) {
+        telemetry.trackCommentDemoCommentEdited({
+          commentId: c.id,
+          instructionLength: c.instruction.length,
+        });
+      }
+    }
+
+    prevCommentsRef.current = next;
+    setComments(next);
+  };
+
   return (
     <div
       style={{ background: SECTION_BG }}
@@ -87,10 +125,13 @@ const CommentDemoSection = () => {
             <CommentLayer
               active
               comments={comments}
-              onCommentsChange={setComments}
+              onCommentsChange={handleCommentsChange}
               initialDraft={SEEDED_DRAFT}
               openInitialDraftOnVisible
               scrollableSelector=".rivet-gallery .content"
+              onDraftCreated={telemetry.trackCommentDemoDraftCreated.bind(
+                telemetry,
+              )}
             >
               <Gallery />
             </CommentLayer>
