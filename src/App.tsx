@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, memo, useLayoutEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast, Toaster } from 'sonner';
 import { posthog } from '@/lib/posthog';
 import NavBar from './components/NavBar';
@@ -6,6 +6,8 @@ import Footer from './components/Footer';
 import FadeInText, { GeometricLines } from './components/FadeInText';
 // import WorkflowPanels from './components/WorkflowPanels';
 import CommentDemoSection from './components/CommentDemoSection';
+import VariantsDemoSection from './components/VariantsDemoSection';
+import CircleGridArt from './components/CircleGridArt';
 import DownloadButton from './components/DownloadButton';
 import {
   Popover,
@@ -291,293 +293,105 @@ const PromptInstallButton = () => {
 //   );
 // };
 
+const NIGHT_DEMO_VIDEO_SRC =
+  'https://pub-eed10ae7764348e2b0775fb6de2f56de.r2.dev/media/riv_demo_night.web.mp4';
+
 const CodePanel = () => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
+  // Defer fetching the 16MB video until the panel is close to the viewport.
+  // Saves the bytes (and the decode work) on initial page load — the file
+  // only starts streaming once a user actually scrolls toward this section.
+  const [shouldLoad, setShouldLoad] = useState(false);
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    // 400px rootMargin gives the network a head start so the video is ready
+    // by the time the section is in view, without paying the cost up-front.
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setShouldLoad(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: '400px 0px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  // Defensive muting: the `muted` JSX attribute alone has a known React quirk
+  // where the property doesn't always flip on the underlying element on the
+  // first render. Set it via ref, and re-snap if anything tries to unmute
+  // (browser extensions, future code).
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    el.muted = true;
+    el.volume = 0;
+    const enforce = () => {
+      if (!el.muted) el.muted = true;
+      if (el.volume !== 0) el.volume = 0;
+    };
+    el.addEventListener('volumechange', enforce);
+    return () => el.removeEventListener('volumechange', enforce);
+  }, []);
+
   return (
-    <div className="flex w-full justify-center bg-green px-8 py-20 font-main text-[#FEFFF3] md:py-28">
-      <div className="flex w-full max-w-prose flex-col gap-6 text-left">
-        <span className="text-[28px] font-normal leading-[1.15] md:text-[36px] lg:text-[44px]">
-          Made for people who design.
-        </span>
-        <span className="text-[18px] font-normal leading-[1.65] md:text-[20px]">
-          Coding agents ask designers to become like engineers. That&apos;s
-          wrong. They should be more like directors.
-        </span>
-        <span className="text-[18px] font-normal leading-[1.65] md:text-[20px]">
-          Product design was never just about the pixels on a page. Details
-          matter. But figuring out what to build matters more.
-        </span>
-        <span className="text-[18px] font-normal leading-[1.65] md:text-[20px]">
-          Code is an infinitely flexible medium to design in. AI tools have
-          made it abundant. It&apos;s an ideal medium for the next era of
-          design.
-        </span>
+    <div ref={sectionRef} className="flex w-full bg-green font-main text-[#FEFFF3]">
+      <div className="grid w-full grid-cols-1 items-stretch lg:grid-cols-[1fr_1fr]">
+        {/* Video — flush left, fills the column edge-to-edge. At lg+
+            `aspect-auto` lets it stretch to match the text column's height
+            (items-stretch on the grid). Below lg the 16/10 aspect ratio
+            gives it a defined height while stacked. */}
+        <div className="relative order-2 aspect-[16/10] w-full overflow-hidden lg:order-1 lg:aspect-auto">
+          <video
+            ref={videoRef}
+            // src + preload only set once shouldLoad flips — keeps the bytes
+            // off the wire on initial page load.
+            src={shouldLoad ? NIGHT_DEMO_VIDEO_SRC : undefined}
+            preload={shouldLoad ? 'auto' : 'none'}
+            autoPlay
+            muted
+            loop
+            playsInline
+            disablePictureInPicture
+            aria-label="Rivet night demo"
+            onContextMenu={(e) => e.preventDefault()}
+            className="pointer-events-none h-full w-full bg-[#0e0e0e] object-cover"
+          />
+        </div>
+
+        {/* Text — keeps the previous padding on its own column so the
+            section still has vertical breathing room despite the outer
+            div losing its py-20. */}
+        <div className="order-1 flex flex-col justify-center px-8 py-20 md:py-28 lg:order-2 lg:px-16">
+          <div className="flex max-w-prose flex-col gap-6 text-left">
+            <span className="text-[28px] font-normal leading-[1.15] md:text-[36px] lg:text-[44px]">
+              Made for people who design.
+            </span>
+            <span className="text-[18px] font-normal leading-[1.65] md:text-[20px]">
+              Coding agents ask designers to become like engineers. That&apos;s
+              wrong. They should be more like directors.
+            </span>
+            <span className="text-[18px] font-normal leading-[1.65] md:text-[20px]">
+              Product design was never just about the pixels on a page. Details
+              matter. But figuring out what to build matters more.
+            </span>
+            <span className="text-[18px] font-normal leading-[1.65] md:text-[20px]">
+              Code is an infinitely flexible medium to design in. AI tools have
+              made it abundant. It&apos;s an ideal medium for the next era of
+              design.
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-const RIPPLE_SHAPES = ['circle', 'triangle', 'square'] as const;
-type RippleShape = (typeof RIPPLE_SHAPES)[number];
-
-const COS30 = Math.cos(Math.PI / 6);
-const SIN30 = Math.sin(Math.PI / 6);
-
-// Hash-based pseudo-random in [0, 1) — deterministic per seed
-const pseudoRandom = (seed: number) => {
-  const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
-  return x - Math.floor(x);
-};
-
-type CellProps = {
-  cx: number;
-  cy: number;
-  pathR: number;
-  strokeWidth: number;
-  shape: RippleShape;
-  scale: number;
-};
-
-// Memoized so cells whose props don't change skip re-render — critical for
-// keeping rAF-driven hover updates cheap (only the ~dozen cells inside the
-// morph zone re-render each frame).
-const Cell = memo(({ cx, cy, pathR, strokeWidth, shape, scale }: CellProps) => {
-  const common = { fill: 'none', stroke: 'black', strokeWidth };
-  let path: React.ReactElement;
-  if (shape === 'square') {
-    path = (
-      <rect
-        {...common}
-        x={-pathR}
-        y={-pathR}
-        width={pathR * 2}
-        height={pathR * 2}
-      />
-    );
-  } else if (shape === 'triangle') {
-    const points = [
-      `0,${-pathR}`,
-      `${pathR * COS30},${pathR * SIN30}`,
-      `${-pathR * COS30},${pathR * SIN30}`,
-    ].join(' ');
-    path = <polygon {...common} points={points} />;
-  } else {
-    path = <circle {...common} cx={0} cy={0} r={pathR} />;
-  }
-  return <g transform={`translate(${cx} ${cy}) scale(${scale})`}>{path}</g>;
-});
-Cell.displayName = 'Cell';
-
-/**
- * Decorative grid for the orange hero panel. Stroke weight is heaviest at the
- * top (filled dots) and thins down to outline rings at the bottom — Mike
- * Tessier "Unoriginal Idea" inspiration. On hover, an organic blob around the
- * cursor (radius wobbles by angle + time) cycles its cells through random
- * shapes at a deliberate pace as long as the user keeps hovering.
- */
-const CircleGridArt = () => {
-  const cols = 12;
-  const maxRows = 14;
-  const minRows = 3;
-  const spacing = 24;
-  // Uniform inner padding from each panel edge to the outer cell edge.
-  // Same value used vertically and horizontally for equal padding on all 4
-  // sides.
-  const gridPadding = 18;
-  // Smaller outerR = thinner max stroke (filled top rows) and smaller dots
-  // overall, calibrating against the hairline circles in the peach panel.
-  const outerR = 4;
-  const fallbackWidth = (cols + 2) * spacing;
-  const fallbackHeight = (maxRows + 2) * spacing;
-
-  // Each shape holds for 1.2s — slow enough to feel deliberate.
-  const shapeDuration = 1200;
-  // Snappy ramp: ~110ms at each stage end; quick easing (cubic) so cells stay
-  // visible most of the window and clip in/out fast.
-  const rampFraction = 0.09;
-  // ~30fps keeps the ramp easings smooth without burning frames during holds.
-  const frameInterval = 1000 / 30;
-  // Organic blob around cursor (angle-based only — no temporal wobble)
-  const baseRadius = 50;
-
-  const cursorRef = useRef<{ x: number; y: number } | null>(null);
-  const startTimeRef = useRef(0);
-  const lastFrameRef = useRef(0);
-  const [, setTick] = useState(0);
-
-  const svgRef = useRef<SVGSVGElement>(null);
-  const [svgSize, setSvgSize] = useState({
-    width: fallbackWidth,
-    height: fallbackHeight,
-  });
-
-  useLayoutEffect(() => {
-    const panel = svgRef.current?.parentElement;
-    if (!panel) return;
-
-    const measure = () => {
-      const { width: rawWidth, height: rawHeight } =
-        panel.getBoundingClientRect();
-      const width = Math.round(rawWidth);
-      const height = Math.round(rawHeight);
-      if (width === 0 || height === 0) return;
-      setSvgSize((current) =>
-        current.width === width && current.height === height
-          ? current
-          : { width, height },
-      );
-    };
-
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(panel);
-    return () => ro.disconnect();
-  }, []);
-
-  // Reserve gridPadding + outerR on every side, so the cell edge (not center)
-  // sits exactly gridPadding away from the panel edge — matching on x and y.
-  // Both axes pick a row/col count from the natural spacing, then stretch
-  // their actual spacing to fill the span exactly. That way no leftover gets
-  // tossed into asymmetric centering padding.
-  const verticalSpan = Math.max(
-    0,
-    svgSize.height - 2 * (gridPadding + outerR),
-  );
-  const rows = Math.max(
-    minRows,
-    Math.min(maxRows, Math.floor(verticalSpan / spacing) + 1),
-  );
-  const rowSpacing = rows > 1 ? verticalSpan / (rows - 1) : 0;
-  const startY = gridPadding + outerR;
-
-  const horizontalSpan = Math.max(
-    0,
-    svgSize.width - 2 * (gridPadding + outerR),
-  );
-  const columnSpacing =
-    cols > 1 ? Math.max(8, horizontalSpan / (cols - 1)) : 0;
-  const startX = gridPadding + outerR;
-
-  useEffect(() => {
-    let raf = 0;
-    const loop = (now: number) => {
-      if (
-        cursorRef.current !== null &&
-        now - lastFrameRef.current >= frameInterval
-      ) {
-        lastFrameRef.current = now;
-        setTick((n) => (n + 1) % 1_000_000);
-      }
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, [frameInterval]);
-
-  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    const svg = e.currentTarget;
-    const pt = svg.createSVGPoint();
-    pt.x = e.clientX;
-    pt.y = e.clientY;
-    const ctm = svg.getScreenCTM();
-    if (!ctm) return;
-    const localPt = pt.matrixTransform(ctm.inverse());
-    if (cursorRef.current === null) {
-      startTimeRef.current = performance.now();
-    }
-    cursorRef.current = { x: localPt.x, y: localPt.y };
-  };
-
-  const handleMouseLeave = () => {
-    cursorRef.current = null;
-    setTick((n) => (n + 1) % 1_000_000);
-  };
-
-  const cursor = cursorRef.current;
-  const elapsed = cursor ? performance.now() - startTimeRef.current : 0;
-
-  const cells: React.ReactElement[] = [];
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      // Top filled (t=1) → bottom thin ring (t=0). Gradient adapts to the
-      // currently rendered row count so the full thick→thin sweep is always
-      // visible, even when we shed rows to match the panel aspect.
-      const norm = rows === 1 ? 0 : r / (rows - 1);
-      const t = 1 - norm;
-      const innerR = (1 - t) * (outerR - 1);
-      const strokeWidth = outerR - innerR;
-      const pathR = (outerR + innerR) / 2;
-
-      const cx = startX + c * columnSpacing;
-      const cy = startY + r * rowSpacing;
-
-      let shape: RippleShape = 'circle';
-      let scale = 1;
-
-      if (cursor) {
-        const dx = cx - cursor.x;
-        const dy = cy - cursor.y;
-        const dist = Math.hypot(dx, dy);
-        const angle = Math.atan2(dy, dx);
-        // Pure angular wobble — boundary is stable while cursor is still
-        const wobble = 14 * Math.sin(angle * 3) + 7 * Math.sin(angle * 7);
-        const boundary = baseRadius + wobble;
-        if (dist < boundary) {
-          // Per-cell phase offset desyncs boundaries so cells don't all swap
-          // together — kills the uniform "group fade" look.
-          const cellPhase =
-            pseudoRandom(r * 7 + c * 13) * shapeDuration;
-          const localElapsed = elapsed + cellPhase;
-
-          // Random per (cell, cycle): each shape change rolls a new shape
-          const cycleNum = Math.floor(localElapsed / shapeDuration);
-          const seed = r * 131 + c * 37 + cycleNum * 17;
-          const idx = Math.floor(pseudoRandom(seed) * RIPPLE_SHAPES.length);
-          shape = RIPPLE_SHAPES[idx];
-
-          // Snappy easing: cubic in/out keeps the cell near scale 1 most of
-          // the ramp, then clips quickly to/from 0 at the boundary.
-          const stageProgress =
-            (localElapsed % shapeDuration) / shapeDuration;
-          let ramp = 1;
-          if (stageProgress < rampFraction) {
-            const t = stageProgress / rampFraction;
-            ramp = 1 - (1 - t) ** 3; // easeOutCubic — fast rise
-          } else if (stageProgress > 1 - rampFraction) {
-            const t = (stageProgress - (1 - rampFraction)) / rampFraction;
-            ramp = 1 - t ** 3; // easeInCubic flipped — slow then fast drop
-          }
-          scale = ramp;
-        }
-      }
-
-      cells.push(
-        <Cell
-          key={`${r}-${c}`}
-          cx={cx}
-          cy={cy}
-          pathR={pathR}
-          strokeWidth={strokeWidth}
-          shape={shape}
-          scale={scale}
-        />,
-      );
-    }
-  }
-
-  return (
-    <svg
-      ref={svgRef}
-      viewBox={`0 0 ${svgSize.width} ${svgSize.height}`}
-      preserveAspectRatio="none"
-      className="absolute inset-0 block h-full w-full"
-      aria-hidden
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-    >
-      {cells}
-    </svg>
-  );
-};
 
 const App = () => {
   const latestVersion = useLatestVersion();
@@ -663,8 +477,9 @@ const App = () => {
           {renderHeroText()}
         </div>
 
-        <div className="-mx-[5vw]" id="demo-panel">
+        <div className="-mx-[5vw] flex flex-col gap-12" id="demo-panel">
           {/* <WorkflowPanels /> */}
+          <VariantsDemoSection />
           <CommentDemoSection />
           <CodePanel />
         </div>

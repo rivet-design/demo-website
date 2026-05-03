@@ -56,20 +56,14 @@ const CommentDemoSection = () => {
   return (
     <div
       style={{ background: SECTION_BG }}
-      className="mt-6 flex w-full justify-center px-[5vw] py-16 md:mt-10 md:py-24"
+      className="flex w-full justify-center px-[5vw] py-16 md:py-24"
     >
-      <div className="grid w-full grid-cols-1 items-center gap-10 md:grid-cols-[1fr_1.7fr] md:gap-16">
-        <div className="max-w-[440px]">
-          <h2 className="mt-3 font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
-            Leave visual feedback
-          </h2>
-          <p className="mt-4 text-[16px] leading-[1.6] text-black/70 md:text-[17px]">
-            Leave comments on anything you&apos;d like to refine, or tune the details yourself.
-          </p>
-        </div>
-
+      <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1.7fr_1fr] lg:gap-16">
+        {/* DOM order is panel-then-text so that at lg+ the panel sits in the
+            first (1.7fr) column on the left. On stacked mobile/tablet we want
+            the title above the panel, so flip with `order-` classes below. */}
         <div
-          className="relative w-full overflow-visible"
+          className="relative order-2 w-full overflow-visible lg:order-1"
           style={{ aspectRatio: '16 / 10' }}
         >
           {/* Mobile: static video — interactive version doesn't translate to
@@ -101,6 +95,15 @@ const CommentDemoSection = () => {
               <Gallery />
             </CommentLayer>
           </div>
+        </div>
+
+        <div className="order-1 max-w-[440px] lg:order-2">
+          <h2 className="mt-3 font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
+            Leave visual feedback
+          </h2>
+          <p className="mt-4 text-[16px] leading-[1.6] text-black/70 md:text-[17px]">
+            Leave comments on anything you&apos;d like to refine, or tune the details yourself.
+          </p>
         </div>
       </div>
     </div>

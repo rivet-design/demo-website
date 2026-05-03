@@ -219,3 +219,43 @@
   --shadow-pop: 0 12px 40px rgba(0, 0, 0, 0.35);
 }
 
+/*
+ * Scoped tokens for the variant pill — same dark Rivet theme as the
+ * comment popovers, plus a small custom shadow for the floating pill.
+ */
+.rivet-variants {
+  --main: #1c1c20;
+  --main-light: #1e1e22;
+  --content: #ffffff;
+  --content-muted: #d1d5db;
+  --content-subtle: #9ca3af;
+  --accent-error: #ef4444;
+  --primary-border: #ff6b35;
+  --pill-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+/*
+ * Variant generation sparkle — six unicode braille frames cycle via
+ * CSS `steps(6)` so the animation is one timer in the browser, not a
+ * per-frame React render. Direct port of `.rivet-sparkle-strip` from
+ * src/ui/src/index.css:235–246 in the rivet repo.
+ */
+@keyframes rivet-variants-sparkle-scroll {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-6em);
+  }
+}
+
+.rivet-variants-sparkle-strip {
+  animation: rivet-variants-sparkle-scroll 0.9s steps(6) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rivet-variants-sparkle-strip {
+    animation: none;
+  }
+}
+

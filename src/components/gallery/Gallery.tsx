@@ -1,28 +1,48 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type CSSProperties } from 'react';
 import { COLLECTIONS, ITEMS } from './data';
 import GalleryItem from './components/GalleryItem';
 import ListItem from './components/ListItem';
 import './gallery.css';
 
-type View = 'grid' | 'list';
+type View = 'grid' | 'list' | 'bento';
 type Cols = 2 | 3 | 4;
+
+type Props = {
+  /**
+   * Optional variant overrides:
+   * - `cssVars`: applied as inline style on the `.rivet-gallery` wrapper.
+   *   Existing classes consume these via `var(--…)`, so recoloring is a
+   *   wrapper-level diff rather than per-element edits.
+   * - `layout.view` / `layout.cols`: override the gallery's internal toggle
+   *   state. Falls back to internal state when undefined so the toggle UI
+   *   still works when no variant is being applied.
+   */
+  variant?: {
+    cssVars?: Record<string, string>;
+    layout?: { view?: View; cols?: Cols };
+  };
+};
 
 /**
  * Embeddable copy of examples/gallery in the rivet repo.
  * - Wrapped in .rivet-gallery so its tokens, body resets, and shimmer keyframe
  *   stay scoped (they would otherwise nuke the host landing page).
  * - Always uses generated SVG placeholder art (no image asset bundling).
- * - Internal interactivity is preserved, but the surrounding CommentLayer sets
- *   pointer-events: none on children when active, so users see the gallery
- *   visually and drag-comment over it rather than operating it.
+ * - When wrapped by an interaction layer that disables pointer events on
+ *   children, internal toggles stay rendered but inert — the variant prop
+ *   then drives layout from the outside.
  */
-export default function Gallery() {
+export default function Gallery({ variant }: Props = {}) {
   const [activeCollection, setActiveCollection] = useState('All Works');
   const [activeTab, setActiveTab] = useState('Library');
-  const [view, setView] = useState<View>('grid');
-  const [cols, setCols] = useState<Cols>(3);
+  const [internalView, setView] = useState<View>('grid');
+  const [internalCols, setCols] = useState<Cols>(3);
   const [sort, setSort] = useState('date-desc');
   const [loading, setLoading] = useState(true);
+
+  // Variant overrides win, internal state is the fallback.
+  const view = variant?.layout?.view ?? internalView;
+  const cols = variant?.layout?.cols ?? internalCols;
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 1800);
@@ -158,8 +178,13 @@ export default function Gallery() {
           </div>
         </aside>
 
-        {/* Main */}
-        <main className="content">
+        {/* Main — variant cssVars are applied here (not the wrapper) so the
+            palette change is localized to the gallery section. Topbar and
+            sidebar keep their default theme. */}
+        <main
+          className="content"
+          style={variant?.cssVars as CSSProperties | undefined}
+        >
           <div className="content-header">
             <div>
               <div className="content-title">{activeCollection}</div>
@@ -281,8 +306,12 @@ export default function Gallery() {
           </div>
 
           <div className="gallery-scroll">
-            {view === 'grid' ? (
-              <div className={`gallery-grid cols-${cols}`}>
+            {view === 'grid' || view === 'bento' ? (
+              <div
+                className={`gallery-grid ${
+                  view === 'bento' ? 'bento' : `cols-${cols}`
+                }`}
+              >
                 {(loading ? Array.from({ length: 10 }) : filtered).map(
                   (item, i) => (
                     <GalleryItem
