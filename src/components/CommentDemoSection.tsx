@@ -129,6 +129,9 @@ const CommentDemoSection = () => {
               initialDraft={SEEDED_DRAFT}
               openInitialDraftOnVisible
               scrollableSelector=".rivet-gallery .content"
+              onDraftCreated={telemetry.trackCommentDemoDraftCreated.bind(
+                telemetry,
+              )}
             >
               <Gallery />
             </CommentLayer>

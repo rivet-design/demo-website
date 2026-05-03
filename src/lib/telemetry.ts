@@ -30,6 +30,21 @@ class Telemetry {
   // ----- Comments demo -----
 
   /**
+   * A draft popover was opened. `source` distinguishes the auto-opened
+   * seeded draft from user-initiated drafts (click on a point, or drag a
+   * rectangle).
+   */
+  trackCommentDemoDraftCreated(props: {
+    source: 'initial' | 'click' | 'drag';
+    hasDragBox: boolean;
+  }): void {
+    this.track('comment_demo_draft_created', {
+      source: props.source,
+      has_drag_box: props.hasDragBox,
+    });
+  }
+
+  /**
    * User submitted a new comment via the drag-rect → popover flow, or the
    * initial seeded draft. Captures only the instruction length (not text).
    */
