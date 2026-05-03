@@ -32,7 +32,7 @@ const VariantsDemoSection = () => {
   return (
     <div
       style={{ background: SECTION_BG }}
-      className="mt-6 flex w-full justify-center px-[5vw] py-16 md:mt-10 md:py-24"
+      className="flex w-full justify-center px-[5vw] py-16 md:py-24"
     >
       <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_1.7fr] lg:gap-16">
         <div className="max-w-[440px]">

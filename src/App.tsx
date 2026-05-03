@@ -294,7 +294,7 @@ const PromptInstallButton = () => {
 // };
 
 const NIGHT_DEMO_VIDEO_SRC =
-  'https://pub-eed10ae7764348e2b0775fb6de2f56de.r2.dev/media/riv_demo_night.mp4';
+  'https://pub-eed10ae7764348e2b0775fb6de2f56de.r2.dev/media/riv_demo_night.web.mp4';
 
 const CodePanel = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -477,7 +477,7 @@ const App = () => {
           {renderHeroText()}
         </div>
 
-        <div className="-mx-[5vw]" id="demo-panel">
+        <div className="-mx-[5vw] flex flex-col gap-12" id="demo-panel">
           {/* <WorkflowPanels /> */}
           <VariantsDemoSection />
           <CommentDemoSection />

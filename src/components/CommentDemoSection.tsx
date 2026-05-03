@@ -56,7 +56,7 @@ const CommentDemoSection = () => {
   return (
     <div
       style={{ background: SECTION_BG }}
-      className="mt-6 flex w-full justify-center px-[5vw] py-16 md:mt-10 md:py-24"
+      className="flex w-full justify-center px-[5vw] py-16 md:py-24"
     >
       <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1.7fr_1fr] lg:gap-16">
         {/* DOM order is panel-then-text so that at lg+ the panel sits in the
