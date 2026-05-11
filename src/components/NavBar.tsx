@@ -33,7 +33,7 @@ const NavBar = () => {
       ref={navRef}
       style={{ width: navWidth }}
       className={[
-        'sticky top-4 z-50 mx-auto overflow-hidden rounded-lg border transition-colors duration-150',
+        'sticky top-4 z-[70] mx-auto overflow-hidden rounded-lg border transition-colors duration-150',
         isDark
           ? 'border-accent-foreground bg-accent-foreground text-white'
           : 'border-border bg-main text-black',
