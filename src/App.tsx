@@ -65,10 +65,10 @@ type ToolOption =
 const TOOL_OPTIONS: ToolOption[] = [
   {
     id: 'claude',
-    label: 'Claude Code',
+    label: 'Claude',
     action: 'copy',
     command:
-      'Please install the Rivet MCP server by running: npx rivet-design install claude',
+      'Please install the Rivet MCP server for Claude Code and the Claude desktop app by running: npx rivet-design install claude && npx rivet-design install claude-desktop',
   },
   {
     id: 'cursor',
