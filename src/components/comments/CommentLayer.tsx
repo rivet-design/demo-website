@@ -501,6 +501,7 @@ const CommentLayer = ({
       <AnimatePresence>
         {editingComment && editingPos ? (
           <CommentPopover
+            key={editingComment.id}
             position={editingPos}
             containerWidth={size.width}
             containerHeight={size.height}
