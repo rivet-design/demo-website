@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { telemetry } from '@/lib/telemetry';
 import {
@@ -10,6 +10,13 @@ import { VARIANTS } from './variants/data';
 import Gallery from './gallery/Gallery';
 
 const SECTION_BG = '#F0EFE9';
+
+// Internal "design" dimensions the gallery + overlay are authored against.
+// A ResizeObserver scales this inner box to fit the outer panel's real width,
+// so the 220px sidebar / 52px topbar / overlay coordinates all stay
+// proportional on every viewport instead of getting squeezed on mobile.
+const DESIGN_WIDTH = 900;
+const DESIGN_HEIGHT = (DESIGN_WIDTH * 11) / 16;
 
 /**
  * Same workflow-panel layout as the comments section — copy on the left,
@@ -24,7 +31,21 @@ const SECTION_BG = '#F0EFE9';
  */
 const VariantsDemoSection = () => {
   const panelRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
   const v = useVariants(VARIANTS, { containerRef: panelRef });
+
+  // Measure the panel and fit the design-width inner box to it. useLayoutEffect
+  // sets the initial scale before paint to avoid a one-frame flash at 1.0.
+  useLayoutEffect(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    setScale(el.getBoundingClientRect().width / DESIGN_WIDTH);
+    const ro = new ResizeObserver((entries) => {
+      setScale(entries[0].contentRect.width / DESIGN_WIDTH);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // While loading, hold on the Original (index 0) — variants don't render
   // until they're "generated".
@@ -89,54 +110,70 @@ const VariantsDemoSection = () => {
           className="relative w-full overflow-hidden rounded-2xl border border-black/10 bg-white shadow-[0_10px_40px_rgba(0,0,0,0.08)]"
           style={{ aspectRatio: '16 / 11' }}
         >
-          {/* Gallery target — what the variants restyle. */}
-          <div className="h-full w-full">
-            <Gallery variant={galleryVariant} />
-          </div>
-
-          {/* Variants overlay — wraps the gallery's `.content` area only.
-              Numbers match the gallery's grid: 52px topbar, 220px sidebar.
-              z-index sits above the gallery's sticky `.content-header`
-              (z-index: 10) so the dashed box, sparkle, and pill render in
-              front of the header. */}
+          {/* Fixed design-space inner box. Everything inside is authored in
+              DESIGN_WIDTH × DESIGN_HEIGHT pixels (matching the gallery's
+              220px sidebar / 52px topbar / overlay coords) and scaled to
+              fit the outer panel. Keeps the demo legible at every viewport. */}
           <div
-            className="rivet-variants pointer-events-none absolute"
             style={{
-              top: 52,
-              left: 220,
-              right: 0,
-              bottom: 0,
-              zIndex: 20,
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: DESIGN_WIDTH,
+              height: DESIGN_HEIGHT,
+              transformOrigin: 'top left',
+              transform: `scale(${scale})`,
             }}
           >
-            <AnimatePresence>
-              {v.phase === 'loading' ? (
-                <VariantLoadingOverlay key="loading" />
-              ) : null}
-            </AnimatePresence>
+            {/* Gallery target — what the variants restyle. */}
+            <div className="h-full w-full">
+              <Gallery variant={galleryVariant} />
+            </div>
 
-            <AnimatePresence>
-              {v.phase === 'ready' ? (
-                <div
-                  key="pill"
-                  className="pointer-events-auto absolute"
-                  style={{
-                    top: 12,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                  }}
-                >
-                  <VariantPill
-                    variants={v.variants}
-                    activeIndex={v.activeIndex}
-                    isSwitching={v.isSwitching}
-                    onPrev={handlePrev}
-                    onNext={handleNext}
-                    onApply={handleApply}
-                  />
-                </div>
-              ) : null}
-            </AnimatePresence>
+            {/* Variants overlay — wraps the gallery's `.content` area only.
+                Numbers match the gallery's grid: 52px topbar, 220px sidebar.
+                z-index sits above the gallery's sticky `.content-header`
+                (z-index: 10) so the dashed box, sparkle, and pill render in
+                front of the header. */}
+            <div
+              className="rivet-variants pointer-events-none absolute"
+              style={{
+                top: 52,
+                left: 220,
+                right: 0,
+                bottom: 0,
+                zIndex: 20,
+              }}
+            >
+              <AnimatePresence>
+                {v.phase === 'loading' ? (
+                  <VariantLoadingOverlay key="loading" />
+                ) : null}
+              </AnimatePresence>
+
+              <AnimatePresence>
+                {v.phase === 'ready' ? (
+                  <div
+                    key="pill"
+                    className="pointer-events-auto absolute"
+                    style={{
+                      top: 12,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                    }}
+                  >
+                    <VariantPill
+                      variants={v.variants}
+                      activeIndex={v.activeIndex}
+                      isSwitching={v.isSwitching}
+                      onPrev={handlePrev}
+                      onNext={handleNext}
+                      onApply={handleApply}
+                    />
+                  </div>
+                ) : null}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </div>
