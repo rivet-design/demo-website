@@ -95,7 +95,7 @@ const CircleGridArt = ({
   const fallbackWidth = (cols + 2) * spacing;
   const fallbackHeight = (maxRows + 2) * spacing;
 
-  const shapeDuration = 1200;
+  const shapeDuration = 1600;
   const rampFraction = 0.09;
   const frameInterval = 1000 / 30;
   const baseRadius = 50;
