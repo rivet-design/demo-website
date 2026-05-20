@@ -50,8 +50,8 @@ const NavBar = () => {
             target="_blank"
             rel="noopener noreferrer"
             className={[
-              'no-external-icon type-label hidden cursor-pointer rounded-lg px-3 py-1.5 transition-colors md:inline-block md:px-4 md:py-2 md:text-sm',
-              isDark ? 'text-white hover:text-white/60' : 'text-black hover:text-black/50',
+              'type-label hidden cursor-pointer rounded-lg px-3 py-1.5 transition-colors md:inline-block md:px-4 md:py-2 md:text-sm',
+              isDark ? 'text-white hover:text-white/60' : 'text-black hover:text-black/60',
             ].join(' ')}
           >
             Releases
@@ -61,23 +61,26 @@ const NavBar = () => {
             target="_blank"
             rel="noopener noreferrer"
             className={[
-              'no-external-icon type-label hidden cursor-pointer rounded-lg px-2 py-1.5 transition-colors md:inline-block md:px-4 md:py-2 md:text-sm',
-              isDark ? 'text-white hover:text-white/60' : 'text-black hover:text-black/50',
+              'type-label hidden cursor-pointer rounded-lg px-2 py-1.5 transition-colors md:inline-block md:px-4 md:py-2 md:text-sm',
+              isDark ? 'text-white hover:text-white/60' : 'text-black hover:text-black/60',
             ].join(' ')}
           >
             MCP
           </a>
           <a
-            href="https://discord.gg/Eqn9Fcpuh4"
+            href="https://x.com/designrivet"
             target="_blank"
             rel="noopener noreferrer"
             className={[
-              'no-external-icon type-label flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition-colors md:px-4 md:py-2 md:text-sm',
+              'no-external-icon type-label flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition-colors md:hidden',
               isDark
-                ? 'bg-white text-accent-foreground hover:text-accent-foreground/80 md:bg-transparent md:text-white md:hover:text-white/60'
-                : 'bg-green text-white hover:text-white/60 md:bg-transparent md:text-black md:hover:text-black/50',
+                ? 'bg-white text-accent-foreground hover:text-accent-foreground/80'
+                : 'bg-green text-white hover:text-white/60',
             ].join(' ')}
           >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
             Community
           </a>
           <DownloadButton

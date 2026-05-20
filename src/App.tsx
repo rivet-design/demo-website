@@ -488,18 +488,6 @@ const App = () => {
         <div className="-mt-12 md:mt-0">
           <Footer />
         </div>
-
-        {/* Mobile sticky button */}
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-content-muted/20 bg-[#FEFFF3]/80 px-4 py-4 backdrop-blur-md md:hidden">
-          <a
-            href="https://discord.gg/qccDTZDBgX"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="no-external-icon type-label-lg block w-full rounded-lg bg-primary px-3 py-3 text-center text-white transition-colors hover:bg-primary-hover"
-          >
-            Join the community
-          </a>
-        </div>
       </div>
     </>
   );
