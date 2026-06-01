@@ -5,7 +5,8 @@ const PROXY_URL = 'https://rivet-proxy.onrender.com';
 type AuthState = 'processing' | 'success' | 'error';
 
 /**
- * OAuth callback page for desktop app authentication
+ * OAuth callback page for Rivet authentication (used by both the MCP and
+ * desktop login flows, which have no local UI server to catch the callback)
  * Extracts tokens from URL hash and completes the OAuth flow
  */
 const AuthSuccessPage = () => {
@@ -73,17 +74,17 @@ const AuthSuccessPage = () => {
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#FEFFF3] px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#1c1c20] px-4 font-main text-content">
       <div className="max-w-md text-center">
         {authState === 'processing' && (
           <>
             <div className="mb-6 flex justify-center">
               <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             </div>
-            <h1 className="type-heading-2 mb-2 font-bold text-gray-900">
+            <h1 className="type-heading-2 mb-2 font-bold text-content">
               Signing you in...
             </h1>
-            <p className="text-gray-600">
+            <p className="text-content-muted">
               Please wait while we complete your authentication.
             </p>
           </>
@@ -92,9 +93,9 @@ const AuthSuccessPage = () => {
         {authState === 'success' && (
           <>
             <div className="mb-6 flex justify-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500/15">
                 <svg
-                  className="h-8 w-8 text-green-600"
+                  className="h-8 w-8 text-green-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -108,11 +109,11 @@ const AuthSuccessPage = () => {
                 </svg>
               </div>
             </div>
-            <h1 className="type-heading-2 mb-2 font-bold text-gray-900">
+            <h1 className="type-heading-2 mb-2 font-bold text-content">
               You&apos;re signed in!
             </h1>
-            <p className="mb-6 text-gray-600">
-              You can now close this tab and return to the Rivet desktop app.
+            <p className="mb-6 text-content-muted">
+              You can now close this tab and return to Rivet.
             </p>
           </>
         )}
@@ -120,9 +121,9 @@ const AuthSuccessPage = () => {
         {authState === 'error' && (
           <>
             <div className="mb-6 flex justify-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/15">
                 <svg
-                  className="h-8 w-8 text-red-600"
+                  className="h-8 w-8 text-red-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -136,15 +137,14 @@ const AuthSuccessPage = () => {
                 </svg>
               </div>
             </div>
-            <h1 className="type-heading-2 mb-2 font-bold text-gray-900">
+            <h1 className="type-heading-2 mb-2 font-bold text-content">
               Authentication failed
             </h1>
-            <p className="mb-4 text-gray-600">
+            <p className="mb-4 text-content-muted">
               {error || 'Something went wrong. Please try again.'}
             </p>
-            <p className="text-sm text-gray-500">
-              You can close this tab and try signing in again from the Rivet
-              app.
+            <p className="text-sm text-content-subtle">
+              You can close this tab and try signing in again from Rivet.
             </p>
           </>
         )}
