@@ -92,23 +92,6 @@ const AuthSuccessPage = () => {
 
         {authState === 'success' && (
           <>
-            <div className="mb-6 flex justify-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500/15">
-                <svg
-                  className="h-8 w-8 text-green-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-            </div>
             <h1 className="type-heading-2 mb-2 font-bold text-content">
               You&apos;re signed in!
             </h1>
@@ -120,23 +103,6 @@ const AuthSuccessPage = () => {
 
         {authState === 'error' && (
           <>
-            <div className="mb-6 flex justify-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/15">
-                <svg
-                  className="h-8 w-8 text-red-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </div>
-            </div>
             <h1 className="type-heading-2 mb-2 font-bold text-content">
               Authentication failed
             </h1>
