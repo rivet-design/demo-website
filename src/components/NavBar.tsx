@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
 import Logo from './Logo';
-import DownloadButton from './DownloadButton';
+import PromptInstallButton from './PromptInstallButton';
 
 const NavBar = () => {
   const navRef = useRef<HTMLElement>(null);
@@ -33,7 +33,7 @@ const NavBar = () => {
       ref={navRef}
       style={{ width: navWidth }}
       className={[
-        'sticky top-4 z-[70] mx-auto overflow-hidden rounded-lg border transition-colors duration-150',
+        'sticky top-4 z-[70] mx-auto rounded-lg border transition-colors duration-150',
         isDark
           ? 'border-accent-foreground bg-accent-foreground text-white'
           : 'border-border bg-main text-black',
@@ -83,16 +83,9 @@ const NavBar = () => {
             </svg>
             Community
           </a>
-          <DownloadButton
-            className={[
-              'type-label hidden cursor-pointer rounded-lg px-3 py-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 md:inline-block md:px-4 md:py-2 md:text-sm',
-              isDark
-                ? 'bg-white text-accent-foreground hover:bg-white/80'
-                : 'bg-accent-foreground text-white hover:bg-[hsl(0_0%_20%)]',
-            ].join(' ')}
-          >
-            Download
-          </DownloadButton>
+          <div className="hidden md:block">
+            <PromptInstallButton tone={isDark ? 'light' : 'dark'} />
+          </div>
         </div>
       </div>
     </motion.nav>

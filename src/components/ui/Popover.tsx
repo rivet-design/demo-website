@@ -34,9 +34,10 @@ type PopoverProps = {
   children: ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  className?: string;
 };
 
-export const Popover = ({ children, open: controlledOpen, onOpenChange }: PopoverProps) => {
+export const Popover = ({ children, open: controlledOpen, onOpenChange, className }: PopoverProps) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const triggerRef = useRef<HTMLElement | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -61,7 +62,7 @@ export const Popover = ({ children, open: controlledOpen, onOpenChange }: Popove
 
   return (
     <PopoverContext.Provider value={{ open, setOpen, triggerRef }}>
-      <div ref={containerRef} className="relative inline-flex">
+      <div ref={containerRef} className={cn('relative inline-flex', className)}>
         {children}
       </div>
     </PopoverContext.Provider>
