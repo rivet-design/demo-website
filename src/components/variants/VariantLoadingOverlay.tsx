@@ -5,7 +5,7 @@ import { motion } from 'motion/react';
  *
  * 1. A dashed orange outline + light orange tint on the element being varied
  *    — matches CommentCarouselLayer.tsx:710 (`1px dashed var(--color-primary)`,
- *    `rgba(255,51,0,0.06)` fill).
+ *    `rgba(225,64,23,0.06)` fill).
  * 2. Just the braille sparkle in primary orange floating above the dashed box's
  *    top-left edge — direct port of CommentCarouselLayer.tsx:729–741. No chip,
  *    no label; the dashed box + animated sparkle carry the message.
@@ -17,8 +17,8 @@ const VariantLoadingOverlay = () => (
       position: 'absolute',
       inset: 0,
       pointerEvents: 'none',
-      border: '1px dashed #FF3300',
-      background: 'rgba(255, 51, 0, 0.06)',
+      border: '1px dashed #E14017',
+      background: 'rgba(225, 64, 23, 0.06)',
       borderRadius: 2,
       boxSizing: 'border-box',
     }}
@@ -57,7 +57,7 @@ const Sparkle = () => (
       lineHeight: 1,
       fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
       fontSize: 14,
-      color: '#FF3300',
+      color: '#E14017',
     }}
   >
     <span

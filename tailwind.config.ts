@@ -32,9 +32,9 @@ export default {
       },
       colors: {
         primary: {
-          DEFAULT: '#FF3300',
-          hover: '#FF5526',
-          border: '#ff6b35',
+          DEFAULT: '#E14017',
+          hover: '#EA5934',
+          border: '#EC6442',
           foreground: '#FFFFFF',
         },
         yellow: {
