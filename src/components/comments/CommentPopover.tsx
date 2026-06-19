@@ -123,7 +123,7 @@ const CommentPopover = ({
           borderRadius: 8,
           border: `1px solid ${isFocused ? 'var(--primary)' : 'var(--divider)'}`,
           boxShadow: isFocused
-            ? '0 0 0 1px rgba(255, 51, 0, 0.3)'
+            ? '0 0 0 1px rgba(225, 64, 23, 0.3)'
             : 'none',
           transition: 'border-color 100ms, box-shadow 100ms',
           background: 'var(--main-light)',

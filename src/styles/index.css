@@ -106,11 +106,11 @@
     @apply bg-background text-foreground;
   }
   ::selection {
-    background-color: #FF3300;
+    background-color: #E14017;
     color: #FFFFFF;
   }
   ::-moz-selection {
-    background-color: #FF3300;
+    background-color: #E14017;
     color: #FFFFFF;
   }
 }
@@ -210,10 +210,10 @@
   --content-subtle: #9ca3af;
   --divider: #4b5563;
   --divider-muted: #232323;
-  --primary: #ff3300;
+  --primary: #E14017;
   --primary-hover: #c2410c;
-  --primary-border: #ff6b35;
-  --primary-soft: rgba(255, 51, 0, 0.1);
+  --primary-border: #EC6442;
+  --primary-soft: rgba(225, 64, 23, 0.1);
   --accent-success: #10b981;
   --accent-error: #ef4444;
   --shadow-pop: 0 12px 40px rgba(0, 0, 0, 0.35);
@@ -230,7 +230,7 @@
   --content-muted: #d1d5db;
   --content-subtle: #9ca3af;
   --accent-error: #ef4444;
-  --primary-border: #ff6b35;
+  --primary-border: #EC6442;
   --pill-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
 
