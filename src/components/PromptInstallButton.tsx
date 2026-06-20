@@ -1,7 +1,12 @@
-import { useState, useSyncExternalStore } from 'react';
+// Single one-click install button. The three agent icons (Codex, Cursor,
+// Claude) are always fanned and fully visible — evenly separated with clear
+// gaps. On hover/focus each icon LIFTS (translates up) and gains a soft drop
+// shadow, and the gaps widen a touch. One click copies a single generic/
+// all-agents install prompt. Replaces the older split button (main
+// "Add to <tool>" action + chevron dropdown).
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { posthog } from '@/lib/posthog';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
 
 type InstallTool = 'claude' | 'cursor' | 'codex';
 
@@ -31,72 +36,46 @@ const ToolLogo = ({
   />
 );
 
-type ToolOption =
-  | { id: InstallTool; label: string; action: 'copy'; command: string }
-  | { id: InstallTool; label: string; action: 'deeplink'; url: string };
-
-const TOOL_OPTIONS: ToolOption[] = [
-  {
-    id: 'claude',
-    label: 'Claude',
-    action: 'copy',
-    command:
-      'Please install the Rivet MCP server for Claude Code and the Claude desktop app by running: npx rivet-design install claude && npx rivet-design install claude-desktop',
-  },
-  {
-    id: 'cursor',
-    label: 'Cursor',
-    action: 'deeplink',
-    url: 'cursor://anysphere.cursor-deeplink/mcp/install?name=rivet&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsInJpdmV0LWRlc2lnbkBsYXRlc3QiLCJtY3AiLCItLWVkaXRvciIsImN1cnNvciJdfQ==',
-  },
-  {
-    id: 'codex',
-    label: 'Codex',
-    action: 'copy',
-    command:
-      'Please install the Rivet MCP server by running: npx rivet-design install codex',
-  },
+// Laid out left-to-right (Claude, Cursor, Codex), each fully visible with a
+// clear gap between them. Hover/focus lifts each icon and widens the gap.
+const FAN_TOOLS: { id: InstallTool; label: string }[] = [
+  { id: 'claude', label: 'Claude' },
+  { id: 'cursor', label: 'Cursor' },
+  { id: 'codex', label: 'Codex' },
 ];
 
-// Shared selection store so every PromptInstallButton on the page stays in
-// sync: committing "Add to Codex" in one updates them all. Only the committed
-// choice is global — per-instance UI (open popover, keyboard highlight, the
-// copied checkmark) stays local.
-let committedIndex = 0;
-const listeners = new Set<() => void>();
-const subscribeCommitted = (cb: () => void) => {
-  listeners.add(cb);
-  return () => listeners.delete(cb);
-};
-const getCommittedIndex = () => committedIndex;
-const commitIndex = (i: number) => {
-  committedIndex = i;
-  listeners.forEach((l) => l());
-};
+// One generic prompt that wires up every agent at once — the single click no
+// longer needs a per-tool choice now that the dropdown is gone.
+const INSTALL_PROMPT =
+  'Please install the Rivet MCP server for my coding agent by running: npx rivet-design install';
 
 type Tone = 'orange' | 'dark' | 'light';
 
 const TONES: Record<
   Tone,
-  { bg: string; border: string; text: string; invertLogo: boolean }
+  { bg: string; border: string; text: string; invertLogo: boolean; ring: string }
 > = {
   orange: {
     bg: 'bg-primary hover:bg-primary-hover',
     border: 'border-primary/20',
     text: 'text-white',
     invertLogo: true,
+    // Ring color around each icon so it reads as a distinct chip.
+    ring: 'ring-primary',
   },
   dark: {
     bg: 'bg-accent-foreground hover:bg-[hsl(0_0%_20%)]',
     border: 'border-white/15',
     text: 'text-white',
     invertLogo: true,
+    ring: 'ring-accent-foreground',
   },
   light: {
     bg: 'bg-white hover:bg-white/80',
     border: 'border-black/10',
     text: 'text-accent-foreground',
     invertLogo: false,
+    ring: 'ring-white',
   },
 };
 
@@ -111,203 +90,95 @@ const PromptInstallButton = ({
   size = 'md',
   fullWidth = false,
 }: PromptInstallButtonProps) => {
-  const committedIdx = useSyncExternalStore(
-    subscribeCommitted,
-    getCommittedIndex,
-  );
-
-  const [selectedIndex, setSelectedIndex] = useState(committedIdx);
-  const [popoverOpen, setPopoverOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const committed = TOOL_OPTIONS[committedIdx];
   const t = TONES[tone];
 
-  const padX = size === 'lg' ? 'px-6' : 'px-4';
   const mainSize = size === 'lg' ? 'px-6 py-4 text-lg' : 'px-4 py-3 text-sm';
-  const chevronSize = size === 'lg' ? 'px-3.5' : 'px-2.5';
+  const iconBox = size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
 
-  const handleMainClick = () => {
+  const handleClick = () => {
     posthog.capture('download_clicked', {
       source: 'landing',
-      download_type: committed.id,
+      download_type: 'all',
     });
 
-    if (committed.action === 'deeplink') {
-      window.location.href = committed.url;
-    } else {
-      navigator.clipboard.writeText(committed.command).then(() => {
-        setCopied(true);
-        toast.success('Prompt copied to clipboard', {
-          description: `Paste into ${committed.label} to get started.`,
-          action: {
-            label: 'Learn more',
-            onClick: () =>
-              window.open('https://docs.rivet.design/mcp-guide', '_blank'),
-          },
-        });
-        setTimeout(() => setCopied(false), 2000);
+    navigator.clipboard.writeText(INSTALL_PROMPT).then(() => {
+      setCopied(true);
+      toast.success('Prompt copied to clipboard', {
+        description: 'Paste into your coding agent to get started.',
+        action: {
+          label: 'Learn more',
+          onClick: () =>
+            window.open('https://docs.rivet.design/mcp-guide', '_blank'),
+        },
       });
-    }
+      setTimeout(() => setCopied(false), 2000);
+    });
   };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!popoverOpen) return;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIndex((i) => (i + 1) % TOOL_OPTIONS.length);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex(
-        (i) => (i - 1 + TOOL_OPTIONS.length) % TOOL_OPTIONS.length,
-      );
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      commitIndex(selectedIndex);
-      setPopoverOpen(false);
-    } else if (e.key === 'Escape') {
-      setSelectedIndex(committedIdx);
-      setPopoverOpen(false);
-    }
-  };
-
-  // Measure the widest label so the main button stays a fixed width
-  const maxLabel = TOOL_OPTIONS.reduce(
-    (longest, tool) =>
-      tool.label.length > longest.length ? tool.label : longest,
-    '',
-  );
 
   return (
-    <Popover
-      className={fullWidth ? 'flex w-full' : undefined}
-      open={popoverOpen}
-      onOpenChange={(open) => {
-        // Sync the keyboard highlight to the committed choice whenever the
-        // popover toggles, so it always opens on the current selection.
-        setSelectedIndex(committedIdx);
-        setPopoverOpen(open);
-      }}
+    // `group` drives the lift: hover/focus-within on the button raises each
+    // icon and widens the gap via per-icon `group-hover` / `group-focus-within`
+    // transform + spacing utilities.
+    <button
+      type="button"
+      onClick={handleClick}
+      className={`group type-label-lg flex items-center gap-2.5 rounded-lg border ${t.border} ${t.bg} ${t.text} ${mainSize} ${
+        fullWidth ? 'w-full justify-center' : 'w-fit'
+      } transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
     >
-      <div className={`flex ${fullWidth ? 'w-full' : 'w-fit'}`}>
-        {/* Main action button */}
-        <button
-          type="button"
-          onClick={handleMainClick}
-          onKeyDown={handleKeyDown}
-          className={`type-label-lg relative flex items-center gap-2 rounded-l-lg border border-r-0 ${t.border} ${t.bg} ${t.text} ${mainSize} ${fullWidth ? 'flex-1' : ''} transition-colors focus:outline-none`}
+      <span className="whitespace-nowrap">Add to your agent</span>
+      {/* Icon area. The fanned row stays mounted so the button keeps a constant
+          width; once copied it goes invisible (still reserving its space) and
+          the confirmation check is overlaid on the right edge. */}
+      <span className="relative flex shrink-0 items-center">
+        {/* Already-fanned icon row. At rest each icon is fully visible with a
+            clear gap. On hover/focus the gap widens and each icon lifts up with
+            a soft drop shadow. `motion-reduce` keeps the icons static (no lift
+            or translate) for reduced-motion users. */}
+        <span
+          className={`flex shrink-0 items-center gap-1 transition-[gap] duration-200 ease-out motion-reduce:transition-none ${
+            copied
+              ? 'invisible'
+              : 'group-hover:gap-1.5 group-focus-within:gap-1.5 motion-reduce:!gap-1'
+          }`}
+          aria-hidden
         >
-          {/* Invisible ghost: logo + widest label — fixes button width */}
-          <img
-            aria-hidden
-            width="16"
-            height="16"
-            className="invisible shrink-0"
-            alt=""
-          />
-          <span aria-hidden className="invisible whitespace-nowrap">
-            {`Add to ${maxLabel}`}
-          </span>
-          {/* Visible content: logo + label */}
-          <span
-            className={`absolute inset-0 flex items-center gap-2 ${padX} ${fullWidth ? 'justify-center' : ''}`}
-          >
-            {copied ? (
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="shrink-0"
-              >
-                <path
-                  d="M20 6L9 17l-5-5"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            ) : (
-              <ToolLogo
-                id={committed.id}
-                label={committed.label}
-                invert={t.invertLogo}
-              />
-            )}
+          {FAN_TOOLS.map((tool) => (
             <span
-              className={`whitespace-nowrap ${fullWidth ? '' : 'flex-1'}`}
+              key={tool.id}
+              className={`relative flex ${iconBox} items-center justify-center rounded-full ${t.bg} ring-2 ${t.ring} transition-[transform,box-shadow] duration-200 ease-out will-change-transform group-hover:-translate-y-0.5 group-hover:shadow-md group-focus-within:-translate-y-0.5 group-focus-within:shadow-md motion-reduce:!translate-y-0 motion-reduce:!shadow-none motion-reduce:transition-none`}
             >
-              {`Add to ${committed.label}`}
+              <ToolLogo id={tool.id} label={tool.label} invert={t.invertLogo} />
             </span>
+          ))}
+        </span>
+
+        {/* Confirmation check — overlaid at the right edge of the reserved icon
+            area after a click, so the button width never changes. */}
+        {copied && (
+          <span className="absolute inset-y-0 right-0 flex items-center">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="shrink-0"
+            >
+              <path
+                d="M20 6L9 17l-5-5"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </span>
-        </button>
-
-        {/* Chevron trigger — opens the popover */}
-        <PopoverTrigger
-          className={`flex items-center justify-center rounded-r-lg border ${t.border} ${t.bg} ${t.text} ${chevronSize} transition-colors focus:outline-none`}
-          onKeyDown={handleKeyDown}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M6 9l6 6 6-6"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </PopoverTrigger>
-      </div>
-
-      {/* Dropdown via PopoverContent — always the dark menu surface */}
-      <PopoverContent
-        align="start"
-        sideOffset={6}
-        className="min-w-[calc(100%+2rem)]"
-        onKeyDown={handleKeyDown}
-      >
-        {TOOL_OPTIONS.map((tool, i) => (
-          <button
-            key={tool.id}
-            type="button"
-            onClick={() => {
-              setSelectedIndex(i);
-              commitIndex(i);
-              setPopoverOpen(false);
-            }}
-            className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white transition-colors hover:bg-[hsl(0_0%_25%)] focus:outline-none ${i === selectedIndex ? 'bg-[hsl(0_0%_22%)]' : ''}`}
-          >
-            <ToolLogo id={tool.id} label={tool.label} />
-            <span className="flex-1 font-main">{tool.label}</span>
-            {i === committedIdx && (
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M5 13l4 4L19 7"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            )}
-          </button>
-        ))}
-      </PopoverContent>
-    </Popover>
+        )}
+      </span>
+    </button>
   );
 };
 
