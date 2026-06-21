@@ -51,7 +51,7 @@ const buildSmoothPath = (pts: TrailPoint[]): string => {
  * partially extending off-frame, intersected by a dashed grid. On hover, the
  * cursor draws a smooth bezier trail that fades out over time.
  */
-export const GeometricLines = () => {
+export const GeometricLines = ({ color = '#C97557' }: { color?: string }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [points, setPoints] = useState<TrailPoint[]>([]);
 
@@ -114,7 +114,7 @@ export const GeometricLines = () => {
           <path
             key={i}
             d={buildSmoothPath(slice)}
-            stroke="#C97557"
+            stroke={color}
             strokeWidth="1"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -138,13 +138,13 @@ export const GeometricLines = () => {
         onMouseMove={handleMouseMove}
       >
         {/* Dashed grid — quiet structure */}
-        <line x1="0" y1="60" x2="420" y2="60" stroke="#D9907A" strokeWidth="0.6" strokeDasharray="3 4" opacity="0.55" />
-        <line x1="0" y1="120" x2="420" y2="120" stroke="#D9907A" strokeWidth="0.6" strokeDasharray="3 4" opacity="0.55" />
-        <line x1="355" y1="0" x2="355" y2="180" stroke="#D9907A" strokeWidth="0.6" strokeDasharray="3 4" opacity="0.55" />
+        <line x1="0" y1="60" x2="420" y2="60" stroke={color} strokeWidth="0.6" strokeDasharray="3 4" opacity="0.55" />
+        <line x1="0" y1="120" x2="420" y2="120" stroke={color} strokeWidth="0.6" strokeDasharray="3 4" opacity="0.55" />
+        <line x1="355" y1="0" x2="355" y2="180" stroke={color} strokeWidth="0.6" strokeDasharray="3 4" opacity="0.55" />
 
         {/* Large thin solid circles, partially out of frame */}
-        <circle cx="160" cy="-30" r="90" stroke="#C97557" strokeWidth="0.8" fill="none" opacity="0.75" />
-        <circle cx="395" cy="60" r="115" stroke="#C97557" strokeWidth="0.8" fill="none" opacity="0.75" />
+        <circle cx="160" cy="-30" r="90" stroke={color} strokeWidth="0.8" fill="none" opacity="0.75" />
+        <circle cx="395" cy="60" r="115" stroke={color} strokeWidth="0.8" fill="none" opacity="0.75" />
 
         {/* Cursor trail — smooth bezier curve matching the circle geometry. */}
         {trailPaths}

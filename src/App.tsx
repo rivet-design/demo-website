@@ -2,14 +2,15 @@ import { useState, useEffect, useRef } from 'react';
 import { Toaster } from 'sonner';
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
-import FadeInText, { GeometricLines } from './components/FadeInText';
+import FadeInText from './components/FadeInText';
 // import WorkflowPanels from './components/WorkflowPanels';
 import CommentDemoSection from './components/CommentDemoSection';
 import VariantsDemoSection from './components/VariantsDemoSection';
+import ReferencesDemoSection from './components/ReferencesDemoSection';
 import SketchCircle from './components/SketchCircle';
 import PaperSheet from './components/PaperSheet';
-import CircleGridArt from './components/CircleGridArt';
 import PromptInstallButton from './components/PromptInstallButton';
+import InstallAccordion from './components/InstallAccordion';
 
 const R2_PUBLIC_URL = 'https://releases.rivet.design';
 const RELEASES_LINK = 'https://docs.rivet.design/releases';
@@ -167,9 +168,10 @@ const App = () => {
       <div className="hidden flex-col items-center py-16 md:flex">
         <div className="flex flex-col gap-6">
           <h2 className="type-heading-1 text-center text-[44px] font-normal">
-            Direct, don’t implement
+            Direct, don’t implement.
           </h2>
           <PromptInstallButton size="lg" fullWidth />
+          <InstallAccordion />
         </div>
       </div>
     );
@@ -177,9 +179,9 @@ const App = () => {
 
   const renderHeroText = () => {
     return (
-      <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-[1fr_360px] md:grid-rows-[1fr_1fr] lg:grid-cols-[1fr_420px]">
-        {/* LEFT: White card with badge, title, subtitle, CTAs (spans both rows) */}
-        <FadeInText className="md:col-start-1 md:row-span-2">
+      <div className="w-full">
+        {/* White card with badge, title, subtitle, CTAs */}
+        <FadeInText>
           <div
             className={`flex h-full flex-col ${SHOW_MCP_BADGE ? 'justify-between' : 'justify-end'} gap-8 rounded-lg border border-divider/20 bg-white px-8 py-10 md:px-12 md:py-12`}
           >
@@ -220,20 +222,6 @@ const App = () => {
             </div>
           </div>
         </FadeInText>
-
-        {/* RIGHT-TOP: peach panel with line art */}
-        <FadeInText className="md:col-start-2 md:row-start-1">
-          <div className="relative h-full min-h-[180px] overflow-hidden rounded-lg bg-[#FCE5DC]">
-            <GeometricLines />
-          </div>
-        </FadeInText>
-
-        {/* RIGHT-BOTTOM: orange panel with circle-grid art */}
-        <FadeInText className="md:col-start-2 md:row-start-2" delay={0.3}>
-          <div className="relative h-full min-h-[180px] overflow-hidden rounded-lg bg-primary">
-            <CircleGridArt />
-          </div>
-        </FadeInText>
       </div>
     );
   };
@@ -248,6 +236,7 @@ const App = () => {
 
         <div className="-mx-[5vw] flex flex-col gap-12" id="demo-panel">
           {/* <WorkflowPanels /> */}
+          <ReferencesDemoSection />
           <VariantsDemoSection />
           <CommentDemoSection />
           <CodePanel />
