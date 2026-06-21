@@ -8,6 +8,7 @@ import {
 } from './variants';
 import { VARIANTS } from './variants/data';
 import Gallery from './gallery/Gallery';
+import PaperTexture from './PaperTexture';
 
 const SECTION_BG = '#F0EFE9';
 
@@ -93,15 +94,16 @@ const VariantsDemoSection = () => {
   return (
     <div
       style={{ background: SECTION_BG }}
-      className="flex w-full justify-center px-[5vw] py-16 md:py-24"
+      className="relative flex w-full justify-center px-[5vw] py-16 md:py-24"
     >
+      <PaperTexture className="-z-10" />
       <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_1.7fr] lg:gap-16">
         <div className="max-w-[440px]">
           <h2 className="mt-3 font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
-            Try different design directions
+            Explore lots of design directions
           </h2>
           <p className="mt-4 text-[16px] leading-[1.6] text-black/70 md:text-[17px]">
-            Select anything in your real app and generate UI variants to cycle through.
+            Fully explore the design space for any interface, big or small.
           </p>
         </div>
 

@@ -6,11 +6,15 @@ import FadeInText, { GeometricLines } from './components/FadeInText';
 // import WorkflowPanels from './components/WorkflowPanels';
 import CommentDemoSection from './components/CommentDemoSection';
 import VariantsDemoSection from './components/VariantsDemoSection';
+import SketchCircle from './components/SketchCircle';
+import PaperSheet from './components/PaperSheet';
 import CircleGridArt from './components/CircleGridArt';
 import PromptInstallButton from './components/PromptInstallButton';
 
 const R2_PUBLIC_URL = 'https://releases.rivet.design';
 const RELEASES_LINK = 'https://docs.rivet.design/releases';
+// Try: hide the "New — Try Rivet's MCP in vX.Y" hero badge. Flip to true to restore.
+const SHOW_MCP_BADGE = false;
 
 /**
  * Fetch the latest Rivet version string from the R2 release manifest
@@ -107,54 +111,49 @@ const CodePanel = () => {
   }, []);
 
   return (
-    <div ref={sectionRef} className="flex w-full bg-green font-main text-[#FEFFF3]">
-      <div className="grid w-full grid-cols-1 items-stretch lg:grid-cols-[1fr_1fr]">
-        {/* Video — flush left, fills the column edge-to-edge. At lg+
-            `aspect-auto` lets it stretch to match the text column's height
-            (items-stretch on the grid). Below lg the 16/10 aspect ratio
-            gives it a defined height while stacked. */}
-        <div className="relative order-2 aspect-[16/10] w-full overflow-hidden lg:order-1 lg:aspect-auto">
-          <video
-            ref={videoRef}
-            // src + preload only set once shouldLoad flips — keeps the bytes
-            // off the wire on initial page load.
-            src={shouldLoad ? NIGHT_DEMO_VIDEO_SRC : undefined}
-            preload={shouldLoad ? 'auto' : 'none'}
-            autoPlay
-            muted
-            loop
-            playsInline
-            disablePictureInPicture
-            aria-label="Rivet night demo"
-            onContextMenu={(e) => e.preventDefault()}
-            className="pointer-events-none h-full w-full bg-[#0e0e0e] object-cover"
-          />
-        </div>
+    <div
+      ref={sectionRef}
+      className="relative flex w-full justify-center overflow-hidden bg-green px-6 py-24 font-main text-[#FEFFF3] md:py-36"
+    >
+      {/* Full-width background video. src + preload only set once shouldLoad
+          flips — keeps the bytes off the wire on initial page load. */}
+      <video
+        ref={videoRef}
+        src={shouldLoad ? NIGHT_DEMO_VIDEO_SRC : undefined}
+        preload={shouldLoad ? 'auto' : 'none'}
+        autoPlay
+        muted
+        loop
+        playsInline
+        disablePictureInPicture
+        aria-label="Rivet night demo"
+        onContextMenu={(e) => e.preventDefault()}
+        className="pointer-events-none absolute inset-0 h-full w-full bg-[#0e0e0e] object-cover"
+      />
+      {/* Scrim for depth + contrast behind the letter. */}
+      <div className="pointer-events-none absolute inset-0 bg-black/25" aria-hidden />
 
-        {/* Text — keeps the previous padding on its own column so the
-            section still has vertical breathing room despite the outer
-            div losing its py-20. */}
-        <div className="order-1 flex flex-col justify-center px-8 py-20 md:py-28 lg:order-2 lg:px-16">
-          <div className="flex max-w-prose flex-col gap-6 text-left">
-            <span className="text-[28px] font-normal leading-[1.15] md:text-[36px] lg:text-[44px]">
-              Made for people who design.
-            </span>
-            <span className="text-[18px] font-normal leading-[1.65] md:text-[20px]">
-              Coding agents ask designers to become like engineers. That&apos;s
-              wrong. They should be more like directors.
-            </span>
-            <span className="text-[18px] font-normal leading-[1.65] md:text-[20px]">
-              Product design was never just about the pixels on a page. Details
-              matter. But figuring out what to build matters more.
-            </span>
-            <span className="text-[18px] font-normal leading-[1.65] md:text-[20px]">
-              Code is an infinitely flexible medium to design in. AI tools have
-              made it abundant. It&apos;s an ideal medium for the next era of
-              design.
-            </span>
-          </div>
+      {/* The "letter" — centered on top of the video. */}
+      <PaperSheet className="relative z-10 w-full max-w-prose">
+        <div className="flex flex-col gap-6 px-12 py-14 text-left text-[#2b2620] md:px-16 md:py-16">
+          <span className="text-[28px] font-normal leading-[1.15] md:text-[36px] lg:text-[44px]">
+            Made for people who design.
+          </span>
+          <span className="text-[18px] font-normal leading-[1.65] md:text-[20px]">
+            Coding agents ask designers to become like engineers. That&apos;s
+            wrong. They should be more like directors.
+          </span>
+          <span className="text-[18px] font-normal leading-[1.65] md:text-[20px]">
+            Product design was never just about the pixels on a page. Details
+            matter. But figuring out what to build matters more.
+          </span>
+          <span className="text-[18px] font-normal leading-[1.65] md:text-[20px]">
+            Code is an infinitely flexible medium to design in. AI tools have
+            made it abundant. It&apos;s an ideal medium for the next era of
+            design.
+          </span>
         </div>
-      </div>
+      </PaperSheet>
     </div>
   );
 };
@@ -168,7 +167,7 @@ const App = () => {
       <div className="hidden flex-col items-center py-16 md:flex">
         <div className="flex flex-col gap-6">
           <h2 className="type-heading-1 text-center text-[44px] font-normal">
-            Own every visual detail.
+            Direct, don’t implement
           </h2>
           <PromptInstallButton size="lg" fullWidth />
         </div>
@@ -181,31 +180,39 @@ const App = () => {
       <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-[1fr_360px] md:grid-rows-[1fr_1fr] lg:grid-cols-[1fr_420px]">
         {/* LEFT: White card with badge, title, subtitle, CTAs (spans both rows) */}
         <FadeInText className="md:col-start-1 md:row-span-2">
-          <div className="flex h-full flex-col justify-between gap-8 rounded-lg border border-divider/20 bg-white px-8 py-10 md:px-12 md:py-12">
+          <div
+            className={`flex h-full flex-col ${SHOW_MCP_BADGE ? 'justify-between' : 'justify-end'} gap-8 rounded-lg border border-divider/20 bg-white px-8 py-10 md:px-12 md:py-12`}
+          >
             {/* Top: New / MCP badge */}
-            <a
-              href={RELEASES_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="no-external-icon flex w-fit items-center gap-2"
-            >
-              <span className="type-overline relative rounded-full bg-green px-2 py-0.5 text-white">
-                <span className="absolute inset-0 rounded-full bg-green opacity-20" />
-                <span className="relative">New</span>
-              </span>
-              <span className="text-base text-black hover:underline">
-                Try Rivet&apos;s MCP{latestVersion ? ` in v${latestVersion}` : ''}
-              </span>
-            </a>
+            {SHOW_MCP_BADGE && (
+              <a
+                href={RELEASES_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="no-external-icon flex w-fit items-center gap-2"
+              >
+                <span className="type-overline relative rounded-full bg-green px-2 py-0.5 text-white">
+                  <span className="absolute inset-0 rounded-full bg-green opacity-20" />
+                  <span className="relative">New</span>
+                </span>
+                <span className="text-base text-black hover:underline">
+                  Try Rivet&apos;s MCP{latestVersion ? ` in v${latestVersion}` : ''}
+                </span>
+              </a>
+            )}
 
             {/* Bottom: Title, subtitle, CTAs */}
             <div className="flex flex-col gap-6">
               <span className="type-display text-[40px] font-normal leading-[1.05] text-black md:text-[56px] lg:text-[64px]">
-                Direct, don&apos;t implement.
+                <span className="relative inline-block">
+                  Direct
+                  <SketchCircle />
+                </span>
+                , don&apos;t implement.
               </span>
               <span className="text-[16px] font-normal leading-relaxed text-divider-muted md:text-[18px]">
-                Set the vision and let design agents explore dozens of
-                directions. Then share visual feedback and refine the details.
+                Rivet understands your references, and then explores dozens of
+                design directions with you.
               </span>
               <div className="mt-2 hidden flex-row flex-wrap items-center gap-3 md:flex">
                 <PromptInstallButton />
