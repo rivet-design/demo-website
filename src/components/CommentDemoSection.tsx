@@ -142,10 +142,12 @@ const CommentDemoSection = () => {
 
         <div className="order-1 max-w-[440px] lg:order-2">
           <h2 className="mt-3 font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
-            Leave visual feedback
+            Refine visual details
           </h2>
           <p className="mt-4 text-[16px] leading-[1.6] text-black/70 md:text-[17px]">
-            Leave comments on anything you&apos;d like to refine, or tune the details yourself.
+            Share precise design feedback with an agent to get the details of a
+            design direction just right. Then generate a link to share with your
+            team.
           </p>
         </div>
       </div>

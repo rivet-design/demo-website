@@ -43,18 +43,7 @@ const NavBar = () => {
               isDark ? 'text-white hover:text-white/60' : 'text-black hover:text-black/60',
             ].join(' ')}
           >
-            Releases
-          </a>
-          <a
-            href="https://docs.rivet.design/mcp-guide"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={[
-              'type-label hidden cursor-pointer rounded-lg px-2 py-1.5 transition-colors md:inline-block md:px-4 md:py-2 md:text-sm',
-              isDark ? 'text-white hover:text-white/60' : 'text-black hover:text-black/60',
-            ].join(' ')}
-          >
-            MCP
+            Release notes
           </a>
           <a
             href="https://x.com/designrivet"

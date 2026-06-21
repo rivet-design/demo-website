@@ -10,6 +10,7 @@ import SketchCircle from './components/SketchCircle';
 import PaperSheet from './components/PaperSheet';
 import CircleGridArt from './components/CircleGridArt';
 import PromptInstallButton from './components/PromptInstallButton';
+import InstallAccordion from './components/InstallAccordion';
 
 const R2_PUBLIC_URL = 'https://releases.rivet.design';
 const RELEASES_LINK = 'https://docs.rivet.design/releases';
@@ -167,9 +168,10 @@ const App = () => {
       <div className="hidden flex-col items-center py-16 md:flex">
         <div className="flex flex-col gap-6">
           <h2 className="type-heading-1 text-center text-[44px] font-normal">
-            Direct, don’t implement
+            Direct, don’t implement.
           </h2>
           <PromptInstallButton size="lg" fullWidth />
+          <InstallAccordion />
         </div>
       </div>
     );
