@@ -1,32 +1,21 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
 import Logo from './Logo';
 import PromptInstallButton from './PromptInstallButton';
 
 const NavBar = () => {
   const navRef = useRef<HTMLElement>(null);
-  const [isDark, setIsDark] = useState(false);
+  // Experiment: keep the nav white throughout (isDark stays false).
+  const [isDark] = useState(false);
 
   const { scrollY } = useScroll();
   const navWidth = useTransform(scrollY, [100, 300], ['100%', '80%']);
 
-  useEffect(() => {
-    const panel = document.getElementById('demo-panel');
-    if (!panel) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsDark(entry.isIntersecting);
-      },
-      {
-        rootMargin: '0px 0px -90% 0px',
-        threshold: 0,
-      }
-    );
-
-    observer.observe(panel);
-    return () => observer.disconnect();
-  }, []);
+  // The nav previously switched to the dark theme while the #demo-panel
+  // section was in view, via an IntersectionObserver that called
+  // setIsDark(entry.isIntersecting). That observer is removed for this
+  // experiment so the nav stays light; restore it to bring the dark switch
+  // back.
 
   return (
     <motion.nav

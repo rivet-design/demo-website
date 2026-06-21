@@ -128,7 +128,7 @@ const PromptInstallButton = ({
         fullWidth ? 'w-full justify-center' : 'w-fit'
       } transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
     >
-      <span className="whitespace-nowrap">Add to your agent</span>
+      <span className="whitespace-nowrap">Add the Rivet MCP</span>
       {/* Icon area. The fanned row stays mounted so the button keeps a constant
           width; once copied it goes invisible (still reserving its space) and
           the confirmation check is overlaid on the right edge. */}
