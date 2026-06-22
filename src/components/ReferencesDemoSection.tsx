@@ -4,11 +4,26 @@
 // echoes one of the hero bento's right-hand panels — a peach panel with the
 // GeometricLines line-art, or an orange panel with the CircleGridArt. Built on
 // the Rivet design system.
+import { useEffect, useState } from 'react';
 import PaperTexture from './PaperTexture';
 import { GeometricLines } from './FadeInText';
 import CircleGridArt from './CircleGridArt';
 
 const SECTION_BG = '#F0EFE9';
+
+// lg+ gets a denser grid (more rows) than small screens, where the cards are
+// narrow and want fewer, more-spaced dots.
+const useIsDesktop = () => {
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+  return isDesktop;
+};
 
 // Each card echoes one of the hero bento's right-hand panels — line-art or
 // circle-grid — but every card gets a unique background + art color from the
@@ -37,18 +52,28 @@ const COLUMNS: Card[][] = [
   CARDS.filter((c) => c.col === 2),
 ];
 
-const CardFace = ({ card }: { card: Card }) => (
+const CardFace = ({
+  card,
+  gridSpacing,
+}: {
+  card: Card;
+  gridSpacing: number;
+}) => (
   <div className={`relative ${card.aspect} overflow-hidden rounded-xl ${card.bg}`}>
-    {/* Hero-bento motifs, recolored per card for variety. */}
+    {/* Hero-bento motifs, recolored per card for variety. Fewer columns keeps
+        the grid from overrunning the right edge on narrow (mobile) cards;
+        spacing (row density) tightens on desktop for a few more rows. */}
     {card.motif === 'lines' ? (
       <GeometricLines color={card.color} />
     ) : (
-      <CircleGridArt color={card.color} />
+      <CircleGridArt color={card.color} cols={5} spacing={gridSpacing} />
     )}
   </div>
 );
 
 const ReferencesDemoSection = () => {
+  // More dot rows on desktop, fewer (well-spaced) on small screens.
+  const gridSpacing = useIsDesktop() ? 22 : 30;
   return (
     <div
       style={{ background: SECTION_BG }}
@@ -83,7 +108,7 @@ const ReferencesDemoSection = () => {
                   style={{ marginTop: ci === 1 ? '32px' : ci === 2 ? '14px' : 0 }}
                 >
                   {col.map((card, i) => (
-                    <CardFace key={i} card={card} />
+                    <CardFace key={i} card={card} gridSpacing={gridSpacing} />
                   ))}
                 </div>
               ))}
