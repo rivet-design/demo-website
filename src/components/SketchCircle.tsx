@@ -14,7 +14,7 @@ const SketchCircle = () => (
     aria-hidden
     viewBox="0 0 340 170"
     preserveAspectRatio="none"
-    className="pointer-events-none absolute -left-[0.78em] -right-[0.78em] -top-[0.55em] -bottom-[0.95em] overflow-visible"
+    className="pointer-events-none absolute -left-[0.95em] -right-[0.95em] -top-[0.62em] -bottom-[1.1em] overflow-visible sm:-left-[0.78em] sm:-right-[0.78em] sm:-top-[0.55em] sm:-bottom-[0.95em]"
   >
     <defs>
       <filter id="sketch-rough" x="-25%" y="-25%" width="150%" height="150%">
