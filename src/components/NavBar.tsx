@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
 import Logo from './Logo';
 import PromptInstallButton from './PromptInstallButton';
@@ -11,6 +11,18 @@ const NavBar = () => {
   const { scrollY } = useScroll();
   const navWidth = useTransform(scrollY, [100, 300], ['100%', '80%']);
 
+  // The scroll-linked shrink animates `width`, which forces a layout reflow
+  // every frame — fine on desktop, but it janks on mobile. Only run it at md+;
+  // on small screens the nav stays full-width (no per-frame layout work).
+  const [animateWidth, setAnimateWidth] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)');
+    const update = () => setAnimateWidth(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
   // The nav previously switched to the dark theme while the #demo-panel
   // section was in view, via an IntersectionObserver that called
   // setIsDark(entry.isIntersecting). That observer is removed for this
@@ -20,7 +32,7 @@ const NavBar = () => {
   return (
     <motion.nav
       ref={navRef}
-      style={{ width: navWidth }}
+      style={{ width: animateWidth ? navWidth : '100%' }}
       className={[
         'sticky top-4 z-[70] mx-auto rounded-lg border transition-colors duration-150',
         isDark
