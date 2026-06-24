@@ -47,7 +47,7 @@ const FAN_TOOLS: { id: InstallTool; label: string }[] = [
 // One generic prompt that wires up every agent at once — the single click no
 // longer needs a per-tool choice now that the dropdown is gone.
 const INSTALL_PROMPT =
-  'Please install the Rivet MCP server for my coding agent by running: npx rivet-design install';
+  'Please install the Rivet MCP server for my coding agent by running: npx rivet-design@latest install';
 
 type Tone = 'orange' | 'dark' | 'light';
 
