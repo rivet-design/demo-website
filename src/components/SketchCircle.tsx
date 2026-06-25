@@ -17,7 +17,7 @@
 const SketchCircle = () => (
   <span
     aria-hidden
-    className="pointer-events-none absolute -inset-x-[0.7em] -top-[0.62em] -bottom-[0.62em] overflow-visible sm:-inset-x-[0.78em] sm:-top-[0.55em] sm:-bottom-[0.95em]"
+    className="pointer-events-none absolute -inset-x-[0.7em] -top-[0.62em] -bottom-[0.62em] overflow-visible sm:-inset-x-[0.78em] sm:-top-[0.5em] sm:-bottom-[0.45em]"
   >
     <svg
       viewBox="0 0 340 170"
