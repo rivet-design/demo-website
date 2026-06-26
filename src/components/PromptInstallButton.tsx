@@ -38,13 +38,14 @@ const ToolLogo = ({
   />
 );
 
-// Cursor's one-click install URL for the hosted Rivet MCP server. Mirrors
-// buildCursorHostedInstallUrl in rivet core: the base64 `config` decodes to
-// {"url":"https://rivet-proxy.onrender.com/mcp"} (the hosted server, not the
-// local npx command). cursor.com/install-mcp hands off to Cursor and writes
+// Cursor's one-click install URL for the local (stdio) Rivet MCP server.
+// Mirrors buildCursorLocalRivetEntry in rivet core: the base64 `config` decodes
+// to {"command":"npx","args":["-y","rivet-design@latest","mcp","--editor","cursor"]}
+// — a locally-spawned stdio server, not the hosted remote URL (so no OAuth).
+// cursor.com/install-mcp is the web handoff that bounces to Cursor and writes
 // the entry into ~/.cursor/mcp.json.
 const CURSOR_DEEPLINK =
-  'https://cursor.com/install-mcp?name=rivet&config=eyJ1cmwiOiJodHRwczovL3JpdmV0LXByb3h5Lm9ucmVuZGVyLmNvbS9tY3AifQ%3D%3D';
+  'https://cursor.com/install-mcp?name=rivet&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsInJpdmV0LWRlc2lnbkBsYXRlc3QiLCJtY3AiLCItLWVkaXRvciIsImN1cnNvciJdfQ%3D%3D';
 
 type AgentItem =
   | { id: string; label: string; logo: AgentLogo; action: 'deeplink'; url: string }
