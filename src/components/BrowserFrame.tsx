@@ -1,4 +1,11 @@
-import { useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from 'react';
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
@@ -18,6 +25,7 @@ const BrowserFrame = ({
   children,
   url,
   draggable = false,
+  animateOpen = false,
   className = '',
 }: {
   children: ReactNode;
@@ -25,10 +33,41 @@ const BrowserFrame = ({
   url?: string;
   /** When true, the title bar drags the window within its parent container. */
   draggable?: boolean;
+  /**
+   * When true, the window plays a macOS-style "maximize from minimized" open on
+   * mount: the backdrop shows first, then the frame scales up into place.
+   */
+  animateOpen?: boolean;
   className?: string;
 }) => {
   const frameRef = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
+  // Open-animation lifecycle: `entered` drives the scale/opacity to their final
+  // values; `settled` drops the CSS transition afterwards so dragging stays snappy.
+  const [entered, setEntered] = useState(false);
+  const [settled, setSettled] = useState(false);
+
+  useEffect(() => {
+    if (!animateOpen) return;
+    // Respect reduced-motion: land fully open with no movement.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setEntered(true);
+      setSettled(true);
+      return;
+    }
+    // Start expanding the moment the page paints — just one frame's delay so the
+    // small/transparent start state lands before we flip to the open state (else
+    // the browser has nothing to transition from). The second timer fires after
+    // the transform settles so we can shed the transition.
+    const OPEN_DELAY = 32;
+    const OPEN_DURATION = 600;
+    const start = setTimeout(() => setEntered(true), OPEN_DELAY);
+    const done = setTimeout(() => setSettled(true), OPEN_DELAY + OPEN_DURATION + 40);
+    return () => {
+      clearTimeout(start);
+      clearTimeout(done);
+    };
+  }, [animateOpen]);
   // Geometry captured at drag start so move math is cheap and clamp-correct.
   const drag = useRef<{
     pointerX: number;
@@ -83,14 +122,35 @@ const BrowserFrame = ({
     }
   };
 
+  // Drag offset and the open animation both live on the root transform.
+  const dragTransform = draggable
+    ? `translate3d(${offset.x}px, ${offset.y}px, 0)`
+    : '';
+  // Start small and a touch low (as if rising from the dock), settle at 1:1.
+  const openTransform = animateOpen
+    ? entered
+      ? 'scale(1)'
+      : 'scale(0.35) translateY(14%)'
+    : '';
+  const transform = `${dragTransform} ${openTransform}`.trim();
+
+  const rootStyle: CSSProperties = {};
+  if (transform) rootStyle.transform = transform;
+  if (animateOpen) {
+    rootStyle.opacity = entered ? 1 : 0;
+    // Grow from near the bottom-center, the macOS un-minimize direction.
+    rootStyle.transformOrigin = '50% 92%';
+    rootStyle.willChange = 'transform, opacity';
+    if (!settled) {
+      rootStyle.transition =
+        'transform 600ms cubic-bezier(0.16, 1, 0.3, 1), opacity 300ms ease-out';
+    }
+  }
+
   return (
     <div
       ref={frameRef}
-      style={
-        draggable
-          ? { transform: `translate3d(${offset.x}px, ${offset.y}px, 0)` }
-          : undefined
-      }
+      style={rootStyle}
       className={`overflow-hidden rounded-lg border border-black/10 bg-white shadow-[0_18px_40px_-12px_rgba(0,0,0,0.25)] ${className}`}
     >
       {/* Title bar — doubles as the window drag handle when draggable. */}

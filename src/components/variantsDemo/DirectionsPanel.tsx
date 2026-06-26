@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Copy, MagnifyingGlass, PencilSimple, Trash } from '@phosphor-icons/react';
 import { cn } from './cn';
 import { springs } from './springs';
+import SparkleLoader from './SparkleLoader';
 import { runLabelStyle } from './runLabelColor';
 import {
   useProximityHover,
@@ -77,6 +78,8 @@ type RowProps = {
   index: number;
   isSelected: boolean;
   isEditing: boolean;
+  /** False while the direction is still "generating" — renders a skeleton. */
+  ready: boolean;
   registerItem: (index: number, el: HTMLElement | null) => void;
   onSelect: (id: string) => void;
   onStartRename: (id: string) => void;
@@ -91,6 +94,7 @@ const VariantRow = ({
   index,
   isSelected,
   isEditing,
+  ready,
   registerItem,
   onSelect,
   onStartRename,
@@ -101,6 +105,30 @@ const VariantRow = ({
 }: RowProps) => {
   const rowRef = useRef<HTMLLIElement>(null);
   useRegisterProximityItem(registerItem, index, rowRef);
+
+  // Skeleton direction — port of Rivet core's DirectionSkeletonRow. The loader
+  // sits outside animate-pulse so its own motion isn't dampened. Keeps the same
+  // li wrapper so the list doesn't reflow (or lose hover indices) on resolve.
+  if (!ready) {
+    return (
+      <li ref={rowRef} data-proximity-index={index} className="group relative z-10">
+        <div
+          aria-hidden="true"
+          className="flex w-full items-start gap-2 rounded-md px-3 py-2"
+        >
+          <SparkleLoader className="mt-0.5 shrink-0 text-sm text-content-muted" />
+          <span className="min-w-0 flex-1 animate-pulse">
+            <span className="flex items-center gap-2">
+              <span className="h-3.5 w-28 rounded bg-content-muted/15" />
+            </span>
+            <span className="mt-1.5 flex">
+              <span className="h-2.5 w-full max-w-[14rem] rounded bg-content-muted/10" />
+            </span>
+          </span>
+        </div>
+      </li>
+    );
+  }
 
   if (isEditing) {
     return (
@@ -229,6 +257,7 @@ type VariantTableProps = {
   variants: DemoVariant[];
   selectedId: string;
   editingId: string | null;
+  readyIds: Set<string>;
   onSelect: VariantsDemoController['select'];
   onStartRename: VariantsDemoController['startRename'];
   onCommitRename: VariantsDemoController['commitRename'];
@@ -241,6 +270,7 @@ const VariantTable = ({
   variants,
   selectedId,
   editingId,
+  readyIds,
   onSelect,
   onStartRename,
   onCommitRename,
@@ -293,6 +323,7 @@ const VariantTable = ({
             index={idx}
             isSelected={variant.id === selectedId}
             isEditing={variant.id === editingId}
+            ready={readyIds.has(variant.id)}
             registerItem={registerItem}
             onSelect={onSelect}
             onStartRename={onStartRename}
@@ -357,6 +388,7 @@ const DirectionsPanel = ({ ctrl }: { ctrl: VariantsDemoController }) => {
             variants={filtered}
             selectedId={ctrl.selectedId}
             editingId={ctrl.editingId}
+            readyIds={ctrl.readyIds}
             onSelect={ctrl.select}
             onStartRename={ctrl.startRename}
             onCommitRename={ctrl.commitRename}

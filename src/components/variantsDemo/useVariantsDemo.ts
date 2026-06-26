@@ -17,6 +17,8 @@ export type VariantsDemoController = {
   selectedId: string;
   editingId: string | null;
   autoPlay: boolean;
+  /** Ids whose fake "generation" has resolved; others render as skeletons. */
+  readyIds: Set<string>;
   select: (id: string) => void;
   cycle: (dir: 1 | -1) => void;
   startRename: (id: string) => void;
@@ -28,6 +30,12 @@ export type VariantsDemoController = {
 };
 
 const AUTO_ADVANCE_MS = 1500;
+
+// Fake generation timing on first load: every direction starts as a loading
+// skeleton, the first resolves after ~1s, and the rest land a couple seconds
+// later — mirroring how Rivet streams variants in as they finish generating.
+const FIRST_READY_MS = 1000;
+const ALL_READY_MS = 2800;
 
 export const useVariantsDemo = (
   options?: { autoPlay?: boolean; initialId?: string },
@@ -41,6 +49,26 @@ export const useVariantsDemo = (
   const [selectedId, setSelectedId] = useState(initialId);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [autoPlay, setAutoPlay] = useState(options?.autoPlay ?? true);
+  const [readyIds, setReadyIds] = useState<Set<string>>(() => new Set());
+
+  // Fake the Rivet generation flow once on mount: skeletons first, then the
+  // initial direction resolves, then the remainder stream in.
+  useEffect(() => {
+    const ids = VARIANTS.map((v) => v.id);
+    const firstId = initialId;
+    const firstTimer = setTimeout(
+      () => setReadyIds(new Set([firstId])),
+      FIRST_READY_MS,
+    );
+    const restTimer = setTimeout(
+      () => setReadyIds(new Set(ids)),
+      ALL_READY_MS,
+    );
+    return () => {
+      clearTimeout(firstTimer);
+      clearTimeout(restTimer);
+    };
+  }, [initialId]);
 
   const variants = useMemo(
     () =>
@@ -136,12 +164,14 @@ export const useVariantsDemo = (
     toast('Copied description');
   }, []);
 
-  // Auto-advance loop. Paused once the user takes over or while renaming.
+  // Auto-advance loop. Paused once the user takes over, while renaming, or
+  // while directions are still "generating" (so it never cycles a skeleton).
   useEffect(() => {
     if (!autoPlay || editingId || variants.length <= 1) return;
+    if (readyIds.size < variants.length) return;
     const t = setInterval(advance, AUTO_ADVANCE_MS);
     return () => clearInterval(t);
-  }, [autoPlay, editingId, variants.length, advance]);
+  }, [autoPlay, editingId, variants.length, readyIds.size, advance]);
 
   return {
     variants,
@@ -149,6 +179,7 @@ export const useVariantsDemo = (
     selectedId,
     editingId,
     autoPlay,
+    readyIds,
     select,
     cycle,
     startRename,
