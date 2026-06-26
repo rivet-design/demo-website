@@ -1,27 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
-import { motion, useScroll, useTransform } from 'motion/react';
+import { useState } from 'react';
+import { motion } from 'motion/react';
 import Logo from './Logo';
 import PromptInstallButton from './PromptInstallButton';
+import { surfaceBackground } from '../lib/background';
 
 const NavBar = () => {
-  const navRef = useRef<HTMLElement>(null);
   // Experiment: keep the nav white throughout (isDark stays false).
   const [isDark] = useState(false);
 
-  const { scrollY } = useScroll();
-  const navWidth = useTransform(scrollY, [100, 300], ['100%', '80%']);
-
-  // The scroll-linked shrink animates `width`, which forces a layout reflow
-  // every frame — fine on desktop, but it janks on mobile. Only run it at md+;
-  // on small screens the nav stays full-width (no per-frame layout work).
-  const [animateWidth, setAnimateWidth] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 768px)');
-    const update = () => setAnimateWidth(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
+  // The nav previously shrank its width on scroll. That behavior is removed —
+  // the nav now stays a constant full-width pill, simply sticky at the top.
 
   // The nav previously switched to the dark theme while the #demo-panel
   // section was in view, via an IntersectionObserver that called
@@ -31,18 +19,27 @@ const NavBar = () => {
 
   return (
     <motion.nav
-      ref={navRef}
-      style={{ width: animateWidth ? navWidth : '100%' }}
+      style={
+        // Opaque fill so page content doesn't show through the sticky nav. The
+        // nav is z-[70], so this paints above the scrolling page content while
+        // the nav's own content paints above it. Paper texture or vanilla
+        // white per the FE flag.
+        isDark ? undefined : surfaceBackground
+      }
       className={[
-        'sticky top-4 z-[70] mx-auto rounded-lg border transition-colors duration-150',
+        // Full-bleed sticky bar pinned to the very top: -mx-[5vw] breaks it out
+        // of the page's 5vw gutters so it spans the full viewport width, and
+        // top-0 leaves no gap above — so no scrolling content is ever visible
+        // above or beside the nav. Bottom hairline + shadow for separation.
+        'sticky top-0 z-[70] -mx-[5vw] border-b border-black/10 shadow-sm transition-colors duration-150',
         isDark
-          ? 'border-accent-foreground bg-accent-foreground text-white'
-          : 'border-border bg-main text-black',
+          ? 'bg-accent-foreground text-white'
+          : 'text-black',
       ].join(' ')}
     >
       <div
-        className="flex w-full items-center justify-between px-4 py-1"
-        style={{ height: 78 }}
+        className="flex w-full items-center justify-between px-[5vw] py-1"
+        style={{ height: 60 }}
       >
         <Logo />
         <div className="flex items-center gap-2 md:gap-3">
