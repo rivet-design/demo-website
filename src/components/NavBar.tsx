@@ -30,8 +30,8 @@ const NavBar = () => {
         // Full-bleed sticky bar pinned to the very top: -mx-[5vw] breaks it out
         // of the page's 5vw gutters so it spans the full viewport width, and
         // top-0 leaves no gap above — so no scrolling content is ever visible
-        // above or beside the nav. Bottom hairline + shadow for separation.
-        'sticky top-0 z-[70] -mx-[5vw] border-b border-black/10 shadow-sm transition-colors duration-150',
+        // above or beside the nav. Soft shadow for separation (no hairline).
+        'sticky top-0 z-[70] -mx-[5vw] shadow-sm transition-colors duration-150',
         isDark
           ? 'bg-accent-foreground text-white'
           : 'text-black',

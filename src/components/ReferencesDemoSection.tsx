@@ -11,6 +11,16 @@ import CircleGridArt from './CircleGridArt';
 
 const SECTION_BG = '#F0EFE9';
 
+// Brand marks for the reference sources. Pinterest is the swirl glyph (filled
+// with the brand red via currentColor) ported from Rivet Core's design-
+// references panel (src/ui/src/components/ConnectorsView.tsx); Are.na uses its
+// star mark (public/images/arena-logo.png).
+const PinterestIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden {...props}>
+    <path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.781c0-1.669.967-2.915 2.171-2.915 1.024 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.132 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.137.893 2.739.098.119.112.223.083.344-.091.379-.293 1.194-.333 1.361-.052.22-.174.266-.401.16-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.36-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146A12.004 12.004 0 0 0 12 24c6.627 0 12-5.373 12-12C24 5.372 18.627 0 12 0z" />
+  </svg>
+);
+
 // lg+ gets a denser grid (more rows) than small screens, where the cards are
 // narrow and want fewer, more-spaced dots.
 const useIsDesktop = () => {
@@ -37,12 +47,15 @@ type Card = {
   color: string; // art stroke color
 };
 
+// Three panels pull their color straight from the hero backdrop blobs
+// (panel-backdrop.png): teal #1FD0D3, yellow #ECE44D, dark green #214C16. Art
+// strokes are picked for contrast against each fill.
 const CARDS: Card[] = [
   { col: 0, aspect: 'aspect-[3/4]', motif: 'lines', bg: 'bg-[#FCE5DC]', color: '#C97557' },
-  { col: 0, aspect: 'aspect-square', motif: 'grid', bg: 'bg-[#3E2A6B]', color: '#E3D6FF' },
-  { col: 1, aspect: 'aspect-[4/3]', motif: 'grid', bg: 'bg-primary', color: '#FFFFFF' },
+  { col: 0, aspect: 'aspect-square', motif: 'grid', bg: 'bg-[#214C16]', color: '#CDE9C2' },
+  { col: 1, aspect: 'aspect-[4/3]', motif: 'grid', bg: 'bg-[#1FD0D3]', color: '#0C6E70' },
   { col: 1, aspect: 'aspect-[5/6]', motif: 'lines', bg: 'bg-accent-foreground', color: 'rgba(255,255,255,0.85)' },
-  { col: 2, aspect: 'aspect-[4/5]', motif: 'lines', bg: 'bg-secondary', color: '#E14017' },
+  { col: 2, aspect: 'aspect-[4/5]', motif: 'lines', bg: 'bg-[#ECE44D]', color: '#214C16' },
   { col: 2, aspect: 'aspect-square', motif: 'grid', bg: 'bg-green', color: '#FCE5DC' },
 ];
 
@@ -87,8 +100,22 @@ const ReferencesDemoSection = () => {
             Bring your design references
           </h2>
           <p className="mt-4 text-[16px] leading-[1.6] text-black/70 md:text-[17px]">
-            Pull in inspiration from Pinterest, Are.na, and your local files.
-            Rivet learns your taste the more you use it.
+            Pull in inspiration from{' '}
+            <span className="inline-flex items-center gap-1 whitespace-nowrap align-[-0.12em] font-medium text-black">
+              <PinterestIcon className="text-[#E60023]" />
+              Pinterest
+            </span>
+            ,{' '}
+            <span className="inline-flex items-center gap-1 whitespace-nowrap align-[-0.12em] font-medium text-black">
+              <img src="/images/arena-logo.png" alt="" aria-hidden className="h-[0.8em] w-auto" />
+              Are.na
+            </span>
+            , and your{' '}
+            <span className="inline-flex items-center gap-1 whitespace-nowrap align-[-0.12em] font-medium text-black">
+              <img src="/images/macos-folder.svg" alt="" aria-hidden className="h-[1.1em] w-auto" />
+              Local Files
+            </span>
+            . Rivet learns your taste the more you use it.
           </p>
         </div>
 

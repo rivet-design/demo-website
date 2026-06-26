@@ -18,16 +18,16 @@ const Footer = () => {
         style={{ marginLeft: 'calc(50% - 50vw)', ...footerBackground }}
       >
        <div className="px-[5vw]">
-        <div className="flex w-full flex-wrap items-start gap-x-16 gap-y-6">
+        <div className="flex w-full flex-wrap items-start gap-x-20 gap-y-8">
           {/* Rivet logo on the left, with the copyright directly beneath it */}
-          <div className="flex flex-col items-start gap-3">
+          <div className="flex flex-col items-start gap-4">
             <img
               src="/images/rivet-logo.png"
               alt="Rivet"
               draggable={false}
               className="inline-block h-11 sm:h-12 w-auto rounded-xl"
             />
-            <span className="font-main text-sm font-medium text-black/70">
+            <span className="font-main text-base font-medium text-black/70">
               © 2026 Rivet, Inc.
             </span>
           </div>
@@ -36,15 +36,15 @@ const Footer = () => {
           <div className="flex-1" />
 
           {/* Link columns - right aligned, each left-aligned internally */}
-          <div className="flex flex-wrap gap-x-16 gap-y-6">
-            <div className="flex flex-col items-start gap-3">
+          <div className="flex flex-wrap gap-x-20 gap-y-8">
+            <div className="flex flex-col items-start gap-4">
               <span className="type-label-lg font-semibold text-accent-foreground">Rivet</span>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-3">
                 <a
                   href={DOCS_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-main text-base font-medium text-black/80 transition-colors hover:text-black"
+                  className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
                 >
                   Docs
                 </a>
@@ -52,7 +52,7 @@ const Footer = () => {
                   href={RELEASES_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-main text-base font-medium text-black/80 transition-colors hover:text-black"
+                  className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
                 >
                   Releases
                 </a>
@@ -60,45 +60,45 @@ const Footer = () => {
                   href={MCP_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-main text-base font-medium text-black/80 transition-colors hover:text-black"
+                  className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
                 >
                   MCP
                 </a>
               </div>
             </div>
 
-            <div className="flex flex-col items-start gap-3">
+            <div className="flex flex-col items-start gap-4">
               <span className="type-label-lg font-semibold text-accent-foreground">Community</span>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-3">
                 <a
                   href={X_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-main text-base font-medium text-black/80 transition-colors hover:text-black"
+                  className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
                 >
                   Twitter
                 </a>
                 <a
                   href={`mailto:${EMAIL}`}
-                  className="font-main text-base font-medium text-black/80 transition-colors hover:text-black"
+                  className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
                 >
                   Email
                 </a>
               </div>
             </div>
 
-            <div className="flex flex-col items-start gap-3">
+            <div className="flex flex-col items-start gap-4">
               <span className="type-label-lg font-semibold text-accent-foreground">Legal</span>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-3">
                 <a
                   href="/terms"
-                  className="font-main text-base font-medium text-black/80 transition-colors hover:text-black"
+                  className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
                 >
                   Terms
                 </a>
                 <a
                   href="/privacy"
-                  className="font-main text-base font-medium text-black/80 transition-colors hover:text-black"
+                  className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
                 >
                   Privacy
                 </a>

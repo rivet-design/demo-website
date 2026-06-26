@@ -243,7 +243,7 @@ const App = () => {
           className="flex w-full justify-center rounded-xl bg-cover bg-center p-4 sm:p-6 md:p-10"
           style={{ backgroundImage: "url('/images/panel-backdrop.png')" }}
         >
-          <BrowserFrame url="localhost:4000" draggable className="w-full max-w-6xl">
+          <BrowserFrame url="localhost:4000" draggable animateOpen className="w-full max-w-6xl">
             <VariantsShowcase
               heightClassName="h-[58vh] min-h-[440px]"
               autoPlay={false}
@@ -256,7 +256,7 @@ const App = () => {
             shell. */}
         <FadeInText>
           <div className="flex flex-col items-center gap-5 py-12 text-center md:py-20">
-            <span className="max-w-2xl text-[20px] font-normal leading-relaxed text-black md:text-[26px]">
+            <span className="max-w-2xl font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
               Rivet understands your references, and then explores dozens of
               design directions with you.
             </span>

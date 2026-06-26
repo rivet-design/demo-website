@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import DirectionsPanel from './DirectionsPanel';
+import SparkleLoader from './SparkleLoader';
 import { useVariantsDemo } from './useVariantsDemo';
 
 /**
@@ -66,6 +67,10 @@ const VariantsShowcase = ({
   }, [hovered, ctrl]);
 
   const activeLoaded = loaded.has(ctrl.selected.src);
+  // The preview only reveals once the direction has "generated" (faked) AND its
+  // iframe has loaded — so the shell shows a generating state on first paint.
+  const selectedReady = ctrl.readyIds.has(ctrl.selected.id);
+  const activeReady = activeLoaded && selectedReady;
 
   return (
     <div
@@ -81,7 +86,7 @@ const VariantsShowcase = ({
           .map((v) => {
             const isActive = v.src === ctrl.selected.src;
             const isPrev = v.src === prevSrc;
-            const opacity = isActive ? (activeLoaded ? 1 : 0) : isPrev ? 1 : 0;
+            const opacity = isActive ? (activeReady ? 1 : 0) : isPrev ? 1 : 0;
             return (
               <iframe
                 key={v.src}
@@ -95,11 +100,20 @@ const VariantsShowcase = ({
               />
             );
           })}
-        {!activeLoaded && (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white">
-            <span className="animate-pulse text-sm text-black/40">
-              Loading {ctrl.selected.label}…
-            </span>
+        {!activeReady && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center gap-2 bg-white">
+            {selectedReady ? (
+              <span className="animate-pulse text-sm text-black/40">
+                Loading {ctrl.selected.label}…
+              </span>
+            ) : (
+              <>
+                <SparkleLoader className="text-sm text-black/40" />
+                <span className="text-sm text-black/40">
+                  Generating directions…
+                </span>
+              </>
+            )}
           </div>
         )}
       </div>
