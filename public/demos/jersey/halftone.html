@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P411 CLUBCALL KIT BUILDER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --tt-blue:#0000AA;
+    --tt-blue-deep:#0a4a22;
+    --tt-cyan:#00FFFF;
+    --tt-yellow:#FFFF00;
+    --tt-green:#00FF00;
+    --tt-magenta:#FF00FF;
+    --tt-red:#FF3030;
+    --tt-white:#FFFFFF;
+    --tt-black:#000000;
+    /* samba kit palette */
+    --samba-yellow:#FFD400;
+    --pitch-green:#1E8A3C;
+    --cobalt:#2230C8;
+    --orange:#E15100;
+    --ink:#111111;
+    --cream:#F4EFE2;
+    --offwhite:#EDE8DA;
+    /* spacing scale */
+    --sp-1:5px;
+    --sp-2:9px;
+    --sp-3:13px;
+    --sp-4:18px;
+    --sp-5:24px;
+    --frame-pad:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:#06330f;
+    font-family:'VT323',monospace;
+    color:var(--tt-white);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:var(--sp-3);
+    -webkit-font-smoothing:none;
+    image-rendering:pixelated;
+  }
+  /* the teletext screen */
+  .tt-screen{
+    position:relative;
+    width:100%;
+    max-width:880px;
+    background:
+      radial-gradient(circle at 50% 50%, transparent 60px, rgba(255,255,255,.22) 61px, rgba(255,255,255,.22) 64px, transparent 65px),
+      linear-gradient(transparent calc(50% - 1.5px), rgba(255,255,255,.18) calc(50% - 1.5px), rgba(255,255,255,.18) calc(50% + 1.5px), transparent calc(50% + 1.5px)),
+      repeating-linear-gradient(180deg, #157a38 0 40px, #11682f 40px 80px);
+    border:4px solid #fff;
+    box-shadow:0 0 0 2px rgba(0,0,0,.45);
+    overflow:hidden;
+    padding:var(--frame-pad) var(--frame-pad) 0;
+  }
+  /* scanlines */
+  .tt-screen::before{
+    content:"";
+    position:absolute;inset:0;
+    background:repeating-linear-gradient(to bottom,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 2px,
+      rgba(0,0,0,.22) 3px,
+      rgba(0,0,0,.22) 4px);
+    pointer-events:none;
+    z-index:60;
+    mix-blend-mode:multiply;
+  }
+  /* vignette + flicker */
+  .tt-screen::after{
+    content:"";
+    position:absolute;inset:0;
+    background:radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,40,.55) 100%);
+    pointer-events:none;
+    z-index:61;
+    animation:flick 5.5s infinite steps(60);
+  }
+  @keyframes flick{
+    0%,100%{opacity:.92;}
+    47%{opacity:.92;}
+    48%{opacity:.78;}
+    49%{opacity:.95;}
+    72%{opacity:.86;}
+    73%{opacity:.93;}
+  }
+  /* ===== type / rows ===== */
+  .tt-line{
+    font-size:26px;
+    line-height:1.35;
+    letter-spacing:.5px;
+    white-space:pre-wrap;
+    text-shadow:1px 1px 0 #000;
+  }
+  .dbl{
+    font-size:30px;
+    line-height:1.1;
+    font-weight:400;
+    text-shadow:2px 2px 0 #000;
+  }
+  .c-cyan{color:var(--tt-cyan);}
+  .c-yel{color:var(--tt-yellow);}
+  .c-grn{color:var(--tt-green);}
+  .c-mag{color:var(--tt-magenta);}
+  .c-wht{color:var(--tt-white);}
+  .c-red{color:var(--tt-red);}
+  .bg-cyan{background:var(--tt-cyan);color:#000;}
+  .bg-yel{background:var(--tt-yellow);color:#000;}
+  .bg-grn{background:var(--tt-green);color:#000;}
+  .bg-mag{background:var(--tt-magenta);color:#000;}
+  .bg-red{background:var(--tt-red);color:#000;}
+  .bg-wht{background:var(--tt-white);color:#000;}
+  /* header bar */
+  .tt-headbar{
+    display:flex;justify-content:space-between;align-items:center;
+    gap:var(--sp-2);flex-wrap:wrap;
+    padding:0;
+    position:relative;z-index:5;
+  }
+  .tt-headbar .left{display:flex;align-items:baseline;gap:var(--sp-3);flex-wrap:wrap;}
+  .pageno{color:var(--tt-cyan);font-size:28px;text-shadow:2px 2px 0 #000;}
+  .title-dbl{
+    display:inline-block;
+    background:var(--tt-yellow);color:#000;
+    padding:0 9px;
+    font-size:30px;line-height:1.1;
+    text-shadow:none;
+  }
+  .clock{color:var(--tt-white);font-size:24px;text-shadow:1px 1px 0 #000;}
+  .mux{color:var(--tt-green);font-size:18px;letter-spacing:1px;}
+  .ruler{
+    height:8px;width:100%;
+    margin:var(--sp-3) 0 var(--sp-2);
+    background:repeating-linear-gradient(to right,
+      var(--tt-red) 0 12%, var(--tt-yellow) 12% 24%, var(--tt-green) 24% 36%,
+      var(--tt-cyan) 36% 48%, var(--tt-magenta) 48% 60%, var(--tt-white) 60% 72%,
+      var(--tt-red) 72% 84%, var(--tt-yellow) 84% 100%);
+    position:relative;z-index:5;
+  }
+  /* main layout */
+  .tt-body{
+    display:grid;
+    grid-template-columns:1.05fr 1fr;
+    gap:var(--sp-4);
+    position:relative;z-index:5;
+    padding:var(--sp-3) 0 var(--sp-4);
+  }
+  @media (max-width:720px){
+    .tt-body{grid-template-columns:1fr;gap:var(--sp-4);padding:var(--sp-3) 0 var(--sp-4);}
+  }
+  /* ===== jersey panel ===== */
+  .kit-panel{
+    background:var(--tt-blue-deep);
+    border:2px solid #000;
+    padding:var(--sp-3);
+    display:flex;flex-direction:column;align-items:center;
+  }
+  .kit-caption{color:var(--tt-cyan);font-size:22px;margin-bottom:var(--sp-2);text-align:center;}
+  .kit-svg-wrap{width:100%;max-width:330px;margin:var(--sp-1) 0 var(--sp-2);}
+  svg.shirt{width:100%;height:auto;display:block;image-rendering:pixelated;}
+  .kit-meta{
+    width:100%;margin-top:var(--sp-2);
+    font-size:21px;color:var(--tt-yellow);
+    display:flex;justify-content:space-between;
+  }
+  .kit-meta .val{color:var(--tt-white);}
+  /* ===== menu panel ===== */
+  .menu-panel{display:flex;flex-direction:column;gap:var(--sp-1);height:100%;}
+  .menu-head{color:var(--tt-magenta);font-size:22px;margin-bottom:var(--sp-1);}
+  /* numbered menu as a compact single row */
+  .menu-row{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-1);}
+  .menu-item{
+    cursor:pointer;
+    font-size:23px;
+    padding:var(--sp-2) var(--sp-2);
+    display:flex;align-items:center;gap:var(--sp-1);
+    color:var(--tt-white);
+    user-select:none;
+    border:2px solid transparent;
+  }
+  .menu-item .knum{
+    display:inline-block;min-width:24px;text-align:center;
+    background:var(--tt-cyan);color:#000;font-weight:700;
+    padding:0 3px;
+  }
+  .menu-item:hover{background:rgba(255,255,255,.12);}
+  .menu-item.active{background:none;color:var(--tt-white);border-color:#fff;}
+  /* options reveal area */
+  .opts{
+    background:var(--tt-blue-deep);
+    border:2px solid #000;
+    padding:var(--sp-3);
+    margin-top:var(--sp-2);
+    min-height:0;
+    flex:1 1 auto;
+    display:flex;flex-direction:column;
+  }
+  .opts-pane{display:none;}
+  .opts-pane.show{display:flex;flex-direction:column;flex:1;justify-content:space-evenly;gap:var(--sp-2);}
+  .cgroup{display:flex;flex-direction:column;gap:var(--sp-2);}
+  .opts-title{color:var(--tt-yellow);font-size:21px;margin-bottom:var(--sp-1);display:block;}
+  /* compact colour chip grid */
+  .swatch-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(40px,1fr));
+    gap:7px;
+    margin-bottom:0;
+  }
+  .swatch-grid.trim{margin-bottom:0;}
+  .chip{
+    position:relative;height:46px;cursor:pointer;
+    border:2px solid #000;box-shadow:1px 1px 0 #000;
+  }
+  .chip:hover{filter:brightness(1.2);}
+  .chip.sel{outline:3px solid var(--tt-yellow);outline-offset:1px;z-index:2;}
+  /* pattern rows (compact) */
+  .opt-row{
+    cursor:pointer;
+    font-size:21px;
+    padding:var(--sp-1) var(--sp-2);
+    margin:var(--sp-1) 0;
+    display:flex;align-items:center;gap:var(--sp-2);
+    border:2px solid transparent;
+    color:var(--tt-white);
+  }
+  .opt-row:hover{background:rgba(255,255,255,.14);}
+  .opt-row.sel{outline:none;border-color:var(--tt-yellow);}
+  .opt-row.sel::after{content:" <";color:var(--tt-yellow);font-size:21px;}
+  .swatch{
+    width:30px;height:22px;display:inline-block;
+    border:2px solid #000;box-shadow:1px 1px 0 #000;
+    flex:0 0 auto;
+  }
+  .opt-label{flex:1;}
+  /* teletext input rows */
+  .tt-input-row{
+    display:flex;align-items:center;gap:var(--sp-2);
+    margin:var(--sp-1) 0;
+    font-size:23px;
+  }
+  .tt-input-row label{color:var(--tt-green);min-width:92px;}
+  .tt-input{
+    flex:1;
+    background:#000;
+    border:2px solid var(--tt-cyan);
+    color:var(--tt-yellow);
+    font-family:'VT323',monospace;
+    font-size:23px;
+    padding:3px var(--sp-2);
+    letter-spacing:2px;
+    text-transform:uppercase;
+    outline:none;
+  }
+  .tt-input:focus{border-color:var(--tt-yellow);background:#000020;}
+  .tt-input.num{max-width:88px;flex:0 0 auto;text-align:center;}
+  .blinkcur{animation:blink 1s steps(1) infinite;color:var(--tt-yellow);}
+  @keyframes blink{50%{opacity:0;}}
+  .hint{color:var(--tt-cyan);font-size:18px;margin-top:var(--sp-1);}
+  /* fastext bar */
+  .fastext{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:var(--sp-1);
+    position:relative;z-index:5;
+    margin:var(--sp-3) calc(var(--frame-pad) * -1) 0;
+    padding:var(--sp-1) var(--frame-pad) var(--frame-pad);
+    border-top:3px solid #000;
+  }
+  .ft-btn{
+    cursor:pointer;
+    border:none;
+    font-family:'VT323',monospace;
+    font-size:19px;
+    padding:var(--sp-1) var(--sp-1);
+    color:#000;
+    text-align:center;
+    letter-spacing:1px;
+    text-shadow:none;
+  }
+  .ft-red{background:var(--tt-red);}
+  .ft-grn{background:var(--tt-green);}
+  .ft-yel{background:var(--tt-yellow);}
+  .ft-cyan{background:var(--tt-cyan);}
+  .ft-btn:active{filter:brightness(.8);}
+  .subhead{color:var(--tt-cyan);font-size:18px;padding:0;margin-bottom:var(--sp-1);position:relative;z-index:5;}
+  .flashmsg{
+    color:var(--tt-yellow);font-size:18px;min-height:20px;line-height:1.25;
+    padding:0;position:relative;z-index:5;
+  }
+  .flashmsg.on{animation:blink 0.6s steps(1) 4;}
+</style>
+<style>
+
+/* ===== HALFTONE THEME (in colour) ===== */
+body{
+  --paper:#f2ece0;--ink:#15140f;--spot:#d8222a;
+  /* mixed-symbol dither tiles: dot / square / plus / cross */
+  --dither-ink:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'><circle cx='4' cy='4' r='1.7' fill='%2315140f'/><rect x='10.3' y='2.3' width='3.4' height='3.4' fill='%2315140f'/><rect x='3.3' y='9.4' width='1.4' height='5.2' fill='%2315140f'/><rect x='1.4' y='11.3' width='5.2' height='1.4' fill='%2315140f'/><path d='M9.6 9.6L14.4 14.4M14.4 9.6L9.6 14.4' stroke='%2315140f' stroke-width='1.4'/></svg>");
+  --dither-knock:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><defs><mask id='k'><rect width='10' height='10' fill='%23fff'/><circle cx='2.5' cy='2.5' r='2' fill='%23000'/><rect x='5.5' y='0.5' width='4' height='4' fill='%23000'/><rect x='1.9' y='5.2' width='1.2' height='4.4' fill='%23000'/><rect x='0.3' y='6.8' width='4.4' height='1.2' fill='%23000'/><path d='M5.7 5.7L9.3 9.3M9.3 5.7L5.7 9.3' stroke='%23000' stroke-width='1.3'/></mask></defs><rect width='10' height='10' fill='%23f2ece0' mask='url(%23k)'/></svg>");
+  background:var(--paper) !important;color:var(--ink) !important;
+  font-family:"Courier New",monospace !important;image-rendering:auto !important;
+  -webkit-font-smoothing:none;overflow-x:hidden;
+  background-image:none !important;
+}
+/* background is a value-driven flowing symbol field rendered to <canvas id="asciiBg"> */
+#asciiBg{position:fixed;inset:0;z-index:-1;pointer-events:none;display:block;}
+body::before{content:none !important;}
+body::after{content:none !important;}
+.tt-screen{position:relative;z-index:1;background:var(--paper) !important;border:3px solid var(--ink) !important;border-radius:0 !important;
+  box-shadow:10px 10px 0 var(--ink),0 0 0 1px var(--ink) !important;overflow:hidden;
+  background-image:none !important;}
+/* solid screen - no dot overlay */
+.tt-screen::before{background:none !important;display:none !important;}
+.tt-screen::after{background:none !important;animation:none !important;}
+.tt-line,.dbl{text-shadow:none !important;color:var(--ink) !important;}
+.c-cyan,.c-yel,.c-grn,.c-mag,.c-wht,.c-red{color:var(--ink) !important;}
+.pageno{color:var(--ink) !important;font-family:"Arial Black","Impact",sans-serif !important;text-shadow:none !important;}
+.title-dbl{background:var(--ink) !important;color:var(--paper) !important;text-shadow:none !important;font-family:"Arial Black","Impact",sans-serif !important;letter-spacing:1px;border-radius:0;padding:0 10px !important;
+  position:relative;}
+.title-dbl::after{content:"CLUBCALL";position:absolute;left:2px;top:1px;color:var(--spot);z-index:-1;}
+.dbl.c-grn{color:var(--ink) !important;font-family:"Arial Black","Impact",sans-serif !important;}
+.clock{color:var(--ink) !important;font-family:"Courier New",monospace !important;text-shadow:none !important;}
+.mux,.subhead{color:var(--ink) !important;}
+.flashmsg{color:var(--spot) !important;font-weight:bold;}
+/* colour bar: solid ░ shading per colour group, packed edge-to-edge (no fill, no border) */
+.ruler{display:flex !important;align-items:stretch;height:auto !important;min-height:16px;
+  border:none !important;border-radius:0;overflow:hidden;background:transparent !important;line-height:1;}
+.ruler-cell{flex:1 1 0;overflow:hidden;white-space:nowrap;
+  font-family:"Courier New",monospace;font-weight:bold;font-size:15px;line-height:1;letter-spacing:0;}
+.kit-panel,.opts{background:var(--paper) !important;border:3px solid var(--ink) !important;border-radius:0 !important;
+  box-shadow:6px 6px 0 var(--ink) !important;
+  background-image:none !important;}
+.kit-caption{color:var(--ink) !important;font-family:"Arial Black",sans-serif !important;text-transform:uppercase;font-size:11px !important;}
+.kit-meta{color:var(--ink) !important;}.kit-meta .val{color:var(--spot) !important;}
+.menu-head{color:var(--ink) !important;font-family:"Arial Black",sans-serif !important;}
+.menu-item{border-radius:0 !important;color:var(--ink) !important;border:2px solid var(--ink) !important;background:var(--paper) !important;
+  background-image:none;transition:none;}
+.menu-item span{color:var(--ink) !important;}
+.knum{background:var(--ink) !important;color:var(--paper) !important;border-radius:0;}
+.menu-item:hover,.menu-item.active{background:var(--ink) !important;border-color:var(--ink) !important;background-image:none !important;}
+.menu-item:hover span,.menu-item.active span{color:var(--paper) !important;}
+.menu-item:hover .knum,.menu-item.active .knum{background:var(--paper) !important;color:var(--ink) !important;}
+.opts-title{color:var(--ink) !important;font-family:"Arial Black",sans-serif !important;text-transform:uppercase;letter-spacing:.5px;}
+/* colour-picker chips: the colour is rendered AS halftone tone-dots on paper */
+.chip{border-radius:0 !important;border:2px solid var(--ink) !important;box-shadow:2px 2px 0 var(--ink) !important;}
+.chip::after{content:"";position:absolute;inset:0;background:var(--dither-knock);background-size:10px 10px;background-position:0 0;pointer-events:none;}
+.chip.sel{outline:3px solid var(--ink) !important;box-shadow:4px 4px 0 var(--spot) !important;}
+.opt-row{border-radius:0 !important;color:var(--ink) !important;border:2px solid transparent !important;}
+.opt-row:hover{background:var(--ink) !important;color:var(--paper) !important;}
+.opt-row.sel{border-color:var(--ink) !important;background:var(--paper) !important;}
+.opt-row.sel::after{color:var(--spot) !important;}
+.swatch{border-radius:0 !important;border:2px solid var(--ink) !important;position:relative;overflow:hidden;}
+.swatch::after{content:"";position:absolute;inset:0;background:var(--dither-knock);background-size:10px 10px;background-position:0 0;pointer-events:none;}
+.tt-input-row label{color:var(--ink) !important;font-family:"Arial Black",sans-serif !important;}
+.tt-input{background:var(--paper) !important;border:2px solid var(--ink) !important;border-radius:0 !important;color:var(--ink) !important;font-family:"Courier New",monospace !important;box-shadow:inset 2px 2px 0 rgba(0,0,0,.1);}
+.tt-input:focus{background:#fff !important;border-color:var(--spot) !important;}
+.hint{color:var(--ink) !important;}.blinkcur{color:var(--spot) !important;}
+.fastext{border-top:3px solid var(--ink) !important;}
+.ft-btn{border-radius:0 !important;color:var(--ink) !important;font-family:"Arial Black",sans-serif !important;border:2px solid var(--ink) !important;
+  background:var(--paper) !important;background-image:radial-gradient(var(--ink) 16%,transparent 17%) !important;text-shadow:none !important;box-shadow:3px 3px 0 var(--ink);}
+.ft-red{background-size:5px 5px !important;}
+.ft-grn{background-size:8px 8px !important;}
+.ft-yel{background-size:11px 11px !important;}
+.ft-cyan{background-size:14px 14px !important;}
+.ft-btn:hover{background:var(--ink) !important;color:var(--paper) !important;background-image:none !important;}
+/* jersey: the colour is rendered AS halftone tone-dots on paper */
+svg.shirt{filter:none !important;}
+.kit-svg-wrap{position:relative;}
+.kit-svg-wrap::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:var(--dither-knock);background-size:10px 10px;background-position:0 0;}
+svg.shirt text{font-family:"Arial Black",sans-serif !important;}
+
+</style>
+</head>
+<body>
+  <canvas id="asciiBg" aria-hidden="true"></canvas>
+  <main class="tt-screen" role="application" aria-label="Teletext ClubCall kit builder">
+    <!-- ===== HEADER ===== -->
+    <header class="tt-headbar">
+      <div class="left">
+        <span class="pageno">P411</span>
+        <span class="title-dbl">CLUBCALL</span>
+        <span class="dbl c-grn">KIT BUILDER</span>
+      </div>
+      <div style="text-align:right;">
+        <div class="clock" id="clock">--:--:--</div>
+        <div class="mux" id="mux">CEEFAX 2  Tue 16 Jun</div>
+      </div>
+    </header>
+    <div class="ruler"></div>
+    <div class="subhead">CLUBCALL &gt;&gt; LATEST SOCCER &gt;&gt; DESIGN YOUR STRIP</div>
+    <div class="flashmsg" id="flash">SELECT A NUMBERED MENU ITEM TO BEGIN...</div>
+
+    <div class="tt-body">
+      <!-- ===== JERSEY PANEL ===== -->
+      <section class="kit-panel">
+        <div class="kit-caption">*** LIVE KIT PREVIEW ***</div>
+        <div class="kit-svg-wrap">
+          <svg class="shirt" viewBox="0 0 240 260" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" aria-label="Football shirt preview">
+            <defs>
+              <!-- vertical stripes -->
+              <pattern id="pat-stripes" width="32" height="16" patternUnits="userSpaceOnUse">
+                <rect width="32" height="16" fill="var(--body-fill)"/>
+                <rect x="0" width="16" height="16" fill="var(--accent-fill)"/>
+              </pattern>
+              <!-- hoops -->
+              <pattern id="pat-hoops" width="16" height="32" patternUnits="userSpaceOnUse">
+                <rect width="16" height="32" fill="var(--body-fill)"/>
+                <rect y="0" width="16" height="16" fill="var(--accent-fill)"/>
+              </pattern>
+              <!-- halftone / tiger: blocky dot grid -->
+              <pattern id="pat-halftone" width="16" height="16" patternUnits="userSpaceOnUse">
+                <rect width="16" height="16" fill="var(--body-fill)"/>
+                <rect x="0" y="0" width="8" height="8" fill="var(--accent-fill)"/>
+                <rect x="8" y="8" width="8" height="8" fill="var(--accent-fill)"/>
+              </pattern>
+              <!-- sash diagonal -->
+              <pattern id="pat-sash" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                <rect width="40" height="40" fill="var(--body-fill)"/>
+                <rect x="0" width="20" height="40" fill="var(--accent-fill)"/>
+              </pattern>
+            </defs>
+
+            <!-- LEFT SLEEVE (blocky) -->
+            <g id="sleeveL">
+              <rect x="8"  y="40" width="40" height="16" fill="var(--accent-fill)"/>
+              <rect x="16" y="56" width="40" height="16" fill="var(--accent-fill)"/>
+              <rect x="24" y="72" width="40" height="16" fill="var(--accent-fill)"/>
+              <rect x="8"  y="86" width="40" height="10" fill="var(--trim-fill)"/>
+            </g>
+            <!-- RIGHT SLEEVE (blocky) -->
+            <g id="sleeveR">
+              <rect x="192" y="40" width="40" height="16" fill="var(--accent-fill)"/>
+              <rect x="184" y="56" width="40" height="16" fill="var(--accent-fill)"/>
+              <rect x="176" y="72" width="40" height="16" fill="var(--accent-fill)"/>
+              <rect x="192" y="86" width="40" height="10" fill="var(--trim-fill)"/>
+            </g>
+
+            <!-- BODY (blocky stepped torso, filled via pattern var) -->
+            <g id="bodyGroup">
+              <rect x="56"  y="40"  width="128" height="16" fill="var(--body-paint)"/>
+              <rect x="48"  y="56"  width="144" height="160" fill="var(--body-paint)"/>
+              <rect x="56"  y="216" width="128" height="16" fill="var(--body-paint)"/>
+            </g>
+            <!-- hem trim -->
+            <rect x="56" y="228" width="128" height="6" fill="var(--trim-fill)"/>
+
+            <!-- COLLAR (blocky V) -->
+            <g id="collar">
+              <rect x="96"  y="40" width="48" height="8"  fill="var(--accent-fill)"/>
+              <rect x="104" y="48" width="32" height="8"  fill="var(--accent-fill)"/>
+              <rect x="112" y="56" width="16" height="8"  fill="var(--trim-fill)"/>
+              <rect x="96"  y="40" width="48" height="4"  fill="var(--trim-fill)"/>
+            </g>
+
+            <!-- NAME -->
+            <text id="nameText" x="120" y="108" text-anchor="middle"
+                  font-family="'VT323',monospace" font-size="22"
+                  fill="var(--trim-fill)" stroke="#000" stroke-width="0.6"
+                  letter-spacing="2">ZICO</text>
+
+            <!-- HERO NUMBER -->
+            <text id="numShadow" x="123" y="196" text-anchor="middle"
+                  font-family="'VT323',monospace" font-size="110"
+                  fill="#000">10</text>
+            <text id="numText" x="120" y="193" text-anchor="middle"
+                  font-family="'VT323',monospace" font-size="110"
+                  fill="var(--num-fill)" stroke="var(--trim-fill)" stroke-width="3"
+                  paint-order="stroke">10</text>
+          </svg>
+        </div>
+        <div class="kit-meta">
+          <span>NAME:<span class="val" id="metaName"> ZICO</span></span>
+          <span>NO:<span class="val" id="metaNum"> 10</span></span>
+        </div>
+      </section>
+
+      <!-- ===== MENU PANEL ===== -->
+      <section class="menu-panel">
+        <div class="menu-head">&gt;&gt; SELECT OPTION 1-4 &lt;&lt;</div>
+        <div class="menu-row">
+          <div class="menu-item active" data-page="colour"><span class="knum">1</span><span class="c-yel">COLOUR</span></div>
+          <div class="menu-item" data-page="pattern"><span class="knum">2</span><span class="c-grn">PATTERN</span></div>
+          <div class="menu-item" data-page="number"><span class="knum">3</span><span class="c-mag">NUMBER</span></div>
+          <div class="menu-item" data-page="name"><span class="knum">4</span><span class="c-cyan">NAME</span></div>
+        </div>
+
+        <div class="opts">
+          <!-- COLOUR PANE -->
+          <div class="opts-pane show" id="pane-colour">
+            <div class="cgroup">
+              <span class="opts-title">P411.1  BODY COLOUR</span>
+              <div id="bodySwatches"></div>
+            </div>
+            <div class="cgroup">
+              <span class="opts-title">ACCENT / SLEEVE + COLLAR</span>
+              <div id="accentSwatches"></div>
+            </div>
+          </div>
+          <!-- PATTERN PANE -->
+          <div class="opts-pane" id="pane-pattern">
+            <span class="opts-title">P411.2  STRIP PATTERN</span>
+            <div id="patternRows"></div>
+          </div>
+          <!-- NUMBER PANE -->
+          <div class="opts-pane" id="pane-number">
+            <span class="opts-title">P411.3  SQUAD NUMBER</span>
+            <div class="tt-input-row">
+              <label>NUMBER:</label>
+              <input class="tt-input num" id="numInput" type="number" min="1" max="99" value="10" inputmode="numeric">
+              <span class="blinkcur">_</span>
+            </div>
+            <span class="opts-title" style="margin-top:var(--sp-2);">NUMBER + TRIM COLOUR</span>
+            <div id="numColRows"></div>
+            <div class="hint">ENTER 1-99. THIS IS YOUR HERO DIGIT.</div>
+          </div>
+          <!-- NAME PANE -->
+          <div class="opts-pane" id="pane-name">
+            <span class="opts-title">P411.4  PLAYER NAME</span>
+            <div class="tt-input-row">
+              <label>NAME:</label>
+              <input class="tt-input" id="nameInput" type="text" maxlength="12" value="ZICO">
+              <span class="blinkcur">_</span>
+            </div>
+            <div class="hint">UP TO 12 CHARACTERS. SHOWN ABOVE NUMBER.</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ===== FASTEXT BAR ===== -->
+    <nav class="fastext" aria-label="Fastext">
+      <button class="ft-btn ft-red"  id="ft-red">RED  RANDOM</button>
+      <button class="ft-btn ft-grn"  id="ft-grn">GREEN  RESET</button>
+      <button class="ft-btn ft-yel"  id="ft-yel">YELLOW  SAVE</button>
+      <button class="ft-btn ft-cyan" id="ft-cyan">CYAN  INDEX</button>
+    </nav>
+  </main>
+
+<script>
+(function(){
+  "use strict";
+  var root=document.documentElement;
+  var shirt=document.querySelector('svg.shirt');
+
+  // ---- palette ----
+  var SAMBA=[
+    {name:'SAMBA YELLOW',hex:'#FFD400'},
+    {name:'PITCH GREEN',hex:'#1E8A3C'},
+    {name:'COBALT BLUE',hex:'#2230C8'},
+    {name:'PRINT ORANGE',hex:'#E15100'},
+    {name:'INK BLACK',hex:'#111111'},
+    {name:'CREAM',hex:'#F4EFE2'},
+    {name:'NAVY',hex:'#00075F'},
+    {name:'OFF-WHITE',hex:'#EDE8DA'}
+  ];
+  var PATTERNS=[
+    {id:'solid',name:'SOLID'},
+    {id:'stripes',name:'VERTICAL STRIPES'},
+    {id:'hoops',name:'HOOPS'},
+    {id:'sash',name:'SASH'},
+    {id:'halftone',name:'HALFTONE / TIGER'}
+  ];
+  var TRIMS=[
+    {name:'WHITE',hex:'#FFFFFF'},
+    {name:'INK BLACK',hex:'#111111'},
+    {name:'SAMBA YELLOW',hex:'#FFD400'},
+    {name:'CREAM',hex:'#F4EFE2'},
+    {name:'COBALT',hex:'#2230C8'}
+  ];
+
+  // ---- state ----
+  var state={
+    body:'#1E8A3C',
+    accent:'#FFD400',
+    pattern:'solid',
+    trim:'#FFFFFF',
+    num:'10',
+    name:'ZICO'
+  };
+
+  function setVars(){
+    root.style.setProperty('--body-fill',state.body);
+    root.style.setProperty('--accent-fill',state.accent);
+    root.style.setProperty('--trim-fill',state.trim);
+    root.style.setProperty('--num-fill',state.body===state.accent?state.trim:state.accent);
+    // body paint -> solid colour OR pattern url
+    var paint=state.body;
+    if(state.pattern!=='solid'){ paint='url(#pat-'+state.pattern+')'; }
+    root.style.setProperty('--body-paint',paint);
+  }
+
+  function applyNumColour(){
+    // number uses accent normally, but if body==accent fall back to trim for contrast
+    var nf=(state.accent.toLowerCase()===state.body.toLowerCase())?state.trim:state.accent;
+    document.getElementById('numText').setAttribute('fill',nf);
+    document.getElementById('numText').setAttribute('stroke',state.trim);
+  }
+
+  function render(){
+    setVars();
+    applyNumColour();
+    var nm=(state.name||'').toUpperCase();
+    document.getElementById('nameText').textContent=nm;
+    document.getElementById('numText').textContent=state.num;
+    document.getElementById('numShadow').textContent=state.num;
+    document.getElementById('metaName').textContent=' '+(nm||'-');
+    document.getElementById('metaNum').textContent=' '+state.num;
+  }
+
+  // ---- build colour swatch rows ----
+  function buildSwatchSet(containerId,key){
+    var c=document.getElementById(containerId);
+    c.className='swatch-grid';
+    c.innerHTML='';
+    SAMBA.forEach(function(s){
+      var chip=document.createElement('div');
+      chip.className='chip'+(state[key]===s.hex?' sel':'');
+      chip.style.background=s.hex;
+      chip.title=s.name;
+      chip.addEventListener('click',function(){
+        state[key]=s.hex;
+        render();
+        markChip(c,chip);
+        flash((key==='body'?'BODY':'ACCENT')+' SET TO '+s.name);
+      });
+      c.appendChild(chip);
+    });
+  }
+
+  function buildPatternRows(){
+    var c=document.getElementById('patternRows');
+    c.innerHTML='';
+    PATTERNS.forEach(function(p){
+      var row=document.createElement('div');
+      row.className='opt-row'+(state.pattern===p.id?' sel':'');
+      row.innerHTML='<span class="swatch" style="background:'+patPreview(p.id)+'"></span><span class="opt-label">'+p.name+'</span>';
+      row.addEventListener('click',function(){
+        state.pattern=p.id;
+        render();
+        markSel(c,row);
+        flash('PATTERN: '+p.name);
+      });
+      c.appendChild(row);
+    });
+  }
+  function patPreview(id){
+    switch(id){
+      case 'stripes':return 'repeating-linear-gradient(90deg,'+state.accent+' 0 6px,'+state.body+' 6px 12px)';
+      case 'hoops':return 'repeating-linear-gradient(0deg,'+state.accent+' 0 6px,'+state.body+' 6px 12px)';
+      case 'sash':return 'repeating-linear-gradient(45deg,'+state.accent+' 0 6px,'+state.body+' 6px 12px)';
+      case 'halftone':return 'repeating-conic-gradient('+state.accent+' 0 25%,'+state.body+' 0 50%) 0 0/10px 10px';
+      default:return state.body;
+    }
+  }
+
+  function buildTrimRows(){
+    var c=document.getElementById('numColRows');
+    c.className='swatch-grid trim';
+    c.innerHTML='';
+    TRIMS.forEach(function(t){
+      var chip=document.createElement('div');
+      chip.className='chip'+(state.trim===t.hex?' sel':'');
+      chip.style.background=t.hex;
+      chip.title=t.name;
+      chip.addEventListener('click',function(){
+        state.trim=t.hex;
+        render();
+        markChip(c,chip);
+        flash('TRIM SET TO '+t.name);
+      });
+      c.appendChild(chip);
+    });
+  }
+
+  function markSel(container,row){
+    Array.prototype.forEach.call(container.querySelectorAll('.opt-row'),function(r){r.classList.remove('sel');});
+    row.classList.add('sel');
+  }
+  function markChip(container,chip){
+    Array.prototype.forEach.call(container.querySelectorAll('.chip'),function(r){r.classList.remove('sel');});
+    chip.classList.add('sel');
+  }
+
+  // ---- menu paging ----
+  var items=document.querySelectorAll('.menu-item');
+  var panes={
+    colour:document.getElementById('pane-colour'),
+    pattern:document.getElementById('pane-pattern'),
+    number:document.getElementById('pane-number'),
+    name:document.getElementById('pane-name')
+  };
+  function showPage(pg){
+    Array.prototype.forEach.call(items,function(it){
+      it.classList.toggle('active',it.getAttribute('data-page')===pg);
+    });
+    Object.keys(panes).forEach(function(k){
+      panes[k].classList.toggle('show',k===pg);
+    });
+    if(pg==='pattern'){buildPatternRows();}
+    flash('PAGE 411.'+({colour:1,pattern:2,number:3,name:4}[pg])+' LOADED');
+  }
+  Array.prototype.forEach.call(items,function(it){
+    it.addEventListener('click',function(){showPage(it.getAttribute('data-page'));});
+  });
+  // keyboard 1-4
+  document.addEventListener('keydown',function(e){
+    if(document.activeElement&&/INPUT/.test(document.activeElement.tagName))return;
+    var map={'1':'colour','2':'pattern','3':'number','4':'name'};
+    if(map[e.key]){showPage(map[e.key]);}
+  });
+
+  // ---- inputs ----
+  var nameInput=document.getElementById('nameInput');
+  nameInput.addEventListener('input',function(){
+    state.name=nameInput.value;
+    render();
+  });
+  var numInput=document.getElementById('numInput');
+  numInput.addEventListener('input',function(){
+    var v=parseInt(numInput.value,10);
+    if(isNaN(v))v='';
+    else{ if(v<1)v=1; if(v>99)v=99; }
+    if(v!=='')numInput.value=v;
+    state.num=(v==='')?'':String(v);
+    render();
+  });
+  numInput.addEventListener('blur',function(){
+    if(state.num===''){state.num='1';numInput.value='1';render();}
+  });
+
+  // ---- flash msg ----
+  var flashEl=document.getElementById('flash');
+  var flashT;
+  function flash(msg){
+    flashEl.textContent='> '+msg;
+    flashEl.classList.remove('on');void flashEl.offsetWidth;flashEl.classList.add('on');
+    clearTimeout(flashT);
+    flashT=setTimeout(function(){flashEl.textContent='> READY.';},2600);
+  }
+
+  // ---- clock ----
+  var DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function pad(n){return (n<10?'0':'')+n;}
+  function tick(){
+    var d=new Date();
+    document.getElementById('clock').textContent=pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+    document.getElementById('mux').textContent='CEEFAX 2  '+DAYS[d.getDay()]+' '+pad(d.getDate())+' '+MON[d.getMonth()];
+  }
+  tick();setInterval(tick,1000);
+
+  // ---- fastext actions ----
+  function rand(a){return a[Math.floor(Math.random()*a.length)];}
+  document.getElementById('ft-red').addEventListener('click',function(){
+    var b=rand(SAMBA),a=rand(SAMBA);
+    while(a.hex===b.hex){a=rand(SAMBA);}
+    state.body=b.hex;state.accent=a.hex;
+    state.pattern=rand(PATTERNS).id;state.trim=rand(TRIMS).hex;
+    state.num=String(1+Math.floor(Math.random()*99));
+    numInput.value=state.num;
+    refreshAll();flash('RANDOM STRIP GENERATED!');
+  });
+  document.getElementById('ft-grn').addEventListener('click',function(){
+    state={body:'#1E8A3C',accent:'#FFD400',pattern:'solid',trim:'#FFFFFF',num:'10',name:'ZICO'};
+    nameInput.value='ZICO';numInput.value='10';
+    refreshAll();flash('RESET TO DEFAULT KIT');
+  });
+  document.getElementById('ft-yel').addEventListener('click',function(){
+    flash('KIT SAVED: '+(state.name||'-').toUpperCase()+' #'+state.num+' OK');
+  });
+  document.getElementById('ft-cyan').addEventListener('click',function(){
+    showPage('colour');flash('RETURN TO INDEX P411.1');
+  });
+
+  function refreshAll(){
+    buildSwatchSet('bodySwatches','body');
+    buildSwatchSet('accentSwatches','accent');
+    buildPatternRows();
+    buildTrimRows();
+    render();
+  }
+
+  // ---- init ----
+  refreshAll();
+  render();
+})();
+</script>
+<script>
+/* ===== value-driven flowing symbol field (ASCII dither of an animated liquid) ===== */
+(function(){
+  "use strict";
+  var canvas=document.getElementById('asciiBg');
+  if(!canvas||!canvas.getContext)return;
+  var ctx=canvas.getContext('2d');
+  var screenEl=document.querySelector('.tt-screen');
+  var cs=getComputedStyle(document.body);
+  var paper=(cs.getPropertyValue('--paper')||'#f2ece0').trim();
+  var ink=(cs.getPropertyValue('--ink')||'#15140f').trim();
+  var spot=(cs.getPropertyValue('--spot')||'#d8222a').trim();
+  // light -> dark by ink coverage: space, middle-dot, colon, then graded shade blocks
+  var RAMP=[' ','·',':','░','▒','▓'];
+  var CELL=16;
+  var dpr=Math.min(window.devicePixelRatio||1,2);
+  var W,H,cols,rows;
+  function resize(){
+    W=window.innerWidth;H=window.innerHeight;
+    canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);
+    canvas.style.width=W+'px';canvas.style.height=H+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    cols=Math.ceil(W/CELL)+1;rows=Math.ceil(H/CELL)+1;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.font='bold '+CELL+'px "Courier New",monospace';
+  }
+  window.addEventListener('resize',resize);
+  resize();
+  // the flowing liquid value field, in [0,1]
+  function field(i,j,t){
+    var cx=cols*0.5,cy=rows*0.5;
+    var v=Math.sin(i*0.13+t*1.6)
+         +Math.sin(j*0.15-t*1.2)
+         +Math.sin((i+j)*0.08+t*0.9)
+         +Math.sin(Math.sqrt((i-cx)*(i-cx)+(j-cy)*(j-cy))*0.18-t*2.1);
+    return (v/4+1)/2;
+  }
+  function draw(t){
+    ctx.fillStyle=paper;ctx.fillRect(0,0,W,H);
+    var sr=screenEl?screenEl.getBoundingClientRect():null;
+    for(var j=0;j<rows;j++){
+      for(var i=0;i<cols;i++){
+        var px=i*CELL,py=j*CELL;
+        if(sr&&px+CELL>sr.left&&px<sr.right&&py+CELL>sr.top&&py<sr.bottom)continue;
+        var idx=field(i,j,t)*RAMP.length|0;
+        if(idx>=RAMP.length)idx=RAMP.length-1;
+        var ch=RAMP[idx];
+        if(ch===' ')continue;
+        ctx.fillStyle=ink;
+        ctx.fillText(ch,px+CELL*0.5,py+CELL*0.55);
+      }
+    }
+  }
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce){draw(0.6);return;}
+  var t=0;
+  (function loop(){t+=0.0125;draw(t);requestAnimationFrame(loop);})(); // t step = flow speed
+})();
+
+/* ===== divider: a row of dither characters in differently-coloured blocks ===== */
+(function(){
+  "use strict";
+  var ruler=document.querySelector('.ruler');
+  if(!ruler)return;
+  // one colour per group, all rendered with ░ packed edge-to-edge
+  var COLORS=['#d8222a','#E15100','#1E8A3C','#2230C8','#B0188F','#15140f'];
+  var fill=new Array(240).join('░');
+  var frag=document.createDocumentFragment();
+  COLORS.forEach(function(c){
+    var cell=document.createElement('span');
+    cell.className='ruler-cell';
+    cell.style.color=c;
+    cell.textContent=fill;
+    frag.appendChild(cell);
+  });
+  ruler.appendChild(frag);
+})();
+</script>
+</body>
+</html>

@@ -7,15 +7,24 @@ import FadeInText from './components/FadeInText';
 import CommentDemoSection from './components/CommentDemoSection';
 import VariantsDemoSection from './components/VariantsDemoSection';
 import ReferencesDemoSection from './components/ReferencesDemoSection';
-import SketchCircle from './components/SketchCircle';
 import PaperSheet from './components/PaperSheet';
 import PromptInstallButton from './components/PromptInstallButton';
 import InstallAccordion from './components/InstallAccordion';
+import BrowserFrame from './components/BrowserFrame';
+import VariantsShowcase from './components/variantsDemo/VariantsShowcase';
+import { SKEUOMORPHIC_DECK_ID } from './components/variantsDemo/data';
+import { pageBackground } from './lib/background';
 
 const R2_PUBLIC_URL = 'https://releases.rivet.design';
 const RELEASES_LINK = 'https://docs.rivet.design/releases';
 // Try: hide the "New — Try Rivet's MCP in vX.Y" hero badge. Flip to true to restore.
 const SHOW_MCP_BADGE = false;
+// Hide the "Made for people who design." manifesto panel (CodePanel). Flip to
+// true to restore.
+const SHOW_MANIFESTO_PANEL = false;
+// Hide the "Explore lots of design directions" panel (VariantsDemoSection).
+// Flip to true to restore.
+const SHOW_VARIANTS_PANEL = false;
 
 /**
  * Fetch the latest Rivet version string from the R2 release manifest
@@ -183,7 +192,7 @@ const App = () => {
         {/* White card with badge, title, subtitle, CTAs */}
         <FadeInText>
           <div
-            className={`flex h-full flex-col ${SHOW_MCP_BADGE ? 'justify-between' : 'justify-end'} gap-8 rounded-lg border border-divider/20 bg-white px-8 py-10 md:px-12 md:py-12`}
+            className={`flex flex-col items-start gap-5 rounded-lg text-left`}
           >
             {/* Top: New / MCP badge */}
             {SHOW_MCP_BADGE && (
@@ -203,22 +212,12 @@ const App = () => {
               </a>
             )}
 
-            {/* Bottom: Title, subtitle, CTAs */}
-            <div className="flex flex-col gap-6">
-              <span className="type-display text-[40px] font-normal leading-[1.05] text-black md:text-[56px] lg:text-[64px]">
-                <span className="relative inline-block">
-                  Direct
-                  <SketchCircle />
-                </span>
-                , don&apos;t implement.
+            {/* Title only, centered. The subtitle + CTA now live below the
+                UI variants shell; the nav also carries a CTA. */}
+            <div className="flex flex-col items-start gap-4">
+              <span className="type-display text-[clamp(2.5rem,6.5vw,8rem)] font-normal normal-case leading-[1.0] text-black">
+                Direct, don&apos;t implement.
               </span>
-              <span className="text-[16px] font-normal leading-relaxed text-divider-muted md:text-[18px]">
-                Rivet understands your references, and then explores dozens of
-                design directions with you.
-              </span>
-              <div className="mt-2 hidden flex-row flex-wrap items-center gap-3 md:flex">
-                <PromptInstallButton />
-              </div>
             </div>
           </div>
         </FadeInText>
@@ -228,18 +227,49 @@ const App = () => {
   return (
     <>
       <Toaster position="bottom-right" theme="light" duration={8000} />
-      <div className="flex min-h-screen flex-col gap-12 bg-main px-[5vw]">
+      {/* Paper texture behind all content. Applied to the scrolling container
+          (not fixed) so it travels with the page; tiled vertically to cover the
+          full scroll height at the same horizontal scale across the viewport. */}
+      <div
+        className={`flex min-h-screen flex-col gap-8 px-[5vw] ${pageBackground.className}`}
+        style={pageBackground.style}
+      >
         <NavBar />
-        <div className="flex w-full items-start justify-start md:items-center md:justify-center">
+        <div className="flex w-full items-start justify-start">
           {renderHeroText()}
         </div>
+
+        <div
+          className="flex w-full justify-center rounded-xl bg-cover bg-center p-4 sm:p-6 md:p-10"
+          style={{ backgroundImage: "url('/images/panel-backdrop.png')" }}
+        >
+          <BrowserFrame url="localhost:4000" draggable className="w-full max-w-6xl">
+            <VariantsShowcase
+              heightClassName="h-[58vh] min-h-[440px]"
+              autoPlay={false}
+              initialVariantId={SKEUOMORPHIC_DECK_ID}
+            />
+          </BrowserFrame>
+        </div>
+
+        {/* Subtitle + CTA, moved below the fold to sit under the UI variants
+            shell. */}
+        <FadeInText>
+          <div className="flex flex-col items-center gap-5 py-12 text-center md:py-20">
+            <span className="max-w-2xl text-[20px] font-normal leading-relaxed text-black md:text-[26px]">
+              Rivet understands your references, and then explores dozens of
+              design directions with you.
+            </span>
+            <PromptInstallButton size="lg" />
+          </div>
+        </FadeInText>
 
         <div className="-mx-[5vw] flex flex-col gap-12" id="demo-panel">
           {/* <WorkflowPanels /> */}
           <ReferencesDemoSection />
-          <VariantsDemoSection />
+          {SHOW_VARIANTS_PANEL && <VariantsDemoSection />}
           <CommentDemoSection />
-          <CodePanel />
+          {SHOW_MANIFESTO_PANEL && <CodePanel />}
         </div>
         {/* <FeaturePanel /> */}
         {renderDownloadPanel()}

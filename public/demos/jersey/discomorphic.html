@@ -1,0 +1,1156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P411 CLUBCALL KIT BUILDER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --tt-blue:#0000AA;
+    --tt-blue-deep:#0a4a22;
+    --tt-cyan:#00FFFF;
+    --tt-yellow:#FFFF00;
+    --tt-green:#00FF00;
+    --tt-magenta:#FF00FF;
+    --tt-red:#FF3030;
+    --tt-white:#FFFFFF;
+    --tt-black:#000000;
+    /* samba kit palette */
+    --samba-yellow:#FFD400;
+    --pitch-green:#1E8A3C;
+    --cobalt:#2230C8;
+    --orange:#E15100;
+    --ink:#111111;
+    --cream:#F4EFE2;
+    --offwhite:#EDE8DA;
+    /* spacing scale */
+    --sp-1:5px;
+    --sp-2:9px;
+    --sp-3:13px;
+    --sp-4:18px;
+    --sp-5:24px;
+    --frame-pad:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:#06330f;
+    font-family:'VT323',monospace;
+    color:var(--tt-white);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    padding:var(--sp-3);
+    -webkit-font-smoothing:none;
+    image-rendering:pixelated;
+  }
+  /* the teletext screen */
+  .tt-screen{
+    position:relative;
+    width:100%;
+    max-width:880px;
+    background:
+      radial-gradient(circle at 50% 50%, transparent 60px, rgba(255,255,255,.22) 61px, rgba(255,255,255,.22) 64px, transparent 65px),
+      linear-gradient(transparent calc(50% - 1.5px), rgba(255,255,255,.18) calc(50% - 1.5px), rgba(255,255,255,.18) calc(50% + 1.5px), transparent calc(50% + 1.5px)),
+      repeating-linear-gradient(180deg, #157a38 0 40px, #11682f 40px 80px);
+    border:4px solid #fff;
+    box-shadow:0 0 0 2px rgba(0,0,0,.45);
+    overflow:hidden;
+    padding:var(--frame-pad) var(--frame-pad) 0;
+  }
+  /* scanlines */
+  .tt-screen::before{
+    content:"";
+    position:absolute;inset:0;
+    background:repeating-linear-gradient(to bottom,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 2px,
+      rgba(0,0,0,.22) 3px,
+      rgba(0,0,0,.22) 4px);
+    pointer-events:none;
+    z-index:60;
+    mix-blend-mode:multiply;
+  }
+  /* vignette + flicker */
+  .tt-screen::after{
+    content:"";
+    position:absolute;inset:0;
+    background:radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,40,.55) 100%);
+    pointer-events:none;
+    z-index:61;
+    animation:flick 5.5s infinite steps(60);
+  }
+  @keyframes flick{
+    0%,100%{opacity:.92;}
+    47%{opacity:.92;}
+    48%{opacity:.78;}
+    49%{opacity:.95;}
+    72%{opacity:.86;}
+    73%{opacity:.93;}
+  }
+  /* ===== type / rows ===== */
+  .tt-line{
+    font-size:26px;
+    line-height:1.35;
+    letter-spacing:.5px;
+    white-space:pre-wrap;
+    text-shadow:1px 1px 0 #000;
+  }
+  .dbl{
+    font-size:30px;
+    line-height:1.1;
+    font-weight:400;
+    text-shadow:2px 2px 0 #000;
+  }
+  .c-cyan{color:var(--tt-cyan);}
+  .c-yel{color:var(--tt-yellow);}
+  .c-grn{color:var(--tt-green);}
+  .c-mag{color:var(--tt-magenta);}
+  .c-wht{color:var(--tt-white);}
+  .c-red{color:var(--tt-red);}
+  .bg-cyan{background:var(--tt-cyan);color:#000;}
+  .bg-yel{background:var(--tt-yellow);color:#000;}
+  .bg-grn{background:var(--tt-green);color:#000;}
+  .bg-mag{background:var(--tt-magenta);color:#000;}
+  .bg-red{background:var(--tt-red);color:#000;}
+  .bg-wht{background:var(--tt-white);color:#000;}
+  /* header bar */
+  .tt-headbar{
+    display:flex;justify-content:space-between;align-items:center;
+    gap:var(--sp-2);flex-wrap:wrap;
+    padding:0;
+    position:relative;z-index:5;
+  }
+  .tt-headbar .left{display:flex;align-items:baseline;gap:var(--sp-3);flex-wrap:wrap;}
+  .pageno{color:var(--tt-cyan);font-size:28px;text-shadow:2px 2px 0 #000;}
+  .title-dbl{
+    display:inline-block;
+    background:var(--tt-yellow);color:#000;
+    padding:0 9px;
+    font-size:30px;line-height:1.1;
+    text-shadow:none;
+  }
+  .clock{color:var(--tt-white);font-size:24px;text-shadow:1px 1px 0 #000;}
+  .mux{color:var(--tt-green);font-size:18px;letter-spacing:1px;}
+  .ruler{
+    height:8px;width:100%;
+    margin:var(--sp-3) 0 var(--sp-2);
+    background:repeating-linear-gradient(to right,
+      var(--tt-red) 0 12%, var(--tt-yellow) 12% 24%, var(--tt-green) 24% 36%,
+      var(--tt-cyan) 36% 48%, var(--tt-magenta) 48% 60%, var(--tt-white) 60% 72%,
+      var(--tt-red) 72% 84%, var(--tt-yellow) 84% 100%);
+    position:relative;z-index:5;
+  }
+  /* main layout */
+  .tt-body{
+    display:grid;
+    grid-template-columns:1.05fr 1fr;
+    gap:var(--sp-4);
+    position:relative;z-index:5;
+    padding:var(--sp-3) 0 var(--sp-4);
+  }
+  @media (max-width:720px){
+    .tt-body{grid-template-columns:1fr;gap:var(--sp-4);padding:var(--sp-3) 0 var(--sp-4);}
+  }
+  /* ===== jersey panel ===== */
+  .kit-panel{
+    background:var(--tt-blue-deep);
+    border:2px solid #000;
+    padding:var(--sp-3);
+    display:flex;flex-direction:column;align-items:center;
+  }
+  .kit-caption{color:var(--tt-cyan);font-size:22px;margin-bottom:var(--sp-2);text-align:center;}
+  .kit-svg-wrap{width:100%;max-width:330px;margin:var(--sp-1) 0 var(--sp-2);}
+  svg.shirt{width:100%;height:auto;display:block;image-rendering:pixelated;}
+  .kit-meta{
+    width:100%;margin-top:var(--sp-2);
+    font-size:21px;color:var(--tt-yellow);
+    display:flex;justify-content:space-between;
+  }
+  .kit-meta .val{color:var(--tt-white);}
+  /* ===== menu panel ===== */
+  .menu-panel{display:flex;flex-direction:column;gap:var(--sp-1);height:100%;}
+  .menu-head{color:var(--tt-magenta);font-size:22px;margin-bottom:var(--sp-1);}
+  /* numbered menu as a compact single row */
+  .menu-row{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-1);}
+  .menu-item{
+    cursor:pointer;
+    font-size:23px;
+    padding:var(--sp-2) var(--sp-2);
+    display:flex;align-items:center;gap:var(--sp-1);
+    color:var(--tt-white);
+    user-select:none;
+    border:2px solid transparent;
+  }
+  .menu-item .knum{
+    display:inline-block;min-width:24px;text-align:center;
+    background:var(--tt-cyan);color:#000;font-weight:700;
+    padding:0 3px;
+  }
+  .menu-item:hover{background:rgba(255,255,255,.12);}
+  .menu-item.active{background:none;color:var(--tt-white);border-color:#fff;}
+  /* options reveal area */
+  .opts{
+    background:var(--tt-blue-deep);
+    border:2px solid #000;
+    padding:var(--sp-3);
+    margin-top:var(--sp-2);
+    min-height:0;
+    flex:1 1 auto;
+    display:flex;flex-direction:column;
+  }
+  .opts-pane{display:none;}
+  .opts-pane.show{display:flex;flex-direction:column;flex:1;justify-content:space-evenly;gap:var(--sp-2);}
+  .cgroup{display:flex;flex-direction:column;gap:var(--sp-2);}
+  .opts-title{color:var(--tt-yellow);font-size:21px;margin-bottom:var(--sp-1);display:block;}
+  /* compact colour chip grid */
+  .swatch-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(40px,1fr));
+    gap:7px;
+    margin-bottom:0;
+  }
+  .swatch-grid.trim{margin-bottom:0;}
+  .chip{
+    position:relative;height:46px;cursor:pointer;
+    border:2px solid #000;box-shadow:1px 1px 0 #000;
+  }
+  .chip:hover{filter:brightness(1.2);}
+  .chip.sel{outline:3px solid var(--tt-yellow);outline-offset:1px;z-index:2;}
+  /* pattern rows (compact) */
+  .opt-row{
+    cursor:pointer;
+    font-size:21px;
+    padding:var(--sp-1) var(--sp-2);
+    margin:var(--sp-1) 0;
+    display:flex;align-items:center;gap:var(--sp-2);
+    border:2px solid transparent;
+    color:var(--tt-white);
+  }
+  .opt-row:hover{background:rgba(255,255,255,.14);}
+  .opt-row.sel{outline:none;border-color:var(--tt-yellow);}
+  .opt-row.sel::after{content:" <";color:var(--tt-yellow);font-size:21px;}
+  .swatch{
+    width:30px;height:22px;display:inline-block;
+    border:2px solid #000;box-shadow:1px 1px 0 #000;
+    flex:0 0 auto;
+  }
+  .opt-label{flex:1;}
+  /* teletext input rows */
+  .tt-input-row{
+    display:flex;align-items:center;gap:var(--sp-2);
+    margin:var(--sp-1) 0;
+    font-size:23px;
+  }
+  .tt-input-row label{color:var(--tt-green);min-width:92px;}
+  .tt-input{
+    flex:1;
+    background:#000;
+    border:2px solid var(--tt-cyan);
+    color:var(--tt-yellow);
+    font-family:'VT323',monospace;
+    font-size:23px;
+    padding:3px var(--sp-2);
+    letter-spacing:2px;
+    text-transform:uppercase;
+    outline:none;
+  }
+  .tt-input:focus{border-color:var(--tt-yellow);background:#000020;}
+  .tt-input.num{max-width:88px;flex:0 0 auto;text-align:center;}
+  .blinkcur{animation:blink 1s steps(1) infinite;color:var(--tt-yellow);}
+  @keyframes blink{50%{opacity:0;}}
+  .hint{color:var(--tt-cyan);font-size:18px;margin-top:var(--sp-1);}
+  /* fastext bar */
+  .fastext{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:var(--sp-1);
+    position:relative;z-index:5;
+    margin:var(--sp-3) calc(var(--frame-pad) * -1) 0;
+    padding:var(--sp-1) var(--frame-pad) var(--frame-pad);
+    border-top:3px solid #000;
+  }
+  .ft-btn{
+    cursor:pointer;
+    border:none;
+    font-family:'VT323',monospace;
+    font-size:19px;
+    padding:var(--sp-1) var(--sp-1);
+    color:#000;
+    text-align:center;
+    letter-spacing:1px;
+    text-shadow:none;
+  }
+  .ft-red{background:var(--tt-red);}
+  .ft-grn{background:var(--tt-green);}
+  .ft-yel{background:var(--tt-yellow);}
+  .ft-cyan{background:var(--tt-cyan);}
+  .ft-btn:active{filter:brightness(.8);}
+  .subhead{color:var(--tt-cyan);font-size:18px;padding:0;margin-bottom:var(--sp-1);position:relative;z-index:5;}
+  .flashmsg{
+    color:var(--tt-yellow);font-size:18px;min-height:20px;line-height:1.25;
+    padding:0;position:relative;z-index:5;
+  }
+  .flashmsg.on{animation:blink 0.6s steps(1) 4;}
+</style>
+<style>
+
+/* ===== DISCO-IMMERSIVE UI (blends into the mosaic) ===== */
+:root{
+  --ink:#ffffff;
+  --muted:#d3cdea;
+  --accent:#c9a8ff;
+  --line:rgba(255,255,255,.18);
+  --sh:0 1px 4px rgba(0,0,0,.85);
+}
+body{
+  background-color:#3a0c16 !important;
+  /* wine-red velvet: fine fabric-nap noise blended over deep burgundy gradients
+     with a soft top sheen and a dark vignette toward the edges */
+  background-image:
+    url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='200'%20height='200'%3E%3Cfilter%20id='v'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.5'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23v)'/%3E%3C/svg%3E"),
+    radial-gradient(140% 110% at 50% -15%, rgba(185,52,72,.6), rgba(185,52,72,0) 55%),
+    radial-gradient(125% 100% at 50% 120%, rgba(5,1,3,.92), rgba(5,1,3,0) 60%),
+    linear-gradient(155deg, #74182a 0%, #481020 55%, #2b0811 100%) !important;
+  background-size:200px 200px, 100% 100%, 100% 100%, 100% 100% !important;
+  background-repeat:repeat, no-repeat, no-repeat, no-repeat !important;
+  background-position:center, center, center, center !important;
+  background-attachment:fixed, fixed, fixed, fixed !important;
+  background-blend-mode:overlay, screen, multiply, normal !important;
+  color:var(--ink) !important;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif !important;
+  image-rendering:auto !important;
+  -webkit-font-smoothing:antialiased;
+  align-items:center !important;
+  padding:40px 20px !important;
+  overflow-x:hidden;
+}
+/* disco-tile texture as the page background (canvas injected by JS) — full,
+   bright mosaic; the UI is inlaid into this same surface */
+#discoBg{position:fixed;top:0;left:0;z-index:0;pointer-events:none;filter:saturate(1.12);}
+/* no card — the UI floats directly on the mosaic */
+.tt-screen{
+  position:relative;z-index:1;
+  background:transparent !important;
+  border:none !important;border-radius:0 !important;box-shadow:none !important;
+  padding:6px 8px 0 !important;
+  overflow:visible !important;
+  animation:none !important;
+}
+.tt-screen::before,.tt-screen::after{content:none !important;background:none !important;animation:none !important;display:none !important;}
+/* ---- header ---- */
+.tt-headbar .left{align-items:center !important;gap:14px !important;}
+.pageno{color:#fff !important;font-size:18px !important;font-weight:800;letter-spacing:.04em;text-shadow:0 2px 6px rgba(0,0,0,.85) !important;}
+.clock{color:#fff !important;font-size:14px !important;text-shadow:var(--sh) !important;font-variant-numeric:tabular-nums;}
+.mux{color:#e7defc !important;font-size:12px !important;letter-spacing:.04em;text-shadow:var(--sh) !important;}
+/* plain white header titles, no texture */
+.tt-headbar .title-dbl,.tt-headbar .dbl{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif !important;
+  font-weight:800 !important;font-size:30px !important;letter-spacing:.01em;
+  background:none !important;color:#fff !important;
+  padding:0 !important;border:none !important;box-shadow:none !important;
+  text-shadow:0 1px 4px rgba(0,0,0,.55) !important;
+}
+/* miscellaneous teletext text removed for a clean disco header */
+.pageno,.clock,.mux,.subhead,.flashmsg,.ruler,.menu-head,.kit-caption{display:none !important;}
+/* ---- dividers / status ---- */
+.ruler{height:3px !important;margin:14px 0 12px !important;border-radius:99px;opacity:.9;
+  background:linear-gradient(90deg,#ff2cc4,#22d3ee,#f472b6,#facc15,#7c4dff,#ff2cc4) !important;box-shadow:0 0 14px rgba(255,255,255,.45) !important;}
+.subhead{color:#e7defc !important;font-size:12px !important;letter-spacing:.06em;text-transform:uppercase;text-shadow:var(--sh) !important;}
+.flashmsg{color:#ffe9a8 !important;font-size:13px !important;min-height:18px;text-shadow:var(--sh) !important;}
+.flashmsg.on{animation:none !important;}
+.tt-body{gap:20px !important;padding:14px 0 18px !important;}
+/* ---- jersey: inlaid into the mosaic (no box); shirt rendered in disco tiles ---- */
+.kit-panel{
+  background:transparent !important;
+  border:none !important;
+  border-radius:16px !important;
+  padding:14px 10px !important;
+  box-shadow:inset 0 0 36px rgba(0,0,0,.35) !important;
+  isolation:isolate;
+}
+.kit-svg-wrap{position:relative;max-width:300px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.55));}
+.kit-svg-wrap::before{content:none !important;background:none !important;display:none !important;}
+.kit-svg-wrap svg{display:block;}
+/* disco-tile overlay imprinted on the shirt; CSS-masked to the shirt shape so
+   the mosaic background shows around it — the shirt looks embedded in the surface */
+.jersey-disco{position:absolute;top:0;left:0;pointer-events:none;mix-blend-mode:overlay;}
+.kit-meta{color:#fff !important;font-size:14px !important;font-weight:700 !important;margin-top:auto !important;padding-top:26px !important;text-shadow:0 0 3px #000, 0 1px 5px #000 !important;}
+.kit-meta .val{color:#fff !important;font-weight:800;}
+/* ---- 4 options: white disco-tile blocks, black text, no numbers ---- */
+.menu-row{gap:8px !important;}
+.menu-item{
+  position:relative;isolation:isolate;overflow:hidden;
+  background-color:#f5f5f9 !important;
+  background-image:linear-gradient(rgba(255,255,255,.55),rgba(255,255,255,.55)),var(--disco-tex) !important;
+  background-size:auto, 120px 120px !important;background-position:center, center !important;background-attachment:scroll, fixed !important;
+  border:1px solid rgba(255,255,255,.75) !important;border-radius:11px !important;
+  color:#000 !important;font-size:13px !important;font-weight:800;padding:13px 8px !important;justify-content:center;gap:0 !important;
+  text-shadow:0 1px 1px rgba(255,255,255,.6) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95), inset 0 -5px 12px rgba(0,0,0,.22), 0 2px 7px rgba(0,0,0,.35) !important;transition:filter .12s;
+}
+.menu-item::before{display:none !important;}
+.menu-item span{position:relative;z-index:1;color:#000 !important;text-shadow:0 1px 1px rgba(255,255,255,.55) !important;letter-spacing:.02em;}
+.menu-item .knum{display:none !important;}
+.menu-item:hover{filter:brightness(1.04) contrast(1.05);}
+.menu-item.active{border-color:#fff !important;box-shadow:0 0 0 2px #fff, 0 0 22px rgba(201,168,255,.95) !important;}
+/* ---- options / colour block: same transparent surface as the jersey block ---- */
+.opts{background:transparent !important;border:none !important;border-radius:16px !important;padding:16px !important;margin-top:10px !important;animation:none !important;
+  box-shadow:inset 0 0 36px rgba(0,0,0,.35) !important;}
+.opts-title{color:#fff !important;font-size:12px !important;letter-spacing:.06em;text-transform:uppercase;text-shadow:0 0 3px #000, 0 0 6px #000, 0 1px 2px #000 !important;margin-bottom:8px;}
+.swatch-grid{grid-template-columns:repeat(4,1fr) !important;gap:10px !important;}
+/* colour chips: bigger colour gems inlaid into the mosaic (4 per row, shared tile grid) */
+.chip{position:relative;isolation:isolate;overflow:hidden;border-radius:10px !important;border:1px solid rgba(0,0,0,.45) !important;height:58px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5), inset 0 -4px 10px rgba(0,0,0,.5) !important;}
+.chip::after{content:"";position:absolute;inset:0;background-image:var(--disco-tex);background-size:120px 120px;background-attachment:fixed;background-position:center;mix-blend-mode:overlay;pointer-events:none;}
+.chip.sel{outline:3px solid #fff !important;outline-offset:1px;box-shadow:inset 0 1px 0 rgba(255,255,255,.45), 0 0 16px rgba(255,255,255,.75) !important;}
+.opt-row{border-radius:9px !important;color:#fff !important;font-size:14px !important;border:1px solid transparent !important;padding:8px 10px !important;text-shadow:0 1px 3px rgba(0,0,0,.85);}
+.opt-row:hover{background:rgba(255,255,255,.12) !important;}
+.opt-row.sel{border-color:#fff !important;background:rgba(255,255,255,.1) !important;box-shadow:none !important;}
+.opt-row.sel::after{color:#ffe9a8 !important;}
+/* pattern preview swatches also share the inlaid tile grid */
+.swatch{position:relative;isolation:isolate;overflow:hidden;border-radius:4px !important;border:1px solid rgba(0,0,0,.4) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4) !important;}
+.swatch::after{content:"";position:absolute;inset:0;background-image:var(--disco-tex);background-size:120px 120px;background-attachment:fixed;background-position:center;mix-blend-mode:overlay;pointer-events:none;}
+/* ---- inputs ---- */
+.tt-input-row label{color:#cfc9e6 !important;font-size:13px !important;}
+.tt-input{background:rgba(0,0,0,.55) !important;border:1px solid rgba(255,255,255,.28) !important;border-radius:9px !important;color:#fff !important;
+  font-family:inherit !important;font-size:15px !important;letter-spacing:normal !important;text-transform:uppercase;box-shadow:none !important;padding:8px 10px !important;}
+.tt-input:focus{border-color:#c9a8ff !important;background:rgba(0,0,0,.65) !important;box-shadow:0 0 0 3px rgba(201,168,255,.25) !important;}
+.tt-input.num{text-align:center;}
+.hint{color:#bdb4d6 !important;font-size:12px !important;}
+.blinkcur{display:none !important;}
+/* ---- fastext buttons inlaid into the surface ---- */
+.fastext{gap:8px !important;border-top:none !important;margin:14px 0 0 !important;padding:8px 0 8px !important;}
+.ft-btn{position:relative;isolation:isolate;overflow:hidden;border-radius:11px !important;color:#fff !important;font-family:inherit !important;font-weight:800;font-size:13px !important;
+  padding:12px 8px !important;border:1px solid rgba(0,0,0,.4) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35), inset 0 -4px 10px rgba(0,0,0,.5) !important;text-shadow:0 1px 3px rgba(0,0,0,.75) !important;letter-spacing:.02em;}
+.ft-btn::before{content:"";position:absolute;inset:0;background-image:var(--disco-tex);background-size:120px 120px;background-attachment:fixed;background-position:center;mix-blend-mode:overlay;pointer-events:none;}
+.ft-btn:hover{filter:brightness(1.12) !important;}
+.ft-red{background:#e11d6b !important;}
+.ft-grn{background:#16a34a !important;}
+.ft-yel{background:#d97706 !important;}
+.ft-cyan{background:#0891b2 !important;}
+
+</style>
+</head>
+<body>
+  <main class="tt-screen" role="application" aria-label="Teletext ClubCall kit builder">
+    <!-- ===== HEADER ===== -->
+    <header class="tt-headbar">
+      <div class="left">
+        <span class="pageno">P411</span>
+        <span class="title-dbl">CLUBCALL</span>
+        <span class="dbl c-grn">KIT BUILDER</span>
+      </div>
+      <div style="text-align:right;">
+        <div class="clock" id="clock">--:--:--</div>
+        <div class="mux" id="mux">CEEFAX 2  Tue 16 Jun</div>
+      </div>
+    </header>
+    <div class="ruler"></div>
+    <div class="subhead">CLUBCALL &gt;&gt; LATEST SOCCER &gt;&gt; DESIGN YOUR STRIP</div>
+    <div class="flashmsg" id="flash">SELECT A NUMBERED MENU ITEM TO BEGIN...</div>
+
+    <div class="tt-body">
+      <!-- ===== JERSEY PANEL ===== -->
+      <section class="kit-panel">
+        <div class="kit-caption">*** LIVE KIT PREVIEW ***</div>
+        <div class="kit-svg-wrap">
+          <svg class="shirt" viewBox="0 0 240 260" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" aria-label="Football shirt preview">
+            <defs>
+              <!-- vertical stripes -->
+              <pattern id="pat-stripes" width="32" height="16" patternUnits="userSpaceOnUse">
+                <rect width="32" height="16" fill="var(--body-fill)"/>
+                <rect x="0" width="16" height="16" fill="var(--accent-fill)"/>
+              </pattern>
+              <!-- hoops -->
+              <pattern id="pat-hoops" width="16" height="32" patternUnits="userSpaceOnUse">
+                <rect width="16" height="32" fill="var(--body-fill)"/>
+                <rect y="0" width="16" height="16" fill="var(--accent-fill)"/>
+              </pattern>
+              <!-- halftone / tiger: blocky dot grid -->
+              <pattern id="pat-halftone" width="16" height="16" patternUnits="userSpaceOnUse">
+                <rect width="16" height="16" fill="var(--body-fill)"/>
+                <rect x="0" y="0" width="8" height="8" fill="var(--accent-fill)"/>
+                <rect x="8" y="8" width="8" height="8" fill="var(--accent-fill)"/>
+              </pattern>
+              <!-- sash diagonal -->
+              <pattern id="pat-sash" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                <rect width="40" height="40" fill="var(--body-fill)"/>
+                <rect x="0" width="20" height="40" fill="var(--accent-fill)"/>
+              </pattern>
+            </defs>
+
+            <!-- LEFT SLEEVE (blocky) -->
+            <g id="sleeveL">
+              <rect x="8"  y="40" width="40" height="16" fill="var(--accent-fill)"/>
+              <rect x="16" y="56" width="40" height="16" fill="var(--accent-fill)"/>
+              <rect x="24" y="72" width="40" height="16" fill="var(--accent-fill)"/>
+              <rect x="8"  y="86" width="40" height="10" fill="var(--trim-fill)"/>
+            </g>
+            <!-- RIGHT SLEEVE (blocky) -->
+            <g id="sleeveR">
+              <rect x="192" y="40" width="40" height="16" fill="var(--accent-fill)"/>
+              <rect x="184" y="56" width="40" height="16" fill="var(--accent-fill)"/>
+              <rect x="176" y="72" width="40" height="16" fill="var(--accent-fill)"/>
+              <rect x="192" y="86" width="40" height="10" fill="var(--trim-fill)"/>
+            </g>
+
+            <!-- BODY (blocky stepped torso, filled via pattern var) -->
+            <g id="bodyGroup">
+              <rect x="56"  y="40"  width="128" height="16" fill="var(--body-paint)"/>
+              <rect x="48"  y="56"  width="144" height="160" fill="var(--body-paint)"/>
+              <rect x="56"  y="216" width="128" height="16" fill="var(--body-paint)"/>
+            </g>
+            <!-- hem trim -->
+            <rect x="56" y="228" width="128" height="6" fill="var(--trim-fill)"/>
+
+            <!-- COLLAR (blocky V) -->
+            <g id="collar">
+              <rect x="96"  y="40" width="48" height="8"  fill="var(--accent-fill)"/>
+              <rect x="104" y="48" width="32" height="8"  fill="var(--accent-fill)"/>
+              <rect x="112" y="56" width="16" height="8"  fill="var(--trim-fill)"/>
+              <rect x="96"  y="40" width="48" height="4"  fill="var(--trim-fill)"/>
+            </g>
+
+            <!-- NAME -->
+            <text id="nameText" x="120" y="108" text-anchor="middle"
+                  font-family="'VT323',monospace" font-size="22"
+                  fill="var(--trim-fill)" stroke="#000" stroke-width="0.6"
+                  letter-spacing="2">ZICO</text>
+
+            <!-- HERO NUMBER -->
+            <text id="numShadow" x="123" y="196" text-anchor="middle"
+                  font-family="'VT323',monospace" font-size="110"
+                  fill="#000">10</text>
+            <text id="numText" x="120" y="193" text-anchor="middle"
+                  font-family="'VT323',monospace" font-size="110"
+                  fill="var(--num-fill)" stroke="var(--trim-fill)" stroke-width="3"
+                  paint-order="stroke">10</text>
+          </svg>
+        </div>
+        <div class="kit-meta">
+          <span>NAME:<span class="val" id="metaName"> ZICO</span></span>
+          <span>NO:<span class="val" id="metaNum"> 10</span></span>
+        </div>
+      </section>
+
+      <!-- ===== MENU PANEL ===== -->
+      <section class="menu-panel">
+        <div class="menu-head">&gt;&gt; SELECT OPTION 1-4 &lt;&lt;</div>
+        <div class="menu-row">
+          <div class="menu-item active" data-page="colour"><span class="knum">1</span><span class="c-yel">COLOUR</span></div>
+          <div class="menu-item" data-page="pattern"><span class="knum">2</span><span class="c-grn">PATTERN</span></div>
+          <div class="menu-item" data-page="number"><span class="knum">3</span><span class="c-mag">NUMBER</span></div>
+          <div class="menu-item" data-page="name"><span class="knum">4</span><span class="c-cyan">NAME</span></div>
+        </div>
+
+        <div class="opts">
+          <!-- COLOUR PANE -->
+          <div class="opts-pane show" id="pane-colour">
+            <div class="cgroup">
+              <span class="opts-title">BODY COLOUR</span>
+              <div id="bodySwatches"></div>
+            </div>
+            <div class="cgroup">
+              <span class="opts-title">ACCENT / SLEEVE + COLLAR</span>
+              <div id="accentSwatches"></div>
+            </div>
+          </div>
+          <!-- PATTERN PANE -->
+          <div class="opts-pane" id="pane-pattern">
+            <span class="opts-title">STRIP PATTERN</span>
+            <div id="patternRows"></div>
+          </div>
+          <!-- NUMBER PANE -->
+          <div class="opts-pane" id="pane-number">
+            <span class="opts-title">SQUAD NUMBER</span>
+            <div class="tt-input-row">
+              <label>NUMBER:</label>
+              <input class="tt-input num" id="numInput" type="number" min="1" max="99" value="10" inputmode="numeric">
+              <span class="blinkcur">_</span>
+            </div>
+            <span class="opts-title" style="margin-top:var(--sp-2);">NUMBER + TRIM COLOUR</span>
+            <div id="numColRows"></div>
+            <div class="hint">ENTER 1-99. THIS IS YOUR HERO DIGIT.</div>
+          </div>
+          <!-- NAME PANE -->
+          <div class="opts-pane" id="pane-name">
+            <span class="opts-title">PLAYER NAME</span>
+            <div class="tt-input-row">
+              <label>NAME:</label>
+              <input class="tt-input" id="nameInput" type="text" maxlength="12" value="ZICO">
+              <span class="blinkcur">_</span>
+            </div>
+            <div class="hint">UP TO 12 CHARACTERS. SHOWN ABOVE NUMBER.</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ===== FASTEXT BAR ===== -->
+    <nav class="fastext" aria-label="Fastext">
+      <button class="ft-btn ft-red"  id="ft-red">RED  RANDOM</button>
+      <button class="ft-btn ft-grn"  id="ft-grn">GREEN  RESET</button>
+      <button class="ft-btn ft-yel"  id="ft-yel">YELLOW  SAVE</button>
+      <button class="ft-btn ft-cyan" id="ft-cyan">CYAN  INDEX</button>
+    </nav>
+  </main>
+
+<script>
+(function(){
+  "use strict";
+  var root=document.documentElement;
+  var shirt=document.querySelector('svg.shirt');
+
+  // ---- palette ----
+  var SAMBA=[
+    {name:'SAMBA YELLOW',hex:'#FFD400'},
+    {name:'PITCH GREEN',hex:'#1E8A3C'},
+    {name:'COBALT BLUE',hex:'#2230C8'},
+    {name:'PRINT ORANGE',hex:'#E15100'},
+    {name:'INK BLACK',hex:'#111111'},
+    {name:'CREAM',hex:'#F4EFE2'},
+    {name:'NAVY',hex:'#00075F'},
+    {name:'OFF-WHITE',hex:'#EDE8DA'}
+  ];
+  var PATTERNS=[
+    {id:'solid',name:'SOLID'},
+    {id:'stripes',name:'VERTICAL STRIPES'},
+    {id:'hoops',name:'HOOPS'},
+    {id:'sash',name:'SASH'},
+    {id:'halftone',name:'HALFTONE / TIGER'}
+  ];
+  var TRIMS=[
+    {name:'WHITE',hex:'#FFFFFF'},
+    {name:'INK BLACK',hex:'#111111'},
+    {name:'SAMBA YELLOW',hex:'#FFD400'},
+    {name:'CREAM',hex:'#F4EFE2'},
+    {name:'COBALT',hex:'#2230C8'}
+  ];
+
+  // ---- state ----
+  var state={
+    body:'#1E8A3C',
+    accent:'#FFD400',
+    pattern:'solid',
+    trim:'#FFFFFF',
+    num:'10',
+    name:'ZICO'
+  };
+
+  function setVars(){
+    root.style.setProperty('--body-fill',state.body);
+    root.style.setProperty('--accent-fill',state.accent);
+    root.style.setProperty('--trim-fill',state.trim);
+    root.style.setProperty('--num-fill',state.body===state.accent?state.trim:state.accent);
+    // body paint -> solid colour OR pattern url
+    var paint=state.body;
+    if(state.pattern!=='solid'){ paint='url(#pat-'+state.pattern+')'; }
+    root.style.setProperty('--body-paint',paint);
+  }
+
+  function applyNumColour(){
+    // number uses accent normally, but if body==accent fall back to trim for contrast
+    var nf=(state.accent.toLowerCase()===state.body.toLowerCase())?state.trim:state.accent;
+    document.getElementById('numText').setAttribute('fill',nf);
+    document.getElementById('numText').setAttribute('stroke',state.trim);
+  }
+
+  function render(){
+    setVars();
+    applyNumColour();
+    var nm=(state.name||'').toUpperCase();
+    document.getElementById('nameText').textContent=nm;
+    document.getElementById('numText').textContent=state.num;
+    document.getElementById('numShadow').textContent=state.num;
+    document.getElementById('metaName').textContent=' '+(nm||'-');
+    document.getElementById('metaNum').textContent=' '+state.num;
+  }
+
+  // ---- build colour swatch rows ----
+  function buildSwatchSet(containerId,key){
+    var c=document.getElementById(containerId);
+    c.className='swatch-grid';
+    c.innerHTML='';
+    SAMBA.forEach(function(s){
+      var chip=document.createElement('div');
+      chip.className='chip'+(state[key]===s.hex?' sel':'');
+      chip.style.background=s.hex;
+      chip.title=s.name;
+      chip.addEventListener('click',function(){
+        state[key]=s.hex;
+        render();
+        markChip(c,chip);
+        flash((key==='body'?'BODY':'ACCENT')+' SET TO '+s.name);
+      });
+      c.appendChild(chip);
+    });
+  }
+
+  function buildPatternRows(){
+    var c=document.getElementById('patternRows');
+    c.innerHTML='';
+    PATTERNS.forEach(function(p){
+      var row=document.createElement('div');
+      row.className='opt-row'+(state.pattern===p.id?' sel':'');
+      row.innerHTML='<span class="swatch" style="background:'+patPreview(p.id)+'"></span><span class="opt-label">'+p.name+'</span>';
+      row.addEventListener('click',function(){
+        state.pattern=p.id;
+        render();
+        markSel(c,row);
+        flash('PATTERN: '+p.name);
+      });
+      c.appendChild(row);
+    });
+  }
+  function patPreview(id){
+    switch(id){
+      case 'stripes':return 'repeating-linear-gradient(90deg,'+state.accent+' 0 6px,'+state.body+' 6px 12px)';
+      case 'hoops':return 'repeating-linear-gradient(0deg,'+state.accent+' 0 6px,'+state.body+' 6px 12px)';
+      case 'sash':return 'repeating-linear-gradient(45deg,'+state.accent+' 0 6px,'+state.body+' 6px 12px)';
+      case 'halftone':return 'repeating-conic-gradient('+state.accent+' 0 25%,'+state.body+' 0 50%) 0 0/10px 10px';
+      default:return state.body;
+    }
+  }
+
+  function buildTrimRows(){
+    var c=document.getElementById('numColRows');
+    c.className='swatch-grid trim';
+    c.innerHTML='';
+    TRIMS.forEach(function(t){
+      var chip=document.createElement('div');
+      chip.className='chip'+(state.trim===t.hex?' sel':'');
+      chip.style.background=t.hex;
+      chip.title=t.name;
+      chip.addEventListener('click',function(){
+        state.trim=t.hex;
+        render();
+        markChip(c,chip);
+        flash('TRIM SET TO '+t.name);
+      });
+      c.appendChild(chip);
+    });
+  }
+
+  function markSel(container,row){
+    Array.prototype.forEach.call(container.querySelectorAll('.opt-row'),function(r){r.classList.remove('sel');});
+    row.classList.add('sel');
+  }
+  function markChip(container,chip){
+    Array.prototype.forEach.call(container.querySelectorAll('.chip'),function(r){r.classList.remove('sel');});
+    chip.classList.add('sel');
+  }
+
+  // ---- menu paging ----
+  var items=document.querySelectorAll('.menu-item');
+  var panes={
+    colour:document.getElementById('pane-colour'),
+    pattern:document.getElementById('pane-pattern'),
+    number:document.getElementById('pane-number'),
+    name:document.getElementById('pane-name')
+  };
+  function showPage(pg){
+    Array.prototype.forEach.call(items,function(it){
+      it.classList.toggle('active',it.getAttribute('data-page')===pg);
+    });
+    Object.keys(panes).forEach(function(k){
+      panes[k].classList.toggle('show',k===pg);
+    });
+    if(pg==='pattern'){buildPatternRows();}
+    flash('PAGE 411.'+({colour:1,pattern:2,number:3,name:4}[pg])+' LOADED');
+  }
+  Array.prototype.forEach.call(items,function(it){
+    it.addEventListener('click',function(){showPage(it.getAttribute('data-page'));});
+  });
+  // keyboard 1-4
+  document.addEventListener('keydown',function(e){
+    if(document.activeElement&&/INPUT/.test(document.activeElement.tagName))return;
+    var map={'1':'colour','2':'pattern','3':'number','4':'name'};
+    if(map[e.key]){showPage(map[e.key]);}
+  });
+
+  // ---- inputs ----
+  var nameInput=document.getElementById('nameInput');
+  nameInput.addEventListener('input',function(){
+    state.name=nameInput.value;
+    render();
+  });
+  var numInput=document.getElementById('numInput');
+  numInput.addEventListener('input',function(){
+    var v=parseInt(numInput.value,10);
+    if(isNaN(v))v='';
+    else{ if(v<1)v=1; if(v>99)v=99; }
+    if(v!=='')numInput.value=v;
+    state.num=(v==='')?'':String(v);
+    render();
+  });
+  numInput.addEventListener('blur',function(){
+    if(state.num===''){state.num='1';numInput.value='1';render();}
+  });
+
+  // ---- flash msg ----
+  var flashEl=document.getElementById('flash');
+  var flashT;
+  function flash(msg){
+    flashEl.textContent='> '+msg;
+    flashEl.classList.remove('on');void flashEl.offsetWidth;flashEl.classList.add('on');
+    clearTimeout(flashT);
+    flashT=setTimeout(function(){flashEl.textContent='> READY.';},2600);
+  }
+
+  // ---- clock ----
+  var DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function pad(n){return (n<10?'0':'')+n;}
+  function tick(){
+    var d=new Date();
+    document.getElementById('clock').textContent=pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+    document.getElementById('mux').textContent='CEEFAX 2  '+DAYS[d.getDay()]+' '+pad(d.getDate())+' '+MON[d.getMonth()];
+  }
+  tick();setInterval(tick,1000);
+
+  // ---- fastext actions ----
+  function rand(a){return a[Math.floor(Math.random()*a.length)];}
+  document.getElementById('ft-red').addEventListener('click',function(){
+    var b=rand(SAMBA),a=rand(SAMBA);
+    while(a.hex===b.hex){a=rand(SAMBA);}
+    state.body=b.hex;state.accent=a.hex;
+    state.pattern=rand(PATTERNS).id;state.trim=rand(TRIMS).hex;
+    state.num=String(1+Math.floor(Math.random()*99));
+    numInput.value=state.num;
+    refreshAll();flash('RANDOM STRIP GENERATED!');
+  });
+  document.getElementById('ft-grn').addEventListener('click',function(){
+    state={body:'#1E8A3C',accent:'#FFD400',pattern:'solid',trim:'#FFFFFF',num:'10',name:'ZICO'};
+    nameInput.value='ZICO';numInput.value='10';
+    refreshAll();flash('RESET TO DEFAULT KIT');
+  });
+  document.getElementById('ft-yel').addEventListener('click',function(){
+    flash('KIT SAVED: '+(state.name||'-').toUpperCase()+' #'+state.num+' OK');
+  });
+  document.getElementById('ft-cyan').addEventListener('click',function(){
+    showPage('colour');flash('RETURN TO INDEX P411.1');
+  });
+
+  function refreshAll(){
+    buildSwatchSet('bodySwatches','body');
+    buildSwatchSet('accentSwatches','accent');
+    buildPatternRows();
+    buildTrimRows();
+    render();
+  }
+
+  // ---- init ----
+  refreshAll();
+  render();
+})();
+</script>
+<script>
+/* === Disco mirror-tile texture (from disco-tile-texture.html), reused for the
+   page background and for masking the title text. Each facet is a tiny mirror
+   reflecting a moving light. === */
+(() => {
+  "use strict";
+  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  const measure = document.createElement('canvas').getContext('2d');
+
+  function hash(x, y){ const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); }
+  function blotch(gx, gy){
+    let v = 0.5
+      + 0.24 * Math.sin(gx * 0.55 + gy * 0.30)
+      + 0.18 * Math.sin(gx * 0.21 - gy * 0.47 + 1.7)
+      + 0.13 * Math.sin((gx + gy) * 0.37 + 4.0)
+      + 0.09 * Math.sin(gx * 0.9 - gy * 0.15 + 2.3);
+    return Math.max(0, Math.min(1, v));
+  }
+
+  function makeDisco(canvas, opts){
+    const P = Object.assign({ tile:16, hue:210, sat:12, irid:40, spark:55, speed:35, anim:true, stretch:false }, opts);
+    const mask = opts.mask || null;
+    const ctx  = canvas.getContext('2d');
+    const base = document.createElement('canvas'), bctx = base.getContext('2d');
+    const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+    let cell, cols, rows, pxW, pxH, tiles = [], raf = 0;
+
+    function bake(W, H){
+      cell = P.tile;
+      cols = Math.max(4, Math.ceil(W / cell));
+      rows = Math.max(4, Math.ceil(H / cell));
+      pxW = cols * cell; pxH = rows * cell;
+
+      base.width = pxW * dpr; base.height = pxH * dpr;
+      bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      bctx.fillStyle = '#05060a';
+      bctx.fillRect(0, 0, pxW, pxH);
+
+      const irid = P.irid / 100, baseSat = P.sat;
+      tiles = [];
+      for (let gy = 0; gy < rows; gy++){
+        for (let gx = 0; gx < cols; gx++){
+          const x = gx * cell, y = gy * cell;
+          const h  = hash(gx, gy);
+          const hN = hash(gx + 31.4, gy + 7.3);
+          const hM = hash(gx + 5.2,  gy + 59.1);
+          const hS = hash(gx + 17.8, gy + 91.7);
+          const field = blotch(gx, gy);
+          const isMirror = h > 0.92;
+
+          let L = 6 + field * 32 + (h - 0.5) * 15;
+          if (isMirror) L += 16;
+          L = Math.max(3, Math.min(70, L));
+
+          const hue = (P.hue + (field - 0.5) * 55 * irid + (h - 0.5) * 46 * irid + 360) % 360;
+          let sat = baseSat * (0.55 + 0.5 * field);
+          if (isMirror) sat *= 0.4;
+          sat = Math.min(100, sat);
+
+          bctx.fillStyle = `hsl(${hue.toFixed(0)} ${sat.toFixed(0)}% ${L.toFixed(0)}%)`;
+          bctx.fillRect(x + 1, y + 1, cell - 1, cell - 1);
+
+          const t = cell - 1;
+          bctx.fillStyle = 'rgba(255,255,255,.22)';
+          bctx.fillRect(x + 1, y + 1, t, 1);
+          bctx.fillRect(x + 1, y + 1, 1, t);
+          bctx.fillStyle = 'rgba(0,0,0,.40)';
+          bctx.fillRect(x + 1, y + cell - 1, t, 1);
+          bctx.fillRect(x + cell - 1, y + 1, 1, t);
+
+          const tilt = isMirror ? 0.26 : 0.55;
+          let nx = (hN - 0.5) * 2 * tilt;
+          let ny = (hM - 0.5) * 2 * tilt;
+          let nz = Math.sqrt(Math.max(0.04, 1 - nx*nx - ny*ny));
+          const ilen = 1 / Math.hypot(nx, ny, nz);
+          nx *= ilen; ny *= ilen; nz *= ilen;
+
+          const litL = isMirror ? 80 : 70;
+          const litSat = Math.min(88, sat * 1.15);
+          const litColor = `hsl(${hue.toFixed(0)} ${litSat.toFixed(0)}% ${litL}%)`;
+          const specSat = 8 + P.irid * 0.42;
+          const specColor = `hsl(${hue.toFixed(0)} ${specSat.toFixed(0)}% 93%)`;
+
+          tiles.push({ x, y, ncx:(x + cell/2)/pxW, ncy:(y + cell/2)/pxH, nx, ny, nz, litColor, specColor, phase:hS * Math.PI * 2, mirror:isMirror });
+        }
+      }
+
+      canvas.width = pxW * dpr; canvas.height = pxH * dpr;
+      if (P.stretch){ canvas.style.width = W + 'px'; canvas.style.height = H + 'px'; }
+      else { canvas.style.width = pxW + 'px'; canvas.style.height = pxH + 'px'; }
+      glow.width = pxW; glow.height = pxH;
+    }
+
+    let slx = 0.34, sly = 0.28;
+    const t0 = performance.now();
+    function paint(now){
+      const t  = (now - t0) / 1000;
+      const sp = P.speed / 100;
+      let tx = 0.5, ty = 0.5;
+      if (P.fixedLight){
+        tx = P.fixedLight.x; ty = P.fixedLight.y; slx = tx; sly = ty;
+      } else {
+        if (P.speed > 0){
+          const a = t * (0.18 + sp * 0.85);
+          tx = 0.5 + Math.cos(a) * 0.34;
+          ty = 0.5 + Math.sin(a * 0.8) * 0.30;
+        }
+        slx += (tx - slx) * 0.12;
+        sly += (ty - sly) * 0.12;
+      }
+
+      const LZ = 0.52;
+      const shininess = 5 + (P.spark / 100) * 30;
+      const specGain  = 0.8 + (P.spark / 100) * 0.5;
+      const diffGain  = 0.58;
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, pxW, pxH);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(base, 0, 0, pxW, pxH);
+
+      gctx.setTransform(1, 0, 0, 1, 0, 0);
+      gctx.clearRect(0, 0, pxW, pxH);
+      gctx.globalCompositeOperation = 'lighter';
+      gctx.lineCap = 'round';
+
+      ctx.globalCompositeOperation = 'lighter';
+      const animT = P.anim ? t : 0;
+      const cs = cell - 1;
+
+      for (let i = 0; i < tiles.length; i++){
+        const tl = tiles[i];
+        const dx = slx - tl.ncx, dy = sly - tl.ncy;
+        const inv = 1 / Math.sqrt(dx*dx + dy*dy + LZ*LZ);
+        const lx = dx * inv, ly = dy * inv, lz = LZ * inv;
+
+        let diff = tl.nx*lx + tl.ny*ly + tl.nz*lz;
+        if (diff < 0) diff = 0;
+
+        const hz = lz + 1;
+        const hinv = 1 / Math.sqrt(lx*lx + ly*ly + hz*hz);
+        let nh = tl.nx*lx*hinv + tl.ny*ly*hinv + tl.nz*hz*hinv;
+        if (nh < 0) nh = 0;
+        const spec = Math.pow(nh, shininess);
+
+        const atten = 1 / (1 + 1.4 * (dx*dx + dy*dy));
+        const shimmer = P.anim ? 0.82 + 0.18 * Math.sin(animT * (1.8 + sp*3) + tl.phase) : 1;
+
+        const aDiff = diffGain * diff * atten;
+        if (aDiff > 0.012){
+          ctx.globalAlpha = aDiff < 1 ? aDiff : 1;
+          ctx.fillStyle = tl.litColor;
+          ctx.fillRect(tl.x + 1, tl.y + 1, cs, cs);
+        }
+
+        const aSpec = specGain * spec * atten * shimmer;
+        if (aSpec > 0.015){
+          gctx.globalAlpha = aSpec < 1 ? aSpec : 1;
+          gctx.fillStyle = tl.specColor;
+          gctx.fillRect(tl.x + 1, tl.y + 1, cs, cs);
+          if (aSpec > 0.45){
+            const cx = tl.x + cell/2, cy = tl.y + cell/2;
+            const len = cell * (1.0 + aSpec * 2.2);
+            gctx.globalAlpha = Math.min(0.5, (aSpec - 0.45) * 0.9);
+            gctx.strokeStyle = '#ffffff';
+            gctx.lineWidth = Math.max(1, cell * 0.16);
+            gctx.beginPath();
+            gctx.moveTo(cx - len, cy); gctx.lineTo(cx + len, cy);
+            gctx.moveTo(cx, cy - len); gctx.lineTo(cx, cy + len);
+            gctx.stroke();
+          }
+        }
+      }
+      ctx.globalAlpha = 1; gctx.globalAlpha = 1;
+
+      // bloom: composite the glint buffer in layers of increasing blur
+      ctx.globalCompositeOperation = 'lighter';
+      const br = Math.max(2, cell * 0.5);
+      ctx.filter = `blur(${(br * 2.4).toFixed(1)}px)`;          ctx.globalAlpha = 0.45; ctx.drawImage(glow, 0, 0, pxW, pxH);
+      ctx.filter = `blur(${br.toFixed(1)}px)`;                  ctx.globalAlpha = 0.55; ctx.drawImage(glow, 0, 0, pxW, pxH);
+      ctx.filter = `blur(${Math.max(1, br * 0.32).toFixed(1)}px)`; ctx.globalAlpha = 0.70; ctx.drawImage(glow, 0, 0, pxW, pxH);
+      ctx.filter = 'none'; ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+
+      // top gloss sheen
+      const sheen = ctx.createLinearGradient(0, 0, 0, pxH);
+      sheen.addColorStop(0,   'rgba(255,255,255,.12)');
+      sheen.addColorStop(.18, 'rgba(255,255,255,.03)');
+      sheen.addColorStop(.5,  'rgba(255,255,255,0)');
+      sheen.addColorStop(1,   'rgba(0,0,0,.14)');
+      ctx.fillStyle = sheen;
+      ctx.fillRect(0, 0, pxW, pxH);
+
+      // inner rim shading
+      ctx.globalCompositeOperation = 'overlay';
+      const rad = Math.max(pxW, pxH);
+      const rim = ctx.createRadialGradient(pxW/2, pxH/2, rad*0.32, pxW/2, pxH/2, rad*0.64);
+      rim.addColorStop(0, 'rgba(0,0,0,0)');
+      rim.addColorStop(1, 'rgba(0,0,0,.30)');
+      ctx.fillStyle = rim;
+      ctx.fillRect(0, 0, pxW, pxH);
+      ctx.globalCompositeOperation = 'source-over';
+
+      // mask the texture to the title text
+      if (mask){
+        ctx.globalCompositeOperation = 'destination-in';
+        ctx.fillStyle = '#000';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.font = mask.font;
+        ctx.fillText(mask.text, mask.x, pxH / 2);
+        ctx.globalCompositeOperation = 'source-over';
+      }
+    }
+    function frame(now){ paint(now); raf = requestAnimationFrame(frame); }
+
+    return {
+      bake,
+      start(){ cancelAnimationFrame(raf); raf = requestAnimationFrame(frame); },
+      snapshot(){ paint(t0 + 1200); return canvas.toDataURL('image/png'); }
+    };
+  }
+
+  // ---- page background: wine-red velvet (CSS on <body>); no disco canvas ----
+
+  // ---- disco-textured titles ----
+  function discoText(el){
+    const text = (el.dataset.discoText || el.textContent).trim();
+    el.dataset.discoText = text;
+    const cs = getComputedStyle(el);
+    const fpx = parseFloat(cs.fontSize) || 28;
+    const font = `${cs.fontWeight || '700'} ${fpx}px ${cs.fontFamily || 'sans-serif'}`;
+    measure.font = font;
+    const pad = Math.round(fpx * 0.16);
+    const w = Math.ceil(measure.measureText(text).width) + pad * 2;
+    const h = Math.ceil(fpx * 1.32);
+    const hue = parseFloat(el.dataset.discoHue);
+
+    const canvas = document.createElement('canvas');
+    canvas.className = 'disco-text-canvas';
+    const inst = makeDisco(canvas, {
+      tile: Math.max(9, Math.round(fpx * 0.34)),
+      hue: isNaN(hue) ? 290 : hue,
+      sat: 4, irid: 6, spark: 72, speed: 46, anim: true,
+      mask: { text, font, x: pad }
+    });
+    inst.bake(w, h);
+    el.textContent = '';
+    el.setAttribute('aria-label', text);
+    el.classList.add('disco-text-host');
+    el.appendChild(canvas);
+    inst.start();
+  }
+  document.querySelectorAll('[data-disco]').forEach(discoText);
+
+  // ---- shared static disco-tile texture, blended onto chips & buttons ----
+  // Near-neutral silver tiles so a CSS `mix-blend-mode:overlay` re-tints them
+  // to whatever colour the element underneath is painted.
+  const tex = makeDisco(document.createElement('canvas'), {
+    tile:13, hue:208, sat:7, irid:18, spark:80, speed:0, anim:false, fixedLight:{ x:0.32, y:0.27 }
+  });
+  tex.bake(176, 176);
+  document.documentElement.style.setProperty('--disco-tex', 'url("' + tex.snapshot() + '")');
+
+  // ---- jersey rendered in disco tiles, embedded in the mosaic ----
+  // A neutral disco texture is overlaid on the shirt with mix-blend-mode:overlay
+  // and CSS-masked to the shirt's silhouette, so the tiles imprint only on the
+  // garment (taking its colours) while the surrounding mosaic shows through —
+  // the shirt reads as embedded in the same tiled surface.
+  const shirtSvg = document.querySelector('svg.shirt');
+  const wrap = document.querySelector('.kit-svg-wrap');
+  if (wrap && shirtSvg){
+    // build a solid silhouette of the shirt to use as the overlay's CSS mask
+    const sil = shirtSvg.cloneNode(true);
+    sil.removeAttribute('style');
+    sil.querySelectorAll('*').forEach(el => {
+      if (el.hasAttribute('fill'))   el.setAttribute('fill', '#000');
+      if (el.hasAttribute('stroke')) el.setAttribute('stroke', '#000');
+    });
+    const maskUrl = 'url("data:image/svg+xml,' +
+      encodeURIComponent(new XMLSerializer().serializeToString(sil)) + '")';
+
+    const jc = document.createElement('canvas');
+    jc.className = 'jersey-disco';
+    jc.style.webkitMaskImage = maskUrl;   jc.style.maskImage = maskUrl;
+    jc.style.webkitMaskSize  = '100% 100%'; jc.style.maskSize = '100% 100%';
+    jc.style.webkitMaskRepeat = 'no-repeat'; jc.style.maskRepeat = 'no-repeat';
+    wrap.appendChild(jc);
+
+    const jersey = makeDisco(jc, { tile:11, hue:210, sat:7, irid:16, spark:74, speed:26, anim:true, stretch:true });
+    const sizeJersey = () => {
+      const w = wrap.clientWidth || 280;
+      const h = wrap.clientHeight || Math.round(w * 260 / 240);
+      jersey.bake(w, h);
+    };
+    requestAnimationFrame(() => { sizeJersey(); jersey.start(); });
+    let jrz;
+    window.addEventListener('resize', () => { clearTimeout(jrz); jrz = setTimeout(sizeJersey, 180); });
+  }
+})();
+</script>
+</body>
+</html>

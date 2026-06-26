@@ -1,16 +1,18 @@
-// Single one-click install button. The three agent icons (Codex, Cursor,
-// Claude) are always fanned and fully visible — evenly separated with clear
-// gaps. On hover/focus each icon LIFTS (translates up) and gains a soft drop
-// shadow, and the gaps widen a touch. One click copies a single generic/
-// all-agents install prompt. Replaces the older split button (main
-// "Add to <tool>" action + chevron dropdown).
+// Single "Add the Rivet MCP" button. On click it opens a popover menu with one
+// row per coding agent (logo + title). Cursor installs via a one-click deep
+// link (cursor://anysphere.cursor-deeplink/...). Claude Code, the Claude
+// desktop app, and Codex have no install URL scheme, so they copy a paste-ready
+// prompt the user drops into the agent (which then runs `npx rivet-design
+// install <agent>`). Replaces the older split button (main "Add to <tool>"
+// action + chevron dropdown).
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { posthog } from '@/lib/posthog';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
 
-type InstallTool = 'claude' | 'cursor' | 'codex';
+type AgentLogo = 'claude' | 'cursor' | 'codex';
 
-const TOOL_LOGOS: Record<InstallTool, string> = {
+const TOOL_LOGOS: Record<AgentLogo, string> = {
   claude: '/images/claude.svg',
   cursor: '/images/cursor.svg',
   codex: '/images/codex.svg',
@@ -23,7 +25,7 @@ const ToolLogo = ({
   label,
   invert = true,
 }: {
-  id: InstallTool;
+  id: AgentLogo;
   label: string;
   invert?: boolean;
 }) => (
@@ -36,18 +38,46 @@ const ToolLogo = ({
   />
 );
 
-// Laid out left-to-right (Claude, Cursor, Codex), each fully visible with a
-// clear gap between them. Hover/focus lifts each icon and widens the gap.
-const FAN_TOOLS: { id: InstallTool; label: string }[] = [
-  { id: 'claude', label: 'Claude' },
-  { id: 'cursor', label: 'Cursor' },
-  { id: 'codex', label: 'Codex' },
-];
+// Cursor's one-click install URL for the local (stdio) Rivet MCP server.
+// Mirrors buildCursorLocalRivetEntry in rivet core: the base64 `config` decodes
+// to {"command":"npx","args":["-y","rivet-design@latest","mcp","--editor","cursor"]}
+// — a locally-spawned stdio server, not the hosted remote URL (so no OAuth).
+// cursor.com/install-mcp is the web handoff that bounces to Cursor and writes
+// the entry into ~/.cursor/mcp.json.
+const CURSOR_DEEPLINK =
+  'https://cursor.com/install-mcp?name=rivet&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsInJpdmV0LWRlc2lnbkBsYXRlc3QiLCJtY3AiLCItLWVkaXRvciIsImN1cnNvciJdfQ%3D%3D';
 
-// One generic prompt that wires up every agent at once — the single click no
-// longer needs a per-tool choice now that the dropdown is gone.
-const INSTALL_PROMPT =
-  'Please install the Rivet MCP server for my coding agent by running: npx rivet-design install';
+type AgentItem =
+  | { id: string; label: string; logo: AgentLogo; action: 'deeplink'; url: string }
+  | { id: string; label: string; logo: AgentLogo; action: 'copy'; prompt: string };
+
+// Menu rows, in display order. Cursor = one-click deep link; the rest copy a
+// paste-ready install prompt (no URL scheme exists for them).
+const AGENT_ITEMS: AgentItem[] = [
+  {
+    id: 'claude',
+    label: 'Claude',
+    logo: 'claude',
+    action: 'copy',
+    prompt:
+      'Please install the Rivet MCP server for Claude Code and the Claude desktop app by running: npx rivet-design install claude && npx rivet-design install claude-desktop',
+  },
+  {
+    id: 'cursor',
+    label: 'Cursor',
+    logo: 'cursor',
+    action: 'deeplink',
+    url: CURSOR_DEEPLINK,
+  },
+  {
+    id: 'codex',
+    label: 'Codex',
+    logo: 'codex',
+    action: 'copy',
+    prompt:
+      'Please install the Rivet MCP server for Codex by running: npx rivet-design install codex',
+  },
+];
 
 type Tone = 'orange' | 'dark' | 'light';
 
@@ -90,95 +120,119 @@ const PromptInstallButton = ({
   size = 'md',
   fullWidth = false,
 }: PromptInstallButtonProps) => {
-  const [copied, setCopied] = useState(false);
+  const [open, setOpen] = useState(false);
+  // Keyboard highlight within the menu (-1 = no row highlighted).
+  const [highlight, setHighlight] = useState(-1);
 
   const t = TONES[tone];
 
   const mainSize = size === 'lg' ? 'px-6 py-4 text-lg' : 'px-4 py-3 text-sm';
   const iconBox = size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
 
-  const handleClick = () => {
+  const activate = (item: AgentItem) => {
     posthog.capture('download_clicked', {
       source: 'landing',
-      download_type: 'all',
+      download_type: item.id,
     });
 
-    navigator.clipboard.writeText(INSTALL_PROMPT).then(() => {
-      setCopied(true);
-      toast.success('Prompt copied to clipboard', {
-        description: 'Paste into your coding agent to get started.',
-        action: {
-          label: 'Learn more',
-          onClick: () =>
-            window.open('https://docs.rivet.design/mcp-guide', '_blank'),
-        },
+    if (item.action === 'deeplink') {
+      // cursor.com/install-mcp is a web handoff that bounces to the cursor://
+      // protocol; open it in a new tab so the landing page stays put.
+      window.open(item.url, '_blank', 'noopener,noreferrer');
+    } else {
+      navigator.clipboard.writeText(item.prompt).then(() => {
+        toast.success('Prompt copied to clipboard', {
+          description: `Paste into ${item.label} to get started.`,
+          action: {
+            label: 'Learn more',
+            onClick: () =>
+              window.open('https://docs.rivet.design/mcp-guide', '_blank'),
+          },
+        });
       });
-      setTimeout(() => setCopied(false), 2000);
-    });
+    }
+    setOpen(false);
+  };
+
+  // Arrow keys move the highlight; Enter activates; Escape closes. Shared by the
+  // trigger and the menu so keyboard users can drive the whole thing.
+  const handleMenuKeyDown = (e: React.KeyboardEvent) => {
+    if (!open) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlight((i) => (i + 1) % AGENT_ITEMS.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlight((i) => (i - 1 + AGENT_ITEMS.length) % AGENT_ITEMS.length);
+    } else if (e.key === 'Enter') {
+      if (highlight >= 0) {
+        e.preventDefault();
+        activate(AGENT_ITEMS[highlight]);
+      }
+    } else if (e.key === 'Escape') {
+      setOpen(false);
+    }
   };
 
   return (
-    // `group` drives the lift: hover/focus-within on the button raises each
-    // icon and widens the gap via per-icon `group-hover` / `group-focus-within`
-    // transform + spacing utilities.
-    <button
-      type="button"
-      onClick={handleClick}
-      className={`group type-label-lg flex items-center gap-2.5 rounded-lg border ${t.border} ${t.bg} ${t.text} ${mainSize} ${
-        fullWidth ? 'w-full justify-center' : 'w-fit'
-      } transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
+    <Popover
+      className={fullWidth ? 'flex w-full' : undefined}
+      open={open}
+      onOpenChange={(next) => {
+        setHighlight(-1);
+        setOpen(next);
+      }}
     >
-      <span className="whitespace-nowrap">Add the Rivet MCP</span>
-      {/* Icon area. The fanned row stays mounted so the button keeps a constant
-          width; once copied it goes invisible (still reserving its space) and
-          the confirmation check is overlaid on the right edge. */}
-      <span className="relative flex shrink-0 items-center">
+      {/* The trigger keeps the original look: label + fanned agent icons that
+          lift on hover. Clicking opens the menu rather than copying. */}
+      <PopoverTrigger
+        onKeyDown={handleMenuKeyDown}
+        className={`group type-label-lg font-normal flex items-center gap-2.5 rounded-lg border ${t.border} ${t.bg} ${t.text} ${mainSize} ${
+          fullWidth ? 'w-full justify-center' : 'w-fit'
+        } transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
+      >
+        <span className="whitespace-nowrap">Add the Rivet MCP</span>
         {/* Already-fanned icon row. At rest each icon is fully visible with a
             clear gap. On hover/focus the gap widens and each icon lifts up with
-            a soft drop shadow. `motion-reduce` keeps the icons static (no lift
-            or translate) for reduced-motion users. */}
+            a soft drop shadow. `motion-reduce` keeps the icons static. */}
         <span
-          className={`flex shrink-0 items-center gap-1 transition-[gap] duration-200 ease-out motion-reduce:transition-none ${
-            copied
-              ? 'invisible'
-              : 'group-hover:gap-1.5 group-focus-within:gap-1.5 motion-reduce:!gap-1'
-          }`}
+          className="flex shrink-0 items-center gap-1 transition-[gap] duration-200 ease-out group-hover:gap-1.5 group-focus-within:gap-1.5 motion-reduce:!gap-1 motion-reduce:transition-none"
           aria-hidden
         >
-          {FAN_TOOLS.map((tool) => (
+          {(['claude', 'cursor', 'codex'] as AgentLogo[]).map((logo) => (
             <span
-              key={tool.id}
+              key={logo}
               className={`relative flex ${iconBox} items-center justify-center rounded-full ${t.bg} ring-2 ${t.ring} transition-[transform,box-shadow] duration-200 ease-out will-change-transform group-hover:-translate-y-0.5 group-hover:shadow-md group-focus-within:-translate-y-0.5 group-focus-within:shadow-md motion-reduce:!translate-y-0 motion-reduce:!shadow-none motion-reduce:transition-none`}
             >
-              <ToolLogo id={tool.id} label={tool.label} invert={t.invertLogo} />
+              <ToolLogo id={logo} label={logo} invert={t.invertLogo} />
             </span>
           ))}
         </span>
+      </PopoverTrigger>
 
-        {/* Confirmation check — overlaid at the right edge of the reserved icon
-            area after a click, so the button width never changes. */}
-        {copied && (
-          <span className="absolute inset-y-0 right-0 flex items-center">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="shrink-0"
-            >
-              <path
-                d="M20 6L9 17l-5-5"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
-        )}
-      </span>
-    </button>
+      {/* Dropdown menu — one row per agent, on the dark menu surface. */}
+      <PopoverContent
+        align={fullWidth ? 'center' : 'start'}
+        sideOffset={6}
+        className="min-w-[16rem] py-1"
+        onKeyDown={handleMenuKeyDown}
+      >
+        {AGENT_ITEMS.map((item, i) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => activate(item)}
+            onMouseEnter={() => setHighlight(i)}
+            className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white transition-colors hover:bg-[hsl(0_0%_25%)] focus:outline-none ${
+              i === highlight ? 'bg-[hsl(0_0%_22%)]' : ''
+            }`}
+          >
+            <ToolLogo id={item.logo} label={item.label} />
+            <span className="flex-1 font-main">{item.label}</span>
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
   );
 };
 

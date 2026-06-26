@@ -101,6 +101,9 @@
   body {
     max-width: 100vw;
     overflow-x: clip;
+    /* Lock overscroll: no rubber-band bounce and no scroll-chaining past the
+       page edges. */
+    overscroll-behavior: none;
   }
   body {
     @apply bg-background text-foreground;
@@ -226,12 +229,28 @@
 .rivet-variants {
   --main: #1c1c20;
   --main-light: #1e1e22;
+  --main-input: #2e2e2e;
+  --main-border: #232328;
+  --main-hover: #404040;
   --content: #ffffff;
   --content-muted: #d1d5db;
   --content-subtle: #9ca3af;
+  --hover: rgb(255 255 255 / 0.06);
   --accent-error: #ef4444;
   --primary-border: #EC6442;
   --pill-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+/* SparkleLoader strip — same braille-frame scroll as the variant overlay, under
+ * the class name the ported core-UI SparkleLoader expects. */
+.rivet-sparkle-strip {
+  animation: rivet-variants-sparkle-scroll 0.9s steps(6) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rivet-sparkle-strip {
+    animation: none;
+  }
 }
 
 /*
