@@ -38,10 +38,13 @@ const ToolLogo = ({
   />
 );
 
-// Cursor's hosted MCP deep link. The base64 `config` decodes to
-// {"command":"npx","args":["-y","rivet-design@latest","mcp","--editor","cursor"]}
+// Cursor's one-click install URL for the hosted Rivet MCP server. Mirrors
+// buildCursorHostedInstallUrl in rivet core: the base64 `config` decodes to
+// {"url":"https://rivet-proxy.onrender.com/mcp"} (the hosted server, not the
+// local npx command). cursor.com/install-mcp hands off to Cursor and writes
+// the entry into ~/.cursor/mcp.json.
 const CURSOR_DEEPLINK =
-  'cursor://anysphere.cursor-deeplink/mcp/install?name=rivet&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsInJpdmV0LWRlc2lnbkBsYXRlc3QiLCJtY3AiLCItLWVkaXRvciIsImN1cnNvciJdfQ==';
+  'https://cursor.com/install-mcp?name=rivet&config=eyJ1cmwiOiJodHRwczovL3JpdmV0LXByb3h5Lm9ucmVuZGVyLmNvbS9tY3AifQ%3D%3D';
 
 type AgentItem =
   | { id: string; label: string; logo: AgentLogo; action: 'deeplink'; url: string }
@@ -132,7 +135,9 @@ const PromptInstallButton = ({
     });
 
     if (item.action === 'deeplink') {
-      window.location.href = item.url;
+      // cursor.com/install-mcp is a web handoff that bounces to the cursor://
+      // protocol; open it in a new tab so the landing page stays put.
+      window.open(item.url, '_blank', 'noopener,noreferrer');
     } else {
       navigator.clipboard.writeText(item.prompt).then(() => {
         toast.success('Prompt copied to clipboard', {
