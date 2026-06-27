@@ -57,7 +57,11 @@ const SketchGuides = () => {
     if (!parent) return;
     const measure = () => {
       const w = parent.clientWidth;
-      const h = parent.scrollHeight;
+      // offsetHeight (not scrollHeight): the in-flow content height, which
+      // EXCLUDES this absolutely-positioned SVG. scrollHeight would feed the
+      // SVG's own height back into the measurement and ratchet the page taller
+      // than its content — leaving dead scroll space below the footer.
+      const h = parent.offsetHeight;
       const vh = window.innerHeight;
       const nav = parent.querySelector('nav');
       const top = nav

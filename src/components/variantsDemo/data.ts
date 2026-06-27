@@ -32,43 +32,37 @@ export const VARIANTS: DemoVariant[] = [
   {
     id: 'ee859344-5023-425f-8db3-7aa596346e09',
     label: 'Skeuomorphic Deck',
-    brief:
-      'A tactile hardware control deck in brushed metal, glossy round buttons, glowing LEDs, and realistic depth.',
+    brief: 'Tactile brushed-metal deck with glowing LEDs.',
     src: '/demos/jersey/skeuomorphic-deck.html',
   },
   {
     id: '9ad7cb99-cf44-41d4-be97-db768e91ad4d',
     label: 'Liquid Glass',
-    brief:
-      'Apple-style frosted glass islands floating over a live WebGL-refracted grass pitch that warps in real time.',
+    brief: 'Frosted glass islands over a live pitch.',
     src: '/demos/jersey/liquid-glass.html',
   },
   {
     id: '00368aee-9194-4bdd-be73-00f40704dbf2',
     label: 'Macintosh System',
-    brief:
-      'A faithful 1984 black-and-white Macintosh System look — Chicago bitmap type, 1-bit dithered patterns, and pixel-perfect window chrome.',
+    brief: 'Faithful 1984 black-and-white Macintosh, bitmap type.',
     src: '/demos/jersey/macintosh-system.html',
   },
   {
     id: 'c4318c43-f680-4200-a141-4ad08aa11318',
     label: 'Frutiger Aero',
-    brief:
-      'The glossy mid-2000s Frutiger Aero / Aqua look — organic pod shapes, bubbly translucency, and wet candy-button shine.',
+    brief: 'Glossy mid-2000s Aqua pods and shine.',
     src: '/demos/jersey/frutiger-aero.html',
   },
   {
     id: '8a4fd242-4c19-486c-a2b3-79f5e8b82dac',
     label: 'Halftone',
-    brief:
-      'A retro print aesthetic of CMYK Ben-Day halftone dots and bold screen-printed color fields.',
+    brief: 'Retro CMYK Ben-Day halftone dots.',
     src: '/demos/jersey/halftone.html',
   },
   {
     id: '8acd812d-13fc-405c-a82d-f27932bdec94',
     label: 'Discomorphic',
-    brief:
-      'Authentic 1980s broadcast teletext on a CRT — chunky color blocks, scanlines, and a subtle flicker over deep disco green.',
+    brief: '1980s CRT teletext over disco green.',
     src: '/demos/jersey/discomorphic.html',
   },
 ];
