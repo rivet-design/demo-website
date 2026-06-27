@@ -14,7 +14,7 @@ const Footer = () => {
           ~23.8vw below — clears the link text instead of overlapping it. Desktop
           keeps the original pt-14 / pb-10. */}
       <div
-        className="w-screen border-t border-border pt-8 pb-[26vw] md:pt-14 md:pb-10"
+        className="w-screen border-t border-border pt-8 pb-[26vw] md:pt-14 md:pb-0"
         style={{ marginLeft: 'calc(50% - 50vw)', ...footerBackground }}
       >
        <div className="px-[5vw]">
@@ -38,7 +38,7 @@ const Footer = () => {
           {/* Link columns - right aligned, each left-aligned internally */}
           <div className="flex flex-wrap gap-x-20 gap-y-8">
             <div className="flex flex-col items-start gap-4">
-              <span className="type-label-lg font-semibold text-accent-foreground">Rivet</span>
+              <span className="type-label-lg font-semibold uppercase tracking-wide text-[#EC4423]">Rivet</span>
               <div className="flex flex-col gap-3">
                 <a
                   href={DOCS_LINK}
@@ -68,7 +68,7 @@ const Footer = () => {
             </div>
 
             <div className="flex flex-col items-start gap-4">
-              <span className="type-label-lg font-semibold text-accent-foreground">Community</span>
+              <span className="type-label-lg font-semibold uppercase tracking-wide text-[#EC4423]">Community</span>
               <div className="flex flex-col gap-3">
                 <a
                   href={X_LINK}
@@ -88,7 +88,7 @@ const Footer = () => {
             </div>
 
             <div className="flex flex-col items-start gap-4">
-              <span className="type-label-lg font-semibold text-accent-foreground">Legal</span>
+              <span className="type-label-lg font-semibold uppercase tracking-wide text-[#EC4423]">Legal</span>
               <div className="flex flex-col gap-3">
                 <a
                   href="/terms"
@@ -124,7 +124,7 @@ const Footer = () => {
           above reserves pb-[26vw] so this pull lands just below the links rather
           than overlapping them; reset to 0 from md up. */}
       <div
-        className="w-screen px-[5vw] -mt-[23.8vw] md:mt-0"
+        className="w-screen px-[5vw] -mt-[23.8vw] md:-mt-12 lg:-mt-20"
         style={{ marginLeft: 'calc(50% - 50vw)', ...footerBackground }}
       >
         {/* object-cover + object-top crops the bottom while anchoring the top
