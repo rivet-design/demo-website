@@ -4,6 +4,7 @@ import { CommentLayer } from './comments';
 import type { Comment } from './comments';
 import Gallery from './gallery/Gallery';
 import PaperTexture from './PaperTexture';
+import BrowserFrame from './BrowserFrame';
 
 const SECTION_BG = '#F0EFE9';
 const R2_MEDIA_URL = 'https://pub-eed10ae7764348e2b0775fb6de2f56de.r2.dev';
@@ -98,17 +99,17 @@ const CommentDemoSection = () => {
       className="relative flex w-full justify-center px-[5vw] py-16 md:py-24"
     >
       <PaperTexture className="-z-10" />
-      <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1.7fr_1fr] lg:gap-16">
+      <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1.3fr_1fr] lg:gap-16">
         {/* DOM order is panel-then-text so that at lg+ the panel sits in the
             first (1.7fr) column on the left. On stacked mobile/tablet we want
             the title above the panel, so flip with `order-` classes below. */}
-        <div
-          className="relative order-2 w-full overflow-visible lg:order-1"
-          style={{ aspectRatio: '16 / 10' }}
-        >
+        <div className="order-2 w-full lg:order-1">
           {/* Mobile: static video — interactive version doesn't translate to
               touch and the gallery is too dense for small screens. */}
-          <div className="block h-full w-full overflow-hidden rounded-2xl border border-black/10 bg-white shadow-[0_10px_40px_rgba(0,0,0,0.08)] md:hidden">
+          <div
+            className="block w-full overflow-hidden rounded-2xl border border-black/10 bg-white shadow-[0_10px_40px_rgba(0,0,0,0.08)] md:hidden"
+            style={{ aspectRatio: '16 / 10' }}
+          >
             <video
               src={MOBILE_VIDEO_SRC}
               poster={MOBILE_POSTER_SRC}
@@ -122,21 +123,31 @@ const CommentDemoSection = () => {
             />
           </div>
 
-          {/* Desktop: full interactive comments + gallery */}
-          <div className="hidden h-full w-full overflow-hidden rounded-2xl border border-black/10 bg-white shadow-[0_10px_40px_rgba(0,0,0,0.08)] md:block">
-            <CommentLayer
-              active
-              comments={comments}
-              onCommentsChange={handleCommentsChange}
-              initialDraft={SEEDED_DRAFT}
-              openInitialDraftOnVisible
-              scrollableSelector=".rivet-gallery .content"
-              onDraftCreated={telemetry.trackCommentDemoDraftCreated.bind(
-                telemetry,
-              )}
-            >
-              <Gallery />
-            </CommentLayer>
+          {/* Desktop: the interactive gallery in a browser window over the same
+              multicolor hero backdrop as the hero + agent panels. The 16:10
+              aspect-ratio lives on the frame's content so the seeded comment
+              coordinates stay aligned to the gallery. */}
+          <div
+            className="hidden w-full overflow-hidden rounded-2xl bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:block md:p-8"
+            style={{ backgroundImage: "url('/images/panel-backdrop.png')" }}
+          >
+            <BrowserFrame url="localhost:3000" draggable className="w-full">
+              <div className="relative w-full" style={{ aspectRatio: '16 / 10' }}>
+                <CommentLayer
+                  active
+                  comments={comments}
+                  onCommentsChange={handleCommentsChange}
+                  initialDraft={SEEDED_DRAFT}
+                  openInitialDraftOnVisible
+                  scrollableSelector=".rivet-gallery .content"
+                  onDraftCreated={telemetry.trackCommentDemoDraftCreated.bind(
+                    telemetry,
+                  )}
+                >
+                  <Gallery />
+                </CommentLayer>
+              </div>
+            </BrowserFrame>
           </div>
         </div>
 

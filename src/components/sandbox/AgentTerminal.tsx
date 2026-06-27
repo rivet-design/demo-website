@@ -38,7 +38,7 @@ const Caret = () => (
 
 const Spinner = () => (
   <span
-    className="inline-block h-3 w-3 animate-spin rounded-full border-[1.5px]"
+    className="inline-block h-3 w-3 shrink-0 animate-spin rounded-full border-[1.5px]"
     style={{ borderColor: TAN, borderTopColor: SAGE }}
   />
 );
@@ -169,7 +169,7 @@ const Block = ({ block }: { block: ResponseBlock }) => {
     case 'result':
       return (
         <div
-          className={`flex items-center gap-2.5 rounded-md border px-3.5 py-2`}
+          className={`flex items-start gap-2.5 rounded-md border px-3.5 py-2`}
           style={{
             borderColor: 'rgba(95,122,82,0.35)',
             backgroundColor: 'rgba(95,122,82,0.08)',
@@ -177,7 +177,7 @@ const Block = ({ block }: { block: ResponseBlock }) => {
           }}
         >
           <span
-            className="flex h-4 w-4 items-center justify-center rounded-full text-[10px]"
+            className="mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px]"
             style={{ backgroundColor: SAGE, color: CREAM_HI }}
             aria-hidden
           >
@@ -251,12 +251,12 @@ const AgentTerminal = () => {
 
   return (
     <div
-      className="mx-auto w-full max-w-3xl overflow-hidden rounded-2xl border font-mono text-[13.5px] shadow-[0_18px_50px_-24px_rgba(58,52,43,0.45)]"
+      className="mx-auto flex h-[60vh] min-h-[480px] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border font-mono text-[13.5px] shadow-[0_18px_50px_-24px_rgba(58,52,43,0.45)]"
       style={{ borderColor: TAN, backgroundColor: CREAM }}
     >
       {/* Title bar */}
       <div
-        className="flex items-center gap-2 border-b px-4 py-2.5"
+        className="flex shrink-0 items-center gap-2 border-b px-4 py-2.5"
         style={{ borderColor: TAN, backgroundColor: CREAM_HI }}
       >
         <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: '#d98a6a' }} />
@@ -274,10 +274,11 @@ const AgentTerminal = () => {
         </span>
       </div>
 
-      {/* Transcript */}
+      {/* Transcript — flexes to fill the window so the overall terminal height
+          stays constant; only this region scrolls. */}
       <div
         ref={scrollRef}
-        className="flex h-[60vh] min-h-[420px] flex-col gap-6 overflow-y-auto p-6 leading-[1.65]"
+        className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-6 leading-[1.65]"
         style={{
           color: INK,
           backgroundImage:
@@ -302,9 +303,11 @@ const AgentTerminal = () => {
 
       {/* Persistent input box — user input is typed HERE (then committed into
           the transcript above as a ❯ line) rather than appearing inline in the
-          scroll, mirroring a real Claude Code prompt pinned to the bottom. */}
+          scroll, mirroring a real Claude Code prompt pinned to the bottom. It
+          grows within the fixed-height window (the transcript shrinks to match)
+          so the terminal itself never changes height. */}
       <div
-        className="border-t px-3.5 py-3"
+        className="shrink-0 border-t px-3.5 py-3"
         style={{ borderColor: TAN, backgroundColor: CREAM_HI }}
       >
         <div

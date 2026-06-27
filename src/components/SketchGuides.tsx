@@ -11,7 +11,8 @@ import rough from 'roughjs';
  * and sized to the container's FULL height, so the verticals run from the nav
  * all the way down the page and scroll with the content. Sits at z-0 over the
  * paper background; page content is lifted to z-10 so the guides read as a
- * backdrop behind it.
+ * backdrop BEHIND the content panels (the panels intentionally render over
+ * them).
  *
  * Entrance: the guides reveal ON SCROLL — each stroke/sparkle fades in once it
  * enters the viewport (via an IntersectionObserver on stacked "tripwire" markers
@@ -41,26 +42,47 @@ const sparkle = (cx: number, cy: number, r = 8, inner = 1.8): SVGPathElement => 
 
 const SketchGuides = () => {
   const svgRef = useRef<SVGSVGElement>(null);
+  // The cinematic scroll-reveal only plays on the FIRST draw. Every later draw
+  // (resize / page-height change) re-runs the draw effect, which rebuilds the
+  // SVG from scratch — so we must NOT re-hide the strokes then, or a continuous
+  // resize keeps re-priming them to opacity 0 and cancelling the reveal pass,
+  // and the guides disappear. After the first draw, redraws render fully opaque.
+  const firstDrawRef = useRef(true);
   // w/h track the full content container; vh is the viewport height (used to
   // place the hero divider near the top); top is the nav's measured bottom edge
   // so the frame starts right at the nav rather than a guessed offset.
-  const [size, setSize] = useState({ w: 0, h: 0, vh: 0, top: 0 });
+  const [size, setSize] = useState({ w: 0, h: 0, vh: 0, top: 0, divider: 0 });
 
   useEffect(() => {
     const parent = svgRef.current?.parentElement;
     if (!parent) return;
     const measure = () => {
       const w = parent.clientWidth;
-      const h = parent.scrollHeight;
+      // offsetHeight (not scrollHeight): the in-flow content height, which
+      // EXCLUDES this absolutely-positioned SVG. scrollHeight would feed the
+      // SVG's own height back into the measurement and ratchet the page taller
+      // than its content — leaving dead scroll space below the footer.
+      const h = parent.offsetHeight;
       const vh = window.innerHeight;
       const nav = parent.querySelector('nav');
       const top = nav
         ? Math.round((nav as HTMLElement).offsetTop + (nav as HTMLElement).offsetHeight)
         : 88;
+      // Anchor the hero divider to the TOP edge of the variant showcase panel so
+      // the line sits just above it and tracks its (resized) height, instead of
+      // a fixed viewport fraction that would cut through the panel.
+      const showcase = parent.querySelector('#hero-showcase') as HTMLElement | null;
+      const divider = showcase
+        ? Math.round(showcase.offsetTop)
+        : Math.round(vh * 0.34);
       setSize((prev) =>
-        prev.w === w && prev.h === h && prev.vh === vh && prev.top === top
+        prev.w === w &&
+        prev.h === h &&
+        prev.vh === vh &&
+        prev.top === top &&
+        prev.divider === divider
           ? prev
-          : { w, h, vh, top },
+          : { w, h, vh, top, divider },
       );
     };
     measure();
@@ -79,7 +101,7 @@ const SketchGuides = () => {
     while (svg.firstChild) svg.removeChild(svg.firstChild);
 
     const rc = rough.svg(svg);
-    const { w, h, vh, top } = size;
+    const { w, h, vh, top, divider } = size;
     // Very subtle hand-drawn character — nearly straight with a faint waver. A
     // fixed seed per stroke keeps the wobble stable so it never "jitters".
     const base = { stroke: ORANGE, strokeWidth: 1.2, roughness: 0.4, bowing: 0.5 };
@@ -88,12 +110,16 @@ const SketchGuides = () => {
     const Rx = Math.round(w * 0.95); // right margin
     const Ix = Math.round(w * 0.15); // inset content-column line
     const Ty = top || 88; // at the nav's bottom edge
-    const My = Math.round(vh * 0.34); // hero / content divider
+    const My = divider || Math.round(vh * 0.34); // top edge of the showcase panel
     const By = h - 40; // bottom rule, at the very end of the page
 
     const reduceMotion =
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Animate the scroll-reveal only on the first draw. On any redraw (resize),
+    // strokes are committed at their final opacity straight away so they persist.
+    const animate = firstDrawRef.current && !reduceMotion;
 
     // Each reveal-able element is registered with the page Y at which it should
     // begin appearing (its top for long verticals, its midpoint otherwise) and
@@ -104,7 +130,7 @@ const SketchGuides = () => {
 
     const prime = (el: SVGElement, y: number, to: number) => {
       el.setAttribute('opacity', String(to));
-      if (reduceMotion) return;
+      if (!animate) return;
       el.style.opacity = '0';
       el.style.transition = 'opacity 500ms ease-out';
       reveals.push({ el, y, to });
@@ -171,7 +197,9 @@ const SketchGuides = () => {
       svg.appendChild(s);
     });
 
-    if (reduceMotion || reveals.length === 0) return;
+    if (!animate || reveals.length === 0) return;
+    // First animated draw done — every subsequent redraw renders fully opaque.
+    firstDrawRef.current = false;
 
     // Reveal-on-scroll. This previously watched invisible SVG <rect> "tripwire"
     // markers with an IntersectionObserver, but IO observing SVG child elements
@@ -206,15 +234,15 @@ const SketchGuides = () => {
       raf = window.requestAnimationFrame(revealVisible);
     };
 
-    // Reveal above-the-fold marks on mount, then follow the scroll down.
+    // Reveal above-the-fold marks on mount, then follow the scroll down. Resize
+    // is handled by the measure effect (which redraws fully opaque), so we only
+    // listen for scroll here.
     schedule();
     window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', schedule);
 
     return () => {
       if (raf) cancelAnimationFrame(raf);
       window.removeEventListener('scroll', schedule);
-      window.removeEventListener('resize', schedule);
     };
   }, [size]);
 

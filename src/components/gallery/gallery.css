@@ -21,6 +21,9 @@
 
   height: 100%;
   width: 100%;
+  /* Establish a container so .app can respond to the gallery's own width
+     (it's embedded in a panel, so viewport media queries don't apply). */
+  container-type: inline-size;
   background: var(--bg);
   color: var(--text-primary);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -55,10 +58,40 @@
 
 .rivet-gallery .app {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 180px 1fr;
   grid-template-rows: 52px 1fr;
   height: 100%;
   overflow: hidden;
+}
+
+/* When the gallery itself (not the viewport) gets narrow — e.g. inside the
+   browser-framed comment panel on smaller screens — drop the sidebar entirely
+   so the masonry gets the full width. Container query, since the gallery's
+   width is decoupled from the viewport. */
+@container (max-width: 520px) {
+  .rivet-gallery .app {
+    grid-template-columns: 0 1fr;
+  }
+  .rivet-gallery .sidebar {
+    display: none;
+  }
+}
+
+/* Skinnier control bar and smaller header text as the gallery narrows. */
+@container (max-width: 640px) {
+  .rivet-gallery .content-header {
+    padding: 11px 14px 9px;
+  }
+  .rivet-gallery .content-title {
+    font-size: 16px;
+  }
+  .rivet-gallery .content-meta {
+    font-size: 11px;
+  }
+  .rivet-gallery .view-toggle-btn {
+    width: 23px;
+    height: 23px;
+  }
 }
 
 /* Topbar */

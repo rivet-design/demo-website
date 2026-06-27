@@ -9,7 +9,7 @@ import {
   useProximityHover,
   useRegisterProximityItem,
 } from './useProximityHover';
-import { RUN_LABEL, type DemoVariant } from './data';
+import { type DemoVariant } from './data';
 import type { VariantsDemoController } from './useVariantsDemo';
 
 /**
@@ -196,9 +196,9 @@ const VariantRow = ({
         <span className="relative ml-1 mt-0.5 flex h-5 shrink-0 items-center justify-end">
           <span
             className="max-w-[8rem] truncate rounded px-1.5 py-0.5 text-[10px] font-medium opacity-100 transition-opacity duration-150 group-hover:opacity-0 group-has-[:focus-visible]:opacity-0"
-            style={runLabelStyle(RUN_LABEL)}
+            style={runLabelStyle(variant.tag)}
           >
-            {RUN_LABEL}
+            {variant.tag}
           </span>
         </span>
       </div>

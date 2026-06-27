@@ -244,6 +244,7 @@ const App = () => {
         </div>
 
         <div
+          id="hero-showcase"
           className="relative z-10 flex w-full justify-center rounded-xl bg-cover bg-center p-4 sm:p-6 md:p-10"
           style={{ backgroundImage: "url('/images/panel-backdrop.png')" }}
         >

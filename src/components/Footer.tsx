@@ -10,11 +10,11 @@ const Footer = () => {
   return (
     <footer className="w-full">
       {/* On mobile the links sit higher (smaller pt) and the block reserves a
-          deep bottom padding (pb-[28vw]) so the multicolor logo — pulled up
-          ~25.6vw below — clears the link text instead of overlapping it. Desktop
+          deep bottom padding (pb-[26vw]) so the multicolor logo — pulled up
+          ~23.8vw below — clears the link text instead of overlapping it. Desktop
           keeps the original pt-14 / pb-10. */}
       <div
-        className="w-screen border-t border-border pt-8 pb-[28vw] md:pt-14 md:pb-10"
+        className="w-screen border-t border-border pt-8 pb-[26vw] md:pt-14 md:pb-10"
         style={{ marginLeft: 'calc(50% - 50vw)', ...footerBackground }}
       >
        <div className="px-[5vw]">
@@ -115,24 +115,29 @@ const Footer = () => {
           so the logo aligns to the same horizontal margin as the wordmark and
           content sections above. The full asset (rivet-multicolor.svg, viewBox
           "0 0 1884 797") is rendered at the padded content width; the inner
-          wrapper is shorter than the rendered logo (aspect-ratio 1884 / 669.5 ≈
-          top 84%) with overflow hidden — so the top ~84% shows and the bottom
-          ~16% is clipped off below the page edge.
+          wrapper is shorter than the rendered logo (aspect-ratio 1884 / 622 ≈
+          top 78%) with overflow hidden — so the top ~78% shows and the bottom
+          ~22% of the wordmark is clipped off below the page edge.
 
           On mobile the logo block is pulled up ~80% of its own rendered height
-          (-mt-[25.6vw]; height ≈ 90vw × 669.5/1884 ≈ 32vw). The content block
-          above reserves pb-[28vw] so this pull lands just below the links rather
+          (-mt-[23.8vw]; height ≈ 90vw × 622/1884 ≈ 29.7vw). The content block
+          above reserves pb-[26vw] so this pull lands just below the links rather
           than overlapping them; reset to 0 from md up. */}
       <div
-        className="w-screen px-[5vw] -mt-[25.6vw] md:mt-0"
+        className="w-screen px-[5vw] -mt-[23.8vw] md:mt-0"
         style={{ marginLeft: 'calc(50% - 50vw)', ...footerBackground }}
       >
-        <div className="overflow-hidden" style={{ aspectRatio: '1884 / 669.5' }}>
+        {/* object-cover + object-top crops the bottom while anchoring the top
+            (the hand-drawn dot over the "i"). This is independent of the SVG's
+            intrinsic size, which WebKit/iOS Safari resolves differently from
+            Chromium (mixed fixed + 100% dims) — without it, Safari could clip
+            the top and drop the dot. */}
+        <div className="overflow-hidden" style={{ aspectRatio: '1884 / 622' }}>
           <img
             src="/images/rivet-multicolor.svg"
             alt="rivet"
             draggable={false}
-            className="block w-full mix-blend-multiply"
+            className="block h-full w-full object-cover object-top mix-blend-multiply"
           />
         </div>
       </div>

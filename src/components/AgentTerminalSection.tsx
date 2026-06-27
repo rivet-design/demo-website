@@ -56,7 +56,10 @@ const AgentTerminalSection = () => {
       <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1.7fr_1fr] lg:gap-16">
         {/* Terminal — left on lg+, below the title on mobile. */}
         <div className="order-2 w-full lg:order-1">
-          <div className="overflow-hidden rounded-2xl border border-black/10 bg-[#efe7d6] p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:p-8">
+          <div
+            className="overflow-hidden rounded-2xl border border-black/10 bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:p-8"
+            style={{ backgroundImage: "url('/images/panel-backdrop.png')" }}
+          >
             <AgentTerminal />
           </div>
         </div>
