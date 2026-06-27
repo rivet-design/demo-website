@@ -15,6 +15,8 @@ import SketchGuides from './components/SketchGuides';
 import VariantsShowcase from './components/variantsDemo/VariantsShowcase';
 import AgentTerminalSection from './components/AgentTerminalSection';
 import { SKEUOMORPHIC_DECK_ID } from './components/variantsDemo/data';
+import AgentTerminal from './components/sandbox/AgentTerminal';
+import { HERO_SESSION } from './components/sandbox/terminalScript';
 import { pageBackground } from './lib/background';
 
 const R2_PUBLIC_URL = 'https://releases.rivet.design';
@@ -27,6 +29,12 @@ const SHOW_MANIFESTO_PANEL = false;
 // Hide the "Explore lots of design directions" panel (VariantsDemoSection).
 // Flip to true to restore.
 const SHOW_VARIANTS_PANEL = false;
+
+// Hero agent-chat interaction timing: the floating chat types the prompt + MCP
+// tool calls first, then the browser window opens, then the variant directions
+// generate and fade in.
+const HERO_WINDOW_OPEN_MS = 2600;
+const HERO_LOAD_DELAY_MS = 2600;
 
 /**
  * Fetch the latest Rivet version string from the R2 release manifest
@@ -174,6 +182,57 @@ const CodePanel = () => {
 const App = () => {
   const latestVersion = useLatestVersion();
 
+  // The floating agent-chat intro is a desktop, motion-allowed affordance: it's
+  // `hidden md:flex`, so below md there's no visible chat to justify the staged
+  // delays, and reduced-motion users shouldn't sit through the typing + open
+  // sequence. Decide once, synchronously on first render, so the showcase never
+  // starts in a delayed/blank state it then has to correct. When the intro does
+  // NOT play, the window and variants drop their delays and land immediately.
+  const [playHeroIntro] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
+      window.matchMedia('(min-width: 768px)').matches,
+  );
+  const windowOpenDelayMs = playHeroIntro ? HERO_WINDOW_OPEN_MS : 0;
+  const loadDelayMs = playHeroIntro ? HERO_LOAD_DELAY_MS : 0;
+
+  // Hero choreography: the agent chat starts centered (drawing the eye to the
+  // prompt as it types), then slides to the right once the browser window has
+  // animated in.
+  const [chatMoved, setChatMoved] = useState(false);
+  // Once the agent finishes all its MCP calls, the chat minimizes out.
+  const [chatMinimized, setChatMinimized] = useState(false);
+  // After the minimize animation finishes we UNMOUNT the chat for good. It's a
+  // `hidden md:flex` element, so otherwise crossing the md breakpoint on resize
+  // re-displays it and replays the minimize animation — flashing the panel back
+  // in. The intro is one-shot, so once it's gone it should stay gone.
+  const [chatGone, setChatGone] = useState(false);
+  // The minimize step is scheduled from the chat's onComplete; keep the handle
+  // so we can cancel it if the tree unmounts before it fires.
+  const minimizeTimer = useRef<number>();
+  useEffect(() => {
+    // No intro this session → settle the chat into its final position at once
+    // (it isn't rendered, but this keeps the choreography state coherent).
+    if (!playHeroIntro) {
+      setChatMoved(true);
+      return;
+    }
+    const t = setTimeout(() => setChatMoved(true), HERO_WINDOW_OPEN_MS + 900);
+    return () => clearTimeout(t);
+  }, [playHeroIntro]);
+  useEffect(() => {
+    if (!chatMinimized) return;
+    const t = setTimeout(() => setChatGone(true), 700);
+    return () => clearTimeout(t);
+  }, [chatMinimized]);
+  useEffect(
+    () => () => {
+      if (minimizeTimer.current) clearTimeout(minimizeTimer.current);
+    },
+    [],
+  );
+
   const renderDownloadPanel = () => {
     return (
       <div className="relative z-10 hidden flex-col items-center py-16 md:flex">
@@ -248,13 +307,49 @@ const App = () => {
           className="relative z-10 flex w-full justify-center rounded-xl bg-cover bg-center p-4 sm:p-6 md:p-10"
           style={{ backgroundImage: "url('/images/panel-backdrop.png')" }}
         >
-          <BrowserFrame url="localhost:4000" draggable animateOpen className="w-full max-w-6xl">
+          <BrowserFrame
+            url="localhost:4000"
+            draggable
+            animateOpen
+            openDelayMs={windowOpenDelayMs}
+            className="w-full max-w-6xl"
+          >
             <VariantsShowcase
               heightClassName="h-[58vh] min-h-[440px]"
               autoPlay={false}
               initialVariantId={SKEUOMORPHIC_DECK_ID}
+              loadDelayMs={loadDelayMs}
             />
           </BrowserFrame>
+
+          {/* Floating agent chat (bottom-right) that "drives" the demo: it types
+              the prompt + Rivet MCP tool calls, then the window opens and the
+              directions generate and fade in. Decorative, so pointer-events are
+              off; hidden on small screens where the hero is already tight. It's
+              a one-shot intro — unmounted once it has minimized so a resize can
+              never bring it back. */}
+          {playHeroIntro && !chatGone && (
+            <AgentTerminal
+              compact
+              loop={false}
+              script={HERO_SESSION}
+              onComplete={() => {
+                minimizeTimer.current = window.setTimeout(
+                  () => setChatMinimized(true),
+                  1100,
+                );
+              }}
+              className={`pointer-events-none absolute z-20 hidden h-[240px] w-[300px] -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] md:flex lg:h-[300px] lg:w-[380px] ${
+                chatMoved
+                  ? 'left-[70%] top-[61%] lg:left-[77%] lg:top-[63%]'
+                  : 'left-1/2 top-1/2'
+              } ${
+                chatMinimized
+                  ? 'origin-bottom-right animate-[rivet-chat-minimize_0.6s_cubic-bezier(0.7,0,0.84,0)_forwards]'
+                  : ''
+              }`}
+            />
+          )}
         </div>
 
         {/* Subtitle + CTA, moved below the fold to sit under the UI variants
@@ -269,7 +364,7 @@ const App = () => {
           </div>
         </FadeInText>
 
-        <div className="relative z-10 -mx-[5vw] flex flex-col gap-12" id="demo-panel">
+        <div className="relative z-10 -mx-[5vw] flex flex-col" id="demo-panel">
           {/* <WorkflowPanels /> */}
           <AgentTerminalSection />
           <ReferencesDemoSection />

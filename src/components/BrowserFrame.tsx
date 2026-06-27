@@ -26,6 +26,7 @@ const BrowserFrame = ({
   url,
   draggable = false,
   animateOpen = false,
+  openDelayMs = 32,
   className = '',
 }: {
   children: ReactNode;
@@ -38,6 +39,12 @@ const BrowserFrame = ({
    * mount: the backdrop shows first, then the frame scales up into place.
    */
   animateOpen?: boolean;
+  /**
+   * How long to stay "minimized" before the open animation fires. Defaults to
+   * one frame; raise it to sequence the open after some other intro (e.g. the
+   * hero's agent chat typing first).
+   */
+  openDelayMs?: number;
   className?: string;
 }) => {
   const frameRef = useRef<HTMLDivElement>(null);
@@ -59,7 +66,7 @@ const BrowserFrame = ({
     // small/transparent start state lands before we flip to the open state (else
     // the browser has nothing to transition from). The second timer fires after
     // the transform settles so we can shed the transition.
-    const OPEN_DELAY = 32;
+    const OPEN_DELAY = Math.max(0, openDelayMs);
     const OPEN_DURATION = 600;
     const start = setTimeout(() => setEntered(true), OPEN_DELAY);
     const done = setTimeout(() => setSettled(true), OPEN_DELAY + OPEN_DURATION + 40);
@@ -67,7 +74,7 @@ const BrowserFrame = ({
       clearTimeout(start);
       clearTimeout(done);
     };
-  }, [animateOpen]);
+  }, [animateOpen, openDelayMs]);
   // Geometry captured at drag start so move math is cheap and clamp-correct.
   const drag = useRef<{
     pointerX: number;
