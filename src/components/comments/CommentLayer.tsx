@@ -280,7 +280,17 @@ const CommentLayer = ({
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if (!active) return;
-    if (draft || editingId) return;
+    // A pointer-down that reaches the layer is always OUTSIDE the popover (it
+    // stops propagation), so dismiss any open draft / editor — matching Rivet
+    // Core's click-outside behavior (its popover has no explicit Cancel button).
+    if (draft) {
+      setDraft(null);
+      return;
+    }
+    if (editingId) {
+      setEditingId(null);
+      return;
+    }
     e.preventDefault();
     const { x, y } = localPoint(e);
     setDrag({

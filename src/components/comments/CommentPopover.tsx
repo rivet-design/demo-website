@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
+import SparkleLoader from '../variantsDemo/SparkleLoader';
 
 type Props = {
   /** Container-local pixel position to anchor the popover */
@@ -38,6 +39,17 @@ const CommentPopover = ({
   // Defaults true because the textarea is auto-focused on mount; saves a
   // 1-frame flash where the border would render gray before onFocus fires.
   const [isFocused, setIsFocused] = useState(true);
+  // "Vary" shows an in-button ASCII generating state (like the variant rows)
+  // before it resolves. The timer is cleared if the popover unmounts first.
+  const [varying, setVarying] = useState(false);
+  const varyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (varyTimerRef.current) clearTimeout(varyTimerRef.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     // preventScroll keeps an already-open popover from yanking the viewport
@@ -65,6 +77,15 @@ const CommentPopover = ({
       return;
     }
     onSubmit(trimmed);
+  };
+
+  const handleVary = () => {
+    const trimmed = value.trim();
+    if (!trimmed || varying) return;
+    setVarying(true);
+    // Fake the generation: the ASCII loader animates in-button, then the
+    // comment lands — mirroring a variant row that loads then resolves.
+    varyTimerRef.current = setTimeout(() => onSubmit(trimmed), 1800);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -177,33 +198,55 @@ const CommentPopover = ({
           ) : null}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* "Vary" — the very secondary button (outlined, fills on hover),
+              symmetric with Rivet Core. Clicking it shows an in-button ASCII
+              generating state, like the variant rows. */}
           <button
             type="button"
-            onClick={onCancel}
+            onClick={handleVary}
+            disabled={!isSaveEnabled || varying}
             style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              minWidth: 82,
               background: 'transparent',
-              border: 'none',
-              color: 'var(--content-muted)',
+              border: '1px solid var(--main-border)',
+              color: 'var(--content)',
               fontSize: 13,
-              padding: '6px 8px',
-              borderRadius: 6,
-              transition: 'color 120ms',
+              fontWeight: 500,
+              padding: '6px 14px',
+              borderRadius: 999,
+              opacity: isSaveEnabled ? 1 : 0.5,
+              cursor: isSaveEnabled && !varying ? 'pointer' : 'not-allowed',
+              transition: 'background 120ms',
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.color = 'var(--content)';
+              if (isSaveEnabled && !varying) {
+                (e.currentTarget as HTMLButtonElement).style.background =
+                  'var(--main-input)';
+              }
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.color =
-                'var(--content-muted)';
+              (e.currentTarget as HTMLButtonElement).style.background =
+                'transparent';
             }}
           >
-            Cancel
+            {varying ? (
+              <SparkleLoader className="text-[13px] text-[color:var(--content)]" />
+            ) : (
+              <>
+                <CardsThreeIcon />
+                <span>Vary</span>
+              </>
+            )}
           </button>
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={!isSaveEnabled}
+            disabled={!isSaveEnabled || varying}
             style={{
               background: 'var(--primary)',
               border: 'none',
@@ -212,11 +255,11 @@ const CommentPopover = ({
               fontWeight: 500,
               padding: '6px 20px',
               borderRadius: 999,
-              opacity: isSaveEnabled ? 1 : 0.5,
+              opacity: isSaveEnabled && !varying ? 1 : 0.5,
               transition: 'background 120ms',
             }}
             onMouseEnter={(e) => {
-              if (isSaveEnabled) {
+              if (isSaveEnabled && !varying) {
                 (e.currentTarget as HTMLButtonElement).style.background =
                   'var(--primary-hover)';
               }
@@ -226,13 +269,28 @@ const CommentPopover = ({
                 'var(--primary)';
             }}
           >
-            {initialValue ? 'Save' : 'Add'}
+            {initialValue ? 'Save' : 'Apply'}
           </button>
         </div>
       </div>
     </motion.div>
   );
 };
+
+// Stacked cards — the "Vary" glyph, echoing Rivet Core's CardsThree icon.
+const CardsThreeIcon = () => (
+  <svg
+    width="15"
+    height="15"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    aria-hidden="true"
+  >
+    <rect x="8" y="3" width="13" height="13" rx="3" opacity="0.4" />
+    <rect x="5.5" y="5.5" width="13" height="13" rx="3" opacity="0.65" />
+    <rect x="3" y="8" width="13" height="13" rx="3" />
+  </svg>
+);
 
 const TrashIcon = () => (
   <svg
