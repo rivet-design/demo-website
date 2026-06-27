@@ -51,7 +51,14 @@ const SketchGuides = () => {
   // w/h track the full content container; vh is the viewport height (used to
   // place the hero divider near the top); top is the nav's measured bottom edge
   // so the frame starts right at the nav rather than a guessed offset.
-  const [size, setSize] = useState({ w: 0, h: 0, vh: 0, top: 0, divider: 0 });
+  const [size, setSize] = useState({
+    w: 0,
+    h: 0,
+    vh: 0,
+    top: 0,
+    divider: 0,
+    rows: [] as number[],
+  });
 
   useEffect(() => {
     const parent = svgRef.current?.parentElement;
@@ -75,14 +82,31 @@ const SketchGuides = () => {
       const divider = showcase
         ? Math.round(showcase.offsetTop)
         : Math.round(vh * 0.34);
+      // Horizontal rule positions framing each workflow panel (the grey panel
+      // backgrounds were removed — these blueprint lines delineate them now).
+      // Draw one at the top of every [data-guide-row] panel, plus one at the
+      // bottom of the last so the stack reads as framed cells. Measured via
+      // rects (relative to the overlay's parent) so the offsetParent chain
+      // doesn't matter.
+      const parentTop = parent.getBoundingClientRect().top;
+      const rowEls = Array.from(
+        parent.querySelectorAll('[data-guide-row]'),
+      ) as HTMLElement[];
+      const rows: number[] = [];
+      rowEls.forEach((el, i) => {
+        const r = el.getBoundingClientRect();
+        rows.push(Math.round(r.top - parentTop));
+        if (i === rowEls.length - 1) rows.push(Math.round(r.bottom - parentTop));
+      });
       setSize((prev) =>
         prev.w === w &&
         prev.h === h &&
         prev.vh === vh &&
         prev.top === top &&
-        prev.divider === divider
+        prev.divider === divider &&
+        prev.rows.join(',') === rows.join(',')
           ? prev
-          : { w, h, vh, top, divider },
+          : { w, h, vh, top, divider, rows },
       );
     };
     measure();
@@ -101,7 +125,7 @@ const SketchGuides = () => {
     while (svg.firstChild) svg.removeChild(svg.firstChild);
 
     const rc = rough.svg(svg);
-    const { w, h, vh, top, divider } = size;
+    const { w, h, vh, top, divider, rows } = size;
     // Very subtle hand-drawn character — nearly straight with a faint waver. A
     // fixed seed per stroke keeps the wobble stable so it never "jitters".
     const base = { stroke: ORANGE, strokeWidth: 1.2, roughness: 0.4, bowing: 0.5 };
@@ -173,6 +197,9 @@ const SketchGuides = () => {
     hline(0, Ty, w, Ty, 11);
     hline(0, My, w, My, 12);
     hline(0, By, w, By, 13);
+    // Per-panel rules framing each workflow panel (top of each + bottom of the
+    // last), now that the grey panel backgrounds are gone.
+    rows.forEach((ry, i) => hline(0, ry, w, ry, 20 + i));
     // Margin verticals run the FULL page height — left solid, right dashed.
     vline(Lx, Ty, By, 14);
     vline(Rx, Ty, By, 15, true);

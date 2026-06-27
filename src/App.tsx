@@ -315,7 +315,7 @@ const App = () => {
           </div>
         </FadeInText>
 
-        <div className="relative z-10 -mx-[5vw] flex flex-col gap-12" id="demo-panel">
+        <div className="relative z-10 -mx-[5vw] flex flex-col" id="demo-panel">
           {/* <WorkflowPanels /> */}
           <AgentTerminalSection />
           <ReferencesDemoSection />

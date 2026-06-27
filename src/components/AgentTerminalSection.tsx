@@ -1,7 +1,4 @@
-import PaperTexture from './PaperTexture';
 import AgentTerminal from './sandbox/AgentTerminal';
-
-const SECTION_BG = '#F0EFE9';
 
 // Inline vendor mark + name. The shipped SVGs are single-color exports (Claude
 // uses currentColor, Cursor/Codex are light/white for dark UIs), so they'd be
@@ -49,10 +46,9 @@ const Vendor = ({
 const AgentTerminalSection = () => {
   return (
     <div
-      style={{ background: SECTION_BG }}
+      data-guide-row
       className="relative flex w-full justify-center px-[5vw] py-16 md:py-24"
     >
-      <PaperTexture className="-z-10" />
       <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1.7fr_1fr] lg:gap-16">
         {/* Terminal — left on lg+, below the title on mobile. */}
         <div className="order-2 w-full lg:order-1">

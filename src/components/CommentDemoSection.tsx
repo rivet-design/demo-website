@@ -3,10 +3,8 @@ import { telemetry } from '@/lib/telemetry';
 import { CommentLayer } from './comments';
 import type { Comment } from './comments';
 import Gallery from './gallery/Gallery';
-import PaperTexture from './PaperTexture';
 import BrowserFrame from './BrowserFrame';
 
-const SECTION_BG = '#F0EFE9';
 const R2_MEDIA_URL = 'https://pub-eed10ae7764348e2b0775fb6de2f56de.r2.dev';
 const MOBILE_VIDEO_SRC = `${R2_MEDIA_URL}/media/vid_landing.webm`;
 const MOBILE_POSTER_SRC = '/images/rivet-demo@2x.png';
@@ -95,10 +93,9 @@ const CommentDemoSection = () => {
 
   return (
     <div
-      style={{ background: SECTION_BG }}
+      data-guide-row
       className="relative flex w-full justify-center px-[5vw] py-16 md:py-24"
     >
-      <PaperTexture className="-z-10" />
       <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1.3fr_1fr] lg:gap-16">
         {/* DOM order is panel-then-text so that at lg+ the panel sits in the
             first (1.7fr) column on the left. On stacked mobile/tablet we want

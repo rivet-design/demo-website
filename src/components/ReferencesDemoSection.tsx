@@ -5,11 +5,9 @@
 // GeometricLines line-art, or an orange panel with the CircleGridArt. Built on
 // the Rivet design system.
 import { useEffect, useState } from 'react';
-import PaperTexture from './PaperTexture';
 import { GeometricLines } from './FadeInText';
 import CircleGridArt from './CircleGridArt';
 
-const SECTION_BG = '#F0EFE9';
 
 // Brand marks for the reference sources. Pinterest is the swirl glyph (filled
 // with the brand red via currentColor) ported from Rivet Core's design-
@@ -89,10 +87,9 @@ const ReferencesDemoSection = () => {
   const gridSpacing = useIsDesktop() ? 22 : 30;
   return (
     <div
-      style={{ background: SECTION_BG }}
+      data-guide-row
       className="relative flex w-full justify-center px-[5vw] py-16 md:py-24"
     >
-      <PaperTexture className="-z-10" />
       <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_1.7fr] lg:gap-16">
         {/* Copy */}
         <div className="max-w-[440px]">
