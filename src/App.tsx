@@ -11,7 +11,9 @@ import PaperSheet from './components/PaperSheet';
 import PromptInstallButton from './components/PromptInstallButton';
 import InstallAccordion from './components/InstallAccordion';
 import BrowserFrame from './components/BrowserFrame';
+import SketchGuides from './components/SketchGuides';
 import VariantsShowcase from './components/variantsDemo/VariantsShowcase';
+import AgentTerminalSection from './components/AgentTerminalSection';
 import { SKEUOMORPHIC_DECK_ID } from './components/variantsDemo/data';
 import { pageBackground } from './lib/background';
 
@@ -174,7 +176,7 @@ const App = () => {
 
   const renderDownloadPanel = () => {
     return (
-      <div className="hidden flex-col items-center py-16 md:flex">
+      <div className="relative z-10 hidden flex-col items-center py-16 md:flex">
         <div className="flex flex-col gap-6">
           <h2 className="type-heading-1 text-center text-[44px] font-normal">
             Direct, don’t implement.
@@ -231,16 +233,18 @@ const App = () => {
           (not fixed) so it travels with the page; tiled vertically to cover the
           full scroll height at the same horizontal scale across the viewport. */}
       <div
-        className={`flex min-h-screen flex-col gap-8 px-[5vw] ${pageBackground.className}`}
+        className={`relative flex min-h-screen flex-col gap-8 px-[5vw] ${pageBackground.className}`}
         style={pageBackground.style}
       >
+        {/* Hand-drawn blueprint guide lines, behind all content. */}
+        <SketchGuides />
         <NavBar />
-        <div className="flex w-full items-start justify-start">
+        <div className="relative z-10 flex w-full items-start justify-start">
           {renderHeroText()}
         </div>
 
         <div
-          className="flex w-full justify-center rounded-xl bg-cover bg-center p-4 sm:p-6 md:p-10"
+          className="relative z-10 flex w-full justify-center rounded-xl bg-cover bg-center p-4 sm:p-6 md:p-10"
           style={{ backgroundImage: "url('/images/panel-backdrop.png')" }}
         >
           <BrowserFrame url="localhost:4000" draggable animateOpen className="w-full max-w-6xl">
@@ -255,7 +259,7 @@ const App = () => {
         {/* Subtitle + CTA, moved below the fold to sit under the UI variants
             shell. */}
         <FadeInText>
-          <div className="flex flex-col items-center gap-5 py-12 text-center md:py-20">
+          <div className="relative z-10 flex flex-col items-center gap-8 py-12 text-center md:gap-10 md:py-20">
             <span className="max-w-2xl font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
               Rivet understands your references, and then explores dozens of
               design directions with you.
@@ -264,8 +268,9 @@ const App = () => {
           </div>
         </FadeInText>
 
-        <div className="-mx-[5vw] flex flex-col gap-12" id="demo-panel">
+        <div className="relative z-10 -mx-[5vw] flex flex-col gap-12" id="demo-panel">
           {/* <WorkflowPanels /> */}
+          <AgentTerminalSection />
           <ReferencesDemoSection />
           {SHOW_VARIANTS_PANEL && <VariantsDemoSection />}
           <CommentDemoSection />
@@ -273,7 +278,7 @@ const App = () => {
         </div>
         {/* <FeaturePanel /> */}
         {renderDownloadPanel()}
-        <div className="-mt-12 md:mt-0">
+        <div className="relative z-10 -mt-12 md:mt-0">
           <Footer />
         </div>
       </div>

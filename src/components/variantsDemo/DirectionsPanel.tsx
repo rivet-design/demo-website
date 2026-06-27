@@ -374,8 +374,8 @@ const DirectionsPanel = ({ ctrl }: { ctrl: VariantsDemoController }) => {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search variants…"
-            aria-label="Search variants"
+            placeholder="Search directions…"
+            aria-label="Search directions"
             className="w-full rounded-md border border-[var(--main-border)] bg-[#2e2e2e]/40 py-1.5 pl-7 pr-2 text-xs text-content placeholder:text-content-muted focus:outline-none focus:ring-1 focus:ring-content-muted/40"
           />
         </div>
