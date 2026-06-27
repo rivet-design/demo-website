@@ -182,6 +182,15 @@ const CodePanel = () => {
 const App = () => {
   const latestVersion = useLatestVersion();
 
+  // Hero choreography: the agent chat starts centered (drawing the eye to the
+  // prompt as it types), then slides to the left once the browser window has
+  // animated in.
+  const [chatMoved, setChatMoved] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setChatMoved(true), HERO_WINDOW_OPEN_MS + 900);
+    return () => clearTimeout(t);
+  }, []);
+
   const renderDownloadPanel = () => {
     return (
       <div className="relative z-10 hidden flex-col items-center py-16 md:flex">
@@ -279,7 +288,9 @@ const App = () => {
             compact
             loop={false}
             script={HERO_SESSION}
-            className="pointer-events-none absolute bottom-5 right-5 z-20 hidden h-[300px] w-[360px] md:flex lg:bottom-8 lg:right-8"
+            className={`pointer-events-none absolute z-20 hidden h-[300px] w-[380px] -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] md:flex ${
+              chatMoved ? 'left-[23%] top-[63%]' : 'left-1/2 top-1/2'
+            }`}
           />
         </div>
 

@@ -30,10 +30,14 @@ const TAN_SOFT = '#ece3d3'; // softer tan (inner dividers)
 const SAGE = '#5f7a52'; // muted sage-green accent
 const CLAY = '#a8604a'; // muted clay / terracotta accent
 
+// Blinking orange cursor — draws the eye to the prompt as the text types in.
 const Caret = () => (
   <span
-    className="ml-0.5 inline-block h-[1.05em] w-[0.5ch] translate-y-[0.16em] animate-pulse rounded-[1px]"
-    style={{ backgroundColor: SAGE, opacity: 0.85 }}
+    className="ml-0.5 inline-block h-[1.05em] w-[0.55ch] translate-y-[0.16em] rounded-[1px]"
+    style={{
+      backgroundColor: '#E14017',
+      animation: 'rivet-caret-blink 1.05s steps(1, end) infinite',
+    }}
   />
 );
 
@@ -266,7 +270,7 @@ const AgentTerminal = ({
       className={cn(
         'flex flex-col overflow-hidden border font-mono shadow-[0_18px_50px_-24px_rgba(58,52,43,0.45)]',
         compact
-          ? 'rounded-xl text-[11px]'
+          ? 'rounded-xl text-[12.5px]'
           : 'mx-auto h-[60vh] min-h-[480px] w-full max-w-3xl rounded-2xl text-[13.5px]',
         className,
       )}
