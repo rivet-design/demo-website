@@ -9,9 +9,11 @@ import rough from 'roughjs';
  *
  * The overlay is absolutely positioned inside the scrolling content container
  * and sized to the container's FULL height, so the verticals run from the nav
- * all the way down the page and scroll with the content. Sits at z-0 over the
- * paper background; page content is lifted to z-10 so the guides read as a
- * backdrop behind it.
+ * all the way down the page and scroll with the content. Sits at z-20 — above
+ * the page content (z-10) so the margin rules read as a blueprint overlay
+ * framing the layout (otherwise the hero's full-width showcase panel and the
+ * section backgrounds occlude them), but below the sticky nav (z-70). It is
+ * pointer-events-none, so it never intercepts interaction.
  *
  * Entrance: the guides reveal ON SCROLL — each stroke/sparkle fades in once it
  * enters the viewport (via an IntersectionObserver on stacked "tripwire" markers
@@ -240,7 +242,7 @@ const SketchGuides = () => {
       aria-hidden
       width={size.w}
       height={size.h}
-      className="pointer-events-none absolute left-0 top-0 z-0 hidden md:block"
+      className="pointer-events-none absolute left-0 top-0 z-20 hidden md:block"
     />
   );
 };
