@@ -61,6 +61,7 @@ const SketchGuides = () => {
     vh: 0,
     top: 0,
     divider: 0,
+    heroBottom: 0,
     rows: [] as number[],
   });
 
@@ -86,13 +87,21 @@ const SketchGuides = () => {
       const divider = showcase
         ? Math.round(showcase.offsetTop)
         : Math.round(vh * 0.34);
+      // Bottom edge of the hero asset (the showcase panel) so we can draw a rule
+      // flush along its base, mirroring the divider that hugs its top.
+      const heroBottom = showcase
+        ? Math.round(showcase.offsetTop + showcase.offsetHeight)
+        : 0;
       // Horizontal rule positions framing each workflow panel (the grey panel
       // backgrounds were removed — these blueprint lines delineate them now).
       // [data-guide-row] sits on each panel's CONTENT, and we draw a rule just
-      // above and just below it (HUG px out) so the lines hug the panel rather
+      // above and just below it (HUG px OUT) so the lines hug the panel rather
       // than the section's outer padding. Measured via rects (relative to the
-      // overlay's parent) so the offsetParent chain doesn't matter.
-      const HUG = 16;
+      // overlay's parent) so the offsetParent chain doesn't matter. The gap must
+      // stay > 0: the panels (z-10) are opaque and paint over their own edges, so
+      // a rule sitting flush (HUG = 0) is hidden behind the panel. A small offset
+      // keeps the rules tight against the panel while staying visible.
+      const HUG = 6;
       const parentTop = parent.getBoundingClientRect().top;
       const rowEls = Array.from(
         parent.querySelectorAll('[data-guide-row]'),
@@ -109,9 +118,10 @@ const SketchGuides = () => {
         prev.vh === vh &&
         prev.top === top &&
         prev.divider === divider &&
+        prev.heroBottom === heroBottom &&
         prev.rows.join(',') === rows.join(',')
           ? prev
-          : { w, h, vh, top, divider, rows },
+          : { w, h, vh, top, divider, heroBottom, rows },
       );
     };
     measure();
@@ -130,7 +140,7 @@ const SketchGuides = () => {
     while (svg.firstChild) svg.removeChild(svg.firstChild);
 
     const rc = rough.svg(svg);
-    const { w, h, vh, top, divider, rows } = size;
+    const { w, h, vh, top, divider, heroBottom, rows } = size;
     // Very subtle hand-drawn character — nearly straight with a faint waver. A
     // fixed seed per stroke keeps the wobble stable so it never "jitters".
     const base = { stroke: ORANGE, strokeWidth: 1.2, roughness: 0.4, bowing: 0.5 };
@@ -199,7 +209,14 @@ const SketchGuides = () => {
 
     // Full-bleed horizontals: at the nav, the hero divider, and the page bottom.
     hline(0, Ty, w, Ty, 11);
-    hline(0, My, w, My, 12);
+    // The hero asset (z-10) paints its backdrop over anything drawn at its exact
+    // edge, so a rule sitting flush on the top/bottom is hidden behind it. Lift
+    // both rules a few px OUTSIDE the asset so they clear the backdrop while still
+    // hugging it.
+    const HERO_RULE_GAP = 6;
+    hline(0, My - HERO_RULE_GAP, w, My - HERO_RULE_GAP, 12);
+    // Rule along the bottom of the hero asset, mirroring the divider above.
+    if (heroBottom) hline(0, heroBottom + HERO_RULE_GAP, w, heroBottom + HERO_RULE_GAP, 16);
     hline(0, By, w, By, 13);
     // Per-panel rules framing each workflow panel (top of each + bottom of the
     // last), now that the grey panel backgrounds are gone.
@@ -244,19 +261,17 @@ const SketchGuides = () => {
     let raf = 0;
     const revealVisible = () => {
       raf = 0;
-      // Viewport-relative top of the overlay; a stroke at local y sits at
-      // svgTop + y on screen. Using the live rect makes this correct whether the
-      // page scrolls on window or on an ancestor container.
-      const svgTop = svg.getBoundingClientRect().top;
-      const cutoff = window.innerHeight * 0.9; // reveal slightly before fully in view
+      // The guides must ALWAYS end up visible — never left stranded at opacity 0
+      // waiting on a scroll that may not happen (e.g. the new hero-bottom rule
+      // sits below the fold at mount). So on the first frame we reveal every
+      // still-hidden stroke, staggered in draw order for the sketch-in entrance,
+      // rather than gating each one on whether it has scrolled into view.
       let i = 0; // sequential index within this reveal batch
       for (const r of reveals) {
         if (r.el.style.opacity !== '0') continue; // already revealed
-        if (svgTop + r.y <= cutoff) {
-          r.el.style.transitionDelay = `${i * STAGGER}ms`;
-          r.el.style.opacity = String(r.to);
-          i += 1;
-        }
+        r.el.style.transitionDelay = `${i * STAGGER}ms`;
+        r.el.style.opacity = String(r.to);
+        i += 1;
       }
     };
     const schedule = () => {
@@ -264,15 +279,12 @@ const SketchGuides = () => {
       raf = window.requestAnimationFrame(revealVisible);
     };
 
-    // Reveal above-the-fold marks on mount, then follow the scroll down. Resize
-    // is handled by the measure effect (which redraws fully opaque), so we only
-    // listen for scroll here.
+    // Reveal everything on mount (staggered). Resize is handled by the measure
+    // effect, which redraws fully opaque.
     schedule();
-    window.addEventListener('scroll', schedule, { passive: true });
 
     return () => {
       if (raf) cancelAnimationFrame(raf);
-      window.removeEventListener('scroll', schedule);
     };
   }, [size]);
 
