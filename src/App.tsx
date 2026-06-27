@@ -289,7 +289,7 @@ const App = () => {
             loop={false}
             script={HERO_SESSION}
             className={`pointer-events-none absolute z-20 hidden h-[300px] w-[380px] -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] md:flex ${
-              chatMoved ? 'left-[23%] top-[63%]' : 'left-1/2 top-1/2'
+              chatMoved ? 'left-[77%] top-[63%]' : 'left-1/2 top-1/2'
             }`}
           />
         </div>

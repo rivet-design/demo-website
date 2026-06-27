@@ -38,7 +38,7 @@ export type Turn = {
 // the current app's design, starts a set of variants, and reports them ready.
 export const HERO_SESSION: Turn[] = [
   {
-    command: 'try some new textures for my world cup jersey app',
+    command: '/rivet try some new textures for my world cup jersey app',
     response: [
       { kind: 'thinking', text: 'Exploring new texture directions for your kit studio…' },
       {

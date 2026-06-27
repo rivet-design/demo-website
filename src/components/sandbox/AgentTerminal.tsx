@@ -198,20 +198,38 @@ const Block = ({ block }: { block: ResponseBlock }) => {
 // board) so the user's own input — the taste they're bringing — stands out from
 // the rest of the prompt.
 const renderCommand = (command: string) => {
-  const m = command.match(/(?:https?:\/\/)?(?:www\.)?pinterest\.com\/\S+/i);
-  if (!m) return command;
+  // Pull off a leading slash-command (e.g. "/rivet") and render it in the brand
+  // orange so it reads as a real Rivet command — highlights progressively as it
+  // types in.
+  const slash = command.match(/^\/\w[\w-]*/);
+  const head = slash ? (
+    <span className="font-semibold" style={{ color: '#E14017' }}>
+      {slash[0]}
+    </span>
+  ) : null;
+  const rest = slash ? command.slice(slash[0].length) : command;
+
+  const m = rest.match(/(?:https?:\/\/)?(?:www\.)?pinterest\.com\/\S+/i);
+  if (!m)
+    return (
+      <>
+        {head}
+        {rest}
+      </>
+    );
   const url = m[0];
-  const at = command.indexOf(url);
+  const at = rest.indexOf(url);
   return (
     <>
-      {command.slice(0, at)}
+      {head}
+      {rest.slice(0, at)}
       <span
         className="underline decoration-dotted underline-offset-2"
         style={{ color: CLAY }}
       >
         {url}
       </span>
-      {command.slice(at + url.length)}
+      {rest.slice(at + url.length)}
     </>
   );
 };
