@@ -25,6 +25,10 @@ import rough from 'roughjs';
 const ORANGE = '#E14017';
 const NS = 'http://www.w3.org/2000/svg';
 
+// Sparkle/inkblot marks at guide intersections — flagged off for now while we
+// dial in the lines. Flip to true to bring them back.
+const SHOW_SPARKLES = false;
+
 // A crisp little 4-point sparkle (the brand's twinkle motif) placed at guide
 // intersections.
 const sparkle = (cx: number, cy: number, r = 8, inner = 1.8): SVGPathElement => {
@@ -132,7 +136,6 @@ const SketchGuides = () => {
 
     const Lx = Math.round(w * 0.05); // left margin (matches the page's 5vw gutter)
     const Rx = Math.round(w * 0.95); // right margin
-    const Ix = Math.round(w * 0.15); // inset content-column line
     const Ty = top || 88; // at the nav's bottom edge
     const My = divider || Math.round(vh * 0.34); // top edge of the showcase panel
     const By = h - 40; // bottom rule, at the very end of the page
@@ -203,26 +206,25 @@ const SketchGuides = () => {
     // Margin verticals run the FULL page height — left solid, right dashed.
     vline(Lx, Ty, By, 14);
     vline(Rx, Ty, By, 15, true);
-    // Inset content-column line, from the hero divider to the bottom.
-    vline(Ix, My, By, 16);
 
     // Sparkles at the prominent corners / crossings. Pushed last so they fade in
-    // after the lines within their band.
-    (
-      [
-        [Lx, Ty],
-        [Rx, Ty],
-        [Lx, My],
-        [Rx, My],
-        [Ix, My],
-        [Lx, By],
-        [Rx, By],
-      ] as const
-    ).forEach(([x, y]) => {
-      const s = sparkle(x, y);
-      prime(s, y, 0.75);
-      svg.appendChild(s);
-    });
+    // after the lines within their band. Flagged off for now.
+    if (SHOW_SPARKLES) {
+      (
+        [
+          [Lx, Ty],
+          [Rx, Ty],
+          [Lx, My],
+          [Rx, My],
+          [Lx, By],
+          [Rx, By],
+        ] as const
+      ).forEach(([x, y]) => {
+        const s = sparkle(x, y);
+        prime(s, y, 0.75);
+        svg.appendChild(s);
+      });
+    }
 
     if (!animate || reveals.length === 0) return;
     // First animated draw done — every subsequent redraw renders fully opaque.
