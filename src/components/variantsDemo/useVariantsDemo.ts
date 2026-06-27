@@ -38,8 +38,9 @@ const FIRST_READY_MS = 1000;
 const ALL_READY_MS = 2800;
 
 export const useVariantsDemo = (
-  options?: { autoPlay?: boolean; initialId?: string },
+  options?: { autoPlay?: boolean; initialId?: string; startDelayMs?: number },
 ): VariantsDemoController => {
+  const startDelayMs = Math.max(0, options?.startDelayMs ?? 0);
   const initialId =
     options?.initialId && VARIANTS.some((v) => v.id === options.initialId)
       ? options.initialId
@@ -52,23 +53,25 @@ export const useVariantsDemo = (
   const [readyIds, setReadyIds] = useState<Set<string>>(() => new Set());
 
   // Fake the Rivet generation flow once on mount: skeletons first, then the
-  // initial direction resolves, then the remainder stream in.
+  // initial direction resolves, then the remainder stream in. `startDelayMs`
+  // offsets the whole sequence so it can be timed after an intro (the hero's
+  // agent chat) rather than firing immediately.
   useEffect(() => {
     const ids = VARIANTS.map((v) => v.id);
     const firstId = initialId;
     const firstTimer = setTimeout(
       () => setReadyIds(new Set([firstId])),
-      FIRST_READY_MS,
+      startDelayMs + FIRST_READY_MS,
     );
     const restTimer = setTimeout(
       () => setReadyIds(new Set(ids)),
-      ALL_READY_MS,
+      startDelayMs + ALL_READY_MS,
     );
     return () => {
       clearTimeout(firstTimer);
       clearTimeout(restTimer);
     };
-  }, [initialId]);
+  }, [initialId, startDelayMs]);
 
   const variants = useMemo(
     () =>

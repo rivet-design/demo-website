@@ -33,6 +33,37 @@ export type Turn = {
   response: ResponseBlock[];
 };
 
+// Single-turn session for the hero interaction: the user asks for new textures,
+// and the agent drives the real Rivet MCP tools to explore directions — captures
+// the current app's design, starts a set of variants, and reports them ready.
+export const HERO_SESSION: Turn[] = [
+  {
+    command: 'try some new textures for my world cup jersey app',
+    response: [
+      { kind: 'thinking', text: 'Exploring new texture directions for your kit studio…' },
+      {
+        kind: 'tool',
+        tool: 'capture_design_evidence',
+        arg: 'snapshot the current jersey app',
+        result: 'palette · display type · layout → DESIGN.md',
+      },
+      {
+        kind: 'tool',
+        tool: 'start_variants',
+        arg: 'mode: "existing", briefs × 6',
+        result: '6 worktrees · editor → :4000',
+      },
+      {
+        kind: 'tool',
+        tool: 'report_variant_complete',
+        arg: '6 × status: "succeeded"',
+        result: 'Skeuomorphic · Liquid Glass · Halftone · …',
+      },
+      { kind: 'result', text: '6 texture directions ready — cycle them in the preview.' },
+    ],
+  },
+];
+
 // Turn 1 EXPLORES directions grounded in the user's Pinterest board; turn 2
 // REFINES the chosen one and commits it. Every tool row is a real Rivet MCP
 // call with arguments/results shaped like the live ones.

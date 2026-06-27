@@ -28,14 +28,21 @@ const VariantsShowcase = ({
   heightClassName = 'h-[60vh] min-h-[460px]',
   autoPlay = true,
   initialVariantId,
+  loadDelayMs = 0,
 }: {
   heightClassName?: string;
   /** When false, the showcase stays pinned to the initial variant (no loop). */
   autoPlay?: boolean;
   /** Pin the showcase to a specific variant on mount. */
   initialVariantId?: string;
+  /** Delay before the fake "generating" sequence starts (to sequence after an intro). */
+  loadDelayMs?: number;
 }) => {
-  const ctrl = useVariantsDemo({ autoPlay, initialId: initialVariantId });
+  const ctrl = useVariantsDemo({
+    autoPlay,
+    initialId: initialVariantId,
+    startDelayMs: loadDelayMs,
+  });
   const [visited, setVisited] = useState<Set<string>>(
     () => new Set([ctrl.selected.src]),
   );

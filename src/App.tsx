@@ -15,6 +15,8 @@ import SketchGuides from './components/SketchGuides';
 import VariantsShowcase from './components/variantsDemo/VariantsShowcase';
 import AgentTerminalSection from './components/AgentTerminalSection';
 import { SKEUOMORPHIC_DECK_ID } from './components/variantsDemo/data';
+import AgentTerminal from './components/sandbox/AgentTerminal';
+import { HERO_SESSION } from './components/sandbox/terminalScript';
 import { pageBackground } from './lib/background';
 
 const R2_PUBLIC_URL = 'https://releases.rivet.design';
@@ -27,6 +29,12 @@ const SHOW_MANIFESTO_PANEL = false;
 // Hide the "Explore lots of design directions" panel (VariantsDemoSection).
 // Flip to true to restore.
 const SHOW_VARIANTS_PANEL = false;
+
+// Hero agent-chat interaction timing: the floating chat types the prompt + MCP
+// tool calls first, then the browser window opens, then the variant directions
+// generate and fade in.
+const HERO_WINDOW_OPEN_MS = 2600;
+const HERO_LOAD_DELAY_MS = 2600;
 
 /**
  * Fetch the latest Rivet version string from the R2 release manifest
@@ -248,13 +256,31 @@ const App = () => {
           className="relative z-10 flex w-full justify-center rounded-xl bg-cover bg-center p-4 sm:p-6 md:p-10"
           style={{ backgroundImage: "url('/images/panel-backdrop.png')" }}
         >
-          <BrowserFrame url="localhost:4000" draggable animateOpen className="w-full max-w-6xl">
+          <BrowserFrame
+            url="localhost:4000"
+            draggable
+            animateOpen
+            openDelayMs={HERO_WINDOW_OPEN_MS}
+            className="w-full max-w-6xl"
+          >
             <VariantsShowcase
               heightClassName="h-[58vh] min-h-[440px]"
               autoPlay={false}
               initialVariantId={SKEUOMORPHIC_DECK_ID}
+              loadDelayMs={HERO_LOAD_DELAY_MS}
             />
           </BrowserFrame>
+
+          {/* Floating agent chat (bottom-right) that "drives" the demo: it types
+              the prompt + Rivet MCP tool calls, then the window opens and the
+              directions generate and fade in. Decorative, so pointer-events are
+              off; hidden on small screens where the hero is already tight. */}
+          <AgentTerminal
+            compact
+            loop={false}
+            script={HERO_SESSION}
+            className="pointer-events-none absolute bottom-5 right-5 z-20 hidden h-[300px] w-[360px] md:flex lg:bottom-8 lg:right-8"
+          />
         </div>
 
         {/* Subtitle + CTA, moved below the fold to sit under the UI variants

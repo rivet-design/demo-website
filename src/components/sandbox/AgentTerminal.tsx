@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import type { ResponseBlock } from './terminalScript';
+import { cn } from '@/lib/utils';
+import type { ResponseBlock, Turn } from './terminalScript';
 import { SESSION } from './terminalScript';
 import { useTerminalPlayer, type CommittedTurn } from './useTerminalPlayer';
 
@@ -236,8 +237,19 @@ const Turn = ({ turn }: { turn: CommittedTurn }) => (
   </div>
 );
 
-const AgentTerminal = () => {
-  const { history, draft, thinking, idle } = useTerminalPlayer(SESSION);
+const AgentTerminal = ({
+  script = SESSION,
+  loop = true,
+  compact = false,
+  className,
+}: {
+  script?: Turn[];
+  loop?: boolean;
+  /** Smaller padding / type for the floating hero chat. */
+  compact?: boolean;
+  className?: string;
+} = {}) => {
+  const { history, draft, thinking, idle } = useTerminalPlayer(script, { loop });
 
   // Keep the latest streamed output in view as blocks reveal — without this the
   // fixed-height transcript would leave the diff / commit payoff below the fold.
@@ -251,22 +263,31 @@ const AgentTerminal = () => {
 
   return (
     <div
-      className="mx-auto flex h-[60vh] min-h-[480px] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border font-mono text-[13.5px] shadow-[0_18px_50px_-24px_rgba(58,52,43,0.45)]"
+      className={cn(
+        'flex flex-col overflow-hidden border font-mono shadow-[0_18px_50px_-24px_rgba(58,52,43,0.45)]',
+        compact
+          ? 'rounded-xl text-[11px]'
+          : 'mx-auto h-[60vh] min-h-[480px] w-full max-w-3xl rounded-2xl text-[13.5px]',
+        className,
+      )}
       style={{ borderColor: TAN, backgroundColor: CREAM }}
     >
       {/* Title bar */}
       <div
-        className="flex shrink-0 items-center gap-2 border-b px-4 py-2.5"
+        className={cn(
+          'flex shrink-0 items-center gap-2 border-b',
+          compact ? 'px-3 py-2' : 'px-4 py-2.5',
+        )}
         style={{ borderColor: TAN, backgroundColor: CREAM_HI }}
       >
-        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: '#d98a6a' }} />
-        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: '#d9b96a' }} />
-        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: SAGE }} />
-        <span className="ml-2 text-[12px] font-semibold tracking-[0.02em]" style={{ color: INK }}>
+        <span className={cn('rounded-full', compact ? 'h-2 w-2' : 'h-2.5 w-2.5')} style={{ backgroundColor: '#d98a6a' }} />
+        <span className={cn('rounded-full', compact ? 'h-2 w-2' : 'h-2.5 w-2.5')} style={{ backgroundColor: '#d9b96a' }} />
+        <span className={cn('rounded-full', compact ? 'h-2 w-2' : 'h-2.5 w-2.5')} style={{ backgroundColor: SAGE }} />
+        <span className={cn('ml-2 font-semibold tracking-[0.02em]', compact ? 'text-[10.5px]' : 'text-[12px]')} style={{ color: INK }}>
           Claude Code
         </span>
         <span
-          className="ml-auto flex items-center gap-1.5 text-[11px]"
+          className={cn('ml-auto flex items-center gap-1.5', compact ? 'text-[9.5px]' : 'text-[11px]')}
           style={{ color: INK_FAINT }}
         >
           <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: SAGE }} />
@@ -278,7 +299,10 @@ const AgentTerminal = () => {
           stays constant; only this region scrolls. */}
       <div
         ref={scrollRef}
-        className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-6 leading-[1.65]"
+        className={cn(
+          'flex min-h-0 flex-1 flex-col overflow-y-auto leading-[1.65]',
+          compact ? 'gap-4 p-3.5' : 'gap-6 p-6',
+        )}
         style={{
           color: INK,
           backgroundImage:
@@ -307,11 +331,14 @@ const AgentTerminal = () => {
           grows within the fixed-height window (the transcript shrinks to match)
           so the terminal itself never changes height. */}
       <div
-        className="shrink-0 border-t px-3.5 py-3"
+        className={cn('shrink-0 border-t', compact ? 'px-2.5 py-2' : 'px-3.5 py-3')}
         style={{ borderColor: TAN, backgroundColor: CREAM_HI }}
       >
         <div
-          className="flex items-start gap-2.5 rounded-lg border px-3 py-2.5"
+          className={cn(
+            'flex items-start gap-2.5 rounded-lg border',
+            compact ? 'px-2.5 py-1.5' : 'px-3 py-2.5',
+          )}
           style={{ borderColor: TAN, backgroundColor: CREAM }}
         >
           <span
@@ -332,13 +359,15 @@ const AgentTerminal = () => {
             )}
             <Caret />
           </div>
-          <span
-            className="shrink-0 pt-[2px] text-[11px] tracking-[0.02em]"
-            style={{ color: INK_FAINT }}
-            aria-hidden
-          >
-            ⏎ send
-          </span>
+          {!compact && (
+            <span
+              className="shrink-0 pt-[2px] text-[11px] tracking-[0.02em]"
+              style={{ color: INK_FAINT }}
+              aria-hidden
+            >
+              ⏎ send
+            </span>
+          )}
         </div>
       </div>
     </div>
