@@ -99,7 +99,7 @@ const CommentDemoSection = () => {
       className="relative flex w-full justify-center px-[5vw] py-16 md:py-24"
     >
       <PaperTexture className="-z-10" />
-      <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1.3fr_1fr] lg:gap-16">
+      <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1.7fr_1fr] lg:gap-16">
         {/* DOM order is panel-then-text so that at lg+ the panel sits in the
             first (1.7fr) column on the left. On stacked mobile/tablet we want
             the title above the panel, so flip with `order-` classes below. */}
@@ -124,15 +124,15 @@ const CommentDemoSection = () => {
           </div>
 
           {/* Desktop: the interactive gallery in a browser window over the same
-              multicolor hero backdrop as the hero + agent panels. The 16:10
-              aspect-ratio lives on the frame's content so the seeded comment
-              coordinates stay aligned to the gallery. */}
+              multicolor hero backdrop as the agent panel. Same w-full + 16/11
+              box as the other workflow panels — the frame and gallery fill it so
+              all three match in size. */}
           <div
             className="hidden w-full overflow-hidden rounded-2xl bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:block md:p-8"
-            style={{ backgroundImage: "url('/images/panel-backdrop.png')" }}
+            style={{ backgroundImage: "url('/images/panel-backdrop.png')", aspectRatio: '16 / 11' }}
           >
-            <BrowserFrame url="localhost:3000" draggable className="w-full">
-              <div className="relative w-full" style={{ aspectRatio: '16 / 10' }}>
+            <BrowserFrame url="localhost:3000" draggable className="h-full w-full">
+              <div className="relative h-full w-full">
                 <CommentLayer
                   active
                   comments={comments}
@@ -153,12 +153,10 @@ const CommentDemoSection = () => {
 
         <div className="order-1 max-w-[440px] lg:order-2">
           <h2 className="mt-3 font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
-            Refine visual details
+            Explore with precision
           </h2>
           <p className="mt-4 text-[16px] leading-[1.6] text-black/70 md:text-[17px]">
-            Share precise design feedback with an agent to get the details of a
-            design direction just right. Then generate a link to share with your
-            team.
+            Vary specific parts of your interface by leaving comments.
           </p>
         </div>
       </div>

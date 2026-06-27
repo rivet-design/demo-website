@@ -40,9 +40,19 @@ const VariantsShowcase = ({
     () => new Set([ctrl.selected.src]),
   );
   const [loaded, setLoaded] = useState<Set<string>>(() => new Set());
-  const [prevSrc, setPrevSrc] = useState<string | null>(null);
   const [hovered, setHovered] = useState(false);
-  const prevSelectedRef = useRef(ctrl.selected.src);
+  // The crossfade underlay = the variant we're transitioning FROM. Track it
+  // synchronously during render: an effect-updated value lags one render, so on
+  // the click that selects a new variant it still points at the one BEFORE the
+  // previous — flashing the wrong variant beneath the incoming fade. Computing
+  // it inline keeps the underlay correct, so the dissolve is always clean.
+  const curSrcRef = useRef(ctrl.selected.src);
+  const prevSrcRef = useRef<string | null>(null);
+  if (curSrcRef.current !== ctrl.selected.src) {
+    prevSrcRef.current = curSrcRef.current;
+    curSrcRef.current = ctrl.selected.src;
+  }
+  const prevSrc = prevSrcRef.current;
   const previewRef = useRef<HTMLDivElement>(null);
   const [paneSize, setPaneSize] = useState({ w: 0, h: 0 });
   const [isDesktop, setIsDesktop] = useState(false);
@@ -71,10 +81,6 @@ const VariantsShowcase = ({
     setVisited((s) =>
       s.has(ctrl.selected.src) ? s : new Set(s).add(ctrl.selected.src),
     );
-    if (prevSelectedRef.current !== ctrl.selected.src) {
-      setPrevSrc(prevSelectedRef.current);
-      prevSelectedRef.current = ctrl.selected.src;
-    }
   }, [ctrl.selected.src]);
 
   // Arrow-key cycling, scoped to hover so it doesn't capture page scroll.
