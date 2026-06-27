@@ -104,7 +104,7 @@ const CommentDemoSection = () => {
           {/* Mobile: static video — interactive version doesn't translate to
               touch and the gallery is too dense for small screens. */}
           <div
-            className="block w-full overflow-hidden rounded-2xl border border-black/10 bg-white shadow-[0_10px_40px_rgba(0,0,0,0.08)] md:hidden"
+            className="block w-full overflow-hidden border border-black/10 bg-white shadow-[0_10px_40px_rgba(0,0,0,0.08)] md:hidden"
             style={{ aspectRatio: '16 / 10' }}
           >
             <video
@@ -125,7 +125,7 @@ const CommentDemoSection = () => {
               box as the other workflow panels — the frame and gallery fill it so
               all three match in size. */}
           <div
-            className="hidden w-full overflow-hidden rounded-2xl bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:block md:p-8"
+            className="hidden w-full overflow-hidden bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:block md:p-8"
             style={{ backgroundImage: "url('/images/panel-backdrop.png')", aspectRatio: '16 / 11' }}
           >
             <BrowserFrame url="localhost:3000" draggable className="h-full w-full">

@@ -124,7 +124,7 @@ const Footer = () => {
           above reserves pb-[26vw] so this pull lands just below the links rather
           than overlapping them; reset to 0 from md up. */}
       <div
-        className="w-screen px-[5vw] -mt-[23.8vw] md:-mt-12 lg:-mt-20"
+        className="pointer-events-none w-screen px-[5vw] -mt-[23.8vw] md:-mt-12 lg:-mt-20"
         style={{ marginLeft: 'calc(50% - 50vw)', ...footerBackground }}
       >
         {/* object-cover + object-top crops the bottom while anchoring the top

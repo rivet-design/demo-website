@@ -118,7 +118,7 @@ const ReferencesDemoSection = () => {
 
         {/* Reference-wall panel */}
         <div
-          className="relative w-full overflow-hidden rounded-2xl border border-black/10 bg-white"
+          className="relative w-full overflow-hidden border border-black/10 bg-white"
           style={{ aspectRatio: '16 / 11' }}
         >
           {/* The masonry wall — bleeds gently past the panel edges for an
