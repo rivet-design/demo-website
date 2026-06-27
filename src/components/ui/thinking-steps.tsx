@@ -142,18 +142,20 @@ function ThinkingStep({
     const isActive = status === "active";
 
     return (
-      /* Outer: animates height to create space smoothly */
+      /* Outer: opens vertical space quickly and smoothly (no overshoot here so
+         the steps below don't jiggle as each row lands). */
       <motion.div
         className={cn("relative z-10 overflow-hidden", className)}
         initial={{ height: 0 }}
         animate={{ height: "auto" }}
-        transition={spring.slow}
+        transition={{ type: "spring", duration: 0.18, bounce: 0 }}
       >
-        {/* Inner: fades content in after space starts opening */}
+        {/* Inner: the content itself pops in with a slight, quick bounce so each
+            tool call reads as snappy rather than a slow fade. */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.24, delay: 0.08, ease: "easeOut" }}
+          initial={{ opacity: 0, y: 6, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ type: "spring", duration: 0.28, bounce: 0.42, delay: 0.02 }}
         >
           {/* Content row — this is the proximity hover target */}
           <div className={cn("flex gap-2.5 px-2 py-1.5", shape.item)}>
