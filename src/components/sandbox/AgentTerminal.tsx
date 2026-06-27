@@ -251,7 +251,7 @@ const AgentTerminal = () => {
 
   return (
     <div
-      className="mx-auto flex h-[60vh] min-h-[480px] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border font-mono text-[13.5px] shadow-[0_18px_50px_-24px_rgba(58,52,43,0.45)]"
+      className="flex h-full w-full flex-col overflow-hidden rounded-2xl border font-mono text-[13.5px] shadow-[0_18px_50px_-24px_rgba(58,52,43,0.45)]"
       style={{ borderColor: TAN, backgroundColor: CREAM }}
     >
       {/* Title bar */}
