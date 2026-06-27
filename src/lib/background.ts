@@ -34,12 +34,10 @@ export const surfaceBackground: CSSProperties = USE_PAPER_TEXTURE
   : { backgroundColor: '#ffffff' };
 
 /**
- * Footer-specific background. Always renders the paper texture, independent of
- * the global USE_PAPER_TEXTURE flag, so the footer keeps its textured look even
- * when the rest of the site is on the flat-white treatment.
+ * Footer-specific background. Flat white so the multicolor wordmark reads as
+ * solid color (its letters multiply against each other, not against a textured
+ * backdrop).
  */
 export const footerBackground: CSSProperties = {
-  backgroundImage: PAPER_TEXTURE,
-  backgroundSize: 'cover',
-  backgroundPosition: 'center',
+  backgroundColor: '#ffffff',
 };
