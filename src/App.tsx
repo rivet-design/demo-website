@@ -182,8 +182,23 @@ const CodePanel = () => {
 const App = () => {
   const latestVersion = useLatestVersion();
 
+  // The floating agent-chat intro is a desktop, motion-allowed affordance: it's
+  // `hidden md:flex`, so below md there's no visible chat to justify the staged
+  // delays, and reduced-motion users shouldn't sit through the typing + open
+  // sequence. Decide once, synchronously on first render, so the showcase never
+  // starts in a delayed/blank state it then has to correct. When the intro does
+  // NOT play, the window and variants drop their delays and land immediately.
+  const [playHeroIntro] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
+      window.matchMedia('(min-width: 768px)').matches,
+  );
+  const windowOpenDelayMs = playHeroIntro ? HERO_WINDOW_OPEN_MS : 0;
+  const loadDelayMs = playHeroIntro ? HERO_LOAD_DELAY_MS : 0;
+
   // Hero choreography: the agent chat starts centered (drawing the eye to the
-  // prompt as it types), then slides to the left once the browser window has
+  // prompt as it types), then slides to the right once the browser window has
   // animated in.
   const [chatMoved, setChatMoved] = useState(false);
   // Once the agent finishes all its MCP calls, the chat minimizes out.
@@ -193,15 +208,30 @@ const App = () => {
   // re-displays it and replays the minimize animation — flashing the panel back
   // in. The intro is one-shot, so once it's gone it should stay gone.
   const [chatGone, setChatGone] = useState(false);
+  // The minimize step is scheduled from the chat's onComplete; keep the handle
+  // so we can cancel it if the tree unmounts before it fires.
+  const minimizeTimer = useRef<number>();
   useEffect(() => {
+    // No intro this session → settle the chat into its final position at once
+    // (it isn't rendered, but this keeps the choreography state coherent).
+    if (!playHeroIntro) {
+      setChatMoved(true);
+      return;
+    }
     const t = setTimeout(() => setChatMoved(true), HERO_WINDOW_OPEN_MS + 900);
     return () => clearTimeout(t);
-  }, []);
+  }, [playHeroIntro]);
   useEffect(() => {
     if (!chatMinimized) return;
     const t = setTimeout(() => setChatGone(true), 700);
     return () => clearTimeout(t);
   }, [chatMinimized]);
+  useEffect(
+    () => () => {
+      if (minimizeTimer.current) clearTimeout(minimizeTimer.current);
+    },
+    [],
+  );
 
   const renderDownloadPanel = () => {
     return (
@@ -281,14 +311,14 @@ const App = () => {
             url="localhost:4000"
             draggable
             animateOpen
-            openDelayMs={HERO_WINDOW_OPEN_MS}
+            openDelayMs={windowOpenDelayMs}
             className="w-full max-w-6xl"
           >
             <VariantsShowcase
               heightClassName="h-[58vh] min-h-[440px]"
               autoPlay={false}
               initialVariantId={SKEUOMORPHIC_DECK_ID}
-              loadDelayMs={HERO_LOAD_DELAY_MS}
+              loadDelayMs={loadDelayMs}
             />
           </BrowserFrame>
 
@@ -298,14 +328,17 @@ const App = () => {
               off; hidden on small screens where the hero is already tight. It's
               a one-shot intro — unmounted once it has minimized so a resize can
               never bring it back. */}
-          {!chatGone && (
+          {playHeroIntro && !chatGone && (
             <AgentTerminal
               compact
               loop={false}
               script={HERO_SESSION}
-              onComplete={() =>
-                window.setTimeout(() => setChatMinimized(true), 1100)
-              }
+              onComplete={() => {
+                minimizeTimer.current = window.setTimeout(
+                  () => setChatMinimized(true),
+                  1100,
+                );
+              }}
               className={`pointer-events-none absolute z-20 hidden h-[240px] w-[300px] -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] md:flex lg:h-[300px] lg:w-[380px] ${
                 chatMoved
                   ? 'left-[70%] top-[61%] lg:left-[77%] lg:top-[63%]'
