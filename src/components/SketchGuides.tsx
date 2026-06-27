@@ -41,6 +41,12 @@ const sparkle = (cx: number, cy: number, r = 8, inner = 1.8): SVGPathElement => 
 
 const SketchGuides = () => {
   const svgRef = useRef<SVGSVGElement>(null);
+  // The cinematic scroll-reveal only plays on the FIRST draw. Every later draw
+  // (resize / page-height change) re-runs the draw effect, which rebuilds the
+  // SVG from scratch — so we must NOT re-hide the strokes then, or a continuous
+  // resize keeps re-priming them to opacity 0 and cancelling the reveal pass,
+  // and the guides disappear. After the first draw, redraws render fully opaque.
+  const firstDrawRef = useRef(true);
   // w/h track the full content container; vh is the viewport height (used to
   // place the hero divider near the top); top is the nav's measured bottom edge
   // so the frame starts right at the nav rather than a guessed offset.
@@ -95,6 +101,10 @@ const SketchGuides = () => {
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    // Animate the scroll-reveal only on the first draw. On any redraw (resize),
+    // strokes are committed at their final opacity straight away so they persist.
+    const animate = firstDrawRef.current && !reduceMotion;
+
     // Each reveal-able element is registered with the page Y at which it should
     // begin appearing (its top for long verticals, its midpoint otherwise) and
     // the opacity it animates to. The `reveals` array order is the draw order,
@@ -104,7 +114,7 @@ const SketchGuides = () => {
 
     const prime = (el: SVGElement, y: number, to: number) => {
       el.setAttribute('opacity', String(to));
-      if (reduceMotion) return;
+      if (!animate) return;
       el.style.opacity = '0';
       el.style.transition = 'opacity 500ms ease-out';
       reveals.push({ el, y, to });
@@ -171,7 +181,9 @@ const SketchGuides = () => {
       svg.appendChild(s);
     });
 
-    if (reduceMotion || reveals.length === 0) return;
+    if (!animate || reveals.length === 0) return;
+    // First animated draw done — every subsequent redraw renders fully opaque.
+    firstDrawRef.current = false;
 
     // Reveal-on-scroll. This previously watched invisible SVG <rect> "tripwire"
     // markers with an IntersectionObserver, but IO observing SVG child elements
@@ -206,15 +218,15 @@ const SketchGuides = () => {
       raf = window.requestAnimationFrame(revealVisible);
     };
 
-    // Reveal above-the-fold marks on mount, then follow the scroll down.
+    // Reveal above-the-fold marks on mount, then follow the scroll down. Resize
+    // is handled by the measure effect (which redraws fully opaque), so we only
+    // listen for scroll here.
     schedule();
     window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', schedule);
 
     return () => {
       if (raf) cancelAnimationFrame(raf);
       window.removeEventListener('scroll', schedule);
-      window.removeEventListener('resize', schedule);
     };
   }, [size]);
 
