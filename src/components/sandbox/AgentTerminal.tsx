@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ResponseBlock } from './terminalScript';
 import { SESSION } from './terminalScript';
 import { useTerminalPlayer, type CommittedTurn } from './useTerminalPlayer';
@@ -43,15 +43,35 @@ const Spinner = () => (
   />
 );
 
-const Block = ({ block, visible }: { block: ResponseBlock; visible: boolean }) => {
-  const base =
-    'transition-all duration-500 ease-out ' +
-    (visible ? 'translate-y-0 opacity-100 blur-0' : 'translate-y-1.5 opacity-0 blur-[1px]');
+// Mounts hidden, then flips to visible on the next frame so the fade/slide-in
+// plays the moment a block is first rendered. Only revealed blocks are mounted
+// (see Turn), so nothing occupies layout height before it appears — which lets
+// the transcript's scroll-to-bottom anchor on freshly revealed content rather
+// than an invisible tail of not-yet-shown blocks.
+const Reveal = ({ children }: { children: ReactNode }) => {
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setShown(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  return (
+    <div
+      className={`transition-all duration-500 ease-out ${
+        shown
+          ? 'translate-y-0 opacity-100 blur-0'
+          : 'translate-y-1.5 opacity-0 blur-[1px]'
+      }`}
+    >
+      {children}
+    </div>
+  );
+};
 
+const Block = ({ block }: { block: ResponseBlock }) => {
   switch (block.kind) {
     case 'thinking':
       return (
-        <div className={`${base} flex items-center gap-2.5`} style={{ color: INK_FAINT }}>
+        <div className={`flex items-center gap-2.5`} style={{ color: INK_FAINT }}>
           <Spinner />
           <span className="italic tracking-[0.01em]">{block.text}</span>
         </div>
@@ -59,7 +79,7 @@ const Block = ({ block, visible }: { block: ResponseBlock; visible: boolean }) =
 
     case 'text':
       return (
-        <div className={`${base} max-w-[64ch] leading-[1.7]`} style={{ color: INK }}>
+        <div className={`max-w-[64ch] leading-[1.7]`} style={{ color: INK }}>
           {block.text}
         </div>
       );
@@ -68,7 +88,7 @@ const Block = ({ block, visible }: { block: ResponseBlock; visible: boolean }) =
       // Claude Code's signature tool-call shape: `⏺ tool(args)` with the
       // result hanging beneath on a `⎿` connector line.
       return (
-        <div className={`${base} flex flex-col gap-1`}>
+        <div className={`flex flex-col gap-1`}>
           <div className="flex flex-wrap items-baseline gap-x-2">
             <span className="translate-y-[1px] text-[11px] leading-none" style={{ color: SAGE }} aria-hidden>
               ⏺
@@ -92,7 +112,7 @@ const Block = ({ block, visible }: { block: ResponseBlock; visible: boolean }) =
     case 'diff':
       return (
         <div
-          className={`${base} overflow-hidden rounded-lg border`}
+          className={`overflow-hidden rounded-lg border`}
           style={{ borderColor: TAN, backgroundColor: CREAM_HI }}
         >
           <div
@@ -149,7 +169,7 @@ const Block = ({ block, visible }: { block: ResponseBlock; visible: boolean }) =
     case 'result':
       return (
         <div
-          className={`${base} flex items-center gap-2.5 rounded-md border px-3.5 py-2`}
+          className={`flex items-center gap-2.5 rounded-md border px-3.5 py-2`}
           style={{
             borderColor: 'rgba(95,122,82,0.35)',
             backgroundColor: 'rgba(95,122,82,0.08)',
@@ -207,8 +227,10 @@ const Turn = ({ turn }: { turn: CommittedTurn }) => (
       className="ml-[0.4rem] flex flex-col gap-2.5 border-l pl-4"
       style={{ borderColor: TAN_SOFT }}
     >
-      {turn.blocks.map((b, i) => (
-        <Block key={i} block={b} visible={i < turn.revealed} />
+      {turn.blocks.slice(0, turn.revealed).map((b, i) => (
+        <Reveal key={i}>
+          <Block block={b} />
+        </Reveal>
       ))}
     </div>
   </div>
