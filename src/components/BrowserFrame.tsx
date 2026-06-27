@@ -158,7 +158,7 @@ const BrowserFrame = ({
     <div
       ref={frameRef}
       style={rootStyle}
-      className={`overflow-hidden rounded-lg border border-black/10 bg-white shadow-[0_18px_40px_-12px_rgba(0,0,0,0.25)] ${className}`}
+      className={`flex flex-col overflow-hidden rounded-lg border border-black/10 bg-white shadow-[0_18px_40px_-12px_rgba(0,0,0,0.25)] ${className}`}
     >
       {/* Title bar — doubles as the window drag handle when draggable. */}
       <div
@@ -233,8 +233,9 @@ const BrowserFrame = ({
         {url && <div className="w-[52px] shrink-0" aria-hidden />}
       </div>
 
-      {/* Content */}
-      <div className="bg-white">{children}</div>
+      {/* Content — fills the remaining height when the frame has a fixed height
+          (e.g. an aspect-ratio panel); sizes to its children otherwise. */}
+      <div className="min-h-0 flex-1 bg-white">{children}</div>
     </div>
   );
 };

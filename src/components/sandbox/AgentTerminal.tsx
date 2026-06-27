@@ -353,7 +353,10 @@ const AgentTerminal = ({
     <div
       className={cn(
         'flex flex-col overflow-hidden rounded-2xl border border-border bg-[hsl(0_0%_98.5%)] font-sans text-foreground shadow-[0_24px_60px_-28px_rgba(20,20,22,0.45)]',
-        compact ? 'text-[12.5px]' : 'mx-auto h-[60vh] min-h-[480px] w-full max-w-3xl text-[13.5px]',
+        // Non-compact fills its container (AgentTerminalSection wraps it in a
+        // fixed 16/11 box so all three workflow panels match in size); the hero
+        // passes its own sizing via className while compact.
+        compact ? 'text-[12.5px]' : 'h-full w-full text-[13.5px]',
         className,
       )}
     >
