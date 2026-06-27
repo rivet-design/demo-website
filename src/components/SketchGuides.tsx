@@ -9,11 +9,10 @@ import rough from 'roughjs';
  *
  * The overlay is absolutely positioned inside the scrolling content container
  * and sized to the container's FULL height, so the verticals run from the nav
- * all the way down the page and scroll with the content. Sits at z-20 — above
- * the page content (z-10) so the margin rules read as a blueprint overlay
- * framing the layout (otherwise the hero's full-width showcase panel and the
- * section backgrounds occlude them), but below the sticky nav (z-70). It is
- * pointer-events-none, so it never intercepts interaction.
+ * all the way down the page and scroll with the content. Sits at z-0 over the
+ * paper background; page content is lifted to z-10 so the guides read as a
+ * backdrop BEHIND the content panels (the panels intentionally render over
+ * them).
  *
  * Entrance: the guides reveal ON SCROLL — each stroke/sparkle fades in once it
  * enters the viewport (via an IntersectionObserver on stacked "tripwire" markers
@@ -52,7 +51,7 @@ const SketchGuides = () => {
   // w/h track the full content container; vh is the viewport height (used to
   // place the hero divider near the top); top is the nav's measured bottom edge
   // so the frame starts right at the nav rather than a guessed offset.
-  const [size, setSize] = useState({ w: 0, h: 0, vh: 0, top: 0 });
+  const [size, setSize] = useState({ w: 0, h: 0, vh: 0, top: 0, divider: 0 });
 
   useEffect(() => {
     const parent = svgRef.current?.parentElement;
@@ -69,10 +68,21 @@ const SketchGuides = () => {
       const top = nav
         ? Math.round((nav as HTMLElement).offsetTop + (nav as HTMLElement).offsetHeight)
         : 88;
+      // Anchor the hero divider to the TOP edge of the variant showcase panel so
+      // the line sits just above it and tracks its (resized) height, instead of
+      // a fixed viewport fraction that would cut through the panel.
+      const showcase = parent.querySelector('#hero-showcase') as HTMLElement | null;
+      const divider = showcase
+        ? Math.round(showcase.offsetTop)
+        : Math.round(vh * 0.34);
       setSize((prev) =>
-        prev.w === w && prev.h === h && prev.vh === vh && prev.top === top
+        prev.w === w &&
+        prev.h === h &&
+        prev.vh === vh &&
+        prev.top === top &&
+        prev.divider === divider
           ? prev
-          : { w, h, vh, top },
+          : { w, h, vh, top, divider },
       );
     };
     measure();
@@ -91,7 +101,7 @@ const SketchGuides = () => {
     while (svg.firstChild) svg.removeChild(svg.firstChild);
 
     const rc = rough.svg(svg);
-    const { w, h, vh, top } = size;
+    const { w, h, vh, top, divider } = size;
     // Very subtle hand-drawn character — nearly straight with a faint waver. A
     // fixed seed per stroke keeps the wobble stable so it never "jitters".
     const base = { stroke: ORANGE, strokeWidth: 1.2, roughness: 0.4, bowing: 0.5 };
@@ -100,7 +110,7 @@ const SketchGuides = () => {
     const Rx = Math.round(w * 0.95); // right margin
     const Ix = Math.round(w * 0.15); // inset content-column line
     const Ty = top || 88; // at the nav's bottom edge
-    const My = Math.round(vh * 0.34); // hero / content divider
+    const My = divider || Math.round(vh * 0.34); // top edge of the showcase panel
     const By = h - 40; // bottom rule, at the very end of the page
 
     const reduceMotion =
@@ -242,7 +252,7 @@ const SketchGuides = () => {
       aria-hidden
       width={size.w}
       height={size.h}
-      className="pointer-events-none absolute left-0 top-0 z-20 hidden md:block"
+      className="pointer-events-none absolute left-0 top-0 z-0 hidden md:block"
     />
   );
 };

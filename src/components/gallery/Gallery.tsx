@@ -36,8 +36,7 @@ export default function Gallery({ variant }: Props = {}) {
   const [activeCollection, setActiveCollection] = useState('All Works');
   const [activeTab, setActiveTab] = useState('Library');
   const [internalView, setView] = useState<View>('grid');
-  const [internalCols, setCols] = useState<Cols>(3);
-  const [sort, setSort] = useState('date-desc');
+  const [internalCols] = useState<Cols>(3);
   const [loading, setLoading] = useState(true);
 
   // Variant overrides win, internal state is the fallback.
@@ -130,7 +129,8 @@ export default function Gallery({ variant }: Props = {}) {
           </div>
         </header>
 
-        {/* Sidebar */}
+        {/* Sidebar — minimal: a single Collections list (no counts, no Smart
+            Albums section) so it stays compact when the panel is narrow. */}
         <aside className="sidebar">
           <div>
             <div className="sidebar-section-title">Collections</div>
@@ -146,34 +146,8 @@ export default function Gallery({ variant }: Props = {}) {
                     style={{ background: c.color }}
                   />
                   {c.label}
-                  <span className="sidebar-item-count">{c.count}</span>
                 </div>
               ))}
-            </div>
-          </div>
-          <div>
-            <div className="sidebar-section-title">Smart Albums</div>
-            <div className="sidebar-items">
-              {['Favorites', 'Recent Imports', 'Untagged', 'RAW Only'].map(
-                (label) => (
-                  <div key={label} className="sidebar-item">
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      style={{ color: 'var(--text-muted)', flexShrink: 0 }}
-                    >
-                      <rect x="3" y="3" width="18" height="18" rx="2" />
-                    </svg>
-                    {label}
-                  </div>
-                ),
-              )}
             </div>
           </div>
         </aside>
@@ -193,69 +167,6 @@ export default function Gallery({ variant }: Props = {}) {
               </div>
             </div>
             <div className="view-controls">
-              <select
-                className="sort-select"
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-              >
-                <option value="date-desc">Newest first</option>
-                <option value="date-asc">Oldest first</option>
-                <option value="name-asc">Name A–Z</option>
-                <option value="size-desc">Largest first</option>
-              </select>
-              {view === 'grid' && (
-                <div style={{ display: 'flex', gap: 2 }}>
-                  {([2, 3, 4] as Cols[]).map((n) => (
-                    <button
-                      key={n}
-                      className={`view-toggle-btn ${cols === n ? 'active' : ''}`}
-                      onClick={() => setCols(n)}
-                      title={`${n} columns`}
-                    >
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 12 12"
-                        fill="currentColor"
-                      >
-                        {n === 2 && (
-                          <>
-                            <rect x="0" y="0" width="5" height="5" rx="1" />
-                            <rect x="7" y="0" width="5" height="5" rx="1" />
-                            <rect x="0" y="7" width="5" height="5" rx="1" />
-                            <rect x="7" y="7" width="5" height="5" rx="1" />
-                          </>
-                        )}
-                        {n === 3 && (
-                          <>
-                            <rect x="0" y="0" width="3" height="3" rx="0.5" />
-                            <rect x="4.5" y="0" width="3" height="3" rx="0.5" />
-                            <rect x="9" y="0" width="3" height="3" rx="0.5" />
-                            <rect x="0" y="4.5" width="3" height="3" rx="0.5" />
-                            <rect x="4.5" y="4.5" width="3" height="3" rx="0.5" />
-                            <rect x="9" y="4.5" width="3" height="3" rx="0.5" />
-                            <rect x="0" y="9" width="3" height="3" rx="0.5" />
-                            <rect x="4.5" y="9" width="3" height="3" rx="0.5" />
-                            <rect x="9" y="9" width="3" height="3" rx="0.5" />
-                          </>
-                        )}
-                        {n === 4 && (
-                          <>
-                            <rect x="0" y="0" width="2" height="2" rx="0.5" />
-                            <rect x="3.3" y="0" width="2" height="2" rx="0.5" />
-                            <rect x="6.6" y="0" width="2" height="2" rx="0.5" />
-                            <rect x="10" y="0" width="2" height="2" rx="0.5" />
-                            <rect x="0" y="3.3" width="2" height="2" rx="0.5" />
-                            <rect x="3.3" y="3.3" width="2" height="2" rx="0.5" />
-                            <rect x="6.6" y="3.3" width="2" height="2" rx="0.5" />
-                            <rect x="10" y="3.3" width="2" height="2" rx="0.5" />
-                          </>
-                        )}
-                      </svg>
-                    </button>
-                  ))}
-                </div>
-              )}
               <div className="view-toggle">
                 <button
                   className={`view-toggle-btn ${view === 'grid' ? 'active' : ''}`}

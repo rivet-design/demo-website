@@ -38,11 +38,11 @@ const VariantsDemoPage = () => {
       </div>
 
       <div
-        className="flex w-full justify-center rounded-xl bg-cover bg-center p-4 sm:p-6 md:p-8"
+        className="flex w-full justify-center rounded-xl bg-cover bg-center p-4 sm:p-6 md:p-10"
         style={{ backgroundImage: "url('/images/panel-backdrop.png')" }}
       >
         <BrowserFrame url="localhost:6000" className="w-full max-w-6xl">
-          <VariantsShowcase heightClassName="h-[68vh] min-h-[480px]" />
+          <VariantsShowcase heightClassName="h-[58vh] min-h-[440px]" />
         </BrowserFrame>
       </div>
     </div>

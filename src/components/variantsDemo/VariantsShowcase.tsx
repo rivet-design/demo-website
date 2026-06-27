@@ -3,6 +3,13 @@ import DirectionsPanel from './DirectionsPanel';
 import SparkleLoader from './SparkleLoader';
 import { useVariantsDemo } from './useVariantsDemo';
 
+// Each variant page is rendered at a fixed, generously-tall logical viewport so
+// it fits without an internal scroll (a scrolling iframe would trap the page's
+// wheel scroll). The whole iframe is then contain-scaled to fit the preview
+// pane, and scrolling="no" guarantees no wheel capture even if a page overflows.
+const DESIGN_W = 1280;
+const DESIGN_H = 820;
+
 /**
  * The Rivet variants interaction — the inner content of a BrowserFrame: a
  * full-height variant preview on the left and the Directions panel on the
@@ -36,6 +43,29 @@ const VariantsShowcase = ({
   const [prevSrc, setPrevSrc] = useState<string | null>(null);
   const [hovered, setHovered] = useState(false);
   const prevSelectedRef = useRef(ctrl.selected.src);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [paneSize, setPaneSize] = useState({ w: 0, h: 0 });
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  // Measure the preview pane so each variant page can be contain-scaled to fit.
+  useEffect(() => {
+    const el = previewRef.current;
+    if (!el) return;
+    const update = () => setPaneSize({ w: el.clientWidth, h: el.clientHeight });
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Side-by-side (variant + panel) only at sm+; below that the layout stacks.
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 640px)');
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   useEffect(() => {
     setVisited((s) =>
@@ -72,15 +102,36 @@ const VariantsShowcase = ({
   const selectedReady = ctrl.readyIds.has(ctrl.selected.id);
   const activeReady = activeLoaded && selectedReady;
 
+  // Desktop: the shell height is driven by the variant — scale to fit WIDTH so
+  // there's no letterbox, and collapse the shell (and the RHS panel) to exactly
+  // that height. Mobile: keep the passed height and contain the page within it.
+  const measured = paneSize.w > 0;
+  const fitScale = !measured
+    ? 0
+    : isDesktop
+      ? paneSize.w / DESIGN_W
+      : Math.min(paneSize.w / DESIGN_W, paneSize.h / DESIGN_H);
+  const desktopHeight = measured ? DESIGN_H * (paneSize.w / DESIGN_W) : 0;
+
   return (
     <div
-      className={`flex flex-col sm:flex-row ${heightClassName}`}
+      className={`flex flex-col sm:flex-row ${
+        isDesktop && measured ? '' : heightClassName
+      }`}
+      style={
+        isDesktop && measured
+          ? { height: desktopHeight, minHeight: desktopHeight }
+          : undefined
+      }
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
       {/* Preview — the variant itself. Hero of the shell: full height beside
           the panel on desktop, top section above it when stacked on mobile. */}
-      <div className="relative min-h-0 min-w-0 flex-1 bg-white">
+      <div
+        ref={previewRef}
+        className="relative min-h-0 min-w-0 flex-1 overflow-hidden bg-white"
+      >
         {ctrl.variants
           .filter((v) => visited.has(v.src))
           .map((v) => {
@@ -92,9 +143,20 @@ const VariantsShowcase = ({
                 key={v.src}
                 src={v.src}
                 title={v.label}
+                scrolling="no"
                 onLoad={() => setLoaded((s) => new Set(s).add(v.src))}
-                style={{ opacity, zIndex: isActive ? 20 : isPrev ? 10 : 0 }}
-                className={`absolute inset-0 h-full w-full border-0 transition-opacity duration-300 ease-in-out ${
+                style={{
+                  width: DESIGN_W,
+                  height: DESIGN_H,
+                  position: 'absolute',
+                  left: '50%',
+                  top: '50%',
+                  transform: `translate(-50%, -50%) scale(${fitScale})`,
+                  transformOrigin: 'center center',
+                  opacity,
+                  zIndex: isActive ? 20 : isPrev ? 10 : 0,
+                }}
+                className={`border-0 transition-opacity duration-300 ease-in-out ${
                   isActive ? '' : 'pointer-events-none'
                 }`}
               />

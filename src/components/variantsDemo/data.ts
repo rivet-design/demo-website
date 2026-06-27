@@ -14,6 +14,8 @@ export type DemoVariant = {
   brief: string;
   /** URL of the hosted static page for this variant. */
   src: string;
+  /** Run tag shown as the chip on the direction row. */
+  tag: string;
 };
 
 /** Shared run label (manifest `runLabel`) shown as the chip on each direction. */
@@ -34,35 +36,41 @@ export const VARIANTS: DemoVariant[] = [
     label: 'Skeuomorphic Deck',
     brief: 'Tactile brushed-metal deck with glowing LEDs.',
     src: '/demos/jersey/skeuomorphic-deck.html',
+    tag: 'Legacy Apple',
   },
   {
     id: '9ad7cb99-cf44-41d4-be97-db768e91ad4d',
     label: 'Liquid Glass',
     brief: 'Frosted glass islands over a live pitch.',
     src: '/demos/jersey/liquid-glass.html',
+    tag: 'Legacy Apple',
   },
   {
     id: '00368aee-9194-4bdd-be73-00f40704dbf2',
     label: 'Macintosh System',
     brief: 'Faithful 1984 black-and-white Macintosh, bitmap type.',
     src: '/demos/jersey/macintosh-system.html',
+    tag: 'Legacy Apple',
   },
   {
     id: 'c4318c43-f680-4200-a141-4ad08aa11318',
     label: 'Frutiger Aero',
     brief: 'Glossy mid-2000s Aqua pods and shine.',
     src: '/demos/jersey/frutiger-aero.html',
+    tag: 'Retro flair',
   },
   {
     id: '8a4fd242-4c19-486c-a2b3-79f5e8b82dac',
     label: 'Halftone',
     brief: 'Retro CMYK Ben-Day halftone dots.',
     src: '/demos/jersey/halftone.html',
+    tag: 'Retro flair',
   },
   {
     id: '8acd812d-13fc-405c-a82d-f27932bdec94',
     label: 'Discomorphic',
     brief: '1980s CRT teletext over disco green.',
     src: '/demos/jersey/discomorphic.html',
+    tag: 'Retro flair',
   },
 ];

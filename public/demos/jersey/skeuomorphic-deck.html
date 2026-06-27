@@ -246,6 +246,12 @@
     transition:transform .07s;
   }
   .btn-row.small .cbtn{width:38px;height:38px;}
+  /* Accent (cuffs & collar): always render all 8 swatches on one row — they
+     flex to share the width equally (capped at 44px) and stay circular. */
+  #accentSwatches{flex-wrap:nowrap;gap:8px;}
+  #accentSwatches .cbtn{flex:1 1 0;min-width:0;width:auto;height:auto;aspect-ratio:1;max-width:44px;}
+  /* Trim colour: keep the 4 options on a single line. */
+  #numColRows{flex-wrap:nowrap;}
   .cbtn-face{
     display:block;width:100%;height:100%;border-radius:50%;
     background:
@@ -603,7 +609,7 @@
         </div>
 
         <div class="ctl-block">
-          <div class="ctl-label">Strip Pattern</div>
+          <div class="ctl-label">Stripe Pattern</div>
           <div class="seg" id="patternSeg"></div>
         </div>
 
@@ -682,7 +688,6 @@
     {name:'White',hex:'#FFFFFF'},
     {name:'Ink Black',hex:'#111111'},
     {name:'Samba Yellow',hex:'#FFD400'},
-    {name:'Cream',hex:'#F4EFE2'},
     {name:'Cobalt',hex:'#2230C8'}
   ];
 

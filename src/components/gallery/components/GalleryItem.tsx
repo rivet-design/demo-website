@@ -74,37 +74,6 @@ export default function GalleryItem({ item, loading = false }: Props) {
           </>
         )}
       </div>
-      <div className="item-meta">
-        {loading ? (
-          <>
-            <div
-              style={{
-                height: 10,
-                width: '60%',
-                borderRadius: 4,
-                background: 'var(--skeleton-base)',
-                marginBottom: 6,
-              }}
-            />
-            <div
-              style={{
-                height: 9,
-                width: '40%',
-                borderRadius: 4,
-                background: 'var(--skeleton-base)',
-              }}
-            />
-          </>
-        ) : (
-          <>
-            <div className="item-title">{item.title}</div>
-            <div className="item-sub">
-              <span>{item.date}</span>
-              <span className="item-tag">{item.tag}</span>
-            </div>
-          </>
-        )}
-      </div>
     </div>
   );
 }
