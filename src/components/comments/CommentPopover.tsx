@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
+import { CardsThree } from '@phosphor-icons/react';
 import SparkleLoader from '../variantsDemo/SparkleLoader';
 
 type Props = {
@@ -238,7 +239,7 @@ const CommentPopover = ({
               <SparkleLoader className="text-[13px] text-[color:var(--content)]" />
             ) : (
               <>
-                <CardsThreeIcon />
+                <CardsThree size={16} weight="bold" />
                 <span>Vary</span>
               </>
             )}
@@ -276,21 +277,6 @@ const CommentPopover = ({
     </motion.div>
   );
 };
-
-// Stacked cards — the "Vary" glyph, echoing Rivet Core's CardsThree icon.
-const CardsThreeIcon = () => (
-  <svg
-    width="15"
-    height="15"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    aria-hidden="true"
-  >
-    <rect x="8" y="3" width="13" height="13" rx="3" opacity="0.4" />
-    <rect x="5.5" y="5.5" width="13" height="13" rx="3" opacity="0.65" />
-    <rect x="3" y="8" width="13" height="13" rx="3" />
-  </svg>
-);
 
 const TrashIcon = () => (
   <svg
