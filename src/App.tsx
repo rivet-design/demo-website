@@ -297,7 +297,7 @@ const App = () => {
               chatMoved ? 'left-[77%] top-[63%]' : 'left-1/2 top-1/2'
             } ${
               chatMinimized
-                ? 'origin-bottom animate-[rivet-chat-minimize_0.62s_cubic-bezier(0.5,0,0.85,0.3)_forwards]'
+                ? 'origin-bottom-right animate-[rivet-chat-minimize_0.6s_cubic-bezier(0.7,0,0.84,0)_forwards]'
                 : ''
             }`}
           />
