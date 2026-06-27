@@ -264,14 +264,28 @@ const AgentTerminal = ({
   loop = true,
   compact = false,
   className,
+  onComplete,
 }: {
   script?: Turn[];
   loop?: boolean;
   /** Smaller padding / type for the floating hero chat. */
   compact?: boolean;
   className?: string;
+  /** Fires once when the whole script has finished (all blocks revealed). */
+  onComplete?: () => void;
 } = {}) => {
   const { history, draft, thinking, idle } = useTerminalPlayer(script, { loop });
+
+  // Fire onComplete once the last turn's last block has streamed in.
+  const lastTurn = history[history.length - 1];
+  const allDone = history.length === script.length && !!lastTurn?.done;
+  const completedRef = useRef(false);
+  useEffect(() => {
+    if (allDone && !completedRef.current) {
+      completedRef.current = true;
+      onComplete?.();
+    }
+  }, [allDone, onComplete]);
 
   // Keep the latest streamed output in view as blocks reveal — without this the
   // fixed-height transcript would leave the diff / commit payoff below the fold.

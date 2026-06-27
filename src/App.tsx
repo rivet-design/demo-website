@@ -186,6 +186,8 @@ const App = () => {
   // prompt as it types), then slides to the left once the browser window has
   // animated in.
   const [chatMoved, setChatMoved] = useState(false);
+  // Once the agent finishes all its MCP calls, the chat minimizes out.
+  const [chatMinimized, setChatMinimized] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setChatMoved(true), HERO_WINDOW_OPEN_MS + 900);
     return () => clearTimeout(t);
@@ -288,8 +290,15 @@ const App = () => {
             compact
             loop={false}
             script={HERO_SESSION}
+            onComplete={() =>
+              window.setTimeout(() => setChatMinimized(true), 1100)
+            }
             className={`pointer-events-none absolute z-20 hidden h-[300px] w-[380px] -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] md:flex ${
               chatMoved ? 'left-[77%] top-[63%]' : 'left-1/2 top-1/2'
+            } ${
+              chatMinimized
+                ? 'origin-bottom animate-[rivet-chat-minimize_0.62s_cubic-bezier(0.5,0,0.85,0.3)_forwards]'
+                : ''
             }`}
           />
         </div>

@@ -268,6 +268,25 @@
   }
 }
 
+/* macOS "genie" minimize for the hero agent chat: the panel squishes and
+   narrows as it sinks toward the dock (bottom), accelerating, then fades out.
+   The translate keeps it horizontally centered on its anchor while it collapses;
+   transform-origin: bottom makes it fold down into the dock. */
+@keyframes rivet-chat-minimize {
+  0% {
+    transform: translate(-50%, -50%) scaleX(1) scaleY(1);
+    opacity: 1;
+  }
+  55% {
+    transform: translate(-50%, 6%) scaleX(0.5) scaleY(0.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, 132%) scaleX(0.06) scaleY(0.015);
+    opacity: 0;
+  }
+}
+
 /* Hard on/off blink for the agent prompt's text cursor. */
 @keyframes rivet-caret-blink {
   0%,
