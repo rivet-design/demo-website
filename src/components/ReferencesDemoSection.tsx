@@ -86,11 +86,11 @@ const ReferencesDemoSection = () => {
   // More dot rows on desktop, fewer (well-spaced) on small screens.
   const gridSpacing = useIsDesktop() ? 22 : 30;
   return (
-    <div
-      data-guide-row
-      className="relative flex w-full justify-center px-[5vw] py-16 md:py-24"
-    >
-      <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_1.7fr] lg:gap-16">
+    <div className="relative flex w-full justify-center px-[5vw] py-12 md:py-16">
+      <div
+        data-guide-row
+        className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_1.7fr] lg:gap-16"
+      >
         {/* Copy */}
         <div className="max-w-[440px]">
           <h2 className="mt-3 font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">

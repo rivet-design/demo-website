@@ -92,11 +92,11 @@ const CommentDemoSection = () => {
   };
 
   return (
-    <div
-      data-guide-row
-      className="relative flex w-full justify-center px-[5vw] py-16 md:py-24"
-    >
-      <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1.3fr_1fr] lg:gap-16">
+    <div className="relative flex w-full justify-center px-[5vw] py-12 md:py-16">
+      <div
+        data-guide-row
+        className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1.3fr_1fr] lg:gap-16"
+      >
         {/* DOM order is panel-then-text so that at lg+ the panel sits in the
             first (1.7fr) column on the left. On stacked mobile/tablet we want
             the title above the panel, so flip with `order-` classes below. */}

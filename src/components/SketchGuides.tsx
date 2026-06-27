@@ -88,19 +88,20 @@ const SketchGuides = () => {
         : Math.round(vh * 0.34);
       // Horizontal rule positions framing each workflow panel (the grey panel
       // backgrounds were removed — these blueprint lines delineate them now).
-      // Draw one at the top of every [data-guide-row] panel, plus one at the
-      // bottom of the last so the stack reads as framed cells. Measured via
-      // rects (relative to the overlay's parent) so the offsetParent chain
-      // doesn't matter.
+      // [data-guide-row] sits on each panel's CONTENT, and we draw a rule just
+      // above and just below it (HUG px out) so the lines hug the panel rather
+      // than the section's outer padding. Measured via rects (relative to the
+      // overlay's parent) so the offsetParent chain doesn't matter.
+      const HUG = 16;
       const parentTop = parent.getBoundingClientRect().top;
       const rowEls = Array.from(
         parent.querySelectorAll('[data-guide-row]'),
       ) as HTMLElement[];
       const rows: number[] = [];
-      rowEls.forEach((el, i) => {
+      rowEls.forEach((el) => {
         const r = el.getBoundingClientRect();
-        rows.push(Math.round(r.top - parentTop));
-        if (i === rowEls.length - 1) rows.push(Math.round(r.bottom - parentTop));
+        rows.push(Math.round(r.top - parentTop - HUG));
+        rows.push(Math.round(r.bottom - parentTop + HUG));
       });
       setSize((prev) =>
         prev.w === w &&
