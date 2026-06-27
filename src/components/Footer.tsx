@@ -127,12 +127,17 @@ const Footer = () => {
         className="w-screen px-[5vw] -mt-[25.6vw] md:mt-0"
         style={{ marginLeft: 'calc(50% - 50vw)', ...footerBackground }}
       >
+        {/* object-cover + object-top crops the bottom while anchoring the top
+            (the hand-drawn dot over the "i"). This is independent of the SVG's
+            intrinsic size, which WebKit/iOS Safari resolves differently from
+            Chromium (mixed fixed + 100% dims) — without it, Safari could clip
+            the top and drop the dot. */}
         <div className="overflow-hidden" style={{ aspectRatio: '1884 / 669.5' }}>
           <img
             src="/images/rivet-multicolor.svg"
             alt="rivet"
             draggable={false}
-            className="block w-full mix-blend-multiply"
+            className="block h-full w-full object-cover object-top mix-blend-multiply"
           />
         </div>
       </div>
