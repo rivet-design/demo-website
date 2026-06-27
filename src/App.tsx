@@ -188,10 +188,20 @@ const App = () => {
   const [chatMoved, setChatMoved] = useState(false);
   // Once the agent finishes all its MCP calls, the chat minimizes out.
   const [chatMinimized, setChatMinimized] = useState(false);
+  // After the minimize animation finishes we UNMOUNT the chat for good. It's a
+  // `hidden md:flex` element, so otherwise crossing the md breakpoint on resize
+  // re-displays it and replays the minimize animation — flashing the panel back
+  // in. The intro is one-shot, so once it's gone it should stay gone.
+  const [chatGone, setChatGone] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setChatMoved(true), HERO_WINDOW_OPEN_MS + 900);
     return () => clearTimeout(t);
   }, []);
+  useEffect(() => {
+    if (!chatMinimized) return;
+    const t = setTimeout(() => setChatGone(true), 700);
+    return () => clearTimeout(t);
+  }, [chatMinimized]);
 
   const renderDownloadPanel = () => {
     return (
@@ -285,22 +295,28 @@ const App = () => {
           {/* Floating agent chat (bottom-right) that "drives" the demo: it types
               the prompt + Rivet MCP tool calls, then the window opens and the
               directions generate and fade in. Decorative, so pointer-events are
-              off; hidden on small screens where the hero is already tight. */}
-          <AgentTerminal
-            compact
-            loop={false}
-            script={HERO_SESSION}
-            onComplete={() =>
-              window.setTimeout(() => setChatMinimized(true), 1100)
-            }
-            className={`pointer-events-none absolute z-20 hidden h-[300px] w-[380px] -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] md:flex ${
-              chatMoved ? 'left-[77%] top-[63%]' : 'left-1/2 top-1/2'
-            } ${
-              chatMinimized
-                ? 'origin-bottom-right animate-[rivet-chat-minimize_0.6s_cubic-bezier(0.7,0,0.84,0)_forwards]'
-                : ''
-            }`}
-          />
+              off; hidden on small screens where the hero is already tight. It's
+              a one-shot intro — unmounted once it has minimized so a resize can
+              never bring it back. */}
+          {!chatGone && (
+            <AgentTerminal
+              compact
+              loop={false}
+              script={HERO_SESSION}
+              onComplete={() =>
+                window.setTimeout(() => setChatMinimized(true), 1100)
+              }
+              className={`pointer-events-none absolute z-20 hidden h-[240px] w-[300px] -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] md:flex lg:h-[300px] lg:w-[380px] ${
+                chatMoved
+                  ? 'left-[70%] top-[61%] lg:left-[77%] lg:top-[63%]'
+                  : 'left-1/2 top-1/2'
+              } ${
+                chatMinimized
+                  ? 'origin-bottom-right animate-[rivet-chat-minimize_0.6s_cubic-bezier(0.7,0,0.84,0)_forwards]'
+                  : ''
+              }`}
+            />
+          )}
         </div>
 
         {/* Subtitle + CTA, moved below the fold to sit under the UI variants

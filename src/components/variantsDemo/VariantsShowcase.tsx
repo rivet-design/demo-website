@@ -10,6 +10,12 @@ import { useVariantsDemo } from './useVariantsDemo';
 const DESIGN_W = 1280;
 const DESIGN_H = 820;
 
+// On narrower desktops the width-driven shell height collapses (the preview pane
+// gets short), which leaves the shell too short to host the floating hero chat.
+// Keep the shell at a reasonable minimum height so it stays a believable browser
+// window and the chat always fits inside it.
+const MIN_DESKTOP_H = 440;
+
 /**
  * The Rivet variants interaction — the inner content of a BrowserFrame: a
  * full-height variant preview on the left and the Directions panel on the
@@ -113,12 +119,16 @@ const VariantsShowcase = ({
   // there's no letterbox, and collapse the shell (and the RHS panel) to exactly
   // that height. Mobile: keep the passed height and contain the page within it.
   const measured = paneSize.w > 0;
+  const desktopHeight = measured
+    ? Math.max(DESIGN_H * (paneSize.w / DESIGN_W), MIN_DESKTOP_H)
+    : 0;
+  // Fit-to-width normally; once the shell is floored to MIN_DESKTOP_H, cover the
+  // (now taller) box so the variant fills it instead of leaving a white band.
   const fitScale = !measured
     ? 0
     : isDesktop
-      ? paneSize.w / DESIGN_W
+      ? Math.max(paneSize.w / DESIGN_W, desktopHeight / DESIGN_H)
       : Math.min(paneSize.w / DESIGN_W, paneSize.h / DESIGN_H);
-  const desktopHeight = measured ? DESIGN_H * (paneSize.w / DESIGN_W) : 0;
 
   return (
     <div
