@@ -46,7 +46,7 @@ const LOOP_GAP_MS = 2600; // pause before clearing + looping
 
 export const useTerminalPlayer = (
   script: Turn[],
-  { loop = true }: { loop?: boolean } = {},
+  { loop = true, paused = false }: { loop?: boolean; paused?: boolean } = {},
 ): TerminalState => {
   const [history, setHistory] = useState<CommittedTurn[]>([]);
   const [draft, setDraft] = useState('');
@@ -57,6 +57,10 @@ export const useTerminalPlayer = (
     const clear = () => {
       if (timer.current) clearTimeout(timer.current);
     };
+    // Off-screen: don't schedule the next step. The cleanup from the previous
+    // run already cancelled any pending timer, so playback freezes on the
+    // current phase and resumes from it when the panel scrolls back into view.
+    if (paused) return clear;
     const next = (p: Phase, ms: number) => {
       clear();
       timer.current = setTimeout(() => setPhase(p), ms);
@@ -128,7 +132,7 @@ export const useTerminalPlayer = (
     }
 
     return clear;
-  }, [phase, script, loop]);
+  }, [phase, script, loop, paused]);
 
   const last = history[history.length - 1];
   const thinking = phase.t === 'thinking' || (phase.t === 'responding' && !!last && last.revealed === 0);

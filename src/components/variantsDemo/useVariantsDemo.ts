@@ -38,13 +38,24 @@ const FIRST_READY_MS = 1000;
 const ALL_READY_MS = 2800;
 
 export const useVariantsDemo = (
-  options?: { autoPlay?: boolean; initialId?: string; startDelayMs?: number },
+  options?: {
+    autoPlay?: boolean;
+    initialId?: string;
+    startDelayMs?: number;
+    /**
+     * Inject a custom variant list (defaults to the hero's jersey VARIANTS).
+     * MUST be a stable module-level reference — passing a fresh array each
+     * render re-runs the generation effect and resets the skeletons.
+     */
+    variants?: DemoVariant[];
+  },
 ): VariantsDemoController => {
+  const SOURCE = options?.variants ?? VARIANTS;
   const startDelayMs = Math.max(0, options?.startDelayMs ?? 0);
   const initialId =
-    options?.initialId && VARIANTS.some((v) => v.id === options.initialId)
+    options?.initialId && SOURCE.some((v) => v.id === options.initialId)
       ? options.initialId
-      : VARIANTS[0].id;
+      : SOURCE[0].id;
   const [overrides, setOverrides] = useState<Record<string, string>>({});
   const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [selectedId, setSelectedId] = useState(initialId);
@@ -57,7 +68,7 @@ export const useVariantsDemo = (
   // offsets the whole sequence so it can be timed after an intro (the hero's
   // agent chat) rather than firing immediately.
   useEffect(() => {
-    const ids = VARIANTS.map((v) => v.id);
+    const ids = SOURCE.map((v) => v.id);
     const firstId = initialId;
     const firstTimer = setTimeout(
       () => setReadyIds(new Set([firstId])),
@@ -71,14 +82,14 @@ export const useVariantsDemo = (
       clearTimeout(firstTimer);
       clearTimeout(restTimer);
     };
-  }, [initialId, startDelayMs]);
+  }, [SOURCE, initialId, startDelayMs]);
 
   const variants = useMemo(
     () =>
-      VARIANTS.filter((v) => !removed.has(v.id)).map((v) =>
+      SOURCE.filter((v) => !removed.has(v.id)).map((v) =>
         overrides[v.id] ? { ...v, label: overrides[v.id] } : v,
       ),
-    [overrides, removed],
+    [SOURCE, overrides, removed],
   );
 
   // Keep a live ref so the interval/keyboard closures always see the current
@@ -87,8 +98,8 @@ export const useVariantsDemo = (
   variantsRef.current = variants;
 
   const selected = useMemo(
-    () => variants.find((v) => v.id === selectedId) ?? variants[0] ?? VARIANTS[0],
-    [variants, selectedId],
+    () => variants.find((v) => v.id === selectedId) ?? variants[0] ?? SOURCE[0],
+    [SOURCE, variants, selectedId],
   );
 
   // Auto-advance, no take-over flag.
@@ -132,11 +143,11 @@ export const useVariantsDemo = (
   const remove = useCallback(
     (id: string) => {
       setAutoPlay(false);
-      const removedVariant = VARIANTS.find((v) => v.id === id);
+      const removedVariant = SOURCE.find((v) => v.id === id);
       setRemoved((set) => new Set(set).add(id));
       setSelectedId((cur) => {
         if (cur !== id) return cur;
-        const next = VARIANTS.find((v) => v.id !== id && !removed.has(v.id));
+        const next = SOURCE.find((v) => v.id !== id && !removed.has(v.id));
         return next ? next.id : cur;
       });
       toast(`Removed “${removedVariant?.label ?? 'direction'}”`, {
@@ -151,16 +162,16 @@ export const useVariantsDemo = (
         },
       });
     },
-    [removed],
+    [SOURCE, removed],
   );
 
   const clearAll = useCallback(() => {
     setRemoved(new Set());
     setOverrides({});
-    setSelectedId(VARIANTS[0].id);
+    setSelectedId(SOURCE[0].id);
     setAutoPlay(true); // resume the loop on a full reset
     toast('Reset all directions');
-  }, []);
+  }, [SOURCE]);
 
   const copyDescription = useCallback((text: string) => {
     void navigator.clipboard?.writeText(text);

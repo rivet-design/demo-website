@@ -1,5 +1,6 @@
 import {
   memo,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -103,6 +104,7 @@ const CircleGridArt = ({
   const cursorRef = useRef<{ x: number; y: number } | null>(null);
   const startTimeRef = useRef(0);
   const lastFrameRef = useRef(0);
+  const rafRef = useRef(0);
   const [, setTick] = useState(0);
 
   const svgRef = useRef<SVGSVGElement>(null);
@@ -153,21 +155,31 @@ const CircleGridArt = ({
     cols > 1 ? Math.max(8, horizontalSpan / (cols - 1)) : 0;
   const startX = gridPadding + outerR;
 
-  useEffect(() => {
-    let raf = 0;
-    const loop = (now: number) => {
-      if (
-        cursorRef.current !== null &&
-        now - lastFrameRef.current >= frameInterval
-      ) {
+  // The hover-morph loop only does work while the cursor is over the grid, so
+  // run it on demand (started from mouse-move, self-stopping once the cursor
+  // leaves) instead of holding a permanent rAF cadence that spins every frame
+  // doing nothing and competes with scrolling.
+  const loop = useCallback(
+    (now: number) => {
+      if (cursorRef.current === null) {
+        rafRef.current = 0;
+        return;
+      }
+      if (now - lastFrameRef.current >= frameInterval) {
         lastFrameRef.current = now;
         setTick((n) => (n + 1) % 1_000_000);
       }
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, [frameInterval]);
+      rafRef.current = requestAnimationFrame(loop);
+    },
+    [frameInterval],
+  );
+
+  useEffect(
+    () => () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    },
+    [],
+  );
 
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
     const svg = e.currentTarget;
@@ -181,6 +193,8 @@ const CircleGridArt = ({
       startTimeRef.current = performance.now();
     }
     cursorRef.current = { x: localPt.x, y: localPt.y };
+    // Start the morph loop if it isn't already running (it stops itself on leave).
+    if (!rafRef.current) rafRef.current = requestAnimationFrame(loop);
   };
 
   const handleMouseLeave = () => {

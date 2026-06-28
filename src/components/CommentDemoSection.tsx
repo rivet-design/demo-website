@@ -1,108 +1,57 @@
-import { useRef, useState } from 'react';
+import { memo, useState } from 'react';
 import { telemetry } from '@/lib/telemetry';
-import { CommentLayer } from './comments';
-import type { Comment } from './comments';
-import Gallery from './gallery/Gallery';
+import CommentDemoShell from './commentsDemo/CommentDemoShell';
 import BrowserFrame from './BrowserFrame';
 
 const R2_MEDIA_URL = 'https://pub-eed10ae7764348e2b0775fb6de2f56de.r2.dev';
 const MOBILE_VIDEO_SRC = `${R2_MEDIA_URL}/media/vid_landing.webm`;
 const MOBILE_POSTER_SRC = '/images/rivet-demo@2x.png';
 
+const REQUEST_TEXT = 'try more fluid layouts';
+
 /**
- * Side-by-side workflow panel: copy on the left, an interactive mini-app on the
- * right. Comments are scoped to the panel — drag inside it to leave a comment;
- * everything resets on page reload.
+ * Workflow panel: "Explore with precision."
  *
- * `mt-6 md:mt-10` lets the page's white bg show through, so this panel reads as
- * a separate entity from the video panel above (rather than one big gray slab).
+ * Mirrors the hero: inside the browser shell, a live gallery preview sits on the
+ * LEFT and a Directions list on the RIGHT. A scripted drag leaves the comment
+ * "try more fluid layouts", layout directions generate on the right, and
+ * selecting one restyles the gallery on the left. The "Explore with precision"
+ * copy stays beside the shell (the section keeps its two-column grid).
  */
-/**
- * Pre-seeded comments shown on first paint. Coordinates are percentages of the
- * comment panel — they survive resizing because the panel has a fixed 16:10
- * aspect ratio. Numbers tuned against the gallery layout (52px topbar,
- * 220px sidebar) for reasonable alignment across breakpoints.
- */
-const SEEDED_COMMENTS: Comment[] = [
-  {
-    id: 'seed-all-works',
-    pin: { xPct: 0.15, yPct: 0.19 },
-    instruction: 'Make this slightly bolder',
-    status: 'pending',
-    createdAt: 0,
-  },
-  {
-    id: 'seed-collections',
-    pin: { xPct: 0.27, yPct: 0.478 },
-    dragBox: {
-      leftPct: 0.005,
-      topPct: 0.16,
-      widthPct: 0.265,
-      heightPct: 0.318,
-    },
-    instruction: 'Could we group these by date?',
-    status: 'pending',
-    createdAt: 0,
-  },
-];
-
-/** Pin for the open draft popover — sits over a top-row gallery item. */
-const SEEDED_DRAFT = {
-  pin: { xPct: 0.58, yPct: 0.35 },
-};
-
 const CommentDemoSection = () => {
-  const [comments, setComments] = useState<Comment[]>(SEEDED_COMMENTS);
+  // The scripted intro plays only on desktop with motion allowed — same gate as
+  // the hero (App.tsx `playHeroIntro`). Otherwise the demo renders its resolved
+  // state with no fake cursor.
+  const [play] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
+      window.matchMedia('(min-width: 768px)').matches,
+  );
 
-  // Diff comments transitions to fire telemetry on user-driven create/edit/
-  // delete actions. We don't capture instruction text (PII-adjacent) — only
-  // its length and a stable comment id.
-  const prevCommentsRef = useRef<Comment[]>(SEEDED_COMMENTS);
-  const handleCommentsChange = (next: Comment[]) => {
-    const prev = prevCommentsRef.current;
-    const prevById = new Map(prev.map((c) => [c.id, c]));
-    const nextById = new Map(next.map((c) => [c.id, c]));
-
-    for (const c of next) {
-      if (!prevById.has(c.id)) {
-        telemetry.trackCommentDemoCommentCreated({
-          commentId: c.id,
-          instructionLength: c.instruction.length,
-          hasDragBox: !!c.dragBox,
-        });
-      }
-    }
-    for (const c of prev) {
-      if (!nextById.has(c.id)) {
-        telemetry.trackCommentDemoCommentDeleted({ commentId: c.id });
-      }
-    }
-    for (const c of next) {
-      const prior = prevById.get(c.id);
-      if (prior && prior.instruction !== c.instruction) {
-        telemetry.trackCommentDemoCommentEdited({
-          commentId: c.id,
-          instructionLength: c.instruction.length,
-        });
-      }
-    }
-
-    prevCommentsRef.current = next;
-    setComments(next);
+  const handleDraftCreated = () => {
+    telemetry.trackCommentDemoDraftCreated({ source: 'drag', hasDragBox: true });
+  };
+  const handleCommentCreated = () => {
+    telemetry.trackCommentDemoCommentCreated({
+      commentId: 'scripted-fluid-layouts',
+      instructionLength: REQUEST_TEXT.length,
+      hasDragBox: true,
+    });
   };
 
   return (
     <div className="relative flex w-full justify-center px-[5vw] py-12 md:py-16">
       <div
         data-guide-row
-        className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1.3fr_1fr] lg:gap-16"
+        className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[2.5fr_1fr] lg:gap-16"
       >
         {/* DOM order is panel-then-text so that at lg+ the panel sits in the
-            first (1.7fr) column on the left. On stacked mobile/tablet we want
+            first (2.5fr) column on the left. On stacked mobile/tablet we want
             the title above the panel, so flip with `order-` classes below. */}
         <div className="order-2 w-full lg:order-1">
-          {/* Mobile: static video — interactive version doesn't translate to
-              touch and the gallery is too dense for small screens. */}
+          {/* Mobile: static video — the interactive drag/variants demo doesn't
+              translate to touch and is too dense for small screens. */}
           <div
             className="block w-full overflow-hidden border border-black/10 bg-white shadow-[0_10px_40px_rgba(0,0,0,0.08)] md:hidden"
             style={{ aspectRatio: '16 / 10' }}
@@ -120,40 +69,34 @@ const CommentDemoSection = () => {
             />
           </div>
 
-          {/* Desktop: the interactive gallery in a browser window over the same
-              multicolor hero backdrop as the agent panel. Same w-full + 16/11
-              box as the other workflow panels — the frame and gallery fill it so
-              all three match in size. */}
+          {/* Desktop: the scripted two-pane shell (gallery + directions) inside a
+              browser window, over the same multicolor backdrop as the agent
+              panel. Same w-full + 16/11 box as the other workflow panels so all
+              three match in size; the frame and shell fill it (h-full). */}
           <div
             className="hidden w-full overflow-hidden bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:block md:p-8"
-            style={{ backgroundImage: "url('/images/panel-backdrop.png')", aspectRatio: '16 / 11' }}
+            style={{
+              backgroundImage: "url('/images/panel-backdrop.png')",
+              aspectRatio: '16 / 11',
+            }}
           >
             <BrowserFrame url="localhost:3000" draggable className="h-full w-full">
-              <div className="relative h-full w-full">
-                <CommentLayer
-                  active
-                  comments={comments}
-                  onCommentsChange={handleCommentsChange}
-                  initialDraft={SEEDED_DRAFT}
-                  openInitialDraftOnVisible
-                  scrollableSelector=".rivet-gallery .content"
-                  onDraftCreated={telemetry.trackCommentDemoDraftCreated.bind(
-                    telemetry,
-                  )}
-                >
-                  <Gallery />
-                </CommentLayer>
-              </div>
+              <CommentDemoShell
+                play={play}
+                onDraftCreated={handleDraftCreated}
+                onCommentCreated={handleCommentCreated}
+              />
             </BrowserFrame>
           </div>
         </div>
 
         <div className="order-1 max-w-[440px] lg:order-2">
           <h2 className="mt-3 font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
-            Explore with precision
+            Explore with precision.
           </h2>
           <p className="mt-4 text-[16px] leading-[1.6] text-black/70 md:text-[17px]">
-            Vary specific parts of your interface by leaving comments.
+            Comment on any part of your interface and Rivet explores focused
+            design directions for just that region.
           </p>
         </div>
       </div>
@@ -161,4 +104,5 @@ const CommentDemoSection = () => {
   );
 };
 
-export default CommentDemoSection;
+// Memoized: takes no props, so App re-renders don't cascade into it.
+export default memo(CommentDemoSection);
