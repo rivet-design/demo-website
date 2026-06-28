@@ -18,20 +18,20 @@ export const FLUID_RUN_LABEL = 'Fluid Layouts';
 
 export const FLUID_VARIANTS: DemoVariant[] = [
   {
-    id: 'fluid-flowing-grid',
-    label: 'Flowing masonry grid',
-    brief: 'Items breathe into an organic bento where sizes vary by content.',
-    src: '/demos/jersey/skeuomorphic-deck.html',
-    tag: FLUID_RUN_LABEL,
-    gallery: { layout: { view: 'bento' } },
-  },
-  {
     id: 'fluid-airy-columns',
     label: 'Airy two-column',
     brief: 'Roomier cards in a relaxed two-up rhythm with generous gutters.',
     src: '/demos/jersey/frutiger-aero.html',
     tag: FLUID_RUN_LABEL,
     gallery: { layout: { view: 'grid', cols: 2 }, cssVars: { '--gallery-gap': '16px' } },
+  },
+  {
+    id: 'fluid-flowing-grid',
+    label: 'Flowing masonry grid',
+    brief: 'Items breathe into an organic bento where sizes vary by content.',
+    src: '/demos/jersey/skeuomorphic-deck.html',
+    tag: FLUID_RUN_LABEL,
+    gallery: { layout: { view: 'bento' } },
   },
   {
     id: 'fluid-edge-to-edge',
@@ -52,4 +52,4 @@ export const FLUID_VARIANTS: DemoVariant[] = [
 ];
 
 /** The direction that resolves first and is pinned as the initial selection. */
-export const FLUID_INITIAL_ID = 'fluid-flowing-grid';
+export const FLUID_INITIAL_ID = 'fluid-airy-columns';

@@ -25,39 +25,44 @@ export type ScriptPhase =
   | 'cursorIn' // cursor eases to the drag start
   | 'dragging' // selection box grows start → end
   | 'popover' // popover open, request shown
-  | 'submitting' // Apply pressed
+  | 'varying' // cursor clicks "Vary" — in-button generating state
   | 'generating' // popover closed, marker placed, directions generating
   | 'done';
 
-// Geometry (DESIGN px). The gallery renders a ~220px sidebar at this width, so
-// the box sits over a 2×2 cluster of items in the content area to its right.
-const ENTRY = { x: 250, y: 340 };
-const DRAG_START = { x: 300, y: 150 };
-const DRAG_END = { x: 624, y: 432 };
-const BOX = { left: 300, top: 150, width: 324, height: 282 };
-// Popover/marker anchor near the box's lower edge. y/H = 0.83 (> 0.6) so the
-// popover flips ABOVE the pin and stays clear of the box.
-const POPOVER_AT = { x: 470, y: 430 };
+// Geometry (DESIGN px). The selection covers the gallery's CONTENT section —
+// the works grid — not the whole window: it spans from just inside the content
+// area (right of the 220px sidebar, below the 52px topbar) to the bottom-right.
+// The drag runs BOTTOM-RIGHT → TOP-LEFT, so it's released at the top-left and
+// the comment popover renders there (opening below the pin). The bottom edge is
+// derived from the live design height (which tracks the pane aspect).
+const INSET = 16;
+const TOPBAR = 52; // gallery topbar height
+const SIDEBAR = 220; // gallery sidebar width
 
-// Timeline (ms). SUBMIT_OFFSET is the total time from `start` to the moment the
-// comment is submitted — the shell uses it to align the directions controller's
-// generation gate to the same clock.
+// Timeline (ms). GEN_OFFSET is the time from `start` to the moment the comment
+// resolves into directions (the panel slides in) — after the cursor has dragged,
+// the popover has been read, and "Vary" has been clicked and shown generating.
 const CURSOR_MS = 650;
 const DRAG_MS = 800;
-const POPOVER_DWELL_MS = 1700;
-const SUBMIT_MS = 300;
-export const SUBMIT_OFFSET =
-  CURSOR_MS + DRAG_MS + POPOVER_DWELL_MS + SUBMIT_MS;
+const POPOVER_DWELL_MS = 1400;
+const VARY_MS = 1500;
+export const GEN_OFFSET = CURSOR_MS + DRAG_MS + POPOVER_DWELL_MS + VARY_MS;
 
 export type ScriptedCommentState = {
   phase: ScriptPhase;
   cursor: { x: number; y: number };
   cursorVisible: boolean;
+  /** True while the cursor is pressing the Vary button (click feedback). */
+  cursorPressed: boolean;
   /** Full selection box (present from `dragging` onward), or null before. */
   box: { left: number; top: number; width: number; height: number } | null;
+  /** Corner the drag starts from — the box grows out of this point. */
+  boxOrigin: { x: number; y: number };
   /** True only during the grow animation so the overlay animates from collapsed. */
   growBox: boolean;
   showPopover: boolean;
+  /** Drives the popover's "Vary" button into its generating state. */
+  varying: boolean;
   showMarker: boolean;
   popoverAt: { x: number; y: number };
 };
@@ -65,6 +70,7 @@ export type ScriptedCommentState = {
 export const useScriptedCommentDemo = ({
   enabled,
   start,
+  designH = SCRIPT_DESIGN_H,
   onDraftOpen,
   onSubmit,
 }: {
@@ -72,6 +78,8 @@ export const useScriptedCommentDemo = ({
   enabled: boolean;
   /** Flips true when the panel scrolls into view; starts the timeline. */
   start: boolean;
+  /** Live design-box height so the selection spans the full (dynamic) gallery. */
+  designH?: number;
   /** Fired once when the popover opens (telemetry: draft created). */
   onDraftOpen?: () => void;
   /** Fired once at submit (telemetry: comment created). */
@@ -95,8 +103,8 @@ export const useScriptedCommentDemo = ({
         onDraftOpen?.();
       }
     });
-    at(CURSOR_MS + DRAG_MS + POPOVER_DWELL_MS, () => setPhase('submitting'));
-    at(SUBMIT_OFFSET, () => {
+    at(CURSOR_MS + DRAG_MS + POPOVER_DWELL_MS, () => setPhase('varying'));
+    at(GEN_OFFSET, () => {
       setPhase('generating');
       if (!firedRef.current.submit) {
         firedRef.current.submit = true;
@@ -112,18 +120,44 @@ export const useScriptedCommentDemo = ({
     // not deps so the timeline isn't rebuilt mid-run.
   }, [enabled, start]);
 
-  // Cursor target by phase. Springs to it in the overlay.
+  // The selection box = the gallery's content section (right of the sidebar,
+  // below the topbar), with the bottom tracking the live design height so it
+  // always covers the full works grid.
+  const box = {
+    left: SIDEBAR + INSET,
+    top: TOPBAR + INSET,
+    width: SCRIPT_DESIGN_W - SIDEBAR - INSET * 2,
+    height: Math.max(0, designH - TOPBAR - INSET * 2),
+  };
+  // Drag runs bottom-right → top-left, so the box grows out of the bottom-right
+  // corner and is released at the top-left.
+  const dragStart = { x: box.left + box.width, y: box.top + box.height };
+  const dragEnd = { x: box.left, y: box.top };
+  // Release point (popover + marker anchor) at the box's TOP-LEFT corner — y near
+  // the top (< 0.6 of height) so the popover opens BELOW the pin, top-left.
+  const popoverAt = dragEnd;
+  // The popover opens below the pin; its "Vary" button sits in the footer below
+  // the pin, in the right-hand button group. Approximate the button center so
+  // the cursor can move to it for the click.
+  const varyAt = { x: popoverAt.x + 25, y: popoverAt.y + 132 };
+  // Cursor fades in up-and-left of the start corner, then eases onto it.
+  const entry = { x: dragStart.x - 70, y: dragStart.y - 50 };
+
+  // Cursor target by phase: enters near the start corner, presses there, drags
+  // to the opposite corner, then moves to the Vary button.
   const cursor =
-    phase === 'idle' || phase === 'cursorIn'
-      ? phase === 'idle'
-        ? ENTRY
-        : DRAG_START
-      : DRAG_END;
+    phase === 'idle'
+      ? entry
+      : phase === 'cursorIn'
+        ? dragStart
+        : phase === 'varying'
+          ? varyAt
+          : dragEnd;
 
   const dragStarted =
     phase === 'dragging' ||
     phase === 'popover' ||
-    phase === 'submitting' ||
+    phase === 'varying' ||
     phase === 'generating' ||
     phase === 'done';
 
@@ -138,11 +172,14 @@ export const useScriptedCommentDemo = ({
       (phase === 'cursorIn' ||
         phase === 'dragging' ||
         phase === 'popover' ||
-        phase === 'submitting'),
-    box: dragStarted ? BOX : null,
+        phase === 'varying'),
+    cursorPressed: phase === 'varying',
+    box: dragStarted ? box : null,
+    boxOrigin: dragStart,
     growBox: phase === 'dragging',
-    showPopover: phase === 'popover' || phase === 'submitting',
+    showPopover: phase === 'popover' || phase === 'varying',
+    varying: phase === 'varying',
     showMarker: phase === 'generating' || phase === 'done',
-    popoverAt: POPOVER_AT,
+    popoverAt,
   };
 };

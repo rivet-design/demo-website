@@ -13,6 +13,12 @@ type Props = {
   onSubmit: (instruction: string) => void;
   onCancel: () => void;
   onDelete?: () => void;
+  /**
+   * Externally force the "Vary" button into its in-button generating state —
+   * used by the scripted demo to show the button being clicked without a real
+   * pointer event. OR'd with the internal state so real clicks still work.
+   */
+  varying?: boolean;
 };
 
 const POPOVER_W = 320;
@@ -29,6 +35,7 @@ const CommentPopover = ({
   onSubmit,
   onCancel,
   onDelete,
+  varying: varyingProp = false,
 }: Props) => {
   const [value, setValue] = useState(initialValue);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -42,7 +49,9 @@ const CommentPopover = ({
   const [isFocused, setIsFocused] = useState(true);
   // "Vary" shows an in-button ASCII generating state (like the variant rows)
   // before it resolves. The timer is cleared if the popover unmounts first.
-  const [varying, setVarying] = useState(false);
+  // The controlled `varyingProp` (scripted demo) is OR'd in below.
+  const [internalVarying, setInternalVarying] = useState(false);
+  const varying = varyingProp || internalVarying;
   const varyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
@@ -83,7 +92,7 @@ const CommentPopover = ({
   const handleVary = () => {
     const trimmed = value.trim();
     if (!trimmed || varying) return;
-    setVarying(true);
+    setInternalVarying(true);
     // Fake the generation: the ASCII loader animates in-button, then the
     // comment lands — mirroring a variant row that loads then resolves.
     varyTimerRef.current = setTimeout(() => onSubmit(trimmed), 1800);

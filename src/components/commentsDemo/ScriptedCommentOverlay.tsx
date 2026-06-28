@@ -52,8 +52,18 @@ const ScriptedCommentOverlay = ({
   /** Live design-box height (tracks the pane aspect so the gallery fills it). */
   designH: number;
 }) => {
-  const { cursor, cursorVisible, box, growBox, showPopover, showMarker, popoverAt } =
-    state;
+  const {
+    cursor,
+    cursorVisible,
+    cursorPressed,
+    box,
+    boxOrigin,
+    growBox,
+    showPopover,
+    varying,
+    showMarker,
+    popoverAt,
+  } = state;
 
   return (
     <div
@@ -66,7 +76,7 @@ const ScriptedCommentOverlay = ({
         <motion.div
           initial={
             growBox
-              ? { left: box.left, top: box.top, width: 0, height: 0, opacity: 0 }
+              ? { left: boxOrigin.x, top: boxOrigin.y, width: 0, height: 0, opacity: 0 }
               : false
           }
           animate={{
@@ -95,6 +105,7 @@ const ScriptedCommentOverlay = ({
           containerWidth={SCRIPT_DESIGN_W}
           containerHeight={designH}
           initialValue={REQUEST_TEXT}
+          varying={varying}
           onSubmit={() => {}}
           onCancel={() => {}}
         />
@@ -117,14 +128,24 @@ const ScriptedCommentOverlay = ({
         {cursorVisible ? (
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1, left: cursor.x, top: cursor.y }}
+            animate={{
+              opacity: 1,
+              left: cursor.x,
+              top: cursor.y,
+              // A quick press-pulse on the Vary button (click feedback), then
+              // back to rest — not a sustained shrink.
+              scale: cursorPressed ? [1, 0.8, 1] : 1,
+            }}
             exit={{ opacity: 0, transition: { duration: 0.25 } }}
             transition={{
               opacity: { duration: 0.2 },
+              scale: cursorPressed
+                ? { duration: 0.34, times: [0, 0.45, 1], ease: 'easeOut' }
+                : { duration: 0.15 },
               left: { type: 'spring', stiffness: 90, damping: 18 },
               top: { type: 'spring', stiffness: 90, damping: 18 },
             }}
-            style={{ position: 'absolute', zIndex: 70 }}
+            style={{ position: 'absolute', zIndex: 70, transformOrigin: 'top left' }}
           >
             <CursorArrow />
           </motion.div>
