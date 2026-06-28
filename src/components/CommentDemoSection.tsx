@@ -76,7 +76,7 @@ const CommentDemoSection = () => {
           <div
             className="hidden w-full overflow-hidden bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:block md:p-8"
             style={{
-              backgroundImage: "url('/images/panel-backdrop.png')",
+              backgroundImage: "url('/images/bg3.webp')",
               aspectRatio: '16 / 11',
             }}
           >
