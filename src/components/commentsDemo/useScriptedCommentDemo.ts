@@ -130,7 +130,15 @@ export const useScriptedCommentDemo = ({
   return {
     phase,
     cursor,
-    cursorVisible: enabled && phase !== 'idle' && phase !== 'done',
+    // The cursor is only "present" while it's doing the work — it leaves once
+    // the comment is applied (generating onward), so it doesn't hover over the
+    // generating directions.
+    cursorVisible:
+      enabled &&
+      (phase === 'cursorIn' ||
+        phase === 'dragging' ||
+        phase === 'popover' ||
+        phase === 'submitting'),
     box: dragStarted ? BOX : null,
     growBox: phase === 'dragging',
     showPopover: phase === 'popover' || phase === 'submitting',

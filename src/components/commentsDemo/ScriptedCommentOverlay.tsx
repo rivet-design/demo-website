@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { CommentMarker, CommentPopover } from '../comments';
 import type { Comment } from '../comments';
 import {
@@ -111,21 +111,25 @@ const ScriptedCommentOverlay = ({
         />
       ) : null}
 
-      {/* Fake cursor — springs to its per-phase target. */}
-      {cursorVisible ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, left: cursor.x, top: cursor.y }}
-          transition={{
-            opacity: { duration: 0.2 },
-            left: { type: 'spring', stiffness: 90, damping: 18 },
-            top: { type: 'spring', stiffness: 90, damping: 18 },
-          }}
-          style={{ position: 'absolute', zIndex: 70 }}
-        >
-          <CursorArrow />
-        </motion.div>
-      ) : null}
+      {/* Fake cursor — springs to its per-phase target, and fades out once the
+          comment is applied (cursorVisible drops at the generating phase). */}
+      <AnimatePresence>
+        {cursorVisible ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, left: cursor.x, top: cursor.y }}
+            exit={{ opacity: 0, transition: { duration: 0.25 } }}
+            transition={{
+              opacity: { duration: 0.2 },
+              left: { type: 'spring', stiffness: 90, damping: 18 },
+              top: { type: 'spring', stiffness: 90, damping: 18 },
+            }}
+            style={{ position: 'absolute', zIndex: 70 }}
+          >
+            <CursorArrow />
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 };
