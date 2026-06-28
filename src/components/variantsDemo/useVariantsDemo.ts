@@ -42,6 +42,10 @@ export const useVariantsDemo = (
     autoPlay?: boolean;
     initialId?: string;
     startDelayMs?: number;
+    /** Override when the first direction resolves (default 1000ms). */
+    firstReadyMs?: number;
+    /** Override when the remaining directions resolve (default 2800ms). */
+    allReadyMs?: number;
     /**
      * Inject a custom variant list (defaults to the hero's jersey VARIANTS).
      * MUST be a stable module-level reference — passing a fresh array each
@@ -52,6 +56,8 @@ export const useVariantsDemo = (
 ): VariantsDemoController => {
   const SOURCE = options?.variants ?? VARIANTS;
   const startDelayMs = Math.max(0, options?.startDelayMs ?? 0);
+  const firstReadyMs = options?.firstReadyMs ?? FIRST_READY_MS;
+  const allReadyMs = options?.allReadyMs ?? ALL_READY_MS;
   const initialId =
     options?.initialId && SOURCE.some((v) => v.id === options.initialId)
       ? options.initialId
@@ -72,17 +78,17 @@ export const useVariantsDemo = (
     const firstId = initialId;
     const firstTimer = setTimeout(
       () => setReadyIds(new Set([firstId])),
-      startDelayMs + FIRST_READY_MS,
+      startDelayMs + firstReadyMs,
     );
     const restTimer = setTimeout(
       () => setReadyIds(new Set(ids)),
-      startDelayMs + ALL_READY_MS,
+      startDelayMs + allReadyMs,
     );
     return () => {
       clearTimeout(firstTimer);
       clearTimeout(restTimer);
     };
-  }, [SOURCE, initialId, startDelayMs]);
+  }, [SOURCE, initialId, startDelayMs, firstReadyMs, allReadyMs]);
 
   const variants = useMemo(
     () =>

@@ -29,6 +29,15 @@ import {
 
 type Selected = { id: string; gallery?: DemoVariant['gallery'] } | null;
 
+// The directions panel renders at its natural 340px width but is scaled down a
+// touch for THIS demo (vs the hero) so the gallery keeps more room — smaller
+// font + less wide, proportionally. The wrapper reserves the scaled width and
+// over-sizes the inner height so the scaled panel still fills the shell with no
+// gap. (useProximityHover is transform-safe, so the hover highlight stays put.)
+const DIRECTIONS_W = 340;
+const DIRECTIONS_SCALE = 0.9;
+const DIRECTIONS_BOX_W = Math.round(DIRECTIONS_W * DIRECTIONS_SCALE);
+
 // The directions controller only mounts once the comment is "applied" — before
 // that the right pane shows an empty panel (no premature skeletons). Split into
 // its own component so the `useVariantsDemo` hook isn't called before then.
@@ -41,6 +50,9 @@ const FluidDirections = ({
     autoPlay: false,
     variants: FLUID_VARIANTS,
     initialId: FLUID_INITIAL_ID,
+    // The remaining three directions stream in a touch faster here than the
+    // hero's default (2800ms).
+    allReadyMs: 1900,
   });
 
   // Restyle the gallery only once the selected direction has "generated"
@@ -55,21 +67,6 @@ const FluidDirections = ({
 
   return <DirectionsPanel ctrl={ctrl} />;
 };
-
-// Empty right pane shown before generation, matching the DirectionsPanel frame
-// so the swap to the real panel doesn't shift layout.
-const EmptyDirections = () => (
-  <aside className="rivet-variants flex h-full w-full shrink-0 flex-col overflow-hidden border-t border-[var(--main-border)] bg-[var(--main)] font-main text-content sm:w-[340px] sm:border-l sm:border-t-0">
-    <div className="flex shrink-0 items-center px-3 py-2">
-      <span className="truncate text-sm font-medium text-content">Directions</span>
-    </div>
-    <div className="flex flex-1 items-center justify-center px-6">
-      <span className="text-center text-xs text-content-muted">
-        Comment on the canvas to generate directions.
-      </span>
-    </div>
-  </aside>
-);
 
 const CommentDemoShell = ({
   play,
@@ -138,6 +135,7 @@ const CommentDemoShell = ({
   const script = useScriptedCommentDemo({
     enabled: play,
     start,
+    designH: fit.designH,
     onDraftOpen: onDraftCreated,
     onSubmit: onCommentCreated,
   });
@@ -190,12 +188,34 @@ const CommentDemoShell = ({
         ) : null}
       </div>
 
-      {/* Right: directions list (after generation) or empty placeholder. */}
-      {showDirections ? (
-        <FluidDirections onSelect={handleSelect} />
-      ) : (
-        <EmptyDirections />
-      )}
+      {/* Right: the directions panel. Nothing renders here until the comment is
+          "varied" (generating); then it slides in by recreating Rivet Core's
+          actual panel animation (src/ui/src/App.tsx) — a width 0 → open collapse
+          + opacity fade on the [0.19, 1, 0.22, 1] ease-out curve over 0.45s,
+          overflow-hidden. Scaled down slightly vs the hero's. */}
+      <motion.div
+        className="relative h-full shrink-0"
+        initial={play ? { width: 0, opacity: 0 } : false}
+        animate={{
+          width: showDirections ? DIRECTIONS_BOX_W : 0,
+          opacity: showDirections ? 1 : 0,
+        }}
+        transition={{ ease: [0.19, 1, 0.22, 1], duration: 0.45 }}
+        style={{ overflow: 'hidden', willChange: 'width' }}
+      >
+        {showDirections ? (
+          <div
+            style={{
+              width: DIRECTIONS_W,
+              height: `${100 / DIRECTIONS_SCALE}%`,
+              transform: `scale(${DIRECTIONS_SCALE})`,
+              transformOrigin: 'top left',
+            }}
+          >
+            <FluidDirections onSelect={handleSelect} />
+          </div>
+        ) : null}
+      </motion.div>
     </div>
   );
 };
