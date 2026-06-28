@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import AgentTerminal from './sandbox/AgentTerminal';
 
 // Inline vendor mark + name. The shipped SVGs are single-color exports (Claude
@@ -48,7 +49,7 @@ const AgentTerminalSection = () => {
     <div className="relative flex w-full justify-center px-[5vw] py-12 md:py-16">
       <div
         data-guide-row
-        className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1.7fr_1fr] lg:gap-16"
+        className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[2.5fr_1fr] lg:gap-16"
       >
         {/* Terminal — left on lg+, below the title on mobile. */}
         <div className="order-2 w-full lg:order-1">
@@ -80,4 +81,6 @@ const AgentTerminalSection = () => {
   );
 };
 
-export default AgentTerminalSection;
+// Memoized: it takes no props, so it never needs to re-render when the App
+// re-renders (e.g. during the hero intro's state churn).
+export default memo(AgentTerminalSection);

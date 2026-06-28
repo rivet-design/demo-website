@@ -16,6 +16,16 @@ export type DemoVariant = {
   src: string;
   /** Run tag shown as the chip on the direction row. */
   tag: string;
+  /**
+   * Optional in-app gallery restyle config. Unused by the hero (which renders
+   * `src` in an iframe) and ignored by DirectionsPanel; the comments demo uses
+   * it to restyle its live <Gallery> when a direction is selected, so the SAME
+   * variant drives both the directions list and the left-hand preview.
+   */
+  gallery?: {
+    cssVars?: Record<string, string>;
+    layout?: { view?: 'grid' | 'list' | 'bento'; cols?: 2 | 3 | 4 };
+  };
 };
 
 /** Shared run label (manifest `runLabel`) shown as the chip on each direction. */

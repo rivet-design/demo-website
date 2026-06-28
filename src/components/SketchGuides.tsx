@@ -14,12 +14,10 @@ import rough from 'roughjs';
  * backdrop BEHIND the content panels (the panels intentionally render over
  * them).
  *
- * Entrance: the guides reveal ON SCROLL — each stroke/sparkle fades in once it
- * enters the viewport (via an IntersectionObserver on stacked "tripwire" markers
- * down the page), and within each revealed band the marks fade in one-at-a-time
- * with a short SEQUENTIAL stagger. Above-the-fold marks reveal (staggered) on
- * mount; the lower reaches of the full-height grid draw themselves in as the
- * reader scrolls down to them.
+ * Entrance: the whole overlay fades in once on first mount (a single, simple
+ * opacity transition on the <svg>). No per-band or scroll-driven reveal — every
+ * guide appears together. Redraws (resize / page-height change) render fully
+ * opaque immediately.
  */
 
 const ORANGE = '#E14017';
@@ -46,11 +44,11 @@ const sparkle = (cx: number, cy: number, r = 8, inner = 1.8): SVGPathElement => 
 
 const SketchGuides = () => {
   const svgRef = useRef<SVGSVGElement>(null);
-  // The cinematic scroll-reveal only plays on the FIRST draw. Every later draw
-  // (resize / page-height change) re-runs the draw effect, which rebuilds the
-  // SVG from scratch — so we must NOT re-hide the strokes then, or a continuous
-  // resize keeps re-priming them to opacity 0 and cancelling the reveal pass,
-  // and the guides disappear. After the first draw, redraws render fully opaque.
+  // The entrance fade only plays on the FIRST draw. Every later draw (resize /
+  // page-height change) re-runs the draw effect, which rebuilds the SVG from
+  // scratch — so we must NOT re-hide the overlay then, or a continuous resize
+  // keeps re-priming it to opacity 0 and the guides disappear. After the first
+  // draw, redraws render fully opaque.
   const firstDrawRef = useRef(true);
   // w/h track the full content container; vh is the viewport height (used to
   // place the hero divider near the top); top is the nav's measured bottom edge
@@ -99,9 +97,10 @@ const SketchGuides = () => {
       // than the section's outer padding. Measured via rects (relative to the
       // overlay's parent) so the offsetParent chain doesn't matter. The gap must
       // stay > 0: the panels (z-10) are opaque and paint over their own edges, so
-      // a rule sitting flush (HUG = 0) is hidden behind the panel. A small offset
-      // keeps the rules tight against the panel while staying visible.
-      const HUG = 6;
+      // a rule sitting flush (HUG = 0) is hidden behind the panel. The rules are
+      // drawn flat (no bow), so a hair's-breadth offset keeps them visible while
+      // reading as flush against the panel with no white gap.
+      const HUG = 1;
       const parentTop = parent.getBoundingClientRect().top;
       const rowEls = Array.from(
         parent.querySelectorAll('[data-guide-row]'),
@@ -155,39 +154,18 @@ const SketchGuides = () => {
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Animate the scroll-reveal only on the first draw. On any redraw (resize),
-    // strokes are committed at their final opacity straight away so they persist.
-    const animate = firstDrawRef.current && !reduceMotion;
-
-    // Each reveal-able element is registered with the page Y at which it should
-    // begin appearing (its top for long verticals, its midpoint otherwise) and
-    // the opacity it animates to. The `reveals` array order is the draw order,
-    // which becomes the sequential fade order within each revealed band.
-    type Reveal = { el: SVGElement; y: number; to: number };
-    const reveals: Reveal[] = [];
-
-    const prime = (el: SVGElement, y: number, to: number) => {
-      el.setAttribute('opacity', String(to));
-      if (!animate) return;
-      el.style.opacity = '0';
-      el.style.transition = 'opacity 500ms ease-out';
-      reveals.push({ el, y, to });
-    };
-
-    // A vertical that spans [y1, y2] is split into stacked segments so the lower
-    // portions can reveal independently as the reader scrolls down to them.
-    const SEG = Math.max(1, Math.round(vh * 0.6)); // ~0.6 viewport per segment
+    // Verticals run the full page height as a SINGLE stroke. (They used to be
+    // split into stacked segments to support a per-band scroll reveal; without
+    // that reveal the segmentation only made the line read as broken where the
+    // independently-perturbed segment endpoints failed to meet.)
     const vline = (x: number, y1: number, y2: number, seed: number, dashed = false) => {
-      for (let sy = y1; sy < y2; sy += SEG) {
-        const ey = Math.min(sy + SEG, y2);
-        const g = rc.line(x, sy, x, ey, {
-          ...base,
-          seed,
-          ...(dashed ? { strokeLineDash: [7, 7] } : {}),
-        });
-        prime(g, sy, 0.5);
-        svg.appendChild(g);
-      }
+      const g = rc.line(x, y1, x, y2, {
+        ...base,
+        seed,
+        ...(dashed ? { strokeLineDash: [7, 7] } : {}),
+      });
+      g.setAttribute('opacity', '0.5');
+      svg.appendChild(g);
     };
 
     const hline = (
@@ -197,36 +175,42 @@ const SketchGuides = () => {
       y2: number,
       seed: number,
       dashed = false,
+      // Framing rules that hug a panel are drawn nearly straight (no bow): a
+      // bowed full-bleed line arcs several px into the opaque panel and gets
+      // painted over, which is why a flush rule used to "disappear". Flat rules
+      // stay put, so they can sit ~1px off the edge and read as flush with no
+      // visible white gap.
+      flat = false,
     ) => {
       const g = rc.line(x1, y1, x2, y2, {
         ...base,
+        ...(flat ? { bowing: 0 } : {}),
         seed,
         ...(dashed ? { strokeLineDash: [7, 7] } : {}),
       });
-      prime(g, (y1 + y2) / 2, 0.5);
+      g.setAttribute('opacity', '0.5');
       svg.appendChild(g);
     };
 
     // Full-bleed horizontals: at the nav, the hero divider, and the page bottom.
     hline(0, Ty, w, Ty, 11);
     // The hero asset (z-10) paints its backdrop over anything drawn at its exact
-    // edge, so a rule sitting flush on the top/bottom is hidden behind it. Lift
-    // both rules a few px OUTSIDE the asset so they clear the backdrop while still
-    // hugging it.
-    const HERO_RULE_GAP = 6;
-    hline(0, My - HERO_RULE_GAP, w, My - HERO_RULE_GAP, 12);
+    // edge. Drawn flat (no bow) the rule stays straight, so a hair's-breadth
+    // offset clears the backdrop while reading as flush against the asset.
+    const HERO_RULE_GAP = 1;
+    hline(0, My - HERO_RULE_GAP, w, My - HERO_RULE_GAP, 12, false, true);
     // Rule along the bottom of the hero asset, mirroring the divider above.
-    if (heroBottom) hline(0, heroBottom + HERO_RULE_GAP, w, heroBottom + HERO_RULE_GAP, 16);
+    if (heroBottom) hline(0, heroBottom + HERO_RULE_GAP, w, heroBottom + HERO_RULE_GAP, 16, false, true);
     hline(0, By, w, By, 13);
     // Per-panel rules framing each workflow panel (top of each + bottom of the
-    // last), now that the grey panel backgrounds are gone.
-    rows.forEach((ry, i) => hline(0, ry, w, ry, 20 + i));
+    // last), now that the grey panel backgrounds are gone. Flat so they hug the
+    // panel edge with no visible gap.
+    rows.forEach((ry, i) => hline(0, ry, w, ry, 20 + i, false, true));
     // Margin verticals run the FULL page height — left solid, right dashed.
     vline(Lx, Ty, By, 14);
     vline(Rx, Ty, By, 15, true);
 
-    // Sparkles at the prominent corners / crossings. Pushed last so they fade in
-    // after the lines within their band. Flagged off for now.
+    // Sparkles at the prominent corners / crossings. Flagged off for now.
     if (SHOW_SPARKLES) {
       (
         [
@@ -238,53 +222,28 @@ const SketchGuides = () => {
           [Rx, By],
         ] as const
       ).forEach(([x, y]) => {
-        const s = sparkle(x, y);
-        prime(s, y, 0.75);
-        svg.appendChild(s);
+        svg.appendChild(sparkle(x, y));
       });
     }
 
-    if (!animate || reveals.length === 0) return;
-    // First animated draw done — every subsequent redraw renders fully opaque.
+    // Entrance: fade the whole overlay in once, on the first draw. Every guide
+    // appears together — no per-band or scroll-driven reveal. Every other draw
+    // (StrictMode's second pass, resize redraws) renders fully opaque straight
+    // away — and must explicitly reset opacity to 1, since a first-draw fade
+    // whose rAF got cancelled mid-flight would otherwise leave the SVG at 0.
+    if (!firstDrawRef.current || reduceMotion) {
+      svg.style.opacity = '1';
+      return;
+    }
     firstDrawRef.current = false;
-
-    // Reveal-on-scroll. This previously watched invisible SVG <rect> "tripwire"
-    // markers with an IntersectionObserver, but IO observing SVG child elements
-    // is unreliable across browsers — some bands (notably the right-margin
-    // verticals) would intermittently never fire, leaving those strokes stuck
-    // at opacity 0 ("the drawing animation didn't trigger"). Drive the reveal
-    // directly off the SVG's measured viewport position instead: on mount and on
-    // every scroll/resize, reveal any still-hidden stroke that has crossed into
-    // view, staggered in draw order so each newly-visible band still sketches
-    // itself in one mark at a time.
-    const STAGGER = 100; // ms between successive marks within a reveal batch
-    let raf = 0;
-    const revealVisible = () => {
-      raf = 0;
-      // The guides must ALWAYS end up visible — never left stranded at opacity 0
-      // waiting on a scroll that may not happen (e.g. the new hero-bottom rule
-      // sits below the fold at mount). So on the first frame we reveal every
-      // still-hidden stroke, staggered in draw order for the sketch-in entrance,
-      // rather than gating each one on whether it has scrolled into view.
-      let i = 0; // sequential index within this reveal batch
-      for (const r of reveals) {
-        if (r.el.style.opacity !== '0') continue; // already revealed
-        r.el.style.transitionDelay = `${i * STAGGER}ms`;
-        r.el.style.opacity = String(r.to);
-        i += 1;
-      }
-    };
-    const schedule = () => {
-      if (raf) return;
-      raf = window.requestAnimationFrame(revealVisible);
-    };
-
-    // Reveal everything on mount (staggered). Resize is handled by the measure
-    // effect, which redraws fully opaque.
-    schedule();
+    svg.style.opacity = '0';
+    svg.style.transition = 'opacity 600ms ease-out';
+    const raf = window.requestAnimationFrame(() => {
+      svg.style.opacity = '1';
+    });
 
     return () => {
-      if (raf) cancelAnimationFrame(raf);
+      cancelAnimationFrame(raf);
     };
   }, [size]);
 

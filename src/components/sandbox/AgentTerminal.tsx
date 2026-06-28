@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useInView } from '@/hooks/use-in-view';
 import { useIcon } from '@/lib/icon-context';
 import type { IconName } from '@/lib/icon-context';
 import {
@@ -324,7 +325,14 @@ const AgentTerminal = ({
   /** Fires once when the whole script has finished (all blocks revealed). */
   onComplete?: () => void;
 } = {}) => {
-  const { history, draft, thinking } = useTerminalPlayer(script, { loop });
+  // Pause the scripted playback while the window is scrolled out of view so it
+  // isn't re-rendering (and running its smooth-scroll catch-up) on every frame
+  // while the user is reading elsewhere on the page.
+  const { ref: rootRef, inView } = useInView<HTMLDivElement>();
+  const { history, draft, thinking } = useTerminalPlayer(script, {
+    loop,
+    paused: !inView,
+  });
 
   // Fire onComplete once the last turn's last block has streamed in.
   const lastTurn = history[history.length - 1];
@@ -341,16 +349,18 @@ const AgentTerminal = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const revealed = history.reduce((n, t) => n + t.revealed, 0);
   useEffect(() => {
+    if (!inView) return;
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-  }, [history.length, revealed, draft, thinking]);
+  }, [history.length, revealed, draft, thinking, inView]);
 
   const SendIcon = useIcon('arrow-up');
   const PlusIcon = useIcon('plus');
 
   return (
     <div
+      ref={rootRef}
       className={cn(
         'flex flex-col overflow-hidden rounded-2xl border border-border bg-[hsl(0_0%_98.5%)] font-sans text-foreground shadow-[0_24px_60px_-28px_rgba(20,20,22,0.45)]',
         // Non-compact fills its container (AgentTerminalSection wraps it in a

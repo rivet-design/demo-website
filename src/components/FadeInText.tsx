@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 type FadeInTextProps = {
   children: ReactNode;
@@ -54,25 +54,40 @@ const buildSmoothPath = (pts: TrailPoint[]): string => {
 export const GeometricLines = ({ color = '#C97557' }: { color?: string }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [points, setPoints] = useState<TrailPoint[]>([]);
+  // Latest points, readable inside the rAF tick without re-subscribing. Kept in
+  // sync during render (cheap, no effect).
+  const pointsRef = useRef(points);
+  pointsRef.current = points;
+  const rafRef = useRef(0);
 
-  // rAF loop trims expired points so the trail fades smoothly even when the
-  // cursor isn't moving. Returns the same array reference when nothing
-  // expires, so React skips the re-render.
-  useEffect(() => {
-    let raf = 0;
-    const tick = () => {
-      setPoints((prev) => {
-        if (prev.length === 0) return prev;
-        const cutoff = performance.now() - TRAIL_LIFETIME;
-        const idx = prev.findIndex((p) => p.t >= cutoff);
-        if (idx <= 0) return idx === 0 ? prev : [];
-        return prev.slice(idx);
-      });
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+  // Trim expired trail points each frame so the trail fades out even when the
+  // cursor is still. Self-stopping: the loop only schedules another frame while
+  // points remain, so an idle (un-hovered) panel costs zero frames — it no
+  // longer holds a permanent rAF cadence alive that competes with scrolling.
+  const tick = useCallback(() => {
+    const prev = pointsRef.current;
+    if (prev.length === 0) {
+      rafRef.current = 0;
+      return;
+    }
+    const cutoff = performance.now() - TRAIL_LIFETIME;
+    const idx = prev.findIndex((p) => p.t >= cutoff);
+    const next = idx <= 0 ? (idx === 0 ? prev : []) : prev.slice(idx);
+    if (next !== prev) setPoints(next);
+    if (next.length === 0) {
+      rafRef.current = 0;
+      return;
+    }
+    rafRef.current = requestAnimationFrame(tick);
   }, []);
+
+  // Cancel any in-flight frame on unmount.
+  useEffect(
+    () => () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    },
+    [],
+  );
 
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
     // Use the SVG's screen CTM so the mapping accounts for
@@ -93,6 +108,9 @@ export const GeometricLines = ({ color = '#C97557' }: { color?: string }) => {
         ? next.slice(next.length - MAX_POINTS)
         : next;
     });
+    // Start the trim loop if it isn't already running (it stops itself once the
+    // trail empties).
+    if (!rafRef.current) rafRef.current = requestAnimationFrame(tick);
   };
 
   const now = performance.now();
