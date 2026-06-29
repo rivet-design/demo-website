@@ -44,6 +44,27 @@ const CursorArrow = () => (
   </svg>
 );
 
+// The "grabber" — the macOS open-hand (grab) cursor: a solid WHITE hand
+// silhouette with a thin dark outline, matching the real system cursor. Four
+// fanned fingers + a thumb over a palm; shown while the cursor is over the Vary
+// button. The palm centers on the button (the open hand's hotspot is its
+// center, unlike the arrow's tip), so the overlay positions it accordingly.
+const CursorHand = () => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 32 32"
+    fill="#fff"
+    stroke="#1c1c20"
+    strokeWidth={1.4}
+    strokeLinejoin="round"
+    strokeLinecap="round"
+    aria-hidden
+  >
+    <path d="M10 14V6.5C10 5.67 10.67 5 11.5 5S13 5.67 13 6.5V13h1V4.5C14 3.67 14.67 3 15.5 3S17 3.67 17 4.5V13h1V5.5C18 4.67 18.67 4 19.5 4S21 4.67 21 5.5V14h1V8.5C22 7.67 22.67 7 23.5 7S25 7.67 25 8.5V18c0 5-3 9-8 9h-2c-3 0-4.5-1.5-6-4l-4-7c-.5-1 .3-2.2 1.4-2.2.5 0 1 .25 1.3.7L10 16V14z" />
+  </svg>
+);
+
 const ScriptedCommentOverlay = ({
   state,
   designH,
@@ -56,6 +77,7 @@ const ScriptedCommentOverlay = ({
     cursor,
     cursorVisible,
     cursorPressed,
+    overButton,
     box,
     boxOrigin,
     growBox,
@@ -147,7 +169,7 @@ const ScriptedCommentOverlay = ({
             }}
             style={{ position: 'absolute', zIndex: 70, transformOrigin: 'top left' }}
           >
-            <CursorArrow />
+            {overButton ? <CursorHand /> : <CursorArrow />}
           </motion.div>
         ) : null}
       </AnimatePresence>

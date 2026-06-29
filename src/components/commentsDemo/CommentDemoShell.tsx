@@ -38,6 +38,12 @@ const DIRECTIONS_W = 340;
 const DIRECTIONS_SCALE = 0.9;
 const DIRECTIONS_BOX_W = Math.round(DIRECTIONS_W * DIRECTIONS_SCALE);
 
+// On mobile there's no room for the directions panel, so the "vary" resolves
+// differently: instead of listing directions on the right, the gallery itself
+// reflows into the first fluid direction — the airy two-column layout. Pull that
+// direction's gallery config so the mobile shell can apply it directly.
+const TWO_COLUMN_DIRECTION = FLUID_VARIANTS.find((v) => v.id === FLUID_INITIAL_ID);
+
 // The directions controller only mounts once the comment is "applied" — before
 // that the right pane shows an empty panel (no premature skeletons). Split into
 // its own component so the `useVariantsDemo` hook isn't called before then.
@@ -70,11 +76,18 @@ const FluidDirections = ({
 
 const CommentDemoShell = ({
   play,
+  mobile = false,
   onDraftCreated,
   onCommentCreated,
 }: {
   /** Whether the scripted drag intro plays (false → resolved state, no cursor). */
   play: boolean;
+  /**
+   * Mobile layout: drop the right-hand directions panel and let the gallery
+   * itself reflow into the two-column layout when the comment is varied. The
+   * drag/comment/vary animation is unchanged.
+   */
+  mobile?: boolean;
   onDraftCreated?: () => void;
   onCommentCreated?: () => void;
 }) => {
@@ -144,7 +157,21 @@ const CommentDemoShell = ({
     setSelected((prev) => (prev?.id === next?.id ? prev : next));
   }, []);
 
-  const showDirections = script.phase === 'generating' || script.phase === 'done';
+  // Mobile: there's no directions panel to drive the selection, so reflow the
+  // gallery into the two-column layout the moment the script reaches its varied
+  // state (and clear it back to the default layout if the timeline restarts).
+  const varied = script.phase === 'generating' || script.phase === 'done';
+  useEffect(() => {
+    if (!mobile) return;
+    handleSelect(
+      varied && TWO_COLUMN_DIRECTION
+        ? { id: TWO_COLUMN_DIRECTION.id, gallery: TWO_COLUMN_DIRECTION.gallery }
+        : null,
+    );
+  }, [mobile, varied, handleSelect]);
+
+  // The directions panel only exists in the desktop two-pane layout.
+  const showDirections = !mobile && varied;
 
   return (
     <div ref={rootRef} className="flex h-full">
@@ -167,7 +194,9 @@ const CommentDemoShell = ({
             }}
           >
             <div className="h-full w-full">
-              <Gallery variant={selected?.gallery} />
+              {/* Light chrome so the orange comment marker + selection stand
+                  out against it (the placeholder tiles stay dark, like photos). */}
+              <Gallery variant={selected?.gallery} theme="light" />
             </div>
 
             {/* Brief white veil flash on each layout change for a crossfade
@@ -188,11 +217,13 @@ const CommentDemoShell = ({
         ) : null}
       </div>
 
-      {/* Right: the directions panel. Nothing renders here until the comment is
-          "varied" (generating); then it slides in by recreating Rivet Core's
-          actual panel animation (src/ui/src/App.tsx) — a width 0 → open collapse
-          + opacity fade on the [0.19, 1, 0.22, 1] ease-out curve over 0.45s,
-          overflow-hidden. Scaled down slightly vs the hero's. */}
+      {/* Right: the directions panel (desktop only). Nothing renders here until
+          the comment is "varied" (generating); then it slides in by recreating
+          Rivet Core's actual panel animation (src/ui/src/App.tsx) — a width 0 →
+          open collapse + opacity fade on the [0.19, 1, 0.22, 1] ease-out curve
+          over 0.45s, overflow-hidden. Scaled down slightly vs the hero's. On
+          mobile this pane is omitted entirely; the gallery reflows instead. */}
+      {!mobile && (
       <motion.div
         className="relative h-full shrink-0"
         initial={play ? { width: 0, opacity: 0 } : false}
@@ -216,6 +247,7 @@ const CommentDemoShell = ({
           </div>
         ) : null}
       </motion.div>
+      )}
     </div>
   );
 };

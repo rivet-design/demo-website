@@ -21,6 +21,13 @@ type Props = {
     cssVars?: Record<string, string>;
     layout?: { view?: View; cols?: Cols };
   };
+  /**
+   * Color theme for the gallery chrome. `dark` (default) is the original
+   * near-black UI; `light` swaps in a neutral light palette via the
+   * `.rivet-gallery.light` token overrides — used by the comment demo so the
+   * orange markers stand out against a light surface.
+   */
+  theme?: 'dark' | 'light';
 };
 
 /**
@@ -32,7 +39,7 @@ type Props = {
  *   children, internal toggles stay rendered but inert — the variant prop
  *   then drives layout from the outside.
  */
-export default function Gallery({ variant }: Props = {}) {
+export default function Gallery({ variant, theme = 'dark' }: Props = {}) {
   const [activeCollection, setActiveCollection] = useState('All Works');
   const [activeTab, setActiveTab] = useState('Library');
   const [internalView, setView] = useState<View>('grid');
@@ -62,7 +69,7 @@ export default function Gallery({ variant }: Props = {}) {
   const collectionMeta = COLLECTIONS.find((c) => c.label === activeCollection);
 
   return (
-    <div className="rivet-gallery">
+    <div className={`rivet-gallery${theme === 'light' ? ' light' : ''}`}>
       <div className="app">
         {/* Topbar */}
         <header className="topbar">

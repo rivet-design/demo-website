@@ -7,13 +7,13 @@ interface Props {
 }
 
 export default function PlaceholderArt({ item, width, height }: Props) {
-  const { placeholderColor, svgPattern, id } = item;
+  const { placeholderColor, artColor: art, svgPattern, id } = item;
   const seed = id * 137;
 
   if (svgPattern === 'lines') {
     const lines = Array.from({ length: 8 }, (_, i) => {
       const y = (height / 8) * i + height / 16;
-      const opacity = 0.08 + (i % 3) * 0.04;
+      const opacity = 0.32 + (i % 3) * 0.13;
       return (
         <line
           key={i}
@@ -21,8 +21,8 @@ export default function PlaceholderArt({ item, width, height }: Props) {
           y1={y}
           x2={width}
           y2={y + (seed % 30) - 15}
-          stroke="#fff"
-          strokeWidth="0.5"
+          stroke={art}
+          strokeWidth="1"
           opacity={opacity}
         />
       );
@@ -41,8 +41,9 @@ export default function PlaceholderArt({ item, width, height }: Props) {
           width={width * 0.6}
           height={height * 0.4}
           fill="none"
-          stroke="rgba(255,255,255,0.06)"
-          strokeWidth="0.5"
+          stroke={art}
+          strokeWidth="1"
+          opacity={0.3}
         />
       </svg>
     );
@@ -60,8 +61,9 @@ export default function PlaceholderArt({ item, width, height }: Props) {
           cy={cy}
           r={r}
           fill="none"
-          stroke="rgba(255,255,255,0.07)"
-          strokeWidth="0.5"
+          stroke={art}
+          strokeWidth="1.25"
+          opacity={0.42}
         />
       );
     });
@@ -93,7 +95,8 @@ export default function PlaceholderArt({ item, width, height }: Props) {
             y={r * rh + 1}
             width={cw - 2}
             height={rh - 2}
-            fill={filled ? 'rgba(255,255,255,0.05)' : 'transparent'}
+            fill={filled ? art : 'transparent'}
+            opacity={filled ? 0.5 : 1}
           />,
         );
       }
@@ -113,8 +116,9 @@ export default function PlaceholderArt({ item, width, height }: Props) {
             y1={0}
             x2={i * cw}
             y2={height}
-            stroke="rgba(255,255,255,0.04)"
-            strokeWidth="0.5"
+            stroke={art}
+            strokeWidth="0.75"
+            opacity={0.2}
           />
         ))}
         {Array.from({ length: rows + 1 }, (_, i) => (
@@ -124,8 +128,9 @@ export default function PlaceholderArt({ item, width, height }: Props) {
             y1={i * rh}
             x2={width}
             y2={i * rh}
-            stroke="rgba(255,255,255,0.04)"
-            strokeWidth="0.5"
+            stroke={art}
+            strokeWidth="0.75"
+            opacity={0.2}
           />
         ))}
       </svg>
@@ -138,14 +143,14 @@ export default function PlaceholderArt({ item, width, height }: Props) {
       rows = Math.round(cols * item.aspectRatio);
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        const opacity = (r * cols + c + seed) % 5 === 0 ? 0.2 : 0.05;
+        const opacity = (r * cols + c + seed) % 5 === 0 ? 0.6 : 0.24;
         dots.push(
           <circle
             key={`${r}-${c}`}
             cx={(c + 0.5) * (width / cols)}
             cy={(r + 0.5) * (height / rows)}
-            r="1.5"
-            fill="rgba(255,255,255,1)"
+            r="2"
+            fill={art}
             opacity={opacity}
           />,
         );
@@ -180,8 +185,9 @@ export default function PlaceholderArt({ item, width, height }: Props) {
           key={i}
           d={`M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`}
           fill="none"
-          stroke="rgba(255,255,255,0.08)"
-          strokeWidth="0.5"
+          stroke={art}
+          strokeWidth="1.5"
+          opacity={0.45}
         />
       );
     });
@@ -207,8 +213,9 @@ export default function PlaceholderArt({ item, width, height }: Props) {
         y1={0}
         x2={x + 40}
         y2={height}
-        stroke="rgba(255,255,255,0.04)"
-        strokeWidth="0.5"
+        stroke={art}
+        strokeWidth="1"
+        opacity={0.22}
       />
     );
   });

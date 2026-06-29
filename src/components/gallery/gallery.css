@@ -32,6 +32,24 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * Light theme — same tokens, inverted to a clean neutral (zinc) palette. The
+ * placeholder tiles stay dark/saturated (they're the "photos"), so they read as
+ * artwork on a white gallery chrome — and the orange comment markers + selection
+ * pop far harder against the light surface than they did on the dark one.
+ */
+.rivet-gallery.light {
+  --bg: #ffffff;
+  --surface: #f4f4f5;
+  --surface-2: #e9e9ec;
+  --border: #e4e4e7;
+  --text-primary: #18181b;
+  --text-secondary: #71717a;
+  --text-muted: #a1a1aa;
+  --skeleton-base: #ededef;
+  --skeleton-shine: #f7f7f8;
+}
+
 .rivet-gallery *,
 .rivet-gallery *::before,
 .rivet-gallery *::after {

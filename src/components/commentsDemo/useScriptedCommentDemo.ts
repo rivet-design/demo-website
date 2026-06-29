@@ -25,28 +25,44 @@ export type ScriptPhase =
   | 'cursorIn' // cursor eases to the drag start
   | 'dragging' // selection box grows start → end
   | 'popover' // popover open, request shown
-  | 'varying' // cursor clicks "Vary" — in-button generating state
+  | 'reachVary' // cursor travels from the pin to the "Vary" button
+  | 'clickVary' // cursor presses "Vary" (click pulse) — not yet loading
+  | 'varying' // in-button generating state, after the click
   | 'generating' // popover closed, marker placed, directions generating
   | 'done';
 
-// Geometry (DESIGN px). The selection covers the gallery's CONTENT section —
-// the works grid — not the whole window: it spans from just inside the content
-// area (right of the 220px sidebar, below the 52px topbar) to the bottom-right.
-// The drag runs BOTTOM-RIGHT → TOP-LEFT, so it's released at the top-left and
-// the comment popover renders there (opening below the pin). The bottom edge is
-// derived from the live design height (which tracks the pane aspect).
-const INSET = 16;
-const TOPBAR = 52; // gallery topbar height
-const SIDEBAR = 220; // gallery sidebar width
+// Geometry (DESIGN px). The selection covers the gallery's full CONTENT segment
+// — flush against the sidebar on the left, out to the gallery's right edge, and
+// from the "All Works" header down to the bottom — so the drag grabs the whole
+// works area, not an inset slice. The drag runs BOTTOM-RIGHT → TOP-LEFT, released
+// at the top-left where the comment popover opens (below the pin). The bottom
+// edge tracks the live design height (which tracks the pane aspect).
+// TOPBAR / SIDEBAR mirror the gallery's `.app` grid (gallery.css: 52px row,
+// 180px column) so the box lines up exactly with the rendered chrome.
+const TOPBAR = 52; // gallery topbar height (.app grid row)
+const SIDEBAR = 180; // gallery sidebar width (.app grid column)
 
 // Timeline (ms). GEN_OFFSET is the time from `start` to the moment the comment
 // resolves into directions (the panel slides in) — after the cursor has dragged,
-// the popover has been read, and "Vary" has been clicked and shown generating.
+// the popover has been read, and "Vary" has been reached, clicked, and shown
+// generating. The vary interaction is three distinct beats so the click reads
+// as causing the loading: the cursor travels to the button (REACH), presses it
+// (CLICK), and only then does the in-button loader run (LOADING).
 const CURSOR_MS = 650;
 const DRAG_MS = 800;
 const POPOVER_DWELL_MS = 1400;
-const VARY_MS = 1500;
-export const GEN_OFFSET = CURSOR_MS + DRAG_MS + POPOVER_DWELL_MS + VARY_MS;
+const REACH_VARY_MS = 600; // cursor springs from the pin onto the button
+const CLICK_VARY_MS = 280; // press pulse before anything loads
+// Dwell on the Vary button's loading state before the options generate — kept a
+// touch long so the "generating" beat reads clearly between click and result.
+const LOADING_MS = 1900;
+export const GEN_OFFSET =
+  CURSOR_MS +
+  DRAG_MS +
+  POPOVER_DWELL_MS +
+  REACH_VARY_MS +
+  CLICK_VARY_MS +
+  LOADING_MS;
 
 export type ScriptedCommentState = {
   phase: ScriptPhase;
@@ -54,6 +70,8 @@ export type ScriptedCommentState = {
   cursorVisible: boolean;
   /** True while the cursor is pressing the Vary button (click feedback). */
   cursorPressed: boolean;
+  /** True while the cursor is hovering the Vary button — overlay shows the hand. */
+  overButton: boolean;
   /** Full selection box (present from `dragging` onward), or null before. */
   box: { left: number; top: number; width: number; height: number } | null;
   /** Corner the drag starts from — the box grows out of this point. */
@@ -103,7 +121,10 @@ export const useScriptedCommentDemo = ({
         onDraftOpen?.();
       }
     });
-    at(CURSOR_MS + DRAG_MS + POPOVER_DWELL_MS, () => setPhase('varying'));
+    const reachAt = CURSOR_MS + DRAG_MS + POPOVER_DWELL_MS;
+    at(reachAt, () => setPhase('reachVary'));
+    at(reachAt + REACH_VARY_MS, () => setPhase('clickVary'));
+    at(reachAt + REACH_VARY_MS + CLICK_VARY_MS, () => setPhase('varying'));
     at(GEN_OFFSET, () => {
       setPhase('generating');
       if (!firedRef.current.submit) {
@@ -120,46 +141,59 @@ export const useScriptedCommentDemo = ({
     // not deps so the timeline isn't rebuilt mid-run.
   }, [enabled, start]);
 
-  // The selection box = the gallery's content section (right of the sidebar,
-  // below the topbar), with the bottom tracking the live design height so it
-  // always covers the full works grid.
+  // The selection box spans the entire content segment: flush against the
+  // sidebar (left), out to the gallery's right edge (full width), and from the
+  // "All Works" header down to the bottom. Bottom tracks the live design height.
+  const CONTENT_TOP = TOPBAR + 12; // top edge sits at the "All Works" header text
   const box = {
-    left: SIDEBAR + INSET,
-    top: TOPBAR + INSET,
-    width: SCRIPT_DESIGN_W - SIDEBAR - INSET * 2,
-    height: Math.max(0, designH - TOPBAR - INSET * 2),
+    left: SIDEBAR,
+    top: CONTENT_TOP,
+    width: SCRIPT_DESIGN_W - SIDEBAR,
+    height: Math.max(0, designH - CONTENT_TOP),
   };
-  // Drag runs bottom-right → top-left, so the box grows out of the bottom-right
-  // corner and is released at the top-left.
-  const dragStart = { x: box.left + box.width, y: box.top + box.height };
+  // Drag runs bottom-right → top-left, released at the top-left. The grab corner
+  // is pulled a little inside the box's bottom-right so the cursor glyph stays
+  // within the panel (the box itself still grows out to the true corner).
+  const GRAB_INSET = 22;
+  const dragStart = {
+    x: box.left + box.width - GRAB_INSET,
+    y: box.top + box.height - GRAB_INSET,
+  };
   const dragEnd = { x: box.left, y: box.top };
   // Release point (popover + marker anchor) at the box's TOP-LEFT corner — y near
   // the top (< 0.6 of height) so the popover opens BELOW the pin, top-left.
   const popoverAt = dragEnd;
   // The popover opens below the pin; its "Vary" button sits in the footer below
-  // the pin, in the right-hand button group. Approximate the button center so
-  // the cursor can move to it for the click.
-  const varyAt = { x: popoverAt.x + 25, y: popoverAt.y + 132 };
+  // the pin, in the right-hand button group. This targets the button so the
+  // open-hand cursor's palm (its center, ~11×13px into the 24px glyph) lands on
+  // it — hence the offset is the button center minus that palm offset.
+  const varyAt = { x: popoverAt.x + 18, y: popoverAt.y + 120 };
   // Cursor fades in up-and-left of the start corner, then eases onto it.
   const entry = { x: dragStart.x - 70, y: dragStart.y - 50 };
 
   // Cursor target by phase: enters near the start corner, presses there, drags
-  // to the opposite corner, then moves to the Vary button.
+  // to the opposite corner, then travels to the Vary button and stays there
+  // through the click and the loading.
+  const atVaryButton =
+    phase === 'reachVary' || phase === 'clickVary' || phase === 'varying';
   const cursor =
     phase === 'idle'
       ? entry
       : phase === 'cursorIn'
         ? dragStart
-        : phase === 'varying'
+        : atVaryButton
           ? varyAt
           : dragEnd;
 
-  const dragStarted =
+  // The dashed selection box only renders while the comment is being authored —
+  // the drag, the open popover, and the vary interaction. Once the comment is
+  // applied (generating onward) the marker stands in for it, so the box is gone.
+  const selectionVisible =
     phase === 'dragging' ||
     phase === 'popover' ||
-    phase === 'varying' ||
-    phase === 'generating' ||
-    phase === 'done';
+    phase === 'reachVary' ||
+    phase === 'clickVary' ||
+    phase === 'varying';
 
   return {
     phase,
@@ -172,12 +206,19 @@ export const useScriptedCommentDemo = ({
       (phase === 'cursorIn' ||
         phase === 'dragging' ||
         phase === 'popover' ||
-        phase === 'varying'),
-    cursorPressed: phase === 'varying',
-    box: dragStarted ? box : null,
+        atVaryButton),
+    // Press pulse fires only on the dedicated click beat — after the cursor has
+    // reached the button and before the loader starts.
+    cursorPressed: phase === 'clickVary',
+    overButton: atVaryButton,
+    box: selectionVisible ? box : null,
     boxOrigin: dragStart,
     growBox: phase === 'dragging',
-    showPopover: phase === 'popover' || phase === 'varying',
+    showPopover:
+      phase === 'popover' ||
+      phase === 'reachVary' ||
+      phase === 'clickVary' ||
+      phase === 'varying',
     varying: phase === 'varying',
     showMarker: phase === 'generating' || phase === 'done',
     popoverAt,

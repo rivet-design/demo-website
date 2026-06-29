@@ -46,7 +46,11 @@ const LOOP_GAP_MS = 2600; // pause before clearing + looping
 
 export const useTerminalPlayer = (
   script: Turn[],
-  { loop = true, paused = false }: { loop?: boolean; paused?: boolean } = {},
+  {
+    loop = true,
+    paused = false,
+    typeMs = TYPE_MS,
+  }: { loop?: boolean; paused?: boolean; typeMs?: number } = {},
 ): TerminalState => {
   const [history, setHistory] = useState<CommittedTurn[]>([]);
   const [draft, setDraft] = useState('');
@@ -75,7 +79,7 @@ export const useTerminalPlayer = (
         }
         if (phase.pos < turn.command.length) {
           setDraft(turn.command.slice(0, phase.pos + 1));
-          next({ t: 'typing', turn: phase.turn, pos: phase.pos + 1 }, TYPE_MS);
+          next({ t: 'typing', turn: phase.turn, pos: phase.pos + 1 }, typeMs);
         } else {
           next({ t: 'submit', turn: phase.turn }, 360);
         }
@@ -132,7 +136,7 @@ export const useTerminalPlayer = (
     }
 
     return clear;
-  }, [phase, script, loop, paused]);
+  }, [phase, script, loop, paused, typeMs]);
 
   const last = history[history.length - 1];
   const thinking = phase.t === 'thinking' || (phase.t === 'responding' && !!last && last.revealed === 0);

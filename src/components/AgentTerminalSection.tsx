@@ -50,14 +50,18 @@ const AgentTerminalSection = () => {
       <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[2.5fr_1fr] lg:gap-16">
         {/* Terminal — left on lg+, below the title on mobile. */}
         <div className="order-2 w-full lg:order-1">
-          {/* Same w-full + 16/11 box as the other workflow panels; the terminal
-              fills it (h-full) so all three panels match in size. */}
+          {/* On mobile the panel is a vertical rectangle (`aspect-panel-portrait`)
+              so the terminal — which fills it (h-full) — can show more of the
+              agent transcript; from md up it returns to the landscape `panel`
+              box the other workflow panels share. */}
           <div
             data-guide-row
-            className="w-full overflow-hidden border border-black/10 bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:p-8"
-            style={{ backgroundImage: "url('/images/bg2.webp')", aspectRatio: '16 / 11' }}
+            className="aspect-panel-portrait w-full overflow-hidden border border-black/10 bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:aspect-panel md:p-8"
+            style={{ backgroundImage: "url('/images/bg2.webp')" }}
           >
-            <AgentTerminal />
+            {/* Type the command 1.5× faster than the default (42ms → 28ms/char)
+                so the chat-box text lands quicker in this section. */}
+            <AgentTerminal typeMs={28} />
           </div>
         </div>
 
