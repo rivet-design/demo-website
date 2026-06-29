@@ -53,10 +53,18 @@ const AgentTerminalSection = () => {
           {/* On mobile the panel is a vertical rectangle (`aspect-panel-portrait`)
               so the terminal — which fills it (h-full) — can show more of the
               agent transcript; from md up it returns to the landscape `panel`
-              box the other workflow panels share. */}
+              box the other workflow panels share.
+
+              The portrait ratio is width-driven, so on wider phones / foldables
+              (≈430–767px) a naive `aspect-panel-portrait` would balloon to
+              760–920px tall — a giant box with a tiny scrolled transcript and
+              its bottom padding shoved past the fold. Cap the height so narrow
+              phones keep their full portrait box while anything wider clamps to
+              a sane height; `md:max-h-none` releases it once the landscape ratio
+              takes over. */}
           <div
             data-guide-row
-            className="aspect-panel-portrait w-full overflow-hidden border border-black/10 bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:aspect-panel md:p-8"
+            className="aspect-panel-portrait max-h-[500px] w-full overflow-hidden border border-black/10 bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:aspect-panel md:max-h-none md:p-8"
             style={{ backgroundImage: "url('/images/bg2.webp')" }}
           >
             {/* Type the command 1.5× faster than the default (42ms → 28ms/char)
