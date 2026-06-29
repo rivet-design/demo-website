@@ -6,12 +6,24 @@ export type GalleryItem = {
   date: string;
   size: string;
   aspectRatio: number; // height / width
-  placeholderColor: string;
+  placeholderColor: string; // tile fill (Rivet brand color)
+  artColor: string; // motif stroke — a contrasting brand color
   svgPattern: 'circles' | 'lines' | 'grid' | 'noise' | 'arcs' | 'dots';
   // Always undefined here — gallery uses generated SVG placeholders so we
   // skip bundling 11 image assets. Field is kept for component compatibility.
   image?: string;
 };
+
+// Rivet wordmark palette — the same four brand colors the "design references"
+// wall uses (ReferencesDemoSection), plus a near-black panel. Each tile pairs
+// one brand color as the fill with a contrasting one for its motif, so the grid
+// reads as a set of bold, high-contrast "photos" rather than muted dark blocks.
+const RED = '#EF3517';
+const BLUE = '#1FD0D3';
+const YELLOW = '#ECE44D';
+const GREEN = '#214C16';
+const DARK = '#171717';
+const WHITE = '#ffffff';
 
 export const COLLECTIONS = [
   { label: 'All Works', count: 48, color: '#555' },
@@ -31,7 +43,8 @@ export const ITEMS: GalleryItem[] = [
     date: 'Mar 2024',
     size: '48 MB',
     aspectRatio: 1.25,
-    placeholderColor: '#1a1a2e',
+    placeholderColor: RED,
+    artColor: YELLOW,
     svgPattern: 'lines',
   },
   {
@@ -42,7 +55,8 @@ export const ITEMS: GalleryItem[] = [
     date: 'Feb 2024',
     size: '22 MB',
     aspectRatio: 0.75,
-    placeholderColor: '#1e2a1e',
+    placeholderColor: BLUE,
+    artColor: RED,
     svgPattern: 'circles',
   },
   {
@@ -53,7 +67,8 @@ export const ITEMS: GalleryItem[] = [
     date: 'Mar 2024',
     size: '51 MB',
     aspectRatio: 1.0,
-    placeholderColor: '#2a1e1e',
+    placeholderColor: DARK,
+    artColor: WHITE,
     svgPattern: 'grid',
   },
   {
@@ -64,7 +79,8 @@ export const ITEMS: GalleryItem[] = [
     date: 'Jan 2024',
     size: '8 MB',
     aspectRatio: 0.8,
-    placeholderColor: '#1e1e2a',
+    placeholderColor: YELLOW,
+    artColor: GREEN,
     svgPattern: 'dots',
   },
   {
@@ -75,7 +91,8 @@ export const ITEMS: GalleryItem[] = [
     date: 'Nov 2023',
     size: '31 MB',
     aspectRatio: 1.4,
-    placeholderColor: '#1a1a2e',
+    placeholderColor: GREEN,
+    artColor: YELLOW,
     svgPattern: 'arcs',
   },
   {
@@ -86,7 +103,8 @@ export const ITEMS: GalleryItem[] = [
     date: 'Mar 2024',
     size: '47 MB',
     aspectRatio: 1.0,
-    placeholderColor: '#251e2a',
+    placeholderColor: RED,
+    artColor: BLUE,
     svgPattern: 'noise',
   },
   {
@@ -97,7 +115,8 @@ export const ITEMS: GalleryItem[] = [
     date: 'Feb 2024',
     size: '12 MB',
     aspectRatio: 1.6,
-    placeholderColor: '#1e2025',
+    placeholderColor: BLUE,
+    artColor: YELLOW,
     svgPattern: 'grid',
   },
   {
@@ -108,7 +127,8 @@ export const ITEMS: GalleryItem[] = [
     date: 'Jan 2024',
     size: '39 MB',
     aspectRatio: 0.9,
-    placeholderColor: '#201e1a',
+    placeholderColor: DARK,
+    artColor: WHITE,
     svgPattern: 'dots',
   },
   {
@@ -119,7 +139,8 @@ export const ITEMS: GalleryItem[] = [
     date: 'Dec 2023',
     size: '52 MB',
     aspectRatio: 1.2,
-    placeholderColor: '#201e25',
+    placeholderColor: YELLOW,
+    artColor: RED,
     svgPattern: 'circles',
   },
   {
@@ -130,7 +151,8 @@ export const ITEMS: GalleryItem[] = [
     date: 'Nov 2023',
     size: '19 MB',
     aspectRatio: 1.0,
-    placeholderColor: '#1a1e2a',
+    placeholderColor: GREEN,
+    artColor: YELLOW,
     svgPattern: 'arcs',
   },
 ];

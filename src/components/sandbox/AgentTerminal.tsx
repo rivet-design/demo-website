@@ -314,6 +314,7 @@ const AgentTerminal = ({
   script = SESSION,
   loop = true,
   compact = false,
+  typeMs,
   className,
   onComplete,
 }: {
@@ -321,6 +322,8 @@ const AgentTerminal = ({
   loop?: boolean;
   /** Smaller padding / type for the floating hero chat. */
   compact?: boolean;
+  /** Per-character typing speed (ms) for commands; omit for the default. */
+  typeMs?: number;
   className?: string;
   /** Fires once when the whole script has finished (all blocks revealed). */
   onComplete?: () => void;
@@ -332,6 +335,7 @@ const AgentTerminal = ({
   const { history, draft, thinking } = useTerminalPlayer(script, {
     loop,
     paused: !inView,
+    typeMs,
   });
 
   // Fire onComplete once the last turn's last block has streamed in.

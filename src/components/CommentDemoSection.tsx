@@ -3,10 +3,6 @@ import { telemetry } from '@/lib/telemetry';
 import CommentDemoShell from './commentsDemo/CommentDemoShell';
 import BrowserFrame from './BrowserFrame';
 
-const R2_MEDIA_URL = 'https://pub-eed10ae7764348e2b0775fb6de2f56de.r2.dev';
-const MOBILE_VIDEO_SRC = `${R2_MEDIA_URL}/media/vid_landing.webm`;
-const MOBILE_POSTER_SRC = '/images/rivet-demo@2x.png';
-
 const REQUEST_TEXT = 'try more fluid layouts';
 
 /**
@@ -19,15 +15,18 @@ const REQUEST_TEXT = 'try more fluid layouts';
  * copy stays beside the shell (the section keeps its two-column grid).
  */
 const CommentDemoSection = () => {
-  // The scripted intro plays only on desktop with motion allowed — same gate as
-  // the hero (App.tsx `playHeroIntro`). Otherwise the demo renders its resolved
-  // state with no fake cursor.
-  const [play] = useState(
-    () =>
-      typeof window !== 'undefined' &&
-      !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
-      window.matchMedia('(min-width: 768px)').matches,
-  );
+  // Both the mobile and desktop shells are mounted at once (CSS shows one,
+  // hides the other), so gate playback per-breakpoint: only the on-screen shell
+  // runs the scripted cursor; the hidden one renders its resolved state. With
+  // reduced motion neither plays. Measured once at mount — same as the hero.
+  const [{ playDesktop, playMobile }] = useState(() => {
+    if (typeof window === 'undefined')
+      return { playDesktop: false, playMobile: false };
+    const motionOK = !window.matchMedia('(prefers-reduced-motion: reduce)')
+      .matches;
+    const desktop = window.matchMedia('(min-width: 768px)').matches;
+    return { playDesktop: motionOK && desktop, playMobile: motionOK && !desktop };
+  });
 
   const handleDraftCreated = () => {
     telemetry.trackCommentDemoDraftCreated({ source: 'drag', hasDragBox: true });
@@ -47,24 +46,24 @@ const CommentDemoSection = () => {
             first (2.5fr) column on the left. On stacked mobile/tablet we want
             the title above the panel, so flip with `order-` classes below. */}
         <div className="order-2 w-full lg:order-1">
-          {/* Mobile: static video — the interactive drag/variants demo doesn't
-              translate to touch and is too dense for small screens. */}
+          {/* Mobile: the same scripted drag/comment/vary shell, but in its
+              single-pane mobile layout — no directions panel; the gallery itself
+              reflows into the two-column layout when the comment is varied. A
+              taller (portrait) box leverages the vertical real estate to show
+              more of the masonry grid. */}
           <div
             data-guide-row
-            className="block w-full overflow-hidden border border-black/10 bg-white shadow-[0_10px_40px_rgba(0,0,0,0.08)] md:hidden"
-            style={{ aspectRatio: '16 / 10' }}
+            className="aspect-panel-portrait block w-full overflow-hidden bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:hidden"
+            style={{ backgroundImage: "url('/images/bg3.webp')" }}
           >
-            <video
-              src={MOBILE_VIDEO_SRC}
-              poster={MOBILE_POSTER_SRC}
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              aria-label="Rivet comments demo"
-              className="h-full w-full object-cover"
-            />
+            <BrowserFrame url="localhost:3000" className="h-full w-full">
+              <CommentDemoShell
+                mobile
+                play={playMobile}
+                onDraftCreated={handleDraftCreated}
+                onCommentCreated={handleCommentCreated}
+              />
+            </BrowserFrame>
           </div>
 
           {/* Desktop: the scripted two-pane shell (gallery + directions) inside a
@@ -81,7 +80,7 @@ const CommentDemoSection = () => {
           >
             <BrowserFrame url="localhost:3000" draggable className="h-full w-full">
               <CommentDemoShell
-                play={play}
+                play={playDesktop}
                 onDraftCreated={handleDraftCreated}
                 onCommentCreated={handleCommentCreated}
               />

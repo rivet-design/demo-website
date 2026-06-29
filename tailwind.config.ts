@@ -7,6 +7,15 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      // Sizing primitives for the landing-page workflow panels / containers.
+      // `panel` is the landscape box used on desktop; `panel-portrait` is the
+      // vertical-rectangle variant for mobile, which trades width for height so
+      // the panels can show more of their content (e.g. the agent transcript).
+      // Use them responsively: `aspect-panel-portrait md:aspect-panel`.
+      aspectRatio: {
+        panel: '16 / 11',
+        'panel-portrait': '3 / 4',
+      },
       fontFamily: {
         main: ['Satoshi', 'sans-serif'],
         cta: ['Goldman', 'sans-serif'],
