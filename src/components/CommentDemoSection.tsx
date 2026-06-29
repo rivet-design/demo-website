@@ -3,14 +3,14 @@ import { telemetry } from '@/lib/telemetry';
 import CommentDemoShell from './commentsDemo/CommentDemoShell';
 import BrowserFrame from './BrowserFrame';
 
-const REQUEST_TEXT = 'try more fluid layouts';
+const REQUEST_TEXT = 'Try a simpler layout';
 
 /**
  * Workflow panel: "Explore with precision."
  *
  * Mirrors the hero: inside the browser shell, a live gallery preview sits on the
  * LEFT and a Directions list on the RIGHT. A scripted drag leaves the comment
- * "try more fluid layouts", layout directions generate on the right, and
+ * "Try a simpler layout", layout directions generate on the right, and
  * selecting one restyles the gallery on the left. The "Explore with precision"
  * copy stays beside the shell (the section keeps its two-column grid).
  */

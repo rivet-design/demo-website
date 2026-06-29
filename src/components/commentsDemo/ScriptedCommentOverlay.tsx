@@ -3,6 +3,7 @@ import { CommentMarker, CommentPopover } from '../comments';
 import type { Comment } from '../comments';
 import {
   SCRIPT_DESIGN_W,
+  SCRIPT_DESIGN_H,
   type ScriptedCommentState,
 } from './useScriptedCommentDemo';
 
@@ -14,7 +15,7 @@ import {
  * resolve. Driven entirely by `state` from `useScriptedCommentDemo`.
  */
 
-const REQUEST_TEXT = 'try more fluid layouts';
+const REQUEST_TEXT = 'Try a simpler layout';
 
 // The scripted "comment" used to render the resulting marker. Pin is derived
 // from the popover anchor; the dragBox mirrors the selection so a hover would
@@ -29,6 +30,40 @@ const SCRIPTED_COMMENT = (
   status: 'pending',
   createdAt: 0,
 });
+
+// A couple of pre-existing comments pinned to the gallery's chrome — one on the
+// header beside the user profile, one over the left-hand nav — so it reads
+// immediately as "you can leave comments anywhere on a real UI", not just where
+// the cursor scripts one. Coordinates are FIXED design-space px (the topbar and
+// sidebar are fixed-size regions, not proportional to the panel height), so the
+// pins stay on their targets as the gallery scales across breakpoints. The
+// scripted comment then lands as the third, freshly-added marker.
+const SAMPLE_COMMENTS: { x: number; y: number; comment: Comment }[] = [
+  {
+    // Top-right, on the header by the user profile.
+    x: 716,
+    y: 30,
+    comment: {
+      id: 'sample-header-padding',
+      pin: { xPct: 716 / SCRIPT_DESIGN_W, yPct: 30 / SCRIPT_DESIGN_H },
+      instruction: 'add more padding here for the header',
+      status: 'pending',
+      createdAt: 0,
+    },
+  },
+  {
+    // Over the left-hand collections nav.
+    x: 90,
+    y: 160,
+    comment: {
+      id: 'sample-compact-layout',
+      pin: { xPct: 90 / SCRIPT_DESIGN_W, yPct: 160 / SCRIPT_DESIGN_H },
+      instruction: 'try a more compact layout',
+      status: 'pending',
+      createdAt: 0,
+    },
+  },
+];
 
 // A small arrow pointer drawn as an SVG (no system cursor is visible over the
 // pointer-events-none overlay, so we paint our own).
@@ -133,13 +168,30 @@ const ScriptedCommentOverlay = ({
         />
       ) : null}
 
-      {/* Resulting marker once the comment is "applied". */}
+      {/* Pre-existing sample markers on other tiles — always present, so the
+          gallery reads as a live, comment-able surface even before the scripted
+          comment lands. */}
+      {SAMPLE_COMMENTS.map(({ x, y, comment }, i) => (
+        <CommentMarker
+          key={comment.id}
+          comment={comment}
+          index={i}
+          position={{ x, y }}
+          containerHeight={designH}
+          containerWidth={SCRIPT_DESIGN_W}
+          onEdit={() => {}}
+        />
+      ))}
+
+      {/* Resulting marker once the comment is "applied" — numbered after the
+          pre-existing samples, so it reads as the freshly-added one. */}
       {showMarker ? (
         <CommentMarker
           comment={SCRIPTED_COMMENT(popoverAt, designH)}
-          index={0}
+          index={SAMPLE_COMMENTS.length}
           position={popoverAt}
           containerHeight={designH}
+          containerWidth={SCRIPT_DESIGN_W}
           onEdit={() => {}}
         />
       ) : null}

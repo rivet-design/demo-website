@@ -185,11 +185,14 @@ const ReferencesDemoSection = () => {
           </p>
         </div>
 
-        {/* Reference-wall panel */}
+        {/* Reference-wall panel. Below sm the wall is width-constrained (it can't
+            reach its max-w), so a 16/11 landscape box would be too short and clip
+            the bottom card row. Use a taller, near-portrait box on mobile so all
+            six cards show in full; from sm up the wall hits its max-w and grows to
+            fill the shared 16/11 landscape box like the other workflow panels. */}
         <div
           data-guide-row
-          className="relative w-full overflow-hidden bg-white"
-          style={{ aspectRatio: '16 / 11' }}
+          className="relative aspect-[7/6] w-full overflow-hidden bg-white sm:aspect-[16/11]"
         >
           {/* The masonry wall. In the two-column layout (lg+, text left / wall
               right) it's anchored RIGHT with no gutter so it hugs and bleeds past
@@ -216,14 +219,17 @@ const ReferencesDemoSection = () => {
             </div>
           </div>
 
-          {/* Soft top/bottom fades so the bleeding wall reads as intentional. */}
+          {/* Soft top/bottom fades so the bleeding wall reads as intentional.
+              Only from sm up, where the wall is taller than the box and actually
+              bleeds — on mobile it's fully contained, so a fade there would just
+              dim complete cards and read as truncation. */}
           <span
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-white to-transparent"
+            className="pointer-events-none absolute inset-x-0 top-0 hidden h-10 bg-gradient-to-b from-white to-transparent sm:block"
           />
           <span
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-white to-transparent"
+            className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-10 bg-gradient-to-t from-white to-transparent sm:block"
           />
         </div>
       </div>

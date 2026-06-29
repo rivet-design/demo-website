@@ -80,6 +80,10 @@ const SketchGuides = () => {
       // down the document and redraw the vertical guides only near the footer.
       // The guide frame should start below the nav's in-flow box at page top.
       const top = nav ? Math.round(nav.offsetHeight) : 88;
+      // During aggressive responsive reflow a resize/load callback can run
+      // before the page has a usable content box. Keep the last valid drawing
+      // instead of replacing it with inverted or zero-length guide geometry.
+      if (w <= 0 || h - top <= 80) return;
       // Anchor the hero divider to the TOP edge of the variant showcase panel so
       // the line sits just above it and tracks its (resized) height, instead of
       // a fixed viewport fraction that would cut through the panel.
