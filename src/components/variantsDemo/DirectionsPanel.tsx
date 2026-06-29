@@ -219,7 +219,7 @@ const VariantRow = ({
             e.stopPropagation();
             onCopyDescription(variant.brief);
           }}
-          className="flex h-6 w-6 items-center justify-center rounded text-content-muted hover:bg-[var(--main-hover)] hover:text-content focus:outline-none focus-visible:ring-1 focus-visible:ring-content-muted/40"
+          className="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-content-muted hover:bg-[var(--main-hover)] hover:text-content focus:outline-none focus-visible:ring-1 focus-visible:ring-content-muted/40"
         >
           <Copy size={13} weight="bold" />
         </button>
@@ -231,7 +231,7 @@ const VariantRow = ({
             e.stopPropagation();
             onStartRename(variant.id);
           }}
-          className="flex h-6 w-6 items-center justify-center rounded text-content-muted hover:bg-[var(--main-hover)] hover:text-content focus:outline-none focus-visible:ring-1 focus-visible:ring-content-muted/40"
+          className="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-content-muted hover:bg-[var(--main-hover)] hover:text-content focus:outline-none focus-visible:ring-1 focus-visible:ring-content-muted/40"
         >
           <PencilSimple size={13} weight="bold" />
         </button>
@@ -408,13 +408,13 @@ const DirectionsPanel = ({ ctrl }: { ctrl: VariantsDemoController }) => {
         <button
           type="button"
           onClick={ctrl.clearAll}
-          className="rounded-md px-2 py-1.5 text-xs font-medium text-content-muted transition-colors hover:bg-[var(--main-input)] hover:text-content"
+          className="cursor-pointer rounded-md px-2 py-1.5 text-xs font-medium text-content-muted transition-colors hover:bg-[var(--main-input)] hover:text-content"
         >
           Clear all
         </button>
         <button
           type="button"
-          className="rounded-md bg-[var(--main-input)] px-2 py-1.5 text-xs font-medium text-content transition-colors hover:bg-[var(--main-hover)]"
+          className="cursor-pointer rounded-md bg-[var(--main-input)] px-2 py-1.5 text-xs font-medium text-content transition-colors hover:bg-[var(--main-hover)]"
         >
           Send to Claude Code
         </button>
