@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import { VARIANTS, type DemoVariant } from './data';
 
 /**
@@ -149,23 +148,11 @@ export const useVariantsDemo = (
   const remove = useCallback(
     (id: string) => {
       setAutoPlay(false);
-      const removedVariant = SOURCE.find((v) => v.id === id);
       setRemoved((set) => new Set(set).add(id));
       setSelectedId((cur) => {
         if (cur !== id) return cur;
         const next = SOURCE.find((v) => v.id !== id && !removed.has(v.id));
         return next ? next.id : cur;
-      });
-      toast(`Removed “${removedVariant?.label ?? 'direction'}”`, {
-        action: {
-          label: 'Undo',
-          onClick: () =>
-            setRemoved((set) => {
-              const copy = new Set(set);
-              copy.delete(id);
-              return copy;
-            }),
-        },
       });
     },
     [SOURCE, removed],
@@ -176,12 +163,10 @@ export const useVariantsDemo = (
     setOverrides({});
     setSelectedId(SOURCE[0].id);
     setAutoPlay(true); // resume the loop on a full reset
-    toast('Reset all directions');
   }, [SOURCE]);
 
   const copyDescription = useCallback((text: string) => {
     void navigator.clipboard?.writeText(text);
-    toast('Copied description');
   }, []);
 
   // Auto-advance loop. Paused once the user takes over, while renaming, or

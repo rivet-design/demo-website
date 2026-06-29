@@ -51,51 +51,68 @@ type Card = {
   color: string; // art stroke color
 };
 
-// Three panels pull their color straight from the hero backdrop blobs
-// (panel-backdrop.png): teal #1FD0D3, yellow #ECE44D, dark green #214C16. Art
-// strokes are picked for contrast against each fill.
+// Cards follow the Rivet multicolor wordmark palette (same four colors as the
+// footer logo): red #EF3517, blue #1FD0D3, yellow #ECE44D, dark green #214C16.
+// Every background and art stroke is drawn from these four — each card pairs one
+// brand color as the fill with a contrasting brand color for the motif. The `bg`
+// classes are written as literal arbitrary values so Tailwind's JIT scanner
+// picks them up (it can't resolve template-built class names); `color` is an SVG
+// stroke value so it can stay a JS constant.
+// Art-stroke colors (used as SVG values). Card backgrounds are written as literal
+// `bg-[...]` classes (so Tailwind's JIT picks them up); these constants are only
+// for the line-art stroke colors.
+const BLUE = '#1FD0D3';
+const YELLOW = '#ECE44D';
+const GREEN = '#214C16';
+const RED = '#EF3517';
+// Near-black middle panel, matching the original dark reference card
+// (Tailwind `accent-foreground` ≈ hsl(0 0% 9%)); its line-art is soft white.
+const DARK_ART = 'rgba(255,255,255,0.85)';
+
 const CARDS: Card[] = [
   {
     col: 0,
     aspect: 'aspect-[3/4]',
     motif: 'lines',
-    bg: 'bg-[#FCE5DC]',
-    color: '#C97557',
+    bg: 'bg-[#EF3517]',
+    color: YELLOW,
   },
   {
     col: 0,
     aspect: 'aspect-square',
     motif: 'grid',
-    bg: 'bg-[#214C16]',
-    color: '#CDE9C2',
+    bg: 'bg-[#1FD0D3]',
+    color: RED,
   },
   {
+    // Near-black panel anchors the top-middle of the wall.
     col: 1,
     aspect: 'aspect-[4/3]',
     motif: 'grid',
-    bg: 'bg-[#1FD0D3]',
-    color: '#0C6E70',
+    bg: 'bg-accent-foreground',
+    color: DARK_ART,
   },
   {
+    // Yellow anchors the bottom-middle of the wall.
     col: 1,
     aspect: 'aspect-[5/6]',
     motif: 'lines',
-    bg: 'bg-accent-foreground',
-    color: 'rgba(255,255,255,0.85)',
+    bg: 'bg-[#ECE44D]',
+    color: GREEN,
   },
   {
     col: 2,
     aspect: 'aspect-[4/5]',
     motif: 'lines',
-    bg: 'bg-[#ECE44D]',
-    color: '#214C16',
+    bg: 'bg-[#1FD0D3]',
+    color: YELLOW,
   },
   {
     col: 2,
     aspect: 'aspect-square',
     motif: 'grid',
-    bg: 'bg-green',
-    color: '#FCE5DC',
+    bg: 'bg-[#EF3517]',
+    color: BLUE,
   },
 ];
 
@@ -172,12 +189,12 @@ const ReferencesDemoSection = () => {
 
         {/* Reference-wall panel */}
         <div
-          className="relative w-full overflow-hidden border border-black/10 bg-white"
+          className="relative w-full overflow-hidden bg-white"
           style={{ aspectRatio: '16 / 11' }}
         >
           {/* The masonry wall — bleeds gently past the panel edges for an
               immersive, never-ending feel. */}
-          <div className="absolute inset-0 flex items-center justify-center p-6 sm:p-8">
+          <div className="absolute inset-0 flex items-center justify-center px-4 py-6 sm:px-6 sm:py-8 md:px-8">
             <div
               className="flex w-full max-w-[595px] items-start gap-3 sm:gap-4"
               aria-hidden

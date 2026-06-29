@@ -127,9 +127,27 @@ const SketchGuides = () => {
     const ro = new ResizeObserver(measure);
     ro.observe(parent);
     window.addEventListener('resize', measure);
+    // Layout-settled triggers the ResizeObserver doesn't reliably catch:
+    //  - window 'load': late images (arena/folder marks, halftone bg) finish
+    //    decoding and reflow the panels.
+    //  - fonts.ready: the web font swaps in and text blocks change height,
+    //    which can net-zero the parent height (so RO never fires) while still
+    //    moving every row position.
+    //  - visibilitychange: a page loaded in a BACKGROUND tab measures against
+    //    not-yet-settled layout (and rAF is paused — see the draw effect). When
+    //    the tab is focused, re-measure so the guides match the real geometry
+    //    instead of staying stuck on the stale first pass.
+    window.addEventListener('load', measure);
+    document.fonts?.ready.then(measure).catch(() => {});
+    const onVisible = () => {
+      if (!document.hidden) measure();
+    };
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       ro.disconnect();
       window.removeEventListener('resize', measure);
+      window.removeEventListener('load', measure);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, []);
 
@@ -231,8 +249,14 @@ const SketchGuides = () => {
     // (StrictMode's second pass, resize redraws) renders fully opaque straight
     // away — and must explicitly reset opacity to 1, since a first-draw fade
     // whose rAF got cancelled mid-flight would otherwise leave the SVG at 0.
-    if (!firstDrawRef.current || reduceMotion) {
+    //
+    // document.hidden guard: rAF is paused in a backgrounded tab, so if the page
+    // first draws while hidden the fade-in callback never fires and the overlay
+    // stays stuck at opacity 0 until you focus the tab. Skip the fade entirely
+    // when hidden — show the guides immediately so they're correct on return.
+    if (!firstDrawRef.current || reduceMotion || document.hidden) {
       svg.style.opacity = '1';
+      if (document.hidden) firstDrawRef.current = false;
       return;
     }
     firstDrawRef.current = false;
