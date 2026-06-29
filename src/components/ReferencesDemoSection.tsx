@@ -148,12 +148,10 @@ const ReferencesDemoSection = () => {
   const gridSpacing = useIsDesktop() ? 22 : 30;
   return (
     <div className="relative flex w-full justify-center px-[5vw] py-12 md:py-16">
-      <div
-        data-guide-row
-        className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_2.5fr] lg:gap-16"
-      >
-        {/* Copy */}
-        <div className="max-w-[440px]">
+      <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_2.5fr] lg:gap-16">
+        {/* Copy — text is the outer (left) column at lg; lg:pl-8 keeps it off
+            the page's left guide rule (consistent across all workflow panels). */}
+        <div className="max-w-[440px] lg:pl-8">
           <h2 className="mt-3 font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
             Bring your design references.
           </h2>
@@ -189,12 +187,15 @@ const ReferencesDemoSection = () => {
 
         {/* Reference-wall panel */}
         <div
+          data-guide-row
           className="relative w-full overflow-hidden bg-white"
           style={{ aspectRatio: '16 / 11' }}
         >
-          {/* The masonry wall — bleeds gently past the panel edges for an
-              immersive, never-ending feel. */}
-          <div className="absolute inset-0 flex items-center justify-center px-4 py-6 sm:px-6 sm:py-8 md:px-8">
+          {/* The masonry wall. In the two-column layout (lg+, text left / wall
+              right) it's anchored RIGHT with no gutter so it hugs and bleeds past
+              the page's right guide rule. Once the layout stacks (text above the
+              wall, below lg) it centers within its padding instead. */}
+          <div className="absolute inset-0 flex items-center justify-center px-4 py-6 sm:px-6 sm:py-8 md:px-8 lg:justify-end lg:px-0">
             <div
               className="flex w-full max-w-[595px] items-start gap-3 sm:gap-4"
               aria-hidden

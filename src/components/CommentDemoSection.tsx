@@ -42,10 +42,7 @@ const CommentDemoSection = () => {
 
   return (
     <div className="relative flex w-full justify-center px-[5vw] py-12 md:py-16">
-      <div
-        data-guide-row
-        className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[2.5fr_1fr] lg:gap-16"
-      >
+      <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[2.5fr_1fr] lg:gap-16">
         {/* DOM order is panel-then-text so that at lg+ the panel sits in the
             first (2.5fr) column on the left. On stacked mobile/tablet we want
             the title above the panel, so flip with `order-` classes below. */}
@@ -53,6 +50,7 @@ const CommentDemoSection = () => {
           {/* Mobile: static video — the interactive drag/variants demo doesn't
               translate to touch and is too dense for small screens. */}
           <div
+            data-guide-row
             className="block w-full overflow-hidden border border-black/10 bg-white shadow-[0_10px_40px_rgba(0,0,0,0.08)] md:hidden"
             style={{ aspectRatio: '16 / 10' }}
           >
@@ -74,6 +72,7 @@ const CommentDemoSection = () => {
               panel. Same w-full + 16/11 box as the other workflow panels so all
               three match in size; the frame and shell fill it (h-full). */}
           <div
+            data-guide-row
             className="hidden w-full overflow-hidden bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:block md:p-8"
             style={{
               backgroundImage: "url('/images/bg3.webp')",
@@ -90,7 +89,9 @@ const CommentDemoSection = () => {
           </div>
         </div>
 
-        <div className="order-1 max-w-[440px] lg:order-2">
+        {/* Copy is the outer (right) column at lg; lg:pr-8 keeps it off the
+            page's right guide rule (consistent across all workflow panels). */}
+        <div className="order-1 max-w-[440px] lg:order-2 lg:pr-8">
           <h2 className="mt-3 font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
             Explore with precision.
           </h2>

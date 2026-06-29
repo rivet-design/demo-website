@@ -98,7 +98,9 @@ const VariantsDemoSection = () => {
     >
       <PaperTexture className="-z-10" />
       <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_1.7fr] lg:gap-16">
-        <div className="max-w-[440px]">
+        {/* Copy is the outer (left) column at lg; lg:pl-8 keeps it off the
+            page's left guide rule (consistent across all workflow panels). */}
+        <div className="max-w-[440px] lg:pl-8">
           <h2 className="mt-3 font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
             Explore lots of design directions
           </h2>
