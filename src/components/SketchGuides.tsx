@@ -92,14 +92,16 @@ const SketchGuides = () => {
         : 0;
       // Horizontal rule positions framing each workflow panel (the grey panel
       // backgrounds were removed — these blueprint lines delineate them now).
-      // [data-guide-row] sits on each panel's CONTENT, and we draw a rule just
-      // above and just below it (HUG px OUT) so the lines hug the panel rather
-      // than the section's outer padding. Measured via rects (relative to the
-      // overlay's parent) so the offsetParent chain doesn't matter. The gap must
-      // stay > 0: the panels (z-10) are opaque and paint over their own edges, so
-      // a rule sitting flush (HUG = 0) is hidden behind the panel. The rules are
-      // drawn flat (no bow), so a hair's-breadth offset keeps them visible while
-      // reading as flush against the panel with no white gap.
+      // [data-guide-row] sits on the VISUAL panel itself (the aspect-ratio box),
+      // NOT the grid row: a grid row also contains the copy column, which can be
+      // taller than the panel at some widths, so framing the row would draw the
+      // rule below the panel's real edge. We draw a rule just above and below the
+      // panel (HUG px OUT) so the lines hug it. Measured via rects (relative to
+      // the overlay's parent) so the offsetParent chain doesn't matter. The gap
+      // must stay > 0: the panels (z-10) are opaque and paint over their own
+      // edges, so a rule sitting flush (HUG = 0) is hidden behind the panel. The
+      // rules are drawn flat (no bow), so a hair's-breadth offset keeps them
+      // visible while reading as flush against the panel with no white gap.
       const HUG = 1;
       const parentTop = parent.getBoundingClientRect().top;
       const rowEls = Array.from(
@@ -108,6 +110,10 @@ const SketchGuides = () => {
       const rows: number[] = [];
       rowEls.forEach((el) => {
         const r = el.getBoundingClientRect();
+        // Skip display:none panels — e.g. the comment section's mobile/desktop
+        // variants, only one of which is laid out at a time. A hidden one rects
+        // to all-zeros and would otherwise plant a bogus rule near the page top.
+        if (r.width === 0 && r.height === 0) return;
         rows.push(Math.round(r.top - parentTop - HUG));
         rows.push(Math.round(r.bottom - parentTop + HUG));
       });
@@ -124,8 +130,17 @@ const SketchGuides = () => {
       );
     };
     measure();
+    // Observe the framed panels themselves (and the hero asset), not just the
+    // parent container. The panels size their height from CSS aspect-ratio, so a
+    // viewport resize changes a panel's own box — observing it fires the callback
+    // AFTER that height is committed, and getBoundingClientRect() (which forces a
+    // layout flush) then reads the settled geometry. Watching only the parent
+    // could miss or lag a panel's reflow, leaving a rule at its previous edge.
     const ro = new ResizeObserver(measure);
     ro.observe(parent);
+    parent
+      .querySelectorAll('[data-guide-row], #hero-showcase')
+      .forEach((el) => ro.observe(el));
     window.addEventListener('resize', measure);
     // Layout-settled triggers the ResizeObserver doesn't reliably catch:
     //  - window 'load': late images (arena/folder marks, halftone bg) finish
@@ -277,7 +292,10 @@ const SketchGuides = () => {
       aria-hidden
       width={size.w}
       height={size.h}
-      className="pointer-events-none absolute left-0 top-0 z-0 hidden md:block"
+      // overflow-visible: an outer <svg> clips to its width/height by default, so
+      // if the measured page height is ever a hair short, guides below that y get
+      // cut off. Letting it overflow keeps every line drawn regardless.
+      className="pointer-events-none absolute left-0 top-0 z-0 block overflow-visible"
     />
   );
 };
