@@ -151,7 +151,10 @@ const CodePanel = () => {
         className="pointer-events-none absolute inset-0 h-full w-full bg-[#0e0e0e] object-cover"
       />
       {/* Scrim for depth + contrast behind the letter. */}
-      <div className="pointer-events-none absolute inset-0 bg-black/25" aria-hidden />
+      <div
+        className="pointer-events-none absolute inset-0 bg-black/25"
+        aria-hidden
+      />
 
       {/* The "letter" — centered on top of the video. */}
       <PaperSheet className="relative z-10 w-full max-w-prose">
@@ -177,7 +180,6 @@ const CodePanel = () => {
     </div>
   );
 };
-
 
 const App = () => {
   const latestVersion = useLatestVersion();
@@ -268,7 +270,8 @@ const App = () => {
                   <span className="relative">New</span>
                 </span>
                 <span className="text-base text-black hover:underline">
-                  Try Rivet&apos;s MCP{latestVersion ? ` in v${latestVersion}` : ''}
+                  Try Rivet&apos;s MCP
+                  {latestVersion ? ` in v${latestVersion}` : ''}
                 </span>
               </a>
             )}
@@ -276,8 +279,8 @@ const App = () => {
             {/* Title only, centered. The subtitle + CTA now live below the
                 UI variants shell; the nav also carries a CTA. */}
             <div className="flex flex-col items-start gap-4">
-              <span className="type-display text-[clamp(2.5rem,6.5vw,8rem)] font-normal normal-case leading-[1.0] text-black">
-                Direct, don&apos;t implement.
+              <span className="type-display text-[clamp(1.25rem,6vw,2.5rem)] font-normal normal-case leading-[1.05] text-black sm:text-[clamp(2.5rem,6.5vw,8rem)]">
+                Explore dozens of design directions from your agent.
               </span>
             </div>
           </div>
@@ -339,7 +342,7 @@ const App = () => {
                   1100,
                 );
               }}
-              className={`pointer-events-none absolute z-20 hidden h-[240px] w-[300px] -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] md:flex lg:h-[300px] lg:w-[380px] ${
+              className={`ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none absolute z-20 hidden h-[240px] w-[300px] -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-700 md:flex lg:h-[300px] lg:w-[380px] ${
                 chatMoved
                   ? 'left-[70%] top-[61%] lg:left-[77%] lg:top-[63%]'
                   : 'left-1/2 top-1/2'
