@@ -47,15 +47,13 @@ const Vendor = ({
 const AgentTerminalSection = () => {
   return (
     <div className="relative flex w-full justify-center px-[5vw] py-12 md:py-16">
-      <div
-        data-guide-row
-        className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[2.5fr_1fr] lg:gap-16"
-      >
+      <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[2.5fr_1fr] lg:gap-16">
         {/* Terminal — left on lg+, below the title on mobile. */}
         <div className="order-2 w-full lg:order-1">
           {/* Same w-full + 16/11 box as the other workflow panels; the terminal
               fills it (h-full) so all three panels match in size. */}
           <div
+            data-guide-row
             className="w-full overflow-hidden border border-black/10 bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:p-8"
             style={{ backgroundImage: "url('/images/bg2.webp')", aspectRatio: '16 / 11' }}
           >
@@ -63,8 +61,10 @@ const AgentTerminalSection = () => {
           </div>
         </div>
 
-        {/* Copy — right on lg+, above the terminal on mobile. */}
-        <div className="order-1 max-w-[440px] lg:order-2">
+        {/* Copy — right on lg+, above the terminal on mobile. text is the outer
+            (right) column at lg; lg:pr-8 keeps it off the page's right guide rule
+            (consistent across all workflow panels). */}
+        <div className="order-1 max-w-[440px] lg:order-2 lg:pr-8">
           <h2 className="mt-3 font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
             Works with your agent.
           </h2>
