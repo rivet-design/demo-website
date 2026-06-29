@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
  *
  * A stepped-timeout phase machine (same shape as the terminal player in
  * `sandbox/useTerminalPlayer.ts`) that fakes a user dragging a selection box
- * over the gallery and leaving the comment "try more fluid layouts". It owns
+ * over the gallery and leaving the comment "Try a simpler layout". It owns
  * NO variant state — when the script reaches `generating` the shell mounts the
  * real directions controller, which runs its own skeleton→resolved loading.
  *

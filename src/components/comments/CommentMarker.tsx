@@ -9,6 +9,12 @@ type Props = {
   position: { x: number; y: number };
   /** Container height in px — used to flip the caret upward near the bottom edge */
   containerHeight: number;
+  /**
+   * Container width in px. When provided, the hover preview is clamped to stay
+   * within the container so a marker near an edge doesn't push its tooltip past
+   * the (overflow-hidden) panel bounds and get clipped.
+   */
+  containerWidth?: number;
   onEdit: (commentId: string) => void;
   onHover?: () => void;
   onHoverEnd?: () => void;
@@ -30,11 +36,14 @@ const POPOVER_OFFSET_Y = 8;
 const ABOVE_THRESHOLD_PCT = 0.65;
 const PREVIEW_W = 200;
 
+const PREVIEW_EDGE_PAD = 8;
+
 const CommentMarker = ({
   comment,
   index,
   position,
   containerHeight,
+  containerWidth,
   onEdit,
   onHover,
   onHoverEnd,
@@ -64,13 +73,30 @@ const CommentMarker = ({
     position.y / containerHeight > ABOVE_THRESHOLD_PCT;
   const previewText = comment.instruction;
 
+  // The hover preview is positioned relative to the marker root (which sits at
+  // `position.x - TIP_X`). Centered on the pin by default; when the container
+  // width is known, clamp its absolute left so a marker near an edge keeps its
+  // preview inside the panel instead of pushing it past the overflow-hidden
+  // bounds (where it would be clipped behind the panel/frame).
+  const rootLeft = position.x - TIP_X;
+  const previewCenteredLeft = TIP_X - PREVIEW_W / 2;
+  const previewLeft =
+    containerWidth != null
+      ? Math.min(
+          Math.max(rootLeft + previewCenteredLeft, PREVIEW_EDGE_PAD),
+          containerWidth - PREVIEW_W - PREVIEW_EDGE_PAD,
+        ) - rootLeft
+      : previewCenteredLeft;
+
   return (
     <div
       style={{
         position: 'absolute',
         top: markerBelowPin ? position.y : position.y - TOTAL_H,
         left: position.x - TIP_X,
-        zIndex: isHovered ? 55 : 36,
+        // Lift well above the gallery chrome + sibling markers while hovered so
+        // the preview is never painted under adjacent panel content.
+        zIndex: isHovered ? 80 : 36,
         pointerEvents: 'auto',
       }}
       onMouseEnter={() => {
@@ -153,7 +179,7 @@ const CommentMarker = ({
           <motion.div
             style={{
               position: 'absolute',
-              left: TIP_X - PREVIEW_W / 2,
+              left: previewLeft,
               top: previewAboveMarker
                 ? -POPOVER_OFFSET_Y
                 : TOTAL_H + POPOVER_OFFSET_Y,

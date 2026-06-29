@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { motion } from 'motion/react';
 import Gallery from '../gallery/Gallery';
+import { ITEMS, type GalleryItem } from '../gallery/data';
 import DirectionsPanel from '../variantsDemo/DirectionsPanel';
 import { useVariantsDemo } from '../variantsDemo/useVariantsDemo';
 import type { DemoVariant } from '../variantsDemo/data';
@@ -22,7 +23,7 @@ import {
  * Desktop two-pane content for the "Explore with precision" panel, placed inside
  * a BrowserFrame: a scaled live <Gallery> with the scripted comment overlay on
  * the LEFT, and the directions list on the RIGHT — mirroring the hero's
- * VariantsShowcase. A scripted drag leaves the comment "try more fluid layouts",
+ * VariantsShowcase. A scripted drag leaves the comment "Try a simpler layout",
  * then layout directions generate on the right; selecting one restyles the
  * gallery on the left.
  */
@@ -43,6 +44,22 @@ const DIRECTIONS_BOX_W = Math.round(DIRECTIONS_W * DIRECTIONS_SCALE);
 // reflows into the first fluid direction — the airy two-column layout. Pull that
 // direction's gallery config so the mobile shell can apply it directly.
 const TWO_COLUMN_DIRECTION = FLUID_VARIANTS.find((v) => v.id === FLUID_INITIAL_ID);
+
+// The gallery tiles are recolored to a calm grayscale set so the orange comment
+// markers + selection read as the only colored elements on the surface.
+const BRAND_GRAY_PAIRS = [
+  ['#1c1c20', '#d1d5db'],
+  ['#232328', '#f3f4f6'],
+  ['#2e2e2e', '#c7c9cf'],
+  ['#38383d', '#e5e7eb'],
+  ['#47474d', '#f8fafc'],
+  ['#5a5a61', '#d1d5db'],
+] as const;
+
+const GRAY_GALLERY_ITEMS: GalleryItem[] = ITEMS.map((item, i) => {
+  const [placeholderColor, artColor] = BRAND_GRAY_PAIRS[i % BRAND_GRAY_PAIRS.length];
+  return { ...item, placeholderColor, artColor };
+});
 
 // The directions controller only mounts once the comment is "applied" — before
 // that the right pane shows an empty panel (no premature skeletons). Split into
@@ -196,7 +213,11 @@ const CommentDemoShell = ({
             <div className="h-full w-full">
               {/* Light chrome so the orange comment marker + selection stand
                   out against it (the placeholder tiles stay dark, like photos). */}
-              <Gallery variant={selected?.gallery} theme="light" />
+              <Gallery
+                variant={selected?.gallery}
+                theme="light"
+                items={GRAY_GALLERY_ITEMS}
+              />
             </div>
 
             {/* Brief white veil flash on each layout change for a crossfade

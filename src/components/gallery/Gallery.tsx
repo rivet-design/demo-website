@@ -1,5 +1,5 @@
 import { useState, useEffect, type CSSProperties } from 'react';
-import { COLLECTIONS, ITEMS } from './data';
+import { COLLECTIONS, ITEMS, type GalleryItem as GalleryItemData } from './data';
 import GalleryItem from './components/GalleryItem';
 import ListItem from './components/ListItem';
 import './gallery.css';
@@ -28,6 +28,8 @@ type Props = {
    * orange markers stand out against a light surface.
    */
   theme?: 'dark' | 'light';
+  /** Optional item palette/content override for embedded demos. */
+  items?: GalleryItemData[];
 };
 
 /**
@@ -39,7 +41,11 @@ type Props = {
  *   children, internal toggles stay rendered but inert — the variant prop
  *   then drives layout from the outside.
  */
-export default function Gallery({ variant, theme = 'dark' }: Props = {}) {
+export default function Gallery({
+  variant,
+  theme = 'dark',
+  items = ITEMS,
+}: Props = {}) {
   const [activeCollection, setActiveCollection] = useState('All Works');
   const [activeTab, setActiveTab] = useState('Library');
   const [internalView, setView] = useState<View>('grid');
@@ -63,8 +69,8 @@ export default function Gallery({ variant, theme = 'dark' }: Props = {}) {
 
   const filtered =
     activeCollection === 'All Works'
-      ? ITEMS
-      : ITEMS.filter((i) => i.collection === activeCollection);
+      ? items
+      : items.filter((i) => i.collection === activeCollection);
 
   const collectionMeta = COLLECTIONS.find((c) => c.label === activeCollection);
 
@@ -236,8 +242,8 @@ export default function Gallery({ variant, theme = 'dark' }: Props = {}) {
                       key={loading ? i : (item as (typeof ITEMS)[0]).id}
                       item={
                         loading
-                          ? ITEMS[i % ITEMS.length]
-                          : (item as (typeof ITEMS)[0])
+                          ? items[i % items.length]
+                          : (item as GalleryItemData)
                       }
                       loading={loading}
                     />
@@ -252,8 +258,8 @@ export default function Gallery({ variant, theme = 'dark' }: Props = {}) {
                       key={loading ? i : (item as (typeof ITEMS)[0]).id}
                       item={
                         loading
-                          ? ITEMS[i % ITEMS.length]
-                          : (item as (typeof ITEMS)[0])
+                          ? items[i % items.length]
+                          : (item as GalleryItemData)
                       }
                       loading={loading}
                     />
