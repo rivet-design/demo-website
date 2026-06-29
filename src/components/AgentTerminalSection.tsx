@@ -64,7 +64,7 @@ const AgentTerminalSection = () => {
               takes over. */}
           <div
             data-guide-row
-            className="aspect-panel-portrait max-h-[500px] w-full overflow-hidden border border-black/10 bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:aspect-panel md:max-h-none md:p-8"
+            className="aspect-panel-portrait max-h-[500px] w-full overflow-visible border border-black/10 bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:aspect-panel md:max-h-none md:overflow-hidden md:p-8"
             style={{ backgroundImage: "url('/images/bg2.webp')" }}
           >
             {/* Type the command 1.5× faster than the default (42ms → 28ms/char)

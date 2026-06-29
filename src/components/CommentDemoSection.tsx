@@ -53,7 +53,7 @@ const CommentDemoSection = () => {
               more of the masonry grid. */}
           <div
             data-guide-row
-            className="aspect-panel-portrait block w-full overflow-hidden bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:hidden"
+            className="aspect-panel-portrait block w-full overflow-visible bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:hidden"
             style={{ backgroundImage: "url('/images/bg3.webp')" }}
           >
             <BrowserFrame url="localhost:3000" className="h-full w-full">
