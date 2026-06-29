@@ -1,7 +1,8 @@
 import { footerBackground } from '../lib/background';
 
 const X_LINK = 'https://x.com/designrivet';
-const DOCS_LINK = 'https://docs.rivet.design/';
+const LINKEDIN_LINK = 'https://www.linkedin.com/company/rivetdesign';
+const INSTAGRAM_LINK = 'https://www.instagram.com/rivet.design';
 const RELEASES_LINK = 'https://docs.rivet.design/releases';
 const MCP_LINK = 'https://docs.rivet.design/mcp-guide';
 const EMAIL = 'sam@tryrivet.design';
@@ -41,14 +42,6 @@ const Footer = () => {
               <span className="type-label-lg font-semibold uppercase tracking-wide text-[#EC4423]">Rivet</span>
               <div className="flex flex-col gap-3">
                 <a
-                  href={DOCS_LINK}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
-                >
-                  Docs
-                </a>
-                <a
                   href={RELEASES_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -63,6 +56,12 @@ const Footer = () => {
                   className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
                 >
                   MCP
+                </a>
+                <a
+                  href={`mailto:${EMAIL}`}
+                  className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
+                >
+                  Contact
                 </a>
               </div>
             </div>
@@ -79,10 +78,20 @@ const Footer = () => {
                   Twitter
                 </a>
                 <a
-                  href={`mailto:${EMAIL}`}
+                  href={LINKEDIN_LINK}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
                 >
-                  Email
+                  LinkedIn
+                </a>
+                <a
+                  href={INSTAGRAM_LINK}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
+                >
+                  Instagram
                 </a>
               </div>
             </div>
