@@ -369,11 +369,11 @@ const App = () => {
 
         <div className="relative z-10 -mx-[5vw] flex flex-col" id="demo-panel">
           {/* <WorkflowPanels /> */}
+          <AgentTerminalSection />
           <ReferencesDemoSection />
           {SHOW_VARIANTS_PANEL && <VariantsDemoSection />}
           <CommentDemoSection />
           {SHOW_MANIFESTO_PANEL && <CodePanel />}
-          <AgentTerminalSection />
         </div>
         {/* <FeaturePanel /> */}
         {renderDownloadPanel()}

@@ -195,10 +195,12 @@ const ReferencesDemoSection = () => {
           className="relative aspect-[7/6] w-full overflow-hidden bg-white sm:aspect-[16/11]"
         >
           {/* The masonry wall. In the two-column layout (lg+, text left / wall
-              right) it's anchored RIGHT with no gutter so it hugs and bleeds past
-              the page's right guide rule. Once the layout stacks (text above the
-              wall, below lg) it centers within its padding instead. */}
-          <div className="absolute inset-0 flex items-center justify-center px-4 py-6 sm:px-6 sm:py-8 md:px-8 lg:justify-end lg:px-0">
+              right) it's anchored RIGHT with a matching gutter — lg:pr-8 mirrors
+              the copy's lg:pl-8 so the cards sit off the page's right guide rule
+              by the same inset the text keeps off the left. Once the layout
+              stacks (text above the wall, below lg) it centers within its
+              padding instead. */}
+          <div className="absolute inset-0 flex items-center justify-center px-4 py-6 sm:px-6 sm:py-8 md:px-8 lg:justify-end lg:pr-8">
             <div
               className="flex w-full max-w-[595px] items-start gap-3 sm:gap-4"
               aria-hidden

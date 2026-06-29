@@ -23,7 +23,7 @@ import {
  * Desktop two-pane content for the "Explore with precision" panel, placed inside
  * a BrowserFrame: a scaled live <Gallery> with the scripted comment overlay on
  * the LEFT, and the directions list on the RIGHT — mirroring the hero's
- * VariantsShowcase. A scripted drag leaves the comment "Try a simpler layout",
+ * VariantsShowcase. A scripted drag leaves the comment "Try simpler layouts",
  * then layout directions generate on the right; selecting one restyles the
  * gallery on the left.
  */

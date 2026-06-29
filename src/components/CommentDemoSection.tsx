@@ -3,14 +3,14 @@ import { telemetry } from '@/lib/telemetry';
 import CommentDemoShell from './commentsDemo/CommentDemoShell';
 import BrowserFrame from './BrowserFrame';
 
-const REQUEST_TEXT = 'Try a simpler layout';
+const REQUEST_TEXT = 'Try simpler layouts';
 
 /**
  * Workflow panel: "Explore with precision."
  *
  * Mirrors the hero: inside the browser shell, a live gallery preview sits on the
  * LEFT and a Directions list on the RIGHT. A scripted drag leaves the comment
- * "Try a simpler layout", layout directions generate on the right, and
+ * "Try simpler layouts", layout directions generate on the right, and
  * selecting one restyles the gallery on the left. The "Explore with precision"
  * copy stays beside the shell (the section keeps its two-column grid).
  */
@@ -53,7 +53,7 @@ const CommentDemoSection = () => {
               more of the masonry grid. */}
           <div
             data-guide-row
-            className="aspect-panel-portrait block w-full overflow-hidden bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:hidden"
+            className="aspect-panel-portrait block w-full overflow-visible bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:hidden"
             style={{ backgroundImage: "url('/images/bg3.webp')" }}
           >
             <BrowserFrame url="localhost:3000" className="h-full w-full">
