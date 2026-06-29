@@ -74,10 +74,12 @@ const SketchGuides = () => {
       // than its content — leaving dead scroll space below the footer.
       const h = parent.offsetHeight;
       const vh = window.innerHeight;
-      const nav = parent.querySelector('nav');
-      const top = nav
-        ? Math.round((nav as HTMLElement).offsetTop + (nav as HTMLElement).offsetHeight)
-        : 88;
+      const nav = parent.querySelector('nav') as HTMLElement | null;
+      // The nav is sticky. While the page is scrolled, `offsetTop` reflects the
+      // sticky position, so a resize can report "nav bottom" thousands of px
+      // down the document and redraw the vertical guides only near the footer.
+      // The guide frame should start below the nav's in-flow box at page top.
+      const top = nav ? Math.round(nav.offsetHeight) : 88;
       // Anchor the hero divider to the TOP edge of the variant showcase panel so
       // the line sits just above it and tracks its (resized) height, instead of
       // a fixed viewport fraction that would cut through the panel.
