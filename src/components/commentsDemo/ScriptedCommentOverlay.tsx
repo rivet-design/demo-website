@@ -15,7 +15,7 @@ import {
  * resolve. Driven entirely by `state` from `useScriptedCommentDemo`.
  */
 
-const REQUEST_TEXT = 'Try a simpler layout';
+const REQUEST_TEXT = 'Try simpler layouts';
 
 // The scripted "comment" used to render the resulting marker. Pin is derived
 // from the popover anchor; the dragBox mirrors the selection so a hover would
