@@ -10,6 +10,15 @@ import { useVariantsDemo } from './useVariantsDemo';
 const DESIGN_W = 1280;
 const DESIGN_H = 820;
 
+// Portrait (mobile hero): render each page at a phone width so its OWN mobile-
+// first responsive layout kicks in (the desktop pages all stack to a jersey-led
+// portrait view below ~720px), tall enough to include the jersey preview. The
+// iframe is scaled to fit the pane WIDTH and anchored to the top, so the jersey
+// + texture lead and any overflow is clipped (no scroll) — it's fine not to show
+// the whole page.
+const PORTRAIT_W = 412;
+const PORTRAIT_H = 920;
+
 // On narrower desktops the width-driven shell height collapses (the preview pane
 // gets short), which leaves the shell too short to host the floating hero chat.
 // Keep the shell at a reasonable minimum height so it stays a believable browser
@@ -35,6 +44,9 @@ const VariantsShowcase = ({
   autoPlay = true,
   initialVariantId,
   loadDelayMs = 0,
+  showDirections = true,
+  autoAdvanceMs,
+  portrait = false,
 }: {
   heightClassName?: string;
   /** When false, the showcase stays pinned to the initial variant (no loop). */
@@ -43,11 +55,25 @@ const VariantsShowcase = ({
   initialVariantId?: string;
   /** Delay before the fake "generating" sequence starts (to sequence after an intro). */
   loadDelayMs?: number;
+  /**
+   * Render the right-hand Directions panel. Off for the mobile hero, where
+   * there isn't room — the preview just cycles options on its own.
+   */
+  showDirections?: boolean;
+  /** Auto-advance interval when autoPlay is on (default 1500ms). */
+  autoAdvanceMs?: number;
+  /**
+   * Render each variant at a phone width (its mobile-first layout), fit to the
+   * pane width and top-anchored, instead of the 1280px desktop layout. For the
+   * mobile hero, where the pane is a vertical rectangle.
+   */
+  portrait?: boolean;
 }) => {
   const ctrl = useVariantsDemo({
     autoPlay,
     initialId: initialVariantId,
     startDelayMs: loadDelayMs,
+    autoAdvanceMs,
   });
   const [visited, setVisited] = useState<Set<string>>(
     () => new Set([ctrl.selected.src]),
@@ -125,24 +151,28 @@ const VariantsShowcase = ({
   // there's no letterbox, and collapse the shell (and the RHS panel) to exactly
   // that height. Mobile: keep the passed height and contain the page within it.
   const measured = paneSize.w > 0;
+  const fixedDesktopHeight = isDesktop && measured && !portrait;
   const desktopHeight = measured
     ? Math.max(DESIGN_H * (paneSize.w / DESIGN_W), MIN_DESKTOP_H)
     : 0;
-  // Fit-to-width normally; once the shell is floored to MIN_DESKTOP_H, cover the
-  // (now taller) box so the variant fills it instead of leaving a white band.
+  // Portrait: render at phone width and fit to the pane WIDTH (top-anchored, so
+  // overflow clips). Desktop: fit-to-width, and once floored to MIN_DESKTOP_H
+  // cover the taller box. Tablet/mobile-landscape: contain.
   const fitScale = !measured
     ? 0
-    : isDesktop
-      ? Math.max(paneSize.w / DESIGN_W, desktopHeight / DESIGN_H)
-      : Math.min(paneSize.w / DESIGN_W, paneSize.h / DESIGN_H);
+    : portrait
+      ? paneSize.w / PORTRAIT_W
+      : isDesktop
+        ? Math.max(paneSize.w / DESIGN_W, desktopHeight / DESIGN_H)
+        : Math.min(paneSize.w / DESIGN_W, paneSize.h / DESIGN_H);
 
   return (
     <div
       className={`flex flex-col sm:flex-row ${
-        isDesktop && measured ? '' : heightClassName
+        fixedDesktopHeight ? '' : heightClassName
       }`}
       style={
-        isDesktop && measured
+        fixedDesktopHeight
           ? { height: desktopHeight, minHeight: desktopHeight }
           : undefined
       }
@@ -169,13 +199,15 @@ const VariantsShowcase = ({
                 scrolling="no"
                 onLoad={() => setLoaded((s) => new Set(s).add(v.src))}
                 style={{
-                  width: DESIGN_W,
-                  height: DESIGN_H,
+                  width: portrait ? PORTRAIT_W : DESIGN_W,
+                  height: portrait ? PORTRAIT_H : DESIGN_H,
                   position: 'absolute',
                   left: '50%',
-                  top: '50%',
-                  transform: `translate(-50%, -50%) scale(${fitScale})`,
-                  transformOrigin: 'center center',
+                  top: portrait ? 0 : '50%',
+                  transform: portrait
+                    ? `translateX(-50%) scale(${fitScale})`
+                    : `translate(-50%, -50%) scale(${fitScale})`,
+                  transformOrigin: portrait ? 'top center' : 'center center',
                   opacity,
                   zIndex: isActive ? 20 : isPrev ? 10 : 0,
                 }}
@@ -203,8 +235,9 @@ const VariantsShowcase = ({
         )}
       </div>
 
-      {/* Directions panel — right side, inside the shell */}
-      <DirectionsPanel ctrl={ctrl} />
+      {/* Directions panel — right side, inside the shell. Hidden for the mobile
+          hero, where the preview cycles options on its own. */}
+      {showDirections && <DirectionsPanel ctrl={ctrl} />}
     </div>
   );
 };
