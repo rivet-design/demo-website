@@ -73,7 +73,7 @@ const InstallAccordion = () => {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="type-label mx-auto flex items-center gap-1.5 text-accent-foreground/60 transition-colors hover:text-accent-foreground"
+        className="mx-auto flex items-center gap-1.5 font-main text-sm font-medium text-black/45 transition-colors hover:text-black/70"
       >
         Or paste this into your agent
         <ChevronIcon open={open} />
