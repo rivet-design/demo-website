@@ -20,7 +20,8 @@ const Footer = () => {
       >
        <div className="px-[5vw]">
         <div className="flex w-full flex-wrap items-start gap-x-20 gap-y-8">
-          {/* Rivet logo on the left, with the copyright directly beneath it */}
+          {/* Rivet logo on the left, with the copyright + a small Terms/Privacy
+              row directly beneath it */}
           <div className="flex flex-col items-start gap-4">
             <img
               src="/images/rivet-logo.png"
@@ -28,9 +29,22 @@ const Footer = () => {
               draggable={false}
               className="inline-block h-11 sm:h-12 w-auto rounded-xl"
             />
-            <span className="font-main text-base font-medium text-black/70">
-              © 2026 Rivet, Inc.
-            </span>
+            <div className="flex flex-col items-start gap-2">
+              <span className="font-main text-base font-medium text-black/70">
+                © 2026 Rivet, Inc.
+              </span>
+              <div className="flex items-center gap-4 font-main text-sm font-medium text-black/45">
+                <a href="/terms" className="transition-colors hover:text-black/70">
+                  Terms
+                </a>
+                <a
+                  href="/privacy"
+                  className="transition-colors hover:text-black/70"
+                >
+                  Privacy
+                </a>
+              </div>
+            </div>
           </div>
 
           {/* Spacer to push columns to the right */}
@@ -92,24 +106,6 @@ const Footer = () => {
                   className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
                 >
                   Instagram
-                </a>
-              </div>
-            </div>
-
-            <div className="flex flex-col items-start gap-4">
-              <span className="type-label-lg font-semibold uppercase tracking-wide text-[#EC4423]">Legal</span>
-              <div className="flex flex-col gap-3">
-                <a
-                  href="/terms"
-                  className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
-                >
-                  Terms
-                </a>
-                <a
-                  href="/privacy"
-                  className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
-                >
-                  Privacy
                 </a>
               </div>
             </div>
