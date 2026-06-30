@@ -190,6 +190,9 @@ const App = () => {
   // sequence. Decide once, synchronously on first render, so the showcase never
   // starts in a delayed/blank state it then has to correct. When the intro does
   // NOT play, the window and variants drop their delays and land immediately.
+  // Captured once: which intro to PLAY is decided on first paint (replaying the
+  // typing choreography on a resize would be jarring), and reduced-motion rarely
+  // toggles mid-session.
   const [{ motionOK, isMobileHero }] = useState(() => {
     if (typeof window === 'undefined')
       return { motionOK: false, isMobileHero: false };
@@ -206,6 +209,18 @@ const App = () => {
   const playHeroIntroMobile = motionOK && isMobileHero;
   const windowOpenDelayMs = playHeroIntro ? HERO_WINDOW_OPEN_MS : 0;
   const loadDelayMs = playHeroIntro ? HERO_LOAD_DELAY_MS : 0;
+
+  // The editor's steady-state LAYOUT (portrait iframes, no directions panel,
+  // auto-cycling) must track the viewport — unlike the one-shot intro above —
+  // so widening past 768px after a phone load lands on the desktop layout.
+  const [isMobileViewport, setIsMobileViewport] = useState(isMobileHero);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)');
+    const update = () => setIsMobileViewport(!mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   // Hero choreography: the agent chat starts centered (drawing the eye to the
   // prompt as it types), then slides to the right once the browser window has
@@ -373,10 +388,11 @@ const App = () => {
                 // Mobile cycles through the options on its own (no directions
                 // panel) and renders each variant's portrait (mobile-first)
                 // layout; desktop stays pinned, shows the panel, and uses the
-                // 1280px layout.
-                autoPlay={playHeroIntroMobile}
-                showDirections={!isMobileHero}
-                portrait={isMobileHero}
+                // 1280px layout. Driven by the reactive viewport flag so a
+                // resize across 768px switches layouts to match.
+                autoPlay={isMobileViewport && motionOK}
+                showDirections={!isMobileViewport}
+                portrait={isMobileViewport}
                 autoAdvanceMs={2000}
                 initialVariantId={SKEUOMORPHIC_DECK_ID}
                 loadDelayMs={loadDelayMs}
