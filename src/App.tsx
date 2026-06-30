@@ -190,14 +190,37 @@ const App = () => {
   // sequence. Decide once, synchronously on first render, so the showcase never
   // starts in a delayed/blank state it then has to correct. When the intro does
   // NOT play, the window and variants drop their delays and land immediately.
-  const [playHeroIntro] = useState(
-    () =>
-      typeof window !== 'undefined' &&
-      !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
-      window.matchMedia('(min-width: 768px)').matches,
-  );
+  // Captured once: which intro to PLAY is decided on first paint (replaying the
+  // typing choreography on a resize would be jarring), and reduced-motion rarely
+  // toggles mid-session.
+  const [{ motionOK, isMobileHero }] = useState(() => {
+    if (typeof window === 'undefined')
+      return { motionOK: false, isMobileHero: false };
+    return {
+      motionOK: !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+      isMobileHero: !window.matchMedia('(min-width: 768px)').matches,
+    };
+  });
+  // Desktop (md+): the agent chat floats over the editor and types while the
+  // window opens — both visible at once. Mobile: there isn't room for that, so
+  // the intro is sequential (agent types alone → minimizes → editor maximizes
+  // and cycles options). Reduced-motion users get neither and land on the editor.
+  const playHeroIntro = motionOK && !isMobileHero;
+  const playHeroIntroMobile = motionOK && isMobileHero;
   const windowOpenDelayMs = playHeroIntro ? HERO_WINDOW_OPEN_MS : 0;
   const loadDelayMs = playHeroIntro ? HERO_LOAD_DELAY_MS : 0;
+
+  // The editor's steady-state LAYOUT (portrait iframes, no directions panel,
+  // auto-cycling) must track the viewport — unlike the one-shot intro above —
+  // so widening past 768px after a phone load lands on the desktop layout.
+  const [isMobileViewport, setIsMobileViewport] = useState(isMobileHero);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)');
+    const update = () => setIsMobileViewport(!mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   // Hero choreography: the agent chat starts centered (drawing the eye to the
   // prompt as it types), then slides to the right once the browser window has
@@ -234,6 +257,26 @@ const App = () => {
     },
     [],
   );
+
+  // Mobile hero phase machine: 'agent' (the agent window types alone) →
+  // 'minimizing' (it scales/fades out) → 'editor' (the editor maximizes in its
+  // place and cycles options). Non-mobile or reduced-motion starts at 'editor'.
+  const [mobilePhase, setMobilePhase] = useState<
+    'agent' | 'minimizing' | 'editor'
+  >(() => (playHeroIntroMobile ? 'agent' : 'editor'));
+  const mobileTimers = useRef<number[]>([]);
+  const handleMobileAgentComplete = () => {
+    // Let the "6 directions ready" result sit a beat, then minimize the agent
+    // and hand off to the editor once the minimize animation (~0.5s) finishes.
+    mobileTimers.current.push(
+      window.setTimeout(() => setMobilePhase('minimizing'), 1100),
+      window.setTimeout(() => setMobilePhase('editor'), 1100 + 520),
+    );
+  };
+  useEffect(() => () => mobileTimers.current.forEach(clearTimeout), []);
+  // During the agent phase the editor isn't mounted yet; it takes over once the
+  // agent has minimized out.
+  const showMobileAgent = playHeroIntroMobile && mobilePhase !== 'editor';
 
   const renderDownloadPanel = () => {
     return (
@@ -313,20 +356,49 @@ const App = () => {
           className="relative z-10 flex w-full justify-center bg-cover bg-center p-4 sm:p-6 md:p-10"
           style={{ backgroundImage: "url('/images/halftone-bg.webp')" }}
         >
-          <BrowserFrame
-            url="localhost:4000"
-            draggable
-            animateOpen
-            openDelayMs={windowOpenDelayMs}
-            className="w-full max-w-6xl"
-          >
-            <VariantsShowcase
-              heightClassName="h-[58vh] min-h-[440px]"
-              autoPlay={false}
-              initialVariantId={SKEUOMORPHIC_DECK_ID}
-              loadDelayMs={loadDelayMs}
-            />
-          </BrowserFrame>
+          {showMobileAgent ? (
+            // Mobile intro: the agent window types the request + MCP calls on its
+            // own (full hero box), then minimizes to hand off to the editor.
+            <div
+              className="w-full max-w-6xl"
+              style={{ height: '58vh', minHeight: 440 }}
+            >
+              <AgentTerminal
+                loop={false}
+                typeMs={28}
+                script={HERO_SESSION}
+                onComplete={handleMobileAgentComplete}
+                className={`h-full w-full ${
+                  mobilePhase === 'minimizing'
+                    ? 'origin-center animate-[rivet-mobile-minimize_0.5s_cubic-bezier(0.7,0,0.84,0)_forwards]'
+                    : ''
+                }`}
+              />
+            </div>
+          ) : (
+            <BrowserFrame
+              url="localhost:4000"
+              draggable
+              animateOpen
+              openDelayMs={windowOpenDelayMs}
+              className="w-full max-w-6xl"
+            >
+              <VariantsShowcase
+                heightClassName="h-[58vh] min-h-[440px]"
+                // Mobile cycles through the options on its own (no directions
+                // panel) and renders each variant's portrait (mobile-first)
+                // layout; desktop stays pinned, shows the panel, and uses the
+                // 1280px layout. Driven by the reactive viewport flag so a
+                // resize across 768px switches layouts to match.
+                autoPlay={isMobileViewport && motionOK}
+                showDirections={!isMobileViewport}
+                portrait={isMobileViewport}
+                autoAdvanceMs={2000}
+                initialVariantId={SKEUOMORPHIC_DECK_ID}
+                loadDelayMs={loadDelayMs}
+              />
+            </BrowserFrame>
+          )}
 
           {/* Floating agent chat (bottom-right) that "drives" the demo: it types
               the prompt + Rivet MCP tool calls, then the window opens and the

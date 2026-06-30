@@ -45,6 +45,8 @@ export const useVariantsDemo = (
     firstReadyMs?: number;
     /** Override when the remaining directions resolve (default 2800ms). */
     allReadyMs?: number;
+    /** Auto-advance interval when autoPlay is on (default 1500ms). */
+    autoAdvanceMs?: number;
     /**
      * Inject a custom variant list (defaults to the hero's jersey VARIANTS).
      * MUST be a stable module-level reference — passing a fresh array each
@@ -57,6 +59,7 @@ export const useVariantsDemo = (
   const startDelayMs = Math.max(0, options?.startDelayMs ?? 0);
   const firstReadyMs = options?.firstReadyMs ?? FIRST_READY_MS;
   const allReadyMs = options?.allReadyMs ?? ALL_READY_MS;
+  const autoAdvanceMs = options?.autoAdvanceMs ?? AUTO_ADVANCE_MS;
   const initialId =
     options?.initialId && SOURCE.some((v) => v.id === options.initialId)
       ? options.initialId
@@ -174,9 +177,9 @@ export const useVariantsDemo = (
   useEffect(() => {
     if (!autoPlay || editingId || variants.length <= 1) return;
     if (readyIds.size < variants.length) return;
-    const t = setInterval(advance, AUTO_ADVANCE_MS);
+    const t = setInterval(advance, autoAdvanceMs);
     return () => clearInterval(t);
-  }, [autoPlay, editingId, variants.length, readyIds.size, advance]);
+  }, [autoPlay, editingId, variants.length, readyIds.size, advance, autoAdvanceMs]);
 
   return {
     variants,

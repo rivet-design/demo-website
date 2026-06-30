@@ -283,6 +283,20 @@
   }
 }
 
+/* Mobile hero handoff: the in-flow agent window scales/fades down (no translate
+   centering, unlike the desktop floating chat) so the editor can maximize in
+   its place. */
+@keyframes rivet-mobile-minimize {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.4) translateY(6%);
+    opacity: 0;
+  }
+}
+
 /* Hard on/off blink for the agent prompt's text cursor. */
 @keyframes rivet-caret-blink {
   0%,
