@@ -89,8 +89,10 @@ const CommentDemoSection = () => {
         </div>
 
         {/* Copy is the outer (right) column at lg; lg:pr-8 keeps it off the
-            page's right guide rule (consistent across all workflow panels). */}
-        <div className="order-1 max-w-[440px] lg:order-2 lg:pr-8">
+            page's right guide rule (consistent across all workflow panels).
+            Below lg, px-4 gives the title + subtitle a symmetric gutter so they
+            aren't flush to the section's edge. */}
+        <div className="order-1 max-w-[440px] px-4 lg:order-2 lg:px-0 lg:pr-8">
           <h2 className="mt-3 font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
             Explore with precision.
           </h2>
