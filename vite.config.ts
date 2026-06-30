@@ -13,6 +13,9 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    // Rivet's original-code panel needs production/preview builds to expose the
+    // TSX source locations that Vite's dev server already provides.
+    sourcemap: true,
   },
   server: {
     port: 3001,
