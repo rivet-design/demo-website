@@ -301,9 +301,10 @@ const App = () => {
         {/* Hand-drawn blueprint guide lines, behind all content. */}
         <SketchGuides />
         <NavBar />
-        {/* px-4 below lg gives the hero title a symmetric gutter on mobile, to
-            match the workflow panel titles; cleared at lg. */}
-        <div className="relative z-10 flex w-full items-start justify-start px-4 lg:px-0">
+        {/* px-4 below lg gives the hero title a symmetric gutter on mobile; at
+            lg it switches to lg:pl-8 so the title sits off the page's left guide
+            rule by the same inset as the workflow panel titles. */}
+        <div className="relative z-10 flex w-full items-start justify-start px-4 lg:px-0 lg:pl-8">
           {renderHeroText()}
         </div>
 
