@@ -301,7 +301,9 @@ const App = () => {
         {/* Hand-drawn blueprint guide lines, behind all content. */}
         <SketchGuides />
         <NavBar />
-        <div className="relative z-10 flex w-full items-start justify-start">
+        {/* px-4 below lg gives the hero title a symmetric gutter on mobile, to
+            match the workflow panel titles; cleared at lg. */}
+        <div className="relative z-10 flex w-full items-start justify-start px-4 lg:px-0">
           {renderHeroText()}
         </div>
 
@@ -358,7 +360,7 @@ const App = () => {
         {/* Subtitle + CTA, moved below the fold to sit under the UI variants
             shell. */}
         <FadeInText>
-          <div className="relative z-10 flex flex-col items-center gap-8 py-12 text-center md:gap-10 md:py-20">
+          <div className="relative z-10 flex flex-col items-center gap-8 px-4 py-12 text-center md:gap-10 md:py-20 lg:px-0">
             <span className="max-w-2xl font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
               Rivet understands your references, and then explores dozens of
               design directions with you.
