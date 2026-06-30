@@ -154,7 +154,11 @@
     padding:var(--sp-3) 0 var(--sp-4);
   }
   @media (max-width:720px){
-    .tt-body{grid-template-columns:1fr;gap:var(--sp-4);padding:var(--sp-3) 0 var(--sp-4);}
+    /* minmax(0,1fr) (not 1fr) so a wide child's min-content can't blow the
+       single column past the viewport; min-width:0 lets the children shrink. */
+    .tt-body{grid-template-columns:minmax(0,1fr);gap:var(--sp-4);padding:var(--sp-3) 0 var(--sp-4);}
+    .tt-body > *{min-width:0;}
+    .kit-svg-wrap{margin-left:auto;margin-right:auto;}
   }
   /* ===== jersey panel ===== */
   .kit-panel{

@@ -501,8 +501,22 @@ body.gl-on .tt-screen *{text-shadow:0 1px 3px rgba(0,30,16,.55) !important;}
    to a fixed 360px which overflows. Cap it and shrink the refraction stage so
    the jersey fits without horizontal scroll. */
 @media (max-width:480px){
-  .kit-svg-wrap{width:100% !important;max-width:240px !important;margin:18px auto 32px !important;}
-  .lg-stage{zoom:.6;}
+  /* Stack the bento into a single column so the jersey island spans the full
+     width and renders large, instead of a cramped half-width cell the zoomed
+     refraction stage overflows. */
+  .tt-screen{
+    grid-template-columns:1fr !important;
+    grid-template-areas:
+      "title"
+      "clock"
+      "status"
+      "jersey"
+      "menu"
+      "opts"
+      "foot" !important;
+  }
+  .kit-svg-wrap{width:100% !important;max-width:300px !important;margin:14px auto 24px !important;}
+  .lg-stage{zoom:.72;}
 }
 .lg-shadow,.lg-glass,.lg-pattern,.lg-sheen{
   position:absolute;inset:0;
