@@ -279,7 +279,7 @@ const App = () => {
             {/* Title only, centered. The subtitle + CTA now live below the
                 UI variants shell; the nav also carries a CTA. */}
             <div className="flex flex-col items-start gap-4">
-              <span className="type-display text-[clamp(1.25rem,6vw,2.5rem)] font-normal normal-case leading-[1.05] text-black sm:text-[clamp(2.5rem,6.5vw,8rem)]">
+              <span className="type-display text-[clamp(1.5rem,7.5vw,2.5rem)] font-normal normal-case leading-[1.05] text-black sm:text-[clamp(2.5rem,6.5vw,8rem)]">
                 Explore dozens of design directions from your agent.
               </span>
             </div>
