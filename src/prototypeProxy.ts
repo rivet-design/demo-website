@@ -83,6 +83,19 @@ export const isHopByHopHeader = (headerName: string): boolean => {
 };
 
 /**
+ * Returns true when the resolved upstream would route back to this service.
+ */
+export const isProxyLoopRequest = (
+  headers: ProxyHeaderMap,
+  targetOrigin: string,
+): boolean => {
+  const targetHost = new URL(targetOrigin).host;
+  const requestHost = getFirstForwardedValue(headers.host);
+  const forwardedHost = getFirstForwardedValue(headers['x-forwarded-host']);
+  return targetHost === requestHost || targetHost === forwardedHost;
+};
+
+/**
  * Builds upstream headers while preserving auth and public host context.
  */
 export const createPrototypeProxyHeaders = (
@@ -100,8 +113,10 @@ export const createPrototypeProxyHeaders = (
     proxyHeaders[name] = value;
   });
 
-  // The prototype host uses forwarded host context when constructing share URLs.
-  proxyHeaders.host = publicHost;
+  // The upstream edge routes by Host, so it must see the upstream's own host.
+  // The prototype host reads the browser-visible host from x-forwarded-host
+  // when constructing share URLs.
+  proxyHeaders.host = target.host;
   proxyHeaders['x-forwarded-host'] = publicHost;
   proxyHeaders['x-forwarded-proto'] =
     getFirstForwardedValue(headers['x-forwarded-proto']) ?? 'https';

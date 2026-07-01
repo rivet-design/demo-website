@@ -1,6 +1,7 @@
 import {
   createPrototypeProxyHeaders,
   isPrototypeProxyRequest,
+  isProxyLoopRequest,
   resolvePrototypeHostOrigin,
 } from './prototypeProxy';
 
@@ -57,7 +58,7 @@ describe('prototype proxy', () => {
   });
 
   describe('createPrototypeProxyHeaders', () => {
-    it('preserves auth and forwards the browser-visible host', () => {
+    it('targets the upstream host and forwards the browser-visible host', () => {
       const headers = createPrototypeProxyHeaders(
         {
           authorization: 'Bearer token',
@@ -70,7 +71,7 @@ describe('prototype proxy', () => {
 
       expect(headers.authorization).toBe('Bearer token');
       expect(headers.connection).toBeUndefined();
-      expect(headers.host).toBe('rivet.design');
+      expect(headers.host).toBe('rivet-prototype-host.onrender.com');
       expect(headers['x-forwarded-host']).toBe('rivet.design');
       expect(headers['x-forwarded-proto']).toBe('https');
       expect(headers['content-type']).toBe('application/json');
@@ -86,8 +87,37 @@ describe('prototype proxy', () => {
         'https://rivet-prototype-host.onrender.com',
       );
 
-      expect(headers.host).toBe('rivet.design');
+      expect(headers.host).toBe('rivet-prototype-host.onrender.com');
       expect(headers['x-forwarded-host']).toBe('rivet.design');
+    });
+  });
+
+  describe('isProxyLoopRequest', () => {
+    it('detects an upstream that matches the request host', () => {
+      expect(
+        isProxyLoopRequest({ host: 'rivet.design' }, 'https://rivet.design'),
+      ).toBe(true);
+    });
+
+    it('detects an upstream that matches the forwarded host', () => {
+      expect(
+        isProxyLoopRequest(
+          {
+            host: 'rivet-frontend.onrender.com',
+            'x-forwarded-host': 'rivet.design',
+          },
+          'https://rivet.design',
+        ),
+      ).toBe(true);
+    });
+
+    it('allows a distinct upstream host', () => {
+      expect(
+        isProxyLoopRequest(
+          { host: 'rivet.design' },
+          'https://rivet-prototype-host.onrender.com',
+        ),
+      ).toBe(false);
     });
   });
 });
