@@ -10,6 +10,7 @@ import {
   createPrototypeProxyHeaders,
   isHopByHopHeader,
   isPrototypeProxyRequest,
+  isProxyLoopRequest,
   resolvePrototypeHostOrigin,
 } from './src/prototypeProxy';
 
@@ -45,6 +46,17 @@ export const proxyPrototypeRequest = (
   res: ServerResponse,
   targetOrigin: string,
 ): void => {
+  if (isProxyLoopRequest(req.headers, targetOrigin)) {
+    console.error(
+      `Prototype proxy refused a self-referencing upstream (${targetOrigin}); check RIVET_PROTOTYPE_HOST_URL / PROTOTYPE_HOST_ORIGIN`,
+    );
+    res.writeHead(BAD_GATEWAY_STATUS, {
+      'content-type': 'text/plain; charset=utf-8',
+    });
+    res.end('Prototype host proxy misconfigured');
+    return;
+  }
+
   const targetUrl = createProxyTargetUrl(targetOrigin, req.url);
   const requestFn =
     targetUrl.protocol === 'https:' ? httpsRequest : httpRequest;
