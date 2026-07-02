@@ -21,11 +21,11 @@ import {
 
 /**
  * Desktop two-pane content for the "Explore with precision" panel, placed inside
- * a BrowserFrame: a scaled live <Gallery> with the scripted comment overlay on
- * the LEFT, and the directions list on the RIGHT — mirroring the hero's
- * VariantsShowcase. A scripted drag leaves the comment "Try simpler layouts",
- * then layout directions generate on the right; selecting one restyles the
- * gallery on the left.
+ * a BrowserFrame: the directions list docked on the LEFT (matching core's
+ * left-hand panel) and a scaled live <Gallery> with the scripted comment
+ * overlay beside it — mirroring the hero's VariantsShowcase. A scripted drag
+ * leaves the comment "Try simpler layouts", then layout directions generate on
+ * the left; selecting one restyles the gallery.
  */
 
 type Selected = { id: string; gallery?: DemoVariant['gallery'] } | null;
@@ -191,7 +191,9 @@ const CommentDemoShell = ({
   const showDirections = !mobile && varied;
 
   return (
-    <div ref={rootRef} className="flex h-full">
+    // overflow-hidden clips the directions panel while it sits off-canvas at a
+    // negative margin (the core-style slide-in below).
+    <div ref={rootRef} className="flex h-full overflow-hidden">
       {/* Left: scaled live gallery + scripted comment overlay. Fills the frame's
           content height (the panel's 16/11 box drives the size). */}
       <div
@@ -238,22 +240,28 @@ const CommentDemoShell = ({
         ) : null}
       </div>
 
-      {/* Right: the directions panel (desktop only). Nothing renders here until
-          the comment is "varied" (generating); then it slides in by recreating
-          Rivet Core's actual panel animation (src/ui/src/App.tsx) — a width 0 →
-          open collapse + opacity fade on the [0.19, 1, 0.22, 1] ease-out curve
-          over 0.45s, overflow-hidden. Scaled down slightly vs the hero's. On
-          mobile this pane is omitted entirely; the gallery reflows instead. */}
+      {/* Left: the directions panel (desktop only, order-first). Nothing
+          renders inside until the comment is "varied" (generating); then it
+          slides in by recreating Rivet Core's actual panel animation
+          (src/ui/src/App.tsx) — the panel keeps a FIXED width and slides via
+          marginLeft (−width → 0) + opacity on the [0.22, 1, 0.36, 1] ease-out
+          curve over 0.2s, so the content stays rigid during the slide. Scaled
+          down slightly vs the hero's. On mobile this pane is omitted entirely;
+          the gallery reflows instead. */}
       {!mobile && (
       <motion.div
-        className="relative h-full shrink-0"
-        initial={play ? { width: 0, opacity: 0 } : false}
+        className="relative order-first h-full shrink-0"
+        initial={play ? { marginLeft: -DIRECTIONS_BOX_W, opacity: 0 } : false}
         animate={{
-          width: showDirections ? DIRECTIONS_BOX_W : 0,
+          marginLeft: showDirections ? 0 : -DIRECTIONS_BOX_W,
           opacity: showDirections ? 1 : 0,
         }}
-        transition={{ ease: [0.19, 1, 0.22, 1], duration: 0.45 }}
-        style={{ overflow: 'hidden', willChange: 'width' }}
+        transition={{ ease: [0.22, 1, 0.36, 1], duration: 0.2 }}
+        style={{
+          width: DIRECTIONS_BOX_W,
+          overflow: 'hidden',
+          willChange: 'margin-left, opacity',
+        }}
       >
         {showDirections ? (
           <div

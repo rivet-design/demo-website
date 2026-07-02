@@ -26,9 +26,10 @@ const PORTRAIT_H = 920;
 const MIN_DESKTOP_H = 440;
 
 /**
- * The Rivet variants interaction — the inner content of a BrowserFrame: a
- * full-height variant preview on the left and the Directions panel on the
- * right. Self-contained (owns the controller + iframe lifecycle) so it can be
+ * The Rivet variants interaction — the inner content of a BrowserFrame: the
+ * Directions panel docked on the left (matching core's left-hand panel) and a
+ * full-height variant preview beside it. Self-contained (owns the controller +
+ * iframe lifecycle) so it can be
  * dropped into the /variants page or the landing hero alike.
  *
  * Iframes are mounted lazily and kept alive (stacked, opacity-toggled) so
@@ -235,8 +236,10 @@ const VariantsShowcase = ({
         )}
       </div>
 
-      {/* Directions panel — right side, inside the shell. Hidden for the mobile
-          hero, where the preview cycles options on its own. */}
+      {/* Directions panel — docked on the LEFT at sm+ (the aside carries
+          sm:order-first, mirroring core's order-first panel); stacks below the
+          preview on mobile. Hidden for the mobile hero, where the preview
+          cycles options on its own. */}
       {showDirections && <DirectionsPanel ctrl={ctrl} />}
     </div>
   );

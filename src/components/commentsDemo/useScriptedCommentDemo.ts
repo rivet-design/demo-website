@@ -163,11 +163,15 @@ export const useScriptedCommentDemo = ({
   // Release point (popover + marker anchor) at the box's TOP-LEFT corner — y near
   // the top (< 0.6 of height) so the popover opens BELOW the pin, top-left.
   const popoverAt = dragEnd;
-  // The popover opens below the pin; its "Vary" button sits in the footer below
-  // the pin, in the right-hand button group. This targets the button so the
-  // open-hand cursor's palm (its center, ~11×13px into the 24px glyph) lands on
-  // it — hence the offset is the button center minus that palm offset.
-  const varyAt = { x: popoverAt.x + 18, y: popoverAt.y + 120 };
+  // The popover opens below the pin; its "Vary" pill sits in the action bar's
+  // right-hand cluster, left of the circular send button. This targets the pill
+  // so the open-hand cursor's palm (its center, ~11×13px into the 24px glyph)
+  // lands on it — the offset is the pill center minus that palm offset.
+  // Geometry (chat-composer popover): top = pin.y + 14 offset; pill center sits
+  // ~84px below the popover top (16 pad + 44 one-line textarea + 8 gap + half
+  // the 32px action row) and ~65px right of the pin (popover left = pin.x −
+  // 160, clamped to 20; right cluster hugs the card's right padding edge).
+  const varyAt = { x: popoverAt.x + 54, y: popoverAt.y + 85 };
   // Cursor fades in up-and-left of the start corner, then eases onto it.
   const entry = { x: dragStart.x - 70, y: dragStart.y - 50 };
 

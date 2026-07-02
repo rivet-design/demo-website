@@ -208,6 +208,7 @@
   --main-light: #1e1e22;
   --main-input: #2e2e2e;
   --main-border: #232328;
+  --main-hover: #404040;
   --content: #ffffff;
   --content-muted: #d1d5db;
   --content-subtle: #9ca3af;
@@ -270,15 +271,16 @@
 
 /* Minimize for the hero agent chat — the exact reverse of the browser window's
    open (scale 1 -> 0.35, opacity 1 -> 0, with the mirrored easing applied on the
-   element), collapsing toward the bottom-right (transform-origin set there). The
-   leading translate keeps it anchored while it shrinks. */
+   element), collapsing toward the bottom-left (transform-origin set there),
+   where the chat now floats over the left-docked directions panel. The leading
+   translate keeps it anchored while it shrinks. */
 @keyframes rivet-chat-minimize {
   0% {
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
   }
   100% {
-    transform: translate(-50%, -50%) translate(14%, 14%) scale(0.35);
+    transform: translate(-50%, -50%) translate(-14%, 14%) scale(0.35);
     opacity: 0;
   }
 }
