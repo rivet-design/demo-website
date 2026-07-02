@@ -5,9 +5,9 @@ import type { Comment, CommentStatus } from './types';
 type Props = {
   comment: Comment;
   index: number;
-  /** Container-local pixel position of the marker tip */
+  /** Container-local pixel position of the pin point (the tail tip) */
   position: { x: number; y: number };
-  /** Container height in px — used to flip the caret upward near the bottom edge */
+  /** Container height in px — used to flip the tail near the top edge */
   containerHeight: number;
   /**
    * Container width in px. When provided, the hover preview is clamped to stay
@@ -20,18 +20,23 @@ type Props = {
   onHoverEnd?: () => void;
 };
 
+// Port of Rivet core's CommentMarker (src/ui/src/components/CommentMarker.tsx).
+// Core intentionally does NOT communicate agent progress on the marker: a
+// comment looks the same whether it's freshly placed, in flight, or complete —
+// only `error` stays distinct so failures aren't silently swallowed.
 const STATUS_BG: Record<CommentStatus, string> = {
   pending: 'var(--primary)',
-  complete: 'var(--accent-success)',
+  complete: 'var(--primary)',
   error: 'var(--accent-error)',
 };
 
-const BUBBLE_W = 36;
-const BUBBLE_H = 28;
-const CARET_SIZE = 10;
-const CARET_HALF = CARET_SIZE / 2;
-const TIP_X = BUBBLE_W / 2;
-const TOTAL_H = BUBBLE_H + CARET_HALF;
+// Comment-pin geometry, matching core. A circle whose bottom-left corner is
+// squared off into a short tail (border-radius: 50% 50% 50% 0), so the marker
+// points down-left to its anchor — the classic chat/comment pin. The tail tip
+// is the box's bottom-left corner, which is what registers on the anchor point.
+const PIN_SIZE = 28;
+const BADGE = 20;
+const TOTAL_H = PIN_SIZE;
 const POPOVER_OFFSET_Y = 8;
 const ABOVE_THRESHOLD_PCT = 0.65;
 const PREVIEW_W = 200;
@@ -59,33 +64,33 @@ const CommentMarker = ({
   );
 
   // Two independent flips:
-  // - `markerBelowPin`: place the marker UNDER the pin only when there isn't
-  //   enough room above (pin too close to the top). Default is marker-above-pin
-  //   so the bubble doesn't cover content the pin is anchored to.
+  // - `markerBelowPin`: hang the pin UNDER its anchor (tail at the top-left)
+  //   only when there isn't enough room above — pin too close to the top.
+  //   Default is pin-above-anchor, tail at the bottom-left.
   // - `previewAboveMarker`: float the hover preview ABOVE the marker when the
   //   pin is in the lower portion of the panel, otherwise it would overflow
   //   the bottom edge of the (overflow-hidden) panel.
-  // The original Rivet impl uses one `isAbove` for both because it's
-  // position:fixed against the viewport, where overflow is harmless. In a
-  // panel-bounded port, both concerns must be tracked separately.
+  // Core uses one `isAbove` for both because it's position:fixed against the
+  // viewport, where overflow is harmless. In a panel-bounded port, both
+  // concerns must be tracked separately.
   const markerBelowPin = position.y < TOTAL_H;
   const previewAboveMarker =
     position.y / containerHeight > ABOVE_THRESHOLD_PCT;
   const previewText = comment.instruction;
 
-  // The hover preview is positioned relative to the marker root (which sits at
-  // `position.x - TIP_X`). Centered on the pin by default; when the container
-  // width is known, clamp its absolute left so a marker near an edge keeps its
+  // The anchor is the tail tip (the box's left corner) at position.x; the
+  // round head sits to its right, so center the preview under the head. When
+  // the container width is known, clamp so a marker near an edge keeps its
   // preview inside the panel instead of pushing it past the overflow-hidden
   // bounds (where it would be clipped behind the panel/frame).
-  const rootLeft = position.x - TIP_X;
-  const previewCenteredLeft = TIP_X - PREVIEW_W / 2;
+  const headCenterLocalX = PIN_SIZE / 2;
+  const previewCenteredLeft = headCenterLocalX - PREVIEW_W / 2;
   const previewLeft =
     containerWidth != null
       ? Math.min(
-          Math.max(rootLeft + previewCenteredLeft, PREVIEW_EDGE_PAD),
+          Math.max(position.x + previewCenteredLeft, PREVIEW_EDGE_PAD),
           containerWidth - PREVIEW_W - PREVIEW_EDGE_PAD,
-        ) - rootLeft
+        ) - position.x
       : previewCenteredLeft;
 
   return (
@@ -93,7 +98,7 @@ const CommentMarker = ({
       style={{
         position: 'absolute',
         top: markerBelowPin ? position.y : position.y - TOTAL_H,
-        left: position.x - TIP_X,
+        left: position.x,
         // Lift well above the gallery chrome + sibling markers while hovered so
         // the preview is never painted under adjacent panel content.
         zIndex: isHovered ? 80 : 36,
@@ -113,67 +118,57 @@ const CommentMarker = ({
       <motion.div
         style={{
           position: 'relative',
+          width: PIN_SIZE,
+          height: PIN_SIZE,
           cursor: 'pointer',
-          filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.2))',
+          filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.25))',
         }}
         onClick={handleEdit}
         initial={{ scale: 0.6, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 520, damping: 26, mass: 0.7 }}
       >
-        {/* Caret */}
+        {/* Comment pin: a circle with one corner squared into a tail. The tail
+            sits at the bottom-left, or flips to the top-left when the marker
+            hangs below its anchor point. */}
         <div
           style={{
             position: 'absolute',
+            inset: 0,
             background: 'var(--main)',
-            width: CARET_SIZE,
-            height: CARET_SIZE,
-            left: (BUBBLE_W - CARET_SIZE) / 2,
-            top: markerBelowPin ? -CARET_HALF : BUBBLE_H - CARET_HALF,
-            transform: 'rotate(45deg)',
-            borderRadius: 3,
+            borderRadius: markerBelowPin ? '0 50% 50% 50%' : '50% 50% 50% 0',
           }}
         />
 
-        {/* Bubble — dark capsule with a status-colored circle inside */}
+        {/* Numbered status circle, centered in the round head. */}
         <div
           style={{
-            position: 'relative',
+            position: 'absolute',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            borderRadius: 8,
-            background: 'var(--main)',
-            width: BUBBLE_W,
-            height: BUBBLE_H,
+            width: BADGE,
+            height: BADGE,
+            left: (PIN_SIZE - BADGE) / 2,
+            top: (PIN_SIZE - BADGE) / 2,
+            borderRadius: '50%',
+            background: STATUS_BG[comment.status],
           }}
         >
-          <div
+          <span
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 20,
-              height: 20,
-              borderRadius: '50%',
-              background: STATUS_BG[comment.status],
+              fontSize: 11,
+              fontWeight: 700,
+              lineHeight: 1,
+              color: '#fff',
             }}
           >
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                lineHeight: 1,
-                color: '#fff',
-              }}
-            >
-              {index + 1}
-            </span>
-          </div>
+            {index + 1}
+          </span>
         </div>
       </motion.div>
 
-      {/* Hover preview */}
+      {/* Hover preview — centered under the pin head, clamped to the panel */}
       <AnimatePresence>
         {isHovered && previewText ? (
           <motion.div

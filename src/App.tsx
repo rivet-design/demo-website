@@ -223,8 +223,8 @@ const App = () => {
   }, []);
 
   // Hero choreography: the agent chat starts centered (drawing the eye to the
-  // prompt as it types), then slides to the right once the browser window has
-  // animated in.
+  // prompt as it types), then slides to the left — over the directions panel —
+  // once the browser window has animated in.
   const [chatMoved, setChatMoved] = useState(false);
   // Once the agent finishes all its MCP calls, the chat minimizes out.
   const [chatMinimized, setChatMinimized] = useState(false);
@@ -400,12 +400,13 @@ const App = () => {
             </BrowserFrame>
           )}
 
-          {/* Floating agent chat (bottom-right) that "drives" the demo: it types
-              the prompt + Rivet MCP tool calls, then the window opens and the
-              directions generate and fade in. Decorative, so pointer-events are
-              off; hidden on small screens where the hero is already tight. It's
-              a one-shot intro — unmounted once it has minimized so a resize can
-              never bring it back. */}
+          {/* Floating agent chat (bottom-left, over the left-docked directions
+              panel) that "drives" the demo: it types the prompt + Rivet MCP
+              tool calls, then the window opens and the directions generate and
+              fade in. Decorative, so pointer-events are off; hidden on small
+              screens where the hero is already tight. It's a one-shot intro —
+              unmounted once it has minimized so a resize can never bring it
+              back. */}
           {playHeroIntro && !chatGone && (
             <AgentTerminal
               compact
@@ -419,11 +420,11 @@ const App = () => {
               }}
               className={`ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none absolute z-20 hidden h-[240px] w-[300px] -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-700 md:flex lg:h-[300px] lg:w-[380px] ${
                 chatMoved
-                  ? 'left-[70%] top-[61%] lg:left-[77%] lg:top-[63%]'
+                  ? 'left-[30%] top-[61%] lg:left-[23%] lg:top-[63%]'
                   : 'left-1/2 top-1/2'
               } ${
                 chatMinimized
-                  ? 'origin-bottom-right animate-[rivet-chat-minimize_0.6s_cubic-bezier(0.7,0,0.84,0)_forwards]'
+                  ? 'origin-bottom-left animate-[rivet-chat-minimize_0.6s_cubic-bezier(0.7,0,0.84,0)_forwards]'
                   : ''
               }`}
             />

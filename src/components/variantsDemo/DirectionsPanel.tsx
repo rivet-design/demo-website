@@ -1,6 +1,12 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Copy, MagnifyingGlass, PencilSimple, Trash } from '@phosphor-icons/react';
+import {
+  CaretDown,
+  Copy,
+  MagnifyingGlass,
+  PencilSimple,
+  Trash,
+} from '@phosphor-icons/react';
 import { cn } from './cn';
 import { springs } from './springs';
 import SparkleLoader from './SparkleLoader';
@@ -354,7 +360,7 @@ const DirectionsPanel = ({ ctrl }: { ctrl: VariantsDemoController }) => {
 
   return (
     <aside
-      className="rivet-variants flex h-[42%] w-full shrink-0 flex-col overflow-hidden border-t border-[var(--main-border)] bg-[var(--main)] font-main text-content sm:h-full sm:w-[340px] sm:border-l sm:border-t-0"
+      className="rivet-variants flex h-[42%] w-full shrink-0 flex-col overflow-hidden border-t border-[var(--main-border)] bg-[var(--main)] font-main text-content sm:order-first sm:h-full sm:w-[340px] sm:border-r sm:border-t-0"
     >
       {/* Header */}
       <div className="flex shrink-0 items-center px-3 py-2">
@@ -403,21 +409,33 @@ const DirectionsPanel = ({ ctrl }: { ctrl: VariantsDemoController }) => {
         )}
       </div>
 
-      {/* Footer */}
-      <div className="flex shrink-0 items-center justify-between gap-2 border-t border-[var(--main-border)] bg-[var(--main-light)] px-3 pb-4 pt-2">
-        <button
-          type="button"
-          onClick={ctrl.clearAll}
-          className="cursor-pointer rounded-md px-2 py-1.5 text-xs font-medium text-content-muted transition-colors hover:bg-[var(--main-input)] hover:text-content"
-        >
-          Clear all
-        </button>
-        <button
-          type="button"
-          className="cursor-pointer rounded-md bg-[var(--main-input)] px-2 py-1.5 text-xs font-medium text-content transition-colors hover:bg-[var(--main-hover)]"
-        >
-          Send to Claude Code
-        </button>
+      {/* Footer — port of the core Footer (AgentVariantsPanel.tsx): the
+          selected direction's title on the left, and the Share split button on
+          the right. Core dropped "Clear all" and the always-on "Send to …"
+          button, so the demo does too. The split button mirrors core's
+          SplitButton primary + caret segments (inert in the demo). */}
+      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-[var(--main-border)] bg-[var(--main-light)] px-3 pb-4 pt-2">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-medium text-content">
+            {ctrl.selected.label.trim() || 'Untitled direction'}
+          </div>
+        </div>
+        <div className="flex shrink-0 items-stretch">
+          <button
+            type="button"
+            className="flex h-7 shrink-0 cursor-pointer items-center gap-1.5 rounded-l-md bg-[var(--main-hover)] px-3 text-xs font-medium text-white transition-colors hover:bg-[var(--main-input)]"
+          >
+            Share
+          </button>
+          <button
+            type="button"
+            aria-label="More share actions"
+            title="More share actions"
+            className="h-7 shrink-0 cursor-pointer rounded-r-md border-l border-white/20 bg-[var(--main-hover)] px-1.5 text-white transition-colors hover:bg-[var(--main-input)]"
+          >
+            <CaretDown size={14} weight="bold" />
+          </button>
+        </div>
       </div>
     </aside>
   );

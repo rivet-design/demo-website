@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import { CardsThree } from '@phosphor-icons/react';
+import { ArrowUp, At, CardsThree, Image, Trash } from '@phosphor-icons/react';
 import SparkleLoader from '../variantsDemo/SparkleLoader';
+
+/**
+ * Port of Rivet core's CommentPopover (src/ui/src/components/CommentPopover.tsx)
+ * in its chat-composer form: a borderless auto-growing textarea over an action
+ * bar — utility icons (attach / reference) on the left, the Vary pill and the
+ * circular arrow send button on the right. Backend coupling is replaced by the
+ * onSubmit/onCancel callbacks; the attach/reference icons are decorative.
+ */
 
 type Props = {
   /** Container-local pixel position to anchor the popover */
@@ -25,6 +33,15 @@ const POPOVER_W = 320;
 const PAD = 12;
 const OFFSET_Y = 14;
 const FLIP_THRESHOLD_PCT = 0.6;
+// Matches core's COMMENT_TEXTAREA_MAX_HEIGHT_REM.
+const TEXTAREA_MAX_HEIGHT = '7.5rem';
+
+// Chat-composer growth: the textarea starts at one row and grows with content
+// (up to the max height), instead of reserving a fixed multi-row block.
+const autoResize = (el: HTMLTextAreaElement) => {
+  el.style.height = 'auto';
+  el.style.height = `${el.scrollHeight}px`;
+};
 
 const CommentPopover = ({
   position,
@@ -38,15 +55,9 @@ const CommentPopover = ({
   varying: varyingProp = false,
 }: Props) => {
   const [value, setValue] = useState(initialValue);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const [popoverHeight, setPopoverHeight] = useState(0);
-  // Drives the orange focus border + ring on the textarea — matches the
-  // Tailwind `focus:border-primary focus:ring-1 focus:ring-primary/30` rule
-  // on the real popover at src/ui/src/components/CommentPopover.tsx:436.
-  // Defaults true because the textarea is auto-focused on mount; saves a
-  // 1-frame flash where the border would render gray before onFocus fires.
-  const [isFocused, setIsFocused] = useState(true);
   // "Vary" shows an in-button ASCII generating state (like the variant rows)
   // before it resolves. The timer is cleared if the popover unmounts first.
   // The controlled `varyingProp` (scripted demo) is OR'd in below.
@@ -126,7 +137,8 @@ const CommentPopover = ({
         display: 'flex',
         flexDirection: 'column',
         gap: 8,
-        transformOrigin: isAbove ? 'bottom center' : 'top center',
+        // Core anchors the entrance scale just under the card's top edge.
+        transformOrigin: 'center 24px',
       }}
       initial={{ scale: 0.82, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
@@ -140,30 +152,31 @@ const CommentPopover = ({
       onPointerDown={(e) => e.stopPropagation()}
     >
       <textarea
-        ref={inputRef}
+        ref={(el) => {
+          inputRef.current = el;
+          if (el) autoResize(el);
+        }}
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => {
+          setValue(e.target.value);
+          autoResize(e.target);
+        }}
         onKeyDown={handleKeyDown}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
         placeholder="What should change?"
-        rows={3}
+        rows={1}
+        className="placeholder:text-[color:var(--content-subtle)]"
         style={{
           width: '100%',
           resize: 'none',
+          border: 'none',
           borderRadius: 8,
-          border: `1px solid ${isFocused ? 'var(--primary)' : 'var(--divider)'}`,
-          boxShadow: isFocused
-            ? '0 0 0 1px rgba(225, 64, 23, 0.3)'
-            : 'none',
-          transition: 'border-color 100ms, box-shadow 100ms',
           background: 'var(--main-light)',
           padding: 12,
-          fontSize: 13,
-          lineHeight: 1.4,
+          fontSize: 14,
+          lineHeight: '20px',
           color: 'var(--content)',
           outline: 'none',
-          maxHeight: '9rem',
+          maxHeight: TEXTAREA_MAX_HEIGHT,
           overflowY: 'auto',
         }}
       />
@@ -173,9 +186,11 @@ const CommentPopover = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: 8,
         }}
       >
+        {/* Left cluster: delete (existing comments) + the composer utilities.
+            Attach/reference are decorative in the demo — they complete the
+            core composer's silhouette without a backend. */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           {canDelete && onDelete ? (
             <button
@@ -187,11 +202,11 @@ const CommentPopover = ({
                 background: 'transparent',
                 border: 'none',
                 color: 'var(--content-subtle)',
-                padding: 6,
-                borderRadius: 6,
+                padding: 4,
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                cursor: 'pointer',
                 transition: 'color 120ms',
               }}
               onMouseEnter={(e) => {
@@ -203,15 +218,64 @@ const CommentPopover = ({
                   'var(--content-subtle)';
               }}
             >
-              <TrashIcon />
+              <Trash size={16} weight="bold" />
             </button>
           ) : null}
+          <button
+            type="button"
+            title="Attach images"
+            aria-label="Attach images"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--content-subtle)',
+              padding: 4,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'color 120ms',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color =
+                'var(--content)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color =
+                'var(--content-subtle)';
+            }}
+          >
+            <Image size={16} weight="bold" />
+          </button>
+          <button
+            type="button"
+            title="Reference a direction"
+            aria-label="Reference a direction"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--content-subtle)',
+              padding: 4,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'color 120ms',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color =
+                'var(--content)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color =
+                'var(--content-subtle)';
+            }}
+          >
+            <At size={16} weight="bold" />
+          </button>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* "Vary" — the very secondary button (outlined, fills on hover),
-              symmetric with Rivet Core. Clicking it shows an in-button ASCII
-              generating state, like the variant rows. */}
+          {/* "Vary" — core's filled secondary pill. Clicking it shows an
+              in-button ASCII generating state, like the variant rows. */}
           <button
             type="button"
             onClick={handleVary}
@@ -221,13 +285,13 @@ const CommentPopover = ({
               alignItems: 'center',
               justifyContent: 'center',
               gap: 6,
-              minWidth: 82,
-              background: 'transparent',
-              border: '1px solid var(--main-border)',
+              minWidth: 78,
+              background: 'var(--main-input)',
+              border: 'none',
               color: 'var(--content)',
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: 500,
-              padding: '6px 14px',
+              padding: '6px 12px',
               borderRadius: 999,
               opacity: isSaveEnabled ? 1 : 0.5,
               cursor: isSaveEnabled && !varying ? 'pointer' : 'not-allowed',
@@ -236,16 +300,16 @@ const CommentPopover = ({
             onMouseEnter={(e) => {
               if (isSaveEnabled && !varying) {
                 (e.currentTarget as HTMLButtonElement).style.background =
-                  'var(--main-input)';
+                  'var(--main-hover)';
               }
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLButtonElement).style.background =
-                'transparent';
+                'var(--main-input)';
             }}
           >
             {varying ? (
-              <SparkleLoader className="text-[13px] text-[color:var(--content)]" />
+              <SparkleLoader className="text-[14px] text-[color:var(--content)]" />
             ) : (
               <>
                 <CardsThree size={16} weight="bold" />
@@ -253,19 +317,24 @@ const CommentPopover = ({
               </>
             )}
           </button>
+          {/* Send — core's circular arrow submit ("Send to agent"). */}
           <button
             type="button"
             onClick={handleSubmit}
             disabled={!isSaveEnabled || varying}
+            title="Send to agent"
+            aria-label="Send to agent"
             style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               background: 'var(--primary)',
               border: 'none',
               color: '#fff',
-              fontSize: 13,
-              fontWeight: 500,
-              padding: '6px 20px',
+              padding: 8,
               borderRadius: 999,
               opacity: isSaveEnabled && !varying ? 1 : 0.5,
+              cursor: isSaveEnabled && !varying ? 'pointer' : 'not-allowed',
               transition: 'background 120ms',
             }}
             onMouseEnter={(e) => {
@@ -279,24 +348,12 @@ const CommentPopover = ({
                 'var(--primary)';
             }}
           >
-            {initialValue ? 'Save' : 'Apply'}
+            <ArrowUp size={16} weight="bold" />
           </button>
         </div>
       </div>
     </motion.div>
   );
 };
-
-const TrashIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 256 256"
-    fill="currentColor"
-    aria-hidden="true"
-  >
-    <path d="M216 48h-40v-8a24 24 0 0 0-24-24h-48a24 24 0 0 0-24 24v8H40a8 8 0 0 0 0 16h8v144a16 16 0 0 0 16 16h128a16 16 0 0 0 16-16V64h8a8 8 0 0 0 0-16ZM96 40a8 8 0 0 1 8-8h48a8 8 0 0 1 8 8v8H96Zm96 168H64V64h128Zm-80-104v64a8 8 0 0 1-16 0v-64a8 8 0 0 1 16 0Zm48 0v64a8 8 0 0 1-16 0v-64a8 8 0 0 1 16 0Z" />
-  </svg>
-);
 
 export default CommentPopover;
