@@ -96,7 +96,7 @@ const CommentDemoSection = () => {
           <h2 className="hero-title-size mt-3 font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
             Explore with precision.
           </h2>
-          <p className="mt-4 text-[16px] leading-[1.6] text-black/70 md:text-[17px]">
+          <p className="landing-subtext mt-4 text-black/70">
             Comment on any part of your interface and Rivet explores focused
             design directions for just that region.
           </p>

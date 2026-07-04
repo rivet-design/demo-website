@@ -81,7 +81,7 @@ const AgentTerminalSection = () => {
           <h2 className="hero-title-size mt-3 font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
             Works with your agent.
           </h2>
-          <p className="mt-4 text-[16px] leading-[1.8] text-black/70 md:text-[17px]">
+          <p className="landing-subtext mt-4 text-black/70">
             Use Rivet with your{' '}
             <Vendor src="/images/claude.svg" color="#D97757" name="Claude" />,{' '}
             <Vendor src="/images/cursor.svg" color="#111111" name="Cursor" />,{' '}

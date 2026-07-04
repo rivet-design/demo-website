@@ -156,6 +156,26 @@
     }
   }
 
+  .landing-subtext {
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+  @media (min-width: 768px) {
+    .landing-subtext {
+      font-size: 1.0625rem;
+    }
+  }
+  @media (min-width: 1280px) {
+    .landing-subtext {
+      font-size: 1.1875rem;
+    }
+  }
+  @media (min-width: 1920px) {
+    .landing-subtext {
+      font-size: 1.25rem;
+    }
+  }
+
   /* Display: hero and splash headlines */
   .type-display-hero {
     @apply font-cta text-5xl font-bold leading-tight tracking-tight;

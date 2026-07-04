@@ -157,7 +157,7 @@ const ReferencesDemoSection = () => {
           <h2 className="hero-title-size mt-3 font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
             Bring your design references.
           </h2>
-          <p className="mt-4 text-[16px] leading-[1.6] text-black/70 md:text-[17px]">
+          <p className="landing-subtext mt-4 text-black/70">
             Pull in inspiration from{' '}
             <span className="inline-flex items-center gap-1 whitespace-nowrap align-[-0.12em] font-medium text-black">
               <PinterestIcon className="text-[#E60023]" />
@@ -204,7 +204,7 @@ const ReferencesDemoSection = () => {
               padding instead. */}
           <div className="absolute inset-0 flex items-center justify-center px-4 py-6 sm:px-6 sm:py-8 md:px-8 lg:justify-end lg:pr-8">
             <div
-              className="flex w-full max-w-[595px] items-start gap-3 sm:gap-4"
+              className="flex w-full max-w-[595px] items-start gap-3 sm:gap-4 lg:max-w-none"
               aria-hidden
             >
               {COLUMNS.map((col, ci) => (

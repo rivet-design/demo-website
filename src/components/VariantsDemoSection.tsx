@@ -104,7 +104,7 @@ const VariantsDemoSection = () => {
           <h2 className="hero-title-size mt-3 font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
             Explore lots of design directions
           </h2>
-          <p className="mt-4 text-[16px] leading-[1.6] text-black/70 md:text-[17px]">
+          <p className="landing-subtext mt-4 text-black/70">
             Fully explore the design space for any interface, big or small.
           </p>
         </div>
