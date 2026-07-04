@@ -44,6 +44,7 @@ const sparkle = (cx: number, cy: number, r = 8, inner = 1.8): SVGPathElement => 
 
 const SketchGuides = () => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const verticalSvgRef = useRef<SVGSVGElement>(null);
   // The entrance fade only plays on the FIRST draw. Every later draw (resize /
   // page-height change) re-runs the draw effect, which rebuilds the SVG from
   // scratch — so we must NOT re-hide the overlay then, or a continuous resize
@@ -51,8 +52,8 @@ const SketchGuides = () => {
   // draw, redraws render fully opaque.
   const firstDrawRef = useRef(true);
   // w/h track the full content container; vh is the viewport height (used to
-  // place the hero divider near the top); top is the nav's measured bottom edge
-  // so the frame starts right at the nav rather than a guessed offset.
+  // place the hero divider near the top); top is the nav's measured bottom edge,
+  // used for the horizontal rule below the nav.
   const [size, setSize] = useState({
     w: 0,
     h: 0,
@@ -60,6 +61,7 @@ const SketchGuides = () => {
     top: 0,
     divider: 0,
     heroBottom: 0,
+    footerTop: 0,
     rows: [] as number[],
   });
 
@@ -77,8 +79,7 @@ const SketchGuides = () => {
       const nav = parent.querySelector('nav') as HTMLElement | null;
       // The nav is sticky. While the page is scrolled, `offsetTop` reflects the
       // sticky position, so a resize can report "nav bottom" thousands of px
-      // down the document and redraw the vertical guides only near the footer.
-      // The guide frame should start below the nav's in-flow box at page top.
+      // down the document. Use the in-flow height for the nav-bottom rule.
       const top = nav ? Math.round(nav.offsetHeight) : 88;
       // During aggressive responsive reflow a resize/load callback can run
       // before the page has a usable content box. Keep the last valid drawing
@@ -95,6 +96,10 @@ const SketchGuides = () => {
       // flush along its base, mirroring the divider that hugs its top.
       const heroBottom = showcase
         ? Math.round(showcase.offsetTop + showcase.offsetHeight)
+        : 0;
+      const footer = parent.querySelector('footer') as HTMLElement | null;
+      const footerTop = footer
+        ? Math.round(footer.getBoundingClientRect().top - parent.getBoundingClientRect().top)
         : 0;
       // Horizontal rule positions framing each workflow panel (the grey panel
       // backgrounds were removed — these blueprint lines delineate them now).
@@ -130,9 +135,10 @@ const SketchGuides = () => {
         prev.top === top &&
         prev.divider === divider &&
         prev.heroBottom === heroBottom &&
+        prev.footerTop === footerTop &&
         prev.rows.join(',') === rows.join(',')
           ? prev
-          : { w, h, vh, top, divider, heroBottom, rows },
+          : { w, h, vh, top, divider, heroBottom, footerTop, rows },
       );
     };
     measure();
@@ -176,18 +182,28 @@ const SketchGuides = () => {
     const svg = svgRef.current;
     if (!svg || size.w === 0 || size.h === 0) return;
     while (svg.firstChild) svg.removeChild(svg.firstChild);
+    const verticalSvg = verticalSvgRef.current;
+    if (verticalSvg) {
+      while (verticalSvg.firstChild) verticalSvg.removeChild(verticalSvg.firstChild);
+    }
 
     const rc = rough.svg(svg);
-    const { w, h, vh, top, divider, heroBottom, rows } = size;
+    const verticalRc = verticalSvg ? rough.svg(verticalSvg) : null;
+    const { w, h, vh, top, divider, heroBottom, footerTop, rows } = size;
     // Very subtle hand-drawn character — nearly straight with a faint waver. A
     // fixed seed per stroke keeps the wobble stable so it never "jitters".
     const base = { stroke: ORANGE, strokeWidth: 1.2, roughness: 0.4, bowing: 0.5 };
 
-    const Lx = Math.round(w * 0.05); // left margin (matches the page's 5vw gutter)
-    const Rx = Math.round(w * 0.95); // right margin
+    const parent = svg.parentElement;
+    const gutterX = parent
+      ? parseFloat(window.getComputedStyle(parent).paddingLeft) || w * 0.05
+      : w * 0.05;
+    const Lx = Math.round(gutterX); // left margin (matches the page gutter)
+    const Rx = Math.round(w - gutterX); // right margin
     const Ty = top || 88; // at the nav's bottom edge
     const My = divider || Math.round(vh * 0.34); // top edge of the showcase panel
     const By = h - 40; // bottom rule, at the very end of the page
+    const Vy = footerTop || By; // vertical guide endpoint; footer stays unruled
 
     const reduceMotion =
       typeof window.matchMedia === 'function' &&
@@ -197,14 +213,21 @@ const SketchGuides = () => {
     // split into stacked segments to support a per-band scroll reveal; without
     // that reveal the segmentation only made the line read as broken where the
     // independently-perturbed segment endpoints failed to meet.)
-    const vline = (x: number, y1: number, y2: number, seed: number, dashed = false) => {
-      const g = rc.line(x, y1, x, y2, {
+    const vline = (
+      x: number,
+      y1: number,
+      y2: number,
+      seed: number,
+      dashed = false,
+    ) => {
+      if (!verticalSvg || !verticalRc) return;
+      const g = verticalRc.line(x, y1, x, y2, {
         ...base,
         seed,
         ...(dashed ? { strokeLineDash: [7, 7] } : {}),
       });
       g.setAttribute('opacity', '0.5');
-      svg.appendChild(g);
+      verticalSvg.appendChild(g);
     };
 
     const hline = (
@@ -246,8 +269,8 @@ const SketchGuides = () => {
     // panel edge with no visible gap.
     rows.forEach((ry, i) => hline(0, ry, w, ry, 20 + i, false, true));
     // Margin verticals run the FULL page height — left solid, right dashed.
-    vline(Lx, Ty, By, 14);
-    vline(Rx, Ty, By, 15, true);
+    vline(Lx, 0, Vy, 14);
+    vline(Rx, 0, Vy, 15, true);
 
     // Sparkles at the prominent corners / crossings. Flagged off for now.
     if (SHOW_SPARKLES) {
@@ -293,16 +316,25 @@ const SketchGuides = () => {
   }, [size]);
 
   return (
-    <svg
-      ref={svgRef}
-      aria-hidden
-      width={size.w}
-      height={size.h}
-      // overflow-visible: an outer <svg> clips to its width/height by default, so
-      // if the measured page height is ever a hair short, guides below that y get
-      // cut off. Letting it overflow keeps every line drawn regardless.
-      className="pointer-events-none absolute left-0 top-0 z-0 block overflow-visible"
-    />
+    <>
+      <svg
+        ref={svgRef}
+        aria-hidden
+        width={size.w}
+        height={size.h}
+        // overflow-visible: an outer <svg> clips to its width/height by default, so
+        // if the measured page height is ever a hair short, guides below that y get
+        // cut off. Letting it overflow keeps every line drawn regardless.
+        className="pointer-events-none absolute left-0 top-0 z-0 block overflow-visible"
+      />
+      <svg
+        ref={verticalSvgRef}
+        aria-hidden
+        width={size.w}
+        height={size.h}
+        className="pointer-events-none absolute left-0 top-0 z-[75] block overflow-visible"
+      />
+    </>
   );
 };
 

@@ -1,6 +1,6 @@
 const TermsPage = () => {
   return (
-    <div className="min-h-screen bg-[#FEFFF3] px-[5vw] py-16">
+    <div className="page-gutter-x min-h-screen bg-[#FEFFF3] py-16">
       <div className="mx-auto max-w-2xl">
         <a
           href="/"

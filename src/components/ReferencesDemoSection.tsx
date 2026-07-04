@@ -147,7 +147,7 @@ const ReferencesDemoSection = () => {
   // More dot rows on desktop, fewer (well-spaced) on small screens.
   const gridSpacing = useIsDesktop() ? 22 : 30;
   return (
-    <div className="relative flex w-full justify-center px-[5vw] py-12 md:py-16">
+    <div className="page-gutter-x relative flex w-full justify-center py-12 md:py-16">
       <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_2.5fr] lg:gap-16">
         {/* Copy — text is the outer (left) column at lg; lg:pl-8 keeps it off
             the page's left guide rule (consistent across all workflow panels).
