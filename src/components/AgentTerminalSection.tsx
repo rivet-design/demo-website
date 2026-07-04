@@ -78,7 +78,7 @@ const AgentTerminalSection = () => {
             (consistent across all workflow panels). Below lg, px-4 gives the
             title + subtitle a symmetric gutter so they aren't flush to the edge. */}
         <div className="order-1 max-w-[440px] px-4 lg:order-2 lg:px-0 lg:pr-8">
-          <h2 className="mt-3 font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
+          <h2 className="hero-title-size mt-3 font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
             Works with your agent.
           </h2>
           <p className="mt-4 text-[16px] leading-[1.8] text-black/70 md:text-[17px]">

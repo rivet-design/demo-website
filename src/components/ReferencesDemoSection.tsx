@@ -154,7 +154,7 @@ const ReferencesDemoSection = () => {
             Below lg, px-4 gives the title + subtitle a symmetric gutter so they
             aren't flush to the section's edge. */}
         <div className="max-w-[440px] px-4 lg:px-0 lg:pl-8">
-          <h2 className="mt-3 font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
+          <h2 className="hero-title-size mt-3 font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
             Bring your design references.
           </h2>
           <p className="mt-4 text-[16px] leading-[1.6] text-black/70 md:text-[17px]">
@@ -174,12 +174,12 @@ const ReferencesDemoSection = () => {
               Are.na
             </span>
             , and your{' '}
-            <span className="inline-flex items-center gap-1 whitespace-nowrap align-[-0.12em] font-medium text-black">
+            <span className="inline-flex items-center gap-1 whitespace-nowrap align-[-0.12em] font-medium leading-none text-black">
               <img
                 src="/images/macos-folder.svg"
                 alt=""
                 aria-hidden
-                className="h-[1.1em] w-auto"
+                className="h-[1em] w-auto"
               />
               Local Files
             </span>

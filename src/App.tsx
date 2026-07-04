@@ -159,7 +159,7 @@ const CodePanel = () => {
       {/* The "letter" — centered on top of the video. */}
       <PaperSheet className="relative z-10 w-full max-w-prose">
         <div className="flex flex-col gap-6 px-12 py-14 text-left text-[#2b2620] md:px-16 md:py-16">
-          <span className="text-[28px] font-normal leading-[1.15] md:text-[36px] lg:text-[44px]">
+          <span className="hero-title-size font-normal leading-[1.12]">
             Made for people who design.
           </span>
           <span className="text-[18px] font-normal leading-[1.65] md:text-[20px]">
@@ -282,7 +282,7 @@ const App = () => {
     return (
       <div className="relative z-10 hidden flex-col items-center py-16 md:flex">
         <div className="flex flex-col gap-6">
-          <h2 className="type-heading-1 text-center text-[44px] font-normal">
+          <h2 className="hero-title-size text-center font-main font-normal leading-[1.12]">
             Direct, don’t implement.
           </h2>
           <PromptInstallButton size="lg" fullWidth />
@@ -322,7 +322,7 @@ const App = () => {
             {/* Title only, centered. The subtitle + CTA now live below the
                 UI variants shell; the nav also carries a CTA. */}
             <div className="flex flex-col items-start gap-4">
-              <span className="hero-title-text font-main font-normal normal-case leading-[1.05] text-black">
+              <span className="hero-title-size hero-title-text font-main font-normal normal-case leading-[1.12] text-black">
                 Explore dozens of design directions from your agent.
               </span>
             </div>
@@ -435,7 +435,7 @@ const App = () => {
             shell. */}
         <FadeInText>
           <div className="relative z-10 flex flex-col items-center gap-8 px-4 py-12 text-center md:gap-10 md:py-20 lg:px-0">
-            <span className="max-w-2xl font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
+            <span className="hero-title-size max-w-[24ch] font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
               Rivet understands your references, and then explores dozens of
               design directions with you.
             </span>

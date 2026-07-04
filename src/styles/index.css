@@ -143,12 +143,15 @@
     margin-right: calc(var(--page-gutter-x) * -1);
   }
 
-  .hero-title-text {
+  .hero-title-size {
     font-size: clamp(1.5rem, 7.5vw, 2.5rem);
   }
-  @media (min-width: 768px) {
-    .hero-title-text {
+  @media (min-width: 1024px) {
+    .hero-title-size {
       font-size: clamp(1.5rem, calc((100vw - (var(--page-gutter-x) * 2) - 5rem) / 24.5), 6.75rem);
+    }
+
+    .hero-title-text {
       white-space: nowrap;
     }
   }
