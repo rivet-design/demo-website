@@ -59,7 +59,7 @@ const useLatestVersion = () => {
 
 // const FeaturePanel = () => {
 //   return (
-//     <div className="-mx-[5vw] flex min-h-[28rem] w-screen flex-col items-start justify-center gap-8 bg-main px-[5vw] py-12 sm:flex-row sm:items-center sm:gap-12">
+//     <div className="bleed-page-gutter-x page-gutter-x flex min-h-[28rem] w-screen flex-col items-start justify-center gap-8 bg-main py-12 sm:flex-row sm:items-center sm:gap-12">
 //       {/* Left: title + subtitle */}
 //       <div className="flex max-w-sm flex-col gap-4 text-left font-main">
 //         <h2 className="type-heading-2 text-3xl font-normal text-foreground md:text-4xl">
@@ -322,7 +322,7 @@ const App = () => {
             {/* Title only, centered. The subtitle + CTA now live below the
                 UI variants shell; the nav also carries a CTA. */}
             <div className="flex flex-col items-start gap-4">
-              <span className="type-display text-[clamp(1.5rem,7.5vw,2.5rem)] font-normal normal-case leading-[1.05] text-black sm:text-[clamp(2.5rem,6.5vw,8rem)]">
+              <span className="hero-title-text font-main font-normal normal-case leading-[1.05] text-black">
                 Explore dozens of design directions from your agent.
               </span>
             </div>
@@ -338,7 +338,7 @@ const App = () => {
           (not fixed) so it travels with the page; tiled vertically to cover the
           full scroll height at the same horizontal scale across the viewport. */}
       <div
-        className={`relative flex min-h-screen flex-col gap-8 px-[5vw] ${pageBackground.className}`}
+        className={`page-gutter-x relative flex min-h-screen flex-col gap-8 ${pageBackground.className}`}
         style={pageBackground.style}
       >
         {/* Hand-drawn blueprint guide lines, behind all content. */}
@@ -347,20 +347,20 @@ const App = () => {
         {/* px-4 below lg gives the hero title a symmetric gutter on mobile; at
             lg it switches to lg:pl-8 so the title sits off the page's left guide
             rule by the same inset as the workflow panel titles. */}
-        <div className="relative z-10 flex w-full items-start justify-start px-4 lg:px-0 lg:pl-8">
+        <div className="relative z-10 flex w-full items-start justify-start px-4 lg:px-0 lg:pl-8 min-[1920px]:pl-4">
           {renderHeroText()}
         </div>
 
         <div
           id="hero-showcase"
-          className="relative z-10 flex w-full justify-center bg-cover bg-center p-4 sm:p-6 md:p-10"
+          className="relative z-10 flex w-full justify-center bg-cover bg-center p-4 sm:p-6 md:p-8"
           style={{ backgroundImage: "url('/images/halftone-bg.webp')" }}
         >
           {showMobileAgent ? (
             // Mobile intro: the agent window types the request + MCP calls on its
             // own (full hero box), then minimizes to hand off to the editor.
             <div
-              className="w-full max-w-6xl"
+              className="w-full"
               style={{ height: '58vh', minHeight: 440 }}
             >
               <AgentTerminal
@@ -381,7 +381,7 @@ const App = () => {
               draggable
               animateOpen
               openDelayMs={windowOpenDelayMs}
-              className="w-full max-w-6xl"
+              className="w-full"
             >
               <VariantsShowcase
                 heightClassName="h-[58vh] min-h-[440px]"
@@ -443,7 +443,7 @@ const App = () => {
           </div>
         </FadeInText>
 
-        <div className="relative z-10 -mx-[5vw] flex flex-col" id="demo-panel">
+        <div className="bleed-page-gutter-x relative z-10 flex flex-col" id="demo-panel">
           {/* <WorkflowPanels /> */}
           <AgentTerminalSection />
           <ReferencesDemoSection />

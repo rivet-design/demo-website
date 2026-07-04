@@ -94,7 +94,7 @@ const VariantsDemoSection = () => {
   return (
     <div
       style={{ background: SECTION_BG }}
-      className="relative flex w-full justify-center px-[5vw] py-16 md:py-24"
+      className="page-gutter-x relative flex w-full justify-center py-16 md:py-24"
     >
       <PaperTexture className="-z-10" />
       <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_1.7fr] lg:gap-16">

@@ -40,7 +40,7 @@ const CommentDemoSection = () => {
   };
 
   return (
-    <div className="relative flex w-full justify-center px-[5vw] py-12 md:py-16">
+    <div className="page-gutter-x relative flex w-full justify-center py-12 md:py-16">
       <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[2.5fr_1fr] lg:gap-16">
         {/* DOM order is panel-then-text so that at lg+ the panel sits in the
             first (2.5fr) column on the left. On stacked mobile/tablet we want

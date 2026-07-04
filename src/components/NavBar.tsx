@@ -27,18 +27,18 @@ const NavBar = () => {
         isDark ? undefined : surfaceBackground
       }
       className={[
-        // Full-bleed sticky bar pinned to the very top: -mx-[5vw] breaks it out
-        // of the page's 5vw gutters so it spans the full viewport width, and
+        // Full-bleed sticky bar pinned to the very top: bleed-page-gutter-x
+        // breaks it out of the page gutters so it spans the full viewport width, and
         // top-0 leaves no gap above — so no scrolling content is ever visible
-        // above or beside the nav. Soft shadow for separation (no hairline).
-        'sticky top-0 z-[70] -mx-[5vw] shadow-sm transition-colors duration-150',
+        // above or beside the nav.
+        'bleed-page-gutter-x sticky top-0 z-[70] relative transition-colors duration-150',
         isDark
           ? 'bg-accent-foreground text-white'
           : 'text-black',
       ].join(' ')}
     >
       <div
-        className="flex w-full items-center justify-between px-[5vw] py-1"
+        className="relative z-10 flex w-full items-center justify-between py-1 pl-[calc(var(--page-gutter-x)+1rem)] pr-[var(--page-gutter-x)] lg:pl-[calc(var(--page-gutter-x)+2rem)] min-[1920px]:pl-[calc(var(--page-gutter-x)+1rem)]"
         style={{ height: 60 }}
       >
         <Logo />

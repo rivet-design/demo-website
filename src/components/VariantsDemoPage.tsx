@@ -13,7 +13,7 @@ import { pageBackground } from '../lib/background';
 const VariantsDemoPage = () => {
   return (
     <div
-      className={`flex min-h-screen flex-col gap-8 px-[5vw] py-8 ${pageBackground.className}`}
+      className={`page-gutter-x flex min-h-screen flex-col gap-8 py-8 ${pageBackground.className}`}
       style={pageBackground.style}
     >
       <Toaster position="bottom-right" theme="dark" duration={5000} />

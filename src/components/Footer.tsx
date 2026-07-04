@@ -18,7 +18,7 @@ const Footer = () => {
         className="w-screen border-t border-border pt-8 pb-[26vw] md:pt-14 md:pb-0"
         style={{ marginLeft: 'calc(50% - 50vw)', ...footerBackground }}
       >
-       <div className="px-[5vw]">
+       <div className="page-gutter-x">
         <div className="flex w-full flex-wrap items-start gap-x-20 gap-y-8">
           {/* Rivet logo on the left, with the copyright + a small Terms/Privacy
               row directly beneath it */}
@@ -116,7 +116,8 @@ const Footer = () => {
       </div>
 
       {/* Oversized multicolor wordmark at the bottom of the footer. The block
-          spans full width to carry the paper texture, but is padded by px-[5vw]
+          spans full width to carry the paper texture, but is padded by the
+          shared page gutter
           so the logo aligns to the same horizontal margin as the wordmark and
           content sections above. The full asset (rivet-multicolor.svg, viewBox
           "0 0 1884 797") is rendered at the padded content width; the inner
@@ -129,7 +130,7 @@ const Footer = () => {
           above reserves pb-[26vw] so this pull lands just below the links rather
           than overlapping them; reset to 0 from md up. */}
       <div
-        className="pointer-events-none w-screen px-[5vw] -mt-[23.8vw] md:-mt-12 lg:-mt-20"
+        className="page-gutter-x pointer-events-none w-screen -mt-[23.8vw] md:-mt-12 lg:-mt-20"
         style={{ marginLeft: 'calc(50% - 50vw)', ...footerBackground }}
       >
         {/* object-cover + object-top crops the bottom while anchoring the top

@@ -108,6 +108,19 @@
   body {
     @apply bg-background text-foreground;
   }
+  :root {
+    --page-gutter-x: 5vw;
+  }
+  @media (min-width: 768px) {
+    :root {
+      --page-gutter-x: clamp(5rem, 8vw, 14rem);
+    }
+  }
+  @media (min-width: 1920px) {
+    :root {
+      --page-gutter-x: clamp(16rem, 15vw, 30rem);
+    }
+  }
   ::selection {
     background-color: #E14017;
     color: #FFFFFF;
@@ -120,6 +133,26 @@
 
 /* Typography tokens — encode font-family, size, weight, line-height, and letter-spacing */
 @layer components {
+  .page-gutter-x {
+    padding-left: var(--page-gutter-x);
+    padding-right: var(--page-gutter-x);
+  }
+
+  .bleed-page-gutter-x {
+    margin-left: calc(var(--page-gutter-x) * -1);
+    margin-right: calc(var(--page-gutter-x) * -1);
+  }
+
+  .hero-title-text {
+    font-size: clamp(1.5rem, 7.5vw, 2.5rem);
+  }
+  @media (min-width: 768px) {
+    .hero-title-text {
+      font-size: clamp(1.5rem, calc((100vw - (var(--page-gutter-x) * 2) - 5rem) / 24.5), 6.75rem);
+      white-space: nowrap;
+    }
+  }
+
   /* Display: hero and splash headlines */
   .type-display-hero {
     @apply font-cta text-5xl font-bold leading-tight tracking-tight;

@@ -46,7 +46,7 @@ const Vendor = ({
  */
 const AgentTerminalSection = () => {
   return (
-    <div className="relative flex w-full justify-center px-[5vw] py-12 md:py-16">
+    <div className="page-gutter-x relative flex w-full justify-center py-12 md:py-16">
       <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[2.5fr_1fr] lg:gap-16">
         {/* Terminal — left on lg+, below the title on mobile. */}
         <div className="order-2 w-full lg:order-1">
