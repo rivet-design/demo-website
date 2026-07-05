@@ -150,8 +150,10 @@ const ReferencesDemoSection = () => {
     <div className="page-gutter-x relative flex w-full justify-center py-10 lg:py-16">
       <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_2.5fr] lg:gap-16">
         {/* Copy — text is the outer (left) column at lg. Shared copy-block
-            padding keeps workflow panel title/subtitle spacing consistent. */}
-        <div className="workflow-copy-block lg:max-w-none">
+            padding keeps workflow panel title/subtitle spacing consistent; the
+            lg:pl-8 mirrors the reference wall's lg:pr-8 so the text sits off the
+            page's left guide rule by the same inset the cards keep off the right. */}
+        <div className="workflow-copy-block lg:max-w-none lg:pl-8">
           <h2 className="workflow-title-size font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
             <span className="block whitespace-nowrap">Bring your design</span>
             <span className="block whitespace-nowrap">references.</span>
