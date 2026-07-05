@@ -46,7 +46,7 @@ const Vendor = ({
  */
 const AgentTerminalSection = () => {
   return (
-    <div className="page-gutter-x relative flex w-full justify-center py-12 md:py-16">
+    <div className="page-gutter-x relative flex w-full justify-center py-10 lg:py-16">
       <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[2.5fr_1fr] lg:gap-16">
         {/* Terminal — left on lg+, below the title on mobile. */}
         <div className="order-2 w-full lg:order-1">
@@ -60,11 +60,11 @@ const AgentTerminalSection = () => {
               760–920px tall — a giant box with a tiny scrolled transcript and
               its bottom padding shoved past the fold. Cap the height so narrow
               phones keep their full portrait box while anything wider clamps to
-              a sane height; `md:max-h-none` releases it once the landscape ratio
+              a sane height; `lg:max-h-none` releases it once the landscape ratio
               takes over. */}
           <div
             data-guide-row
-            className="aspect-panel-portrait max-h-[500px] w-full overflow-visible border border-black/10 bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:aspect-panel md:max-h-none md:overflow-hidden md:p-8"
+            className="aspect-panel-portrait max-h-[500px] w-full overflow-visible border border-black/10 bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 lg:aspect-panel lg:max-h-none lg:overflow-hidden lg:p-8"
             style={{ backgroundImage: "url('/images/bg2.webp')" }}
           >
             {/* Type the command 1.5× faster than the default (42ms → 28ms/char)
@@ -73,15 +73,13 @@ const AgentTerminalSection = () => {
           </div>
         </div>
 
-        {/* Copy — right on lg+, above the terminal on mobile. text is the outer
-            (right) column at lg; lg:pr-8 keeps it off the page's right guide rule
-            (consistent across all workflow panels). Below lg, px-4 gives the
-            title + subtitle a symmetric gutter so they aren't flush to the edge. */}
-        <div className="order-1 max-w-[440px] px-4 lg:order-2 lg:px-0 lg:pr-8">
-          <h2 className="mt-3 font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
+        {/* Copy — right on lg+, above the terminal on mobile. Shared copy-block
+            padding keeps workflow panel title/subtitle spacing consistent. */}
+        <div className="workflow-copy-block order-1 lg:order-2">
+          <h2 className="workflow-title-size max-w-[11ch] font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
             Works with your agent.
           </h2>
-          <p className="mt-4 text-[16px] leading-[1.8] text-black/70 md:text-[17px]">
+          <p className="landing-subtext mt-4 text-black/70">
             Use Rivet with your{' '}
             <Vendor src="/images/claude.svg" color="#D97757" name="Claude" />,{' '}
             <Vendor src="/images/cursor.svg" color="#111111" name="Cursor" />,{' '}

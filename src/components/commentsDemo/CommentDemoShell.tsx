@@ -43,7 +43,9 @@ const DIRECTIONS_BOX_W = Math.round(DIRECTIONS_W * DIRECTIONS_SCALE);
 // differently: instead of listing directions on the right, the gallery itself
 // reflows into the first fluid direction — the airy two-column layout. Pull that
 // direction's gallery config so the mobile shell can apply it directly.
-const TWO_COLUMN_DIRECTION = FLUID_VARIANTS.find((v) => v.id === FLUID_INITIAL_ID);
+const TWO_COLUMN_DIRECTION = FLUID_VARIANTS.find(
+  (v) => v.id === FLUID_INITIAL_ID,
+);
 
 // The gallery tiles are recolored to a calm grayscale set so the orange comment
 // markers + selection read as the only colored elements on the surface.
@@ -57,7 +59,8 @@ const BRAND_GRAY_PAIRS = [
 ] as const;
 
 const GRAY_GALLERY_ITEMS: GalleryItem[] = ITEMS.map((item, i) => {
-  const [placeholderColor, artColor] = BRAND_GRAY_PAIRS[i % BRAND_GRAY_PAIRS.length];
+  const [placeholderColor, artColor] =
+    BRAND_GRAY_PAIRS[i % BRAND_GRAY_PAIRS.length];
   return { ...item, placeholderColor, artColor };
 });
 
@@ -166,6 +169,7 @@ const CommentDemoShell = ({
     enabled: play,
     start,
     designH: fit.designH,
+    contentLeft: mobile ? 0 : undefined,
     onDraftOpen: onDraftCreated,
     onSubmit: onCommentCreated,
   });
@@ -219,6 +223,7 @@ const CommentDemoShell = ({
                 variant={selected?.gallery}
                 theme="light"
                 items={GRAY_GALLERY_ITEMS}
+                compact={mobile}
               />
             </div>
 
@@ -249,33 +254,33 @@ const CommentDemoShell = ({
           down slightly vs the hero's. On mobile this pane is omitted entirely;
           the gallery reflows instead. */}
       {!mobile && (
-      <motion.div
-        className="relative order-first h-full shrink-0"
-        initial={play ? { marginLeft: -DIRECTIONS_BOX_W, opacity: 0 } : false}
-        animate={{
-          marginLeft: showDirections ? 0 : -DIRECTIONS_BOX_W,
-          opacity: showDirections ? 1 : 0,
-        }}
-        transition={{ ease: [0.22, 1, 0.36, 1], duration: 0.2 }}
-        style={{
-          width: DIRECTIONS_BOX_W,
-          overflow: 'hidden',
-          willChange: 'margin-left, opacity',
-        }}
-      >
-        {showDirections ? (
-          <div
-            style={{
-              width: DIRECTIONS_W,
-              height: `${100 / DIRECTIONS_SCALE}%`,
-              transform: `scale(${DIRECTIONS_SCALE})`,
-              transformOrigin: 'top left',
-            }}
-          >
-            <FluidDirections onSelect={handleSelect} />
-          </div>
-        ) : null}
-      </motion.div>
+        <motion.div
+          className="relative order-first h-full shrink-0"
+          initial={play ? { marginLeft: -DIRECTIONS_BOX_W, opacity: 0 } : false}
+          animate={{
+            marginLeft: showDirections ? 0 : -DIRECTIONS_BOX_W,
+            opacity: showDirections ? 1 : 0,
+          }}
+          transition={{ ease: [0.22, 1, 0.36, 1], duration: 0.2 }}
+          style={{
+            width: DIRECTIONS_BOX_W,
+            overflow: 'hidden',
+            willChange: 'margin-left, opacity',
+          }}
+        >
+          {showDirections ? (
+            <div
+              style={{
+                width: DIRECTIONS_W,
+                height: `${100 / DIRECTIONS_SCALE}%`,
+                transform: `scale(${DIRECTIONS_SCALE})`,
+                transformOrigin: 'top left',
+              }}
+            >
+              <FluidDirections onSelect={handleSelect} />
+            </div>
+          ) : null}
+        </motion.div>
       )}
     </div>
   );

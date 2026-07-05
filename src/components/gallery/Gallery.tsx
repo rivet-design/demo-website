@@ -1,5 +1,9 @@
 import { useState, useEffect, type CSSProperties } from 'react';
-import { COLLECTIONS, ITEMS, type GalleryItem as GalleryItemData } from './data';
+import {
+  COLLECTIONS,
+  ITEMS,
+  type GalleryItem as GalleryItemData,
+} from './data';
 import GalleryItem from './components/GalleryItem';
 import ListItem from './components/ListItem';
 import './gallery.css';
@@ -30,6 +34,8 @@ type Props = {
   theme?: 'dark' | 'light';
   /** Optional item palette/content override for embedded demos. */
   items?: GalleryItemData[];
+  /** Force the compact embedded layout regardless of container query width. */
+  compact?: boolean;
 };
 
 /**
@@ -45,6 +51,7 @@ export default function Gallery({
   variant,
   theme = 'dark',
   items = ITEMS,
+  compact = false,
 }: Props = {}) {
   const [activeCollection, setActiveCollection] = useState('All Works');
   const [activeTab, setActiveTab] = useState('Library');
@@ -75,7 +82,15 @@ export default function Gallery({
   const collectionMeta = COLLECTIONS.find((c) => c.label === activeCollection);
 
   return (
-    <div className={`rivet-gallery${theme === 'light' ? ' light' : ''}`}>
+    <div
+      className={[
+        'rivet-gallery',
+        theme === 'light' ? 'light' : '',
+        compact ? 'compact' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className="app">
         {/* Topbar */}
         <header className="topbar">

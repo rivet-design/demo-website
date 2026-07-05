@@ -147,17 +147,16 @@ const ReferencesDemoSection = () => {
   // More dot rows on desktop, fewer (well-spaced) on small screens.
   const gridSpacing = useIsDesktop() ? 22 : 30;
   return (
-    <div className="page-gutter-x relative flex w-full justify-center py-12 md:py-16">
+    <div className="page-gutter-x relative flex w-full justify-center py-10 lg:py-16">
       <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_2.5fr] lg:gap-16">
-        {/* Copy — text is the outer (left) column at lg; lg:pl-8 keeps it off
-            the page's left guide rule (consistent across all workflow panels).
-            Below lg, px-4 gives the title + subtitle a symmetric gutter so they
-            aren't flush to the section's edge. */}
-        <div className="max-w-[440px] px-4 lg:px-0 lg:pl-8">
-          <h2 className="mt-3 font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
-            Bring your design references.
+        {/* Copy — text is the outer (left) column at lg. Shared copy-block
+            padding keeps workflow panel title/subtitle spacing consistent. */}
+        <div className="workflow-copy-block lg:max-w-none">
+          <h2 className="workflow-title-size font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
+            <span className="block whitespace-nowrap">Bring your design</span>
+            <span className="block whitespace-nowrap">references.</span>
           </h2>
-          <p className="mt-4 text-[16px] leading-[1.6] text-black/70 md:text-[17px]">
+          <p className="landing-subtext mt-4 text-black/70">
             Pull in inspiration from{' '}
             <span className="inline-flex items-center gap-1 whitespace-nowrap align-[-0.12em] font-medium text-black">
               <PinterestIcon className="text-[#E60023]" />
@@ -174,12 +173,12 @@ const ReferencesDemoSection = () => {
               Are.na
             </span>
             , and your{' '}
-            <span className="inline-flex items-center gap-1 whitespace-nowrap align-[-0.12em] font-medium text-black">
+            <span className="inline-flex items-center gap-1 whitespace-nowrap align-[-0.12em] font-medium leading-none text-black">
               <img
                 src="/images/macos-folder.svg"
                 alt=""
                 aria-hidden
-                className="h-[1.1em] w-auto"
+                className="h-[1em] w-auto"
               />
               Local Files
             </span>
@@ -194,7 +193,7 @@ const ReferencesDemoSection = () => {
             fill the shared 16/11 landscape box like the other workflow panels. */}
         <div
           data-guide-row
-          className="relative aspect-[7/6] w-full overflow-hidden bg-white sm:aspect-[16/11]"
+          className="relative aspect-[7/6] w-full overflow-hidden bg-white lg:aspect-[16/11]"
         >
           {/* The masonry wall. In the two-column layout (lg+, text left / wall
               right) it's anchored RIGHT with a matching gutter — lg:pr-8 mirrors
@@ -202,9 +201,9 @@ const ReferencesDemoSection = () => {
               by the same inset the text keeps off the left. Once the layout
               stacks (text above the wall, below lg) it centers within its
               padding instead. */}
-          <div className="absolute inset-0 flex items-center justify-center px-4 py-6 sm:px-6 sm:py-8 md:px-8 lg:justify-end lg:pr-8">
+          <div className="absolute inset-0 flex items-center justify-center px-4 py-6 sm:px-6 sm:py-8 lg:justify-end lg:px-8 lg:pr-8">
             <div
-              className="flex w-full max-w-[595px] items-start gap-3 sm:gap-4"
+              className="flex w-full max-w-[595px] items-start gap-3 sm:gap-4 lg:max-w-none"
               aria-hidden
             >
               {COLUMNS.map((col, ci) => (

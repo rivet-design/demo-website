@@ -159,7 +159,7 @@ const CodePanel = () => {
       {/* The "letter" — centered on top of the video. */}
       <PaperSheet className="relative z-10 w-full max-w-prose">
         <div className="flex flex-col gap-6 px-12 py-14 text-left text-[#2b2620] md:px-16 md:py-16">
-          <span className="text-[28px] font-normal leading-[1.15] md:text-[36px] lg:text-[44px]">
+          <span className="hero-title-size font-normal leading-[1.12]">
             Made for people who design.
           </span>
           <span className="text-[18px] font-normal leading-[1.65] md:text-[20px]">
@@ -185,7 +185,7 @@ const App = () => {
   const latestVersion = useLatestVersion();
 
   // The floating agent-chat intro is a desktop, motion-allowed affordance: it's
-  // `hidden md:flex`, so below md there's no visible chat to justify the staged
+  // `hidden lg:flex`, so below lg there's no visible chat to justify the staged
   // delays, and reduced-motion users shouldn't sit through the typing + open
   // sequence. Decide once, synchronously on first render, so the showcase never
   // starts in a delayed/blank state it then has to correct. When the intro does
@@ -198,10 +198,10 @@ const App = () => {
       return { motionOK: false, isMobileHero: false };
     return {
       motionOK: !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-      isMobileHero: !window.matchMedia('(min-width: 768px)').matches,
+      isMobileHero: !window.matchMedia('(min-width: 1024px)').matches,
     };
   });
-  // Desktop (md+): the agent chat floats over the editor and types while the
+  // Desktop (lg+): the agent chat floats over the editor and types while the
   // window opens — both visible at once. Mobile: there isn't room for that, so
   // the intro is sequential (agent types alone → minimizes → editor maximizes
   // and cycles options). Reduced-motion users get neither and land on the editor.
@@ -212,10 +212,10 @@ const App = () => {
 
   // The editor's steady-state LAYOUT (portrait iframes, no directions panel,
   // auto-cycling) must track the viewport — unlike the one-shot intro above —
-  // so widening past 768px after a phone load lands on the desktop layout.
+  // so widening past 1024px after a phone load lands on the desktop layout.
   const [isMobileViewport, setIsMobileViewport] = useState(isMobileHero);
   useEffect(() => {
-    const mq = window.matchMedia('(min-width: 768px)');
+    const mq = window.matchMedia('(min-width: 1024px)');
     const update = () => setIsMobileViewport(!mq.matches);
     update();
     mq.addEventListener('change', update);
@@ -229,7 +229,7 @@ const App = () => {
   // Once the agent finishes all its MCP calls, the chat minimizes out.
   const [chatMinimized, setChatMinimized] = useState(false);
   // After the minimize animation finishes we UNMOUNT the chat for good. It's a
-  // `hidden md:flex` element, so otherwise crossing the md breakpoint on resize
+  // `hidden lg:flex` element, so otherwise crossing the lg breakpoint on resize
   // re-displays it and replays the minimize animation — flashing the panel back
   // in. The intro is one-shot, so once it's gone it should stay gone.
   const [chatGone, setChatGone] = useState(false);
@@ -280,9 +280,9 @@ const App = () => {
 
   const renderDownloadPanel = () => {
     return (
-      <div className="relative z-10 hidden flex-col items-center py-16 md:flex">
+      <div className="relative z-10 hidden flex-col items-center py-16 lg:flex">
         <div className="flex flex-col gap-6">
-          <h2 className="type-heading-1 text-center text-[44px] font-normal">
+          <h2 className="hero-title-size text-center font-main font-normal leading-[1.12]">
             Direct, don’t implement.
           </h2>
           <PromptInstallButton size="lg" fullWidth />
@@ -322,7 +322,7 @@ const App = () => {
             {/* Title only, centered. The subtitle + CTA now live below the
                 UI variants shell; the nav also carries a CTA. */}
             <div className="flex flex-col items-start gap-4">
-              <span className="hero-title-text font-main font-normal normal-case leading-[1.05] text-black">
+              <span className="hero-title-size hero-title-text font-main font-normal normal-case leading-[1.12] text-black">
                 Explore dozens of design directions from your agent.
               </span>
             </div>
@@ -353,16 +353,13 @@ const App = () => {
 
         <div
           id="hero-showcase"
-          className="relative z-10 flex w-full justify-center bg-cover bg-center p-4 sm:p-6 md:p-8"
+          className="relative z-10 flex w-full justify-center bg-cover bg-center p-4 sm:p-6 lg:p-8"
           style={{ backgroundImage: "url('/images/halftone-bg.webp')" }}
         >
           {showMobileAgent ? (
             // Mobile intro: the agent window types the request + MCP calls on its
             // own (full hero box), then minimizes to hand off to the editor.
-            <div
-              className="w-full"
-              style={{ height: '58vh', minHeight: 440 }}
-            >
+            <div className="w-full" style={{ height: '58vh', minHeight: 440 }}>
               <AgentTerminal
                 loop={false}
                 typeMs={28}
@@ -389,7 +386,7 @@ const App = () => {
                 // panel) and renders each variant's portrait (mobile-first)
                 // layout; desktop stays pinned, shows the panel, and uses the
                 // 1280px layout. Driven by the reactive viewport flag so a
-                // resize across 768px switches layouts to match.
+                // resize across 1024px switches layouts to match.
                 autoPlay={isMobileViewport && motionOK}
                 showDirections={!isMobileViewport}
                 portrait={isMobileViewport}
@@ -418,7 +415,7 @@ const App = () => {
                   1100,
                 );
               }}
-              className={`ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none absolute z-20 hidden h-[240px] w-[300px] -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-700 md:flex lg:h-[300px] lg:w-[380px] ${
+              className={`ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none absolute z-20 hidden h-[240px] w-[300px] -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-700 lg:flex lg:h-[300px] lg:w-[380px] ${
                 chatMoved
                   ? 'left-[30%] top-[61%] lg:left-[23%] lg:top-[63%]'
                   : 'left-1/2 top-1/2'
@@ -434,8 +431,8 @@ const App = () => {
         {/* Subtitle + CTA, moved below the fold to sit under the UI variants
             shell. */}
         <FadeInText>
-          <div className="relative z-10 flex flex-col items-center gap-8 px-4 py-12 text-center md:gap-10 md:py-20 lg:px-0">
-            <span className="max-w-2xl font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
+          <div className="relative z-10 flex flex-col items-center gap-8 px-4 pb-4 pt-12 text-center lg:gap-10 lg:px-0 lg:pb-8 lg:pt-20">
+            <span className="hero-title-size max-w-[24ch] font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
               Rivet understands your references, and then explores dozens of
               design directions with you.
             </span>
@@ -443,7 +440,10 @@ const App = () => {
           </div>
         </FadeInText>
 
-        <div className="bleed-page-gutter-x relative z-10 flex flex-col" id="demo-panel">
+        <div
+          className="bleed-page-gutter-x relative z-10 flex flex-col"
+          id="demo-panel"
+        >
           {/* <WorkflowPanels /> */}
           <AgentTerminalSection />
           <ReferencesDemoSection />
@@ -453,7 +453,7 @@ const App = () => {
         </div>
         {/* <FeaturePanel /> */}
         {renderDownloadPanel()}
-        <div className="relative z-10 -mt-12 md:mt-0">
+        <div className="relative z-10 -mt-12 lg:mt-0">
           <Footer />
         </div>
       </div>

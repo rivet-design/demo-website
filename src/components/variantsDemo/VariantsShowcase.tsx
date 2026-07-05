@@ -10,14 +10,13 @@ import { useVariantsDemo } from './useVariantsDemo';
 const DESIGN_W = 1280;
 const DESIGN_H = 820;
 
-// Portrait (mobile hero): render each page at a phone width so its OWN mobile-
-// first responsive layout kicks in (the desktop pages all stack to a jersey-led
-// portrait view below ~720px), tall enough to include the jersey preview. The
-// iframe is scaled to fit the pane WIDTH and anchored to the top, so the jersey
-// + texture lead and any overflow is clipped (no scroll) — it's fine not to show
-// the whole page.
-const PORTRAIT_W = 412;
-const PORTRAIT_H = 920;
+// Portrait (mobile hero): render each page at a mobile-layout width so its OWN
+// responsive layout kicks in (the demo pages stack below ~720px). On tablet-ish
+// widths, use the available pane width instead of zooming a 412px phone viewport;
+// cap below the desktop breakpoint so the sample app stays in its mobile layout.
+const PORTRAIT_MIN_W = 412;
+const PORTRAIT_MAX_W = 700;
+const PORTRAIT_H_TO_W = 920 / 412;
 
 // On narrower desktops the width-driven shell height collapses (the preview pane
 // gets short), which leaves the shell too short to host the floating hero chat.
@@ -129,7 +128,8 @@ const VariantsShowcase = ({
     const onKey = (e: KeyboardEvent) => {
       const el = document.activeElement as HTMLElement | null;
       const tag = el?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || el?.isContentEditable) return;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || el?.isContentEditable)
+        return;
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         ctrl.cycle(1);
@@ -148,10 +148,16 @@ const VariantsShowcase = ({
   const selectedReady = ctrl.readyIds.has(ctrl.selected.id);
   const activeReady = activeLoaded && selectedReady;
 
+  const measured = paneSize.w > 0;
+  const portraitViewportW =
+    portrait && measured
+      ? Math.min(Math.max(paneSize.w, PORTRAIT_MIN_W), PORTRAIT_MAX_W)
+      : PORTRAIT_MIN_W;
+  const portraitViewportH = Math.round(portraitViewportW * PORTRAIT_H_TO_W);
+
   // Desktop: the shell height is driven by the variant — scale to fit WIDTH so
   // there's no letterbox, and collapse the shell (and the RHS panel) to exactly
   // that height. Mobile: keep the passed height and contain the page within it.
-  const measured = paneSize.w > 0;
   const fixedDesktopHeight = isDesktop && measured && !portrait;
   const desktopHeight = measured
     ? Math.max(DESIGN_H * (paneSize.w / DESIGN_W), MIN_DESKTOP_H)
@@ -162,7 +168,7 @@ const VariantsShowcase = ({
   const fitScale = !measured
     ? 0
     : portrait
-      ? paneSize.w / PORTRAIT_W
+      ? paneSize.w / portraitViewportW
       : isDesktop
         ? Math.max(paneSize.w / DESIGN_W, desktopHeight / DESIGN_H)
         : Math.min(paneSize.w / DESIGN_W, paneSize.h / DESIGN_H);
@@ -200,8 +206,8 @@ const VariantsShowcase = ({
                 scrolling="no"
                 onLoad={() => setLoaded((s) => new Set(s).add(v.src))}
                 style={{
-                  width: portrait ? PORTRAIT_W : DESIGN_W,
-                  height: portrait ? PORTRAIT_H : DESIGN_H,
+                  width: portrait ? portraitViewportW : DESIGN_W,
+                  height: portrait ? portraitViewportH : DESIGN_H,
                   position: 'absolute',
                   left: '50%',
                   top: portrait ? 0 : '50%',

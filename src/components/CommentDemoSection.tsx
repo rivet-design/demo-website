@@ -24,12 +24,18 @@ const CommentDemoSection = () => {
       return { playDesktop: false, playMobile: false };
     const motionOK = !window.matchMedia('(prefers-reduced-motion: reduce)')
       .matches;
-    const desktop = window.matchMedia('(min-width: 768px)').matches;
-    return { playDesktop: motionOK && desktop, playMobile: motionOK && !desktop };
+    const desktop = window.matchMedia('(min-width: 1024px)').matches;
+    return {
+      playDesktop: motionOK && desktop,
+      playMobile: motionOK && !desktop,
+    };
   });
 
   const handleDraftCreated = () => {
-    telemetry.trackCommentDemoDraftCreated({ source: 'drag', hasDragBox: true });
+    telemetry.trackCommentDemoDraftCreated({
+      source: 'drag',
+      hasDragBox: true,
+    });
   };
   const handleCommentCreated = () => {
     telemetry.trackCommentDemoCommentCreated({
@@ -40,7 +46,7 @@ const CommentDemoSection = () => {
   };
 
   return (
-    <div className="page-gutter-x relative flex w-full justify-center py-12 md:py-16">
+    <div className="page-gutter-x relative flex w-full justify-center py-10 lg:py-16">
       <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[2.5fr_1fr] lg:gap-16">
         {/* DOM order is panel-then-text so that at lg+ the panel sits in the
             first (2.5fr) column on the left. On stacked mobile/tablet we want
@@ -53,7 +59,7 @@ const CommentDemoSection = () => {
               more of the masonry grid. */}
           <div
             data-guide-row
-            className="aspect-panel-portrait block w-full overflow-visible bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:hidden"
+            className="block aspect-panel-portrait w-full overflow-visible bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 lg:hidden"
             style={{ backgroundImage: "url('/images/bg3.webp')" }}
           >
             <BrowserFrame url="localhost:3000" className="h-full w-full">
@@ -72,13 +78,17 @@ const CommentDemoSection = () => {
               three match in size; the frame and shell fill it (h-full). */}
           <div
             data-guide-row
-            className="hidden w-full overflow-hidden bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 md:block md:p-8"
+            className="hidden w-full overflow-hidden bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 lg:block lg:p-8"
             style={{
               backgroundImage: "url('/images/bg3.webp')",
               aspectRatio: '16 / 11',
             }}
           >
-            <BrowserFrame url="localhost:3000" draggable className="h-full w-full">
+            <BrowserFrame
+              url="localhost:3000"
+              draggable
+              className="h-full w-full"
+            >
               <CommentDemoShell
                 play={playDesktop}
                 onDraftCreated={handleDraftCreated}
@@ -88,15 +98,13 @@ const CommentDemoSection = () => {
           </div>
         </div>
 
-        {/* Copy is the outer (right) column at lg; lg:pr-8 keeps it off the
-            page's right guide rule (consistent across all workflow panels).
-            Below lg, px-4 gives the title + subtitle a symmetric gutter so they
-            aren't flush to the section's edge. */}
-        <div className="order-1 max-w-[440px] px-4 lg:order-2 lg:px-0 lg:pr-8">
-          <h2 className="mt-3 font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
+        {/* Copy is the outer (right) column at lg. Shared copy-block padding
+            keeps workflow panel title/subtitle spacing consistent. */}
+        <div className="workflow-copy-block order-1 lg:order-2">
+          <h2 className="workflow-title-size max-w-[11ch] font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
             Explore with precision.
           </h2>
-          <p className="mt-4 text-[16px] leading-[1.6] text-black/70 md:text-[17px]">
+          <p className="landing-subtext mt-4 text-black/70">
             Comment on any part of your interface and Rivet explores focused
             design directions for just that region.
           </p>

@@ -1,11 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { telemetry } from '@/lib/telemetry';
-import {
-  useVariants,
-  VariantPill,
-  VariantLoadingOverlay,
-} from './variants';
+import { useVariants, VariantPill, VariantLoadingOverlay } from './variants';
 import { VARIANTS } from './variants/data';
 import Gallery from './gallery/Gallery';
 import PaperTexture from './PaperTexture';
@@ -94,17 +90,17 @@ const VariantsDemoSection = () => {
   return (
     <div
       style={{ background: SECTION_BG }}
-      className="page-gutter-x relative flex w-full justify-center py-16 md:py-24"
+      className="page-gutter-x relative flex w-full justify-center py-10 lg:py-24"
     >
       <PaperTexture className="-z-10" />
       <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_1.7fr] lg:gap-16">
-        {/* Copy is the outer (left) column at lg; lg:pl-8 keeps it off the
-            page's left guide rule (consistent across all workflow panels). */}
-        <div className="max-w-[440px] lg:pl-8">
-          <h2 className="mt-3 font-main text-[28px] font-normal leading-[1.15] tracking-[-0.01em] text-black md:text-[36px] lg:text-[44px]">
+        {/* Copy is the outer (left) column at lg. Shared copy-block padding
+            keeps workflow panel title/subtitle spacing consistent. */}
+        <div className="workflow-copy-block">
+          <h2 className="workflow-title-size max-w-[13ch] font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
             Explore lots of design directions
           </h2>
-          <p className="mt-4 text-[16px] leading-[1.6] text-black/70 md:text-[17px]">
+          <p className="landing-subtext mt-4 text-black/70">
             Fully explore the design space for any interface, big or small.
           </p>
         </div>

@@ -6,7 +6,7 @@ type HeroProps = {
 const Hero = ({ title, subtitle }: HeroProps) => {
   return (
     <div className="w-full max-w-4xl text-center">
-      <h1 className="type-display-hero text-white md:text-6xl lg:text-7xl">
+      <h1 className="hero-title-size font-cta font-bold leading-tight text-white">
         {title}
       </h1>
       {subtitle ? (

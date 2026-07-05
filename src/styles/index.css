@@ -110,24 +110,32 @@
   }
   :root {
     --page-gutter-x: 5vw;
+    --landing-body-text-size: 1rem;
   }
   @media (min-width: 768px) {
     :root {
       --page-gutter-x: clamp(5rem, 8vw, 14rem);
+      --landing-body-text-size: 1.0625rem;
+    }
+  }
+  @media (min-width: 1280px) {
+    :root {
+      --landing-body-text-size: 1.1875rem;
     }
   }
   @media (min-width: 1920px) {
     :root {
       --page-gutter-x: clamp(16rem, 15vw, 30rem);
+      --landing-body-text-size: 1.25rem;
     }
   }
   ::selection {
-    background-color: #E14017;
-    color: #FFFFFF;
+    background-color: #e14017;
+    color: #ffffff;
   }
   ::-moz-selection {
-    background-color: #E14017;
-    color: #FFFFFF;
+    background-color: #e14017;
+    color: #ffffff;
   }
 }
 
@@ -143,14 +151,76 @@
     margin-right: calc(var(--page-gutter-x) * -1);
   }
 
-  .hero-title-text {
+  .hero-title-size {
     font-size: clamp(1.5rem, 7.5vw, 2.5rem);
   }
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
+    .hero-title-size {
+      font-size: clamp(
+        1.5rem,
+        calc((100vw - (var(--page-gutter-x) * 2) - 5rem) / 24.5),
+        6.75rem
+      );
+    }
+
     .hero-title-text {
-      font-size: clamp(1.5rem, calc((100vw - (var(--page-gutter-x) * 2) - 5rem) / 24.5), 6.75rem);
       white-space: nowrap;
     }
+  }
+
+  .landing-subtext {
+    font-size: var(--landing-body-text-size);
+    line-height: 1.65;
+  }
+
+  .workflow-title-size {
+    font-size: clamp(1.75rem, 6vw, 2.5rem);
+  }
+
+  .workflow-copy-block {
+    width: 100%;
+    max-width: 440px;
+    padding: 0.75rem 1rem;
+  }
+
+  @media (min-width: 1024px) {
+    .workflow-title-size {
+      font-size: clamp(2rem, 2.75vw, 3.625rem);
+    }
+
+    .workflow-copy-block {
+      padding-bottom: 0.75rem;
+      padding-left: 0;
+      padding-right: 0;
+      padding-top: 0.75rem;
+    }
+  }
+
+  [data-sonner-toast][data-styled='true'] {
+    font-family: 'Satoshi', sans-serif !important;
+    font-size: clamp(
+      0.9375rem,
+      calc(var(--landing-body-text-size) * 0.9),
+      1.125rem
+    ) !important;
+    line-height: 1.45 !important;
+  }
+
+  [data-sonner-toast][data-styled='true'] [data-title] {
+    font-size: 1em !important;
+    line-height: 1.45 !important;
+  }
+
+  [data-sonner-toast][data-styled='true'] [data-description] {
+    font-size: 0.92em !important;
+    line-height: 1.45 !important;
+  }
+
+  [data-sonner-toast][data-styled='true'] [data-button] {
+    height: auto !important;
+    min-height: 1.85em !important;
+    font-size: 0.9em !important;
+    line-height: 1.2 !important;
   }
 
   /* Display: hero and splash headlines */
@@ -206,7 +276,7 @@
 }
 
 @layer components {
-  a[target="_blank"]:not(.no-external-icon)::after {
+  a[target='_blank']:not(.no-external-icon)::after {
     content: '';
     display: inline-block;
     width: 0.75em;
@@ -215,18 +285,18 @@
     vertical-align: -0.05em;
     background-color: currentColor;
     -webkit-mask-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 17 17 7'/%3E%3Cpath d='M7 7h10v10'/%3E%3C/svg%3E");
-            mask-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 17 17 7'/%3E%3Cpath d='M7 7h10v10'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 17 17 7'/%3E%3Cpath d='M7 7h10v10'/%3E%3C/svg%3E");
     -webkit-mask-repeat: no-repeat;
-            mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
     -webkit-mask-position: center;
-            mask-position: center;
+    mask-position: center;
     -webkit-mask-size: contain;
-            mask-size: contain;
+    mask-size: contain;
     opacity: 0;
     transition: opacity 150ms ease;
   }
-  a[target="_blank"]:not(.no-external-icon):hover::after,
-  a[target="_blank"]:not(.no-external-icon):focus-visible::after {
+  a[target='_blank']:not(.no-external-icon):hover::after,
+  a[target='_blank']:not(.no-external-icon):focus-visible::after {
     opacity: 1;
   }
 }
@@ -247,9 +317,9 @@
   --content-subtle: #9ca3af;
   --divider: #4b5563;
   --divider-muted: #232323;
-  --primary: #E14017;
+  --primary: #e14017;
   --primary-hover: #c2410c;
-  --primary-border: #EC6442;
+  --primary-border: #ec6442;
   --primary-soft: rgba(225, 64, 23, 0.1);
   --accent-success: #10b981;
   --accent-error: #ef4444;
@@ -271,7 +341,7 @@
   --content-subtle: #9ca3af;
   --hover: rgb(255 255 255 / 0.06);
   --accent-error: #ef4444;
-  --primary-border: #EC6442;
+  --primary-border: #ec6442;
   --pill-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
 
@@ -356,33 +426,41 @@
 
 @theme inline {
   @keyframes shimmer {
-  0% {
-    background-position: 0% 0;
+    0% {
+      background-position: 0% 0;
     }
-  100% {
-    background-position: 100% 0;
+    100% {
+      background-position: 100% 0;
     }
   }
   @keyframes spinner-move {
-  to {
-    stroke-dashoffset: -100;
+    to {
+      stroke-dashoffset: -100;
     }
   }
   @keyframes spinner-dash {
-  0%, 100% {
-    stroke-dasharray: 15 85;
+    0%,
+    100% {
+      stroke-dasharray: 15 85;
     }
-  50% {
-    stroke-dasharray: 40 60;
+    50% {
+      stroke-dasharray: 40 60;
     }
   }
 }
 
 .shimmer-text {
-    color: transparent;
-    background: linear-gradient(90deg, #a3a3a3 0%, #a3a3a3 35%, #525252 50%, #a3a3a3 65%, #a3a3a3 100%);
-    background-size: 300% 100%;
-    background-clip: text;
-    -webkit-background-clip: text;
-    animation: shimmer 1.5s ease-in-out infinite;
+  color: transparent;
+  background: linear-gradient(
+    90deg,
+    #a3a3a3 0%,
+    #a3a3a3 35%,
+    #525252 50%,
+    #a3a3a3 65%,
+    #a3a3a3 100%
+  );
+  background-size: 300% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: shimmer 1.5s ease-in-out infinite;
 }
