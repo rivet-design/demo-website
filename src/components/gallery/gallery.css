@@ -26,7 +26,11 @@
   container-type: inline-size;
   background: var(--bg);
   color: var(--text-primary);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 13px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -93,6 +97,21 @@
   .rivet-gallery .sidebar {
     display: none;
   }
+  .rivet-gallery .content {
+    grid-column: 1 / -1;
+  }
+}
+
+.rivet-gallery.compact .app {
+  grid-template-columns: 0 1fr;
+}
+
+.rivet-gallery.compact .sidebar {
+  display: none;
+}
+
+.rivet-gallery.compact .content {
+  grid-column: 1 / -1;
 }
 
 /* Skinnier control bar and smaller header text as the gallery narrows. */
@@ -195,6 +214,8 @@
 
 /* Sidebar */
 .rivet-gallery .sidebar {
+  grid-column: 1;
+  grid-row: 2;
   border-right: 1px solid var(--border);
   background: var(--bg);
   padding: 16px 12px;
@@ -260,6 +281,8 @@
 
 /* Main content */
 .rivet-gallery .content {
+  grid-column: 2;
+  grid-row: 2;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -267,6 +290,12 @@
    * changes (e.g. bright theme) actually paint this region. */
   background: var(--bg);
   position: relative;
+}
+
+@container (max-width: 520px) {
+  .rivet-gallery .content {
+    grid-column: 1 / -1;
+  }
 }
 
 .rivet-gallery .content-header {

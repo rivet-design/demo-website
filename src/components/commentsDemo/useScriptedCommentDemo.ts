@@ -89,6 +89,7 @@ export const useScriptedCommentDemo = ({
   enabled,
   start,
   designH = SCRIPT_DESIGN_H,
+  contentLeft = SIDEBAR,
   onDraftOpen,
   onSubmit,
 }: {
@@ -98,12 +99,16 @@ export const useScriptedCommentDemo = ({
   start: boolean;
   /** Live design-box height so the selection spans the full (dynamic) gallery. */
   designH?: number;
+  /** Left edge of the gallery content area; mobile compact layout has no sidebar. */
+  contentLeft?: number;
   /** Fired once when the popover opens (telemetry: draft created). */
   onDraftOpen?: () => void;
   /** Fired once at submit (telemetry: comment created). */
   onSubmit?: () => void;
 }): ScriptedCommentState => {
-  const [phase, setPhase] = useState<ScriptPhase>(enabled ? 'idle' : 'generating');
+  const [phase, setPhase] = useState<ScriptPhase>(
+    enabled ? 'idle' : 'generating',
+  );
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const firedRef = useRef({ draft: false, submit: false });
 
@@ -146,9 +151,9 @@ export const useScriptedCommentDemo = ({
   // "All Works" header down to the bottom. Bottom tracks the live design height.
   const CONTENT_TOP = TOPBAR + 12; // top edge sits at the "All Works" header text
   const box = {
-    left: SIDEBAR,
+    left: contentLeft,
     top: CONTENT_TOP,
-    width: SCRIPT_DESIGN_W - SIDEBAR,
+    width: SCRIPT_DESIGN_W - contentLeft,
     height: Math.max(0, designH - CONTENT_TOP),
   };
   // Drag runs bottom-right → top-left, released at the top-left. The grab corner

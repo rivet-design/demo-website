@@ -29,7 +29,12 @@ const SHOW_SPARKLES = false;
 
 // A crisp little 4-point sparkle (the brand's twinkle motif) placed at guide
 // intersections.
-const sparkle = (cx: number, cy: number, r = 8, inner = 1.8): SVGPathElement => {
+const sparkle = (
+  cx: number,
+  cy: number,
+  r = 8,
+  inner = 1.8,
+): SVGPathElement => {
   const p = document.createElementNS(NS, 'path');
   p.setAttribute(
     'd',
@@ -61,6 +66,7 @@ const SketchGuides = () => {
     top: 0,
     divider: 0,
     heroBottom: 0,
+    workflowTop: 0,
     footerTop: 0,
     rows: [] as number[],
   });
@@ -88,7 +94,9 @@ const SketchGuides = () => {
       // Anchor the hero divider to the TOP edge of the variant showcase panel so
       // the line sits just above it and tracks its (resized) height, instead of
       // a fixed viewport fraction that would cut through the panel.
-      const showcase = parent.querySelector('#hero-showcase') as HTMLElement | null;
+      const showcase = parent.querySelector(
+        '#hero-showcase',
+      ) as HTMLElement | null;
       const divider = showcase
         ? Math.round(showcase.offsetTop)
         : Math.round(vh * 0.34);
@@ -97,9 +105,16 @@ const SketchGuides = () => {
       const heroBottom = showcase
         ? Math.round(showcase.offsetTop + showcase.offsetHeight)
         : 0;
+      const workflow = parent.querySelector(
+        '#demo-panel',
+      ) as HTMLElement | null;
+      const workflowTop = workflow ? Math.round(workflow.offsetTop) : 0;
       const footer = parent.querySelector('footer') as HTMLElement | null;
       const footerTop = footer
-        ? Math.round(footer.getBoundingClientRect().top - parent.getBoundingClientRect().top)
+        ? Math.round(
+            footer.getBoundingClientRect().top -
+              parent.getBoundingClientRect().top,
+          )
         : 0;
       // Horizontal rule positions framing each workflow panel (the grey panel
       // backgrounds were removed — these blueprint lines delineate them now).
@@ -135,10 +150,21 @@ const SketchGuides = () => {
         prev.top === top &&
         prev.divider === divider &&
         prev.heroBottom === heroBottom &&
+        prev.workflowTop === workflowTop &&
         prev.footerTop === footerTop &&
         prev.rows.join(',') === rows.join(',')
           ? prev
-          : { w, h, vh, top, divider, heroBottom, footerTop, rows },
+          : {
+              w,
+              h,
+              vh,
+              top,
+              divider,
+              heroBottom,
+              workflowTop,
+              footerTop,
+              rows,
+            },
       );
     };
     measure();
@@ -151,7 +177,7 @@ const SketchGuides = () => {
     const ro = new ResizeObserver(measure);
     ro.observe(parent);
     parent
-      .querySelectorAll('[data-guide-row], #hero-showcase')
+      .querySelectorAll('[data-guide-row], #hero-showcase, #demo-panel')
       .forEach((el) => ro.observe(el));
     window.addEventListener('resize', measure);
     // Layout-settled triggers the ResizeObserver doesn't reliably catch:
@@ -184,15 +210,22 @@ const SketchGuides = () => {
     while (svg.firstChild) svg.removeChild(svg.firstChild);
     const verticalSvg = verticalSvgRef.current;
     if (verticalSvg) {
-      while (verticalSvg.firstChild) verticalSvg.removeChild(verticalSvg.firstChild);
+      while (verticalSvg.firstChild)
+        verticalSvg.removeChild(verticalSvg.firstChild);
     }
 
     const rc = rough.svg(svg);
     const verticalRc = verticalSvg ? rough.svg(verticalSvg) : null;
-    const { w, h, vh, top, divider, heroBottom, footerTop, rows } = size;
+    const { w, h, vh, top, divider, heroBottom, workflowTop, footerTop, rows } =
+      size;
     // Very subtle hand-drawn character — nearly straight with a faint waver. A
     // fixed seed per stroke keeps the wobble stable so it never "jitters".
-    const base = { stroke: ORANGE, strokeWidth: 1.2, roughness: 0.4, bowing: 0.5 };
+    const base = {
+      stroke: ORANGE,
+      strokeWidth: 1.2,
+      roughness: 0.4,
+      bowing: 0.5,
+    };
 
     const parent = svg.parentElement;
     const gutterX = parent
@@ -262,7 +295,17 @@ const SketchGuides = () => {
     const HERO_RULE_GAP = 1;
     hline(0, My - HERO_RULE_GAP, w, My - HERO_RULE_GAP, 12, false, true);
     // Rule along the bottom of the hero asset, mirroring the divider above.
-    if (heroBottom) hline(0, heroBottom + HERO_RULE_GAP, w, heroBottom + HERO_RULE_GAP, 16, false, true);
+    if (heroBottom)
+      hline(
+        0,
+        heroBottom + HERO_RULE_GAP,
+        w,
+        heroBottom + HERO_RULE_GAP,
+        16,
+        false,
+        true,
+      );
+    if (workflowTop) hline(0, workflowTop, w, workflowTop, 17, false, true);
     hline(0, By, w, By, 13);
     // Per-panel rules framing each workflow panel (top of each + bottom of the
     // last), now that the grey panel backgrounds are gone. Flat so they hug the
