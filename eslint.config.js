@@ -31,6 +31,25 @@ export default [
     },
     rules: {
       ...tseslint.configs.recommended.rules,
+      // Allow the `_`-prefix convention for intentionally-unused bindings
+      // (e.g. destructuring to strip props before a spread).
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+      // Permit `@ts-nocheck` / `@ts-expect-error` only when accompanied by a
+      // justification, so suppressions in vendored/infra files stay documented.
+      '@typescript-eslint/ban-ts-comment': [
+        'error',
+        {
+          'ts-nocheck': 'allow-with-description',
+          'ts-expect-error': 'allow-with-description',
+        },
+      ],
     },
   },
 ];
