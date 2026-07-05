@@ -431,7 +431,7 @@ const App = () => {
         {/* Subtitle + CTA, moved below the fold to sit under the UI variants
             shell. */}
         <FadeInText>
-          <div className="relative z-10 flex flex-col items-center gap-8 px-4 pb-4 pt-12 text-center lg:gap-10 lg:px-0 lg:pb-8 lg:pt-20">
+          <div className="relative z-10 flex flex-col items-center gap-8 px-4 pb-4 pt-12 text-center lg:gap-10 lg:px-0 lg:pb-14 lg:pt-6">
             <span className="hero-title-size max-w-[24ch] font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
               Rivet understands your references, and then explores dozens of
               design directions with you.
@@ -440,8 +440,18 @@ const App = () => {
           </div>
         </FadeInText>
 
+        {/* Desktop first-panel band. SketchGuides draws the workflowTop rule at
+            #demo-panel's top and one hugging each panel's visual box; between
+            panels the empty band is a section's pb + the next section's pt (128px).
+            lg:pt-16 (64) + the first section's pt-16 (64) reproduces that 128px
+            band below the workflowTop rule. lg:-mt-8 cancels the parent flex's
+            gap-8 so the rule lands 128px above the first panel; the hero copy above
+            it is centered between the showcase's bottom rule and this one (see the
+            hero block's lg:pt-6 / lg:pb-14). Desktop-only: on mobile each panel's
+            copy stacks above its visual box, so that band isn't empty and doesn't
+            read as narrow. */}
         <div
-          className="bleed-page-gutter-x relative z-10 flex flex-col"
+          className="bleed-page-gutter-x relative z-10 flex flex-col lg:-mt-8 lg:pt-16"
           id="demo-panel"
         >
           {/* <WorkflowPanels /> */}

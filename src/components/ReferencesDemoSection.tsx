@@ -147,8 +147,8 @@ const ReferencesDemoSection = () => {
   // More dot rows on desktop, fewer (well-spaced) on small screens.
   const gridSpacing = useIsDesktop() ? 22 : 30;
   return (
-    <div className="page-gutter-x relative flex w-full justify-center py-10 lg:py-16">
-      <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_2.5fr] lg:gap-16">
+    <div className="page-gutter-x relative flex w-full justify-center py-8 lg:py-16">
+      <div className="grid w-full grid-cols-1 items-center gap-16 lg:grid-cols-[1fr_2.5fr]">
         {/* Copy — text is the outer (left) column at lg. Shared copy-block
             padding keeps workflow panel title/subtitle spacing consistent; the
             lg:pl-8 mirrors the reference wall's lg:pr-8 so the text sits off the
