@@ -46,8 +46,8 @@ const Vendor = ({
  */
 const AgentTerminalSection = () => {
   return (
-    <div className="page-gutter-x relative flex w-full justify-center py-10 lg:py-16">
-      <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[2.5fr_1fr] lg:gap-16">
+    <div className="page-gutter-x relative flex w-full justify-center py-8 lg:py-16">
+      <div className="grid w-full grid-cols-1 items-center gap-16 lg:grid-cols-[2.5fr_1fr]">
         {/* Terminal — left on lg+, below the title on mobile. */}
         <div className="order-2 w-full lg:order-1">
           {/* On mobile the panel is a vertical rectangle (`aspect-panel-portrait`)

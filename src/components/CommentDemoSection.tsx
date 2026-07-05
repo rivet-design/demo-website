@@ -46,8 +46,8 @@ const CommentDemoSection = () => {
   };
 
   return (
-    <div className="page-gutter-x relative flex w-full justify-center py-10 lg:py-16">
-      <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-[2.5fr_1fr] lg:gap-16">
+    <div className="page-gutter-x relative flex w-full justify-center py-8 lg:py-16">
+      <div className="grid w-full grid-cols-1 items-center gap-16 lg:grid-cols-[2.5fr_1fr]">
         {/* DOM order is panel-then-text so that at lg+ the panel sits in the
             first (2.5fr) column on the left. On stacked mobile/tablet we want
             the title above the panel, so flip with `order-` classes below. */}
