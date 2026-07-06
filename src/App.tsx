@@ -392,7 +392,7 @@ const App = () => {
               script={HERO_SESSION}
               className={`ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none absolute z-20 hidden h-[240px] w-[300px] -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-700 lg:flex lg:h-[300px] lg:w-[380px] ${
                 chatMoved
-                  ? 'left-[70%] top-[61%] lg:left-[77%] lg:top-[63%]'
+                  ? 'left-[74%] top-[70%] lg:left-[80%] lg:top-[72%]'
                   : 'left-1/2 top-1/2'
               }`}
             />
