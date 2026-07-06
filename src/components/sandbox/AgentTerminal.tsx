@@ -154,19 +154,20 @@ const renderCommand = (text: string): ReactNode => {
 };
 
 // Fake the feel of tokens streaming back from an agent: split the reply into
-// words and cascade them in with a quick fade + de-blur, so prose materialises
+// words and cascade them in with a fade + de-blur, so prose materialises
 // smoothly left-to-right instead of popping in as one block. The stagger is
-// tuned fast (~22ms/word) so a sentence lands in well under a second.
+// tuned to a calm ~40ms/word so the reply reads like it's being generated
+// rather than dumped in all at once.
 const STREAM_CONTAINER = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.022 } },
+  visible: { transition: { staggerChildren: 0.04 } },
 };
 const STREAM_WORD = {
   hidden: { opacity: 0, filter: 'blur(4px)' },
   visible: {
     opacity: 1,
     filter: 'blur(0px)',
-    transition: { duration: 0.18, ease: 'easeOut' as const },
+    transition: { duration: 0.24, ease: 'easeOut' as const },
   },
 };
 const StreamingText = ({ text }: { text: string }) => {
@@ -349,11 +350,39 @@ const AgentTerminal = ({
     }
   }, [allDone, onComplete]);
 
-  // Keep the latest streamed output in view as rows reveal.
+  // Keep the latest streamed output in view as rows reveal — but only while the
+  // user is parked at the bottom. If they scroll up (to re-read an earlier tool
+  // call while the agent keeps generating), stop yanking them back down; re-pin
+  // the moment they scroll back to the bottom. This lets the user freely scroll
+  // the transcript mid-generation instead of fighting the auto-scroll.
   const scrollRef = useRef<HTMLDivElement>(null);
+  const pinnedRef = useRef(true);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const atBottom = () => el.scrollHeight - el.scrollTop - el.clientHeight < 24;
+    // Only a real user gesture (wheel / touch drag) unpins — the programmatic
+    // smooth-scroll below fires `scroll` events too, and we don't want those to
+    // unpin us mid-animation.
+    const unpin = () => {
+      if (!atBottom()) pinnedRef.current = false;
+    };
+    const onScroll = () => {
+      if (atBottom()) pinnedRef.current = true;
+    };
+    el.addEventListener('wheel', unpin, { passive: true });
+    el.addEventListener('touchmove', unpin, { passive: true });
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      el.removeEventListener('wheel', unpin);
+      el.removeEventListener('touchmove', unpin);
+      el.removeEventListener('scroll', onScroll);
+    };
+  }, []);
+
   const revealed = history.reduce((n, t) => n + t.revealed, 0);
   useEffect(() => {
-    if (!inView) return;
+    if (!inView || !pinnedRef.current) return;
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
