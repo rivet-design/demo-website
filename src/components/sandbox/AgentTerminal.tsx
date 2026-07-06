@@ -361,21 +361,38 @@ const AgentTerminal = ({
     const el = scrollRef.current;
     if (!el) return;
     const atBottom = () => el.scrollHeight - el.scrollTop - el.clientHeight < 24;
-    // Only a real user gesture (wheel / touch drag) unpins — the programmatic
-    // smooth-scroll below fires `scroll` events too, and we don't want those to
-    // unpin us mid-animation.
-    const unpin = () => {
-      if (!atBottom()) pinnedRef.current = false;
+    // Unpin on the user's INTENT to move up, not on the resulting position: a
+    // `wheel` fires before scrollTop changes, so from a pinned-at-bottom state
+    // the element still reports atBottom — keying off direction is what makes
+    // "scroll up mid-generation" actually stick. An upward wheel (deltaY < 0)
+    // or a downward finger drag (content moves up) both mean "let me read back".
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY < 0) pinnedRef.current = false;
     };
+    let touchY = 0;
+    const onTouchStart = (e: TouchEvent) => {
+      touchY = e.touches[0]?.clientY ?? 0;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      const y = e.touches[0]?.clientY ?? touchY;
+      if (y > touchY) pinnedRef.current = false;
+      touchY = y;
+    };
+    // The `scroll` handler only ever RE-pins — landing back at the bottom (by
+    // the user or by our own smooth-scroll settling) resumes auto-follow. It
+    // never unpins, so the programmatic scroll's mid-flight events can't fight
+    // the user.
     const onScroll = () => {
       if (atBottom()) pinnedRef.current = true;
     };
-    el.addEventListener('wheel', unpin, { passive: true });
-    el.addEventListener('touchmove', unpin, { passive: true });
+    el.addEventListener('wheel', onWheel, { passive: true });
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchmove', onTouchMove, { passive: true });
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => {
-      el.removeEventListener('wheel', unpin);
-      el.removeEventListener('touchmove', unpin);
+      el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove', onTouchMove);
       el.removeEventListener('scroll', onScroll);
     };
   }, []);
