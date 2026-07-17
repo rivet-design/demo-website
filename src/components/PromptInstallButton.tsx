@@ -41,21 +41,25 @@ const ToolLogo = ({
 );
 
 // Cursor's deep link into its add-MCP-server dialog. The base64 `config`
-// decodes to
-//   {"command":"sh","args":["-c","exec npx -y rivet-design@latest mcp serve --caller-agent cursor"]}
-// (cmd /c on Windows). npx must NOT be the config's `command`: Cursor's MCP
-// spawner rewrites bare npx entries to run the user's npm under Cursor's
-// bundled helper Node, npm derives its global prefix from that helper's
-// path inside Cursor.app, and npm 10.x dies with
-// `ENOENT lstat .../Cursor.app/.../resources/lib` before the server starts.
-// A shell command is spawned verbatim, so npx resolves and runs under the
-// user's own Node with a real prefix. The cursor:// protocol URL triggers
+// decodes to a shell command that pins npm's global prefix before running
+// npx:
+//   sh -c 'mkdir -p "$HOME/.rivet/npx-prefix/lib";
+//          export npm_config_prefix="$HOME/.rivet/npx-prefix";
+//          exec npx -y rivet-design@latest mcp serve --caller-agent cursor'
+// (cmd /c + %APPDATA%\npm on Windows). The pin is load-bearing: Cursor
+// spawns MCP servers with its bundled helper Node first on PATH, so npx's
+// `#!/usr/bin/env node` shebang runs npm under that helper regardless of
+// the configured command. npm derives its global prefix from the node
+// binary's location — inside the read-only Cursor.app bundle — and npm 10.x
+// dies with `ENOENT lstat .../Cursor.app/.../resources/lib` before the
+// server starts. An explicit npm_config_prefix pointing at a real directory
+// makes any node/npm combination work. The cursor:// protocol URL triggers
 // the OS handler directly; the older cursor.com/install-mcp web handoff
 // silently dead-ended for signed-out visitors.
 const CURSOR_DEEPLINK =
-  'cursor://anysphere.cursor-deeplink/mcp/install?name=rivet&config=eyJjb21tYW5kIjoic2giLCJhcmdzIjpbIi1jIiwiZXhlYyBucHggLXkgcml2ZXQtZGVzaWduQGxhdGVzdCBtY3Agc2VydmUgLS1jYWxsZXItYWdlbnQgY3Vyc29yIl19';
+  'cursor://anysphere.cursor-deeplink/mcp/install?name=rivet&config=eyJjb21tYW5kIjoic2giLCJhcmdzIjpbIi1jIiwibWtkaXIgLXAgXCIkSE9NRS8ucml2ZXQvbnB4LXByZWZpeC9saWJcIjsgZXhwb3J0IG5wbV9jb25maWdfcHJlZml4PVwiJEhPTUUvLnJpdmV0L25weC1wcmVmaXhcIjsgZXhlYyBucHggLXkgcml2ZXQtZGVzaWduQGxhdGVzdCBtY3Agc2VydmUgLS1jYWxsZXItYWdlbnQgY3Vyc29yIl19';
 const CURSOR_DEEPLINK_WINDOWS =
-  'cursor://anysphere.cursor-deeplink/mcp/install?name=rivet&config=eyJjb21tYW5kIjoiY21kIiwiYXJncyI6WyIvYyIsIm5weCAteSByaXZldC1kZXNpZ25AbGF0ZXN0IG1jcCBzZXJ2ZSAtLWNhbGxlci1hZ2VudCBjdXJzb3IiXX0=';
+  'cursor://anysphere.cursor-deeplink/mcp/install?name=rivet&config=eyJjb21tYW5kIjoiY21kIiwiYXJncyI6WyIvYyIsImlmIG5vdCBleGlzdCBcIiVBUFBEQVRBJVxcbnBtXCIgbWtkaXIgXCIlQVBQREFUQSVcXG5wbVwiICYgc2V0IFwibnBtX2NvbmZpZ19wcmVmaXg9JUFQUERBVEElXFxucG1cIiAmIG5weCAteSByaXZldC1kZXNpZ25AbGF0ZXN0IG1jcCBzZXJ2ZSAtLWNhbGxlci1hZ2VudCBjdXJzb3IiXX0=';
 
 type AgentItem =
   | {
