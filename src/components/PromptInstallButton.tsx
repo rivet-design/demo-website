@@ -75,8 +75,9 @@ type AgentItem =
 // Menu rows, in display order. Cursor = one-click deep link; the rest copy a
 // paste-ready install prompt (no install URL scheme exists for them). The
 // commands mirror rivet core's harness registry ids (`install claude` /
-// `codex`). Claude Desktop is retired as an install target in rivet core, so
-// the Claude row covers Claude Code only.
+// `codex`). Users rarely know which Claude surface they're on, so rivet
+// core's `install claude` covers both: Claude Code setup plus the Claude
+// Desktop chat MCP registration when the desktop app is present.
 const AGENT_ITEMS: AgentItem[] = [
   {
     id: 'claude',
@@ -84,7 +85,7 @@ const AGENT_ITEMS: AgentItem[] = [
     logo: 'claude',
     action: 'copy',
     prompt:
-      'Please set up Rivet for Claude Code by running: npx -y rivet-design@latest install claude',
+      'Please set up Rivet for Claude by running: npx -y rivet-design@latest install claude',
   },
   {
     id: 'cursor',
