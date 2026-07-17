@@ -42,17 +42,30 @@ const ToolLogo = ({
 
 // Cursor's deep link into its add-MCP-server dialog. The base64 `config`
 // decodes to
-//   {"command":"npx","args":["-y","rivet-design@latest","mcp","serve","--caller-agent","cursor"]}
-// — the same cache-independent invocation `rivet install` registers, so the
-// entry keeps working across npx cache prunes and rivet updates. The
-// cursor:// protocol URL triggers the OS handler directly; the older
-// cursor.com/install-mcp web handoff silently dead-ended for signed-out
-// visitors.
+//   {"command":"sh","args":["-c","exec npx -y rivet-design@latest mcp serve --caller-agent cursor"]}
+// (cmd /c on Windows). npx must NOT be the config's `command`: Cursor's MCP
+// spawner rewrites bare npx entries to run the user's npm under Cursor's
+// bundled helper Node, npm derives its global prefix from that helper's
+// path inside Cursor.app, and npm 10.x dies with
+// `ENOENT lstat .../Cursor.app/.../resources/lib` before the server starts.
+// A shell command is spawned verbatim, so npx resolves and runs under the
+// user's own Node with a real prefix. The cursor:// protocol URL triggers
+// the OS handler directly; the older cursor.com/install-mcp web handoff
+// silently dead-ended for signed-out visitors.
 const CURSOR_DEEPLINK =
-  'cursor://anysphere.cursor-deeplink/mcp/install?name=rivet&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsInJpdmV0LWRlc2lnbkBsYXRlc3QiLCJtY3AiLCJzZXJ2ZSIsIi0tY2FsbGVyLWFnZW50IiwiY3Vyc29yIl19';
+  'cursor://anysphere.cursor-deeplink/mcp/install?name=rivet&config=eyJjb21tYW5kIjoic2giLCJhcmdzIjpbIi1jIiwiZXhlYyBucHggLXkgcml2ZXQtZGVzaWduQGxhdGVzdCBtY3Agc2VydmUgLS1jYWxsZXItYWdlbnQgY3Vyc29yIl19';
+const CURSOR_DEEPLINK_WINDOWS =
+  'cursor://anysphere.cursor-deeplink/mcp/install?name=rivet&config=eyJjb21tYW5kIjoiY21kIiwiYXJncyI6WyIvYyIsIm5weCAteSByaXZldC1kZXNpZ25AbGF0ZXN0IG1jcCBzZXJ2ZSAtLWNhbGxlci1hZ2VudCBjdXJzb3IiXX0=';
 
 type AgentItem =
-  | { id: string; label: string; logo: AgentLogo; action: 'deeplink'; url: string }
+  | {
+      id: string;
+      label: string;
+      logo: AgentLogo;
+      action: 'deeplink';
+      url: string;
+      windowsUrl?: string;
+    }
   | { id: string; label: string; logo: AgentLogo; action: 'copy'; prompt: string };
 
 // Menu rows, in display order. Cursor = one-click deep link; the rest copy a
@@ -75,6 +88,7 @@ const AGENT_ITEMS: AgentItem[] = [
     logo: 'cursor',
     action: 'deeplink',
     url: CURSOR_DEEPLINK,
+    windowsUrl: CURSOR_DEEPLINK_WINDOWS,
   },
   {
     id: 'codex',
@@ -146,8 +160,11 @@ const PromptInstallButton = ({
       // Custom-protocol URLs must navigate in place: browsers block them in
       // new tabs, and the OS "Open Cursor?" dialog appears without leaving
       // the page. The toast covers the no-handler case (Cursor not
-      // installed).
-      window.location.href = item.url;
+      // installed). Platform pick happens here, not at module scope, so
+      // prerendering never touches `navigator`.
+      const isWindows = /Windows/i.test(navigator.userAgent);
+      window.location.href =
+        isWindows && item.windowsUrl ? item.windowsUrl : item.url;
       toast.success('Opening Cursor…', {
         description: 'Accept the prompt to add the Rivet MCP server.',
       });
