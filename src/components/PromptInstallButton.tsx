@@ -85,7 +85,7 @@ const AGENT_ITEMS: AgentItem[] = [
     logo: 'claude',
     action: 'copy',
     prompt:
-      'Please set up Rivet for Claude Code and Claude Desktop by running: npx -y rivet-design@latest install claude claude-desktop',
+      'Please set up Rivet for Claude Code and Claude Desktop by running: npx -y rivet-design@latest install claude-code claude-desktop',
   },
   {
     id: 'cursor',
