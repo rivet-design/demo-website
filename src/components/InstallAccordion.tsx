@@ -4,7 +4,7 @@
 // gives a smooth height animation.
 import { useState } from 'react';
 
-const INSTALL_CMD = 'npx rivet-design install';
+const INSTALL_CMD = 'npx -y rivet-design@latest install';
 
 const ChevronIcon = ({ open }: { open: boolean }) => (
   <svg

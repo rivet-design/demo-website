@@ -1,10 +1,12 @@
-// Single "Add the Rivet MCP" button. On click it opens a popover menu with one
-// row per coding agent (logo + title). Cursor installs via a one-click deep
-// link (cursor://anysphere.cursor-deeplink/...). Claude Code, the Claude
-// desktop app, and Codex have no install URL scheme, so they copy a paste-ready
-// prompt the user drops into the agent (which then runs `npx rivet-design
-// install <agent>`). Replaces the older split button (main "Add to <tool>"
-// action + chevron dropdown).
+// Single "Add Rivet to your agent" button. On click it opens a popover menu
+// with one row per coding agent (logo + title). Claude Code and Codex copy a
+// paste-ready prompt the user drops into the agent, which then runs `npx -y
+// rivet-design@latest install <agent>` — rivet core's CLI-first install
+// (skill / rules file + command allowlist per harness). Cursor is a one-click
+// deep link straight into Cursor's add-MCP-server dialog: since rivet core
+// registers `mcp serve` via a cache-independent `npx rivet-design@latest`
+// invocation, a static deeplink config is durable again (the older deeplink
+// died with the tombstoned per-tool `rivet mcp --editor` server).
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { posthog } from '@/lib/posthog';
@@ -38,21 +40,26 @@ const ToolLogo = ({
   />
 );
 
-// Cursor's one-click install URL for the local (stdio) Rivet MCP server.
-// Mirrors buildCursorLocalRivetEntry in rivet core: the base64 `config` decodes
-// to {"command":"npx","args":["-y","rivet-design@latest","mcp","--editor","cursor"]}
-// — a locally-spawned stdio server, not the hosted remote URL (so no OAuth).
-// cursor.com/install-mcp is the web handoff that bounces to Cursor and writes
-// the entry into ~/.cursor/mcp.json.
+// Cursor's deep link into its add-MCP-server dialog. The base64 `config`
+// decodes to
+//   {"command":"npx","args":["-y","rivet-design@latest","mcp","serve","--caller-agent","cursor"]}
+// — the same cache-independent invocation `rivet install` registers, so the
+// entry keeps working across npx cache prunes and rivet updates. The
+// cursor:// protocol URL triggers the OS handler directly; the older
+// cursor.com/install-mcp web handoff silently dead-ended for signed-out
+// visitors.
 const CURSOR_DEEPLINK =
-  'https://cursor.com/install-mcp?name=rivet&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsInJpdmV0LWRlc2lnbkBsYXRlc3QiLCJtY3AiLCItLWVkaXRvciIsImN1cnNvciJdfQ%3D%3D';
+  'cursor://anysphere.cursor-deeplink/mcp/install?name=rivet&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsInJpdmV0LWRlc2lnbkBsYXRlc3QiLCJtY3AiLCJzZXJ2ZSIsIi0tY2FsbGVyLWFnZW50IiwiY3Vyc29yIl19';
 
 type AgentItem =
   | { id: string; label: string; logo: AgentLogo; action: 'deeplink'; url: string }
   | { id: string; label: string; logo: AgentLogo; action: 'copy'; prompt: string };
 
 // Menu rows, in display order. Cursor = one-click deep link; the rest copy a
-// paste-ready install prompt (no URL scheme exists for them).
+// paste-ready install prompt (no install URL scheme exists for them). The
+// commands mirror rivet core's harness registry ids (`install claude` /
+// `codex`). Claude Desktop is retired as an install target in rivet core, so
+// the Claude row covers Claude Code only.
 const AGENT_ITEMS: AgentItem[] = [
   {
     id: 'claude',
@@ -60,7 +67,7 @@ const AGENT_ITEMS: AgentItem[] = [
     logo: 'claude',
     action: 'copy',
     prompt:
-      'Please install the Rivet MCP server for Claude Code and the Claude desktop app by running: npx rivet-design install claude && npx rivet-design install claude-desktop',
+      'Please set up Rivet for Claude Code by running: npx -y rivet-design@latest install claude',
   },
   {
     id: 'cursor',
@@ -75,7 +82,7 @@ const AGENT_ITEMS: AgentItem[] = [
     logo: 'codex',
     action: 'copy',
     prompt:
-      'Please install the Rivet MCP server for Codex by running: npx rivet-design install codex',
+      'Please set up Rivet for Codex by running: npx -y rivet-design@latest install codex',
   },
 ];
 
@@ -136,9 +143,14 @@ const PromptInstallButton = ({
     });
 
     if (item.action === 'deeplink') {
-      // cursor.com/install-mcp is a web handoff that bounces to the cursor://
-      // protocol; open it in a new tab so the landing page stays put.
-      window.open(item.url, '_blank', 'noopener,noreferrer');
+      // Custom-protocol URLs must navigate in place: browsers block them in
+      // new tabs, and the OS "Open Cursor?" dialog appears without leaving
+      // the page. The toast covers the no-handler case (Cursor not
+      // installed).
+      window.location.href = item.url;
+      toast.success('Opening Cursor…', {
+        description: 'Accept the prompt to add the Rivet MCP server.',
+      });
     } else {
       navigator.clipboard.writeText(item.prompt).then(() => {
         toast.success('Prompt copied to clipboard', {
@@ -191,7 +203,7 @@ const PromptInstallButton = ({
           fullWidth ? 'w-full justify-center' : 'w-fit'
         } transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
       >
-        <span className="whitespace-nowrap">Add the Rivet MCP</span>
+        <span className="whitespace-nowrap">Add Rivet to your agent</span>
         {/* Already-fanned icon row. At rest each icon is fully visible with a
             clear gap. On hover/focus the gap widens and each icon lifts up with
             a soft drop shadow. `motion-reduce` keeps the icons static. */}
