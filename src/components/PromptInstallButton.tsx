@@ -10,15 +10,12 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { posthog } from '@/lib/posthog';
+import {
+  AGENT_LOGOS as TOOL_LOGOS,
+  INSTALL_COMMANDS,
+  type InstallAgentId as AgentLogo,
+} from '@/lib/install';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
-
-type AgentLogo = 'claude' | 'cursor' | 'codex';
-
-const TOOL_LOGOS: Record<AgentLogo, string> = {
-  claude: '/images/claude.svg',
-  cursor: '/images/cursor.svg',
-  codex: '/images/codex.svg',
-};
 
 // Logo rendered from public/ image files. `invert` flips it white (for dark
 // button tones); otherwise it stays black (for the light tone).
@@ -84,8 +81,7 @@ const AGENT_ITEMS: AgentItem[] = [
     label: 'Claude',
     logo: 'claude',
     action: 'copy',
-    prompt:
-      'Please set up Rivet for Claude Code and Claude Desktop by running: npx -y rivet-design@latest install claude-code claude-desktop',
+    prompt: `Please set up Rivet for Claude Code and Claude Desktop by running: ${INSTALL_COMMANDS.claude}`,
   },
   {
     id: 'cursor',
@@ -100,8 +96,7 @@ const AGENT_ITEMS: AgentItem[] = [
     label: 'Codex',
     logo: 'codex',
     action: 'copy',
-    prompt:
-      'Please set up Rivet for Codex by running: npx -y rivet-design@latest install codex',
+    prompt: `Please set up Rivet for Codex by running: ${INSTALL_COMMANDS.codex}`,
   },
 ];
 
@@ -171,17 +166,12 @@ const PromptInstallButton = ({
       window.location.href =
         isWindows && item.windowsUrl ? item.windowsUrl : item.url;
       toast.success('Opening Cursor…', {
-        description: 'Accept the prompt to add the Rivet MCP server.',
+        description: 'Accept the prompt to install the Rivet MCP.',
       });
     } else {
       navigator.clipboard.writeText(item.prompt).then(() => {
         toast.success('Prompt copied to clipboard', {
-          description: `Paste into ${item.label} to get started.`,
-          action: {
-            label: 'Learn more',
-            onClick: () =>
-              window.open('https://docs.rivet.design/mcp-guide', '_blank'),
-          },
+          description: `Paste into ${item.label} to install the Rivet MCP.`,
         });
       });
     }
@@ -245,10 +235,13 @@ const PromptInstallButton = ({
       </PopoverTrigger>
 
       {/* Dropdown menu — one row per agent, on the dark menu surface. */}
+      {/* The menu matches the trigger's width exactly, so the dropdown reads
+          as an extension of the button it opens from. */}
       <PopoverContent
         align={fullWidth ? 'center' : 'start'}
         sideOffset={6}
-        className="min-w-[16rem] py-1"
+        matchTriggerWidth
+        className="py-1"
         onKeyDown={handleMenuKeyDown}
       >
         {AGENT_ITEMS.map((item, i) => (
@@ -257,11 +250,20 @@ const PromptInstallButton = ({
             type="button"
             onClick={() => activate(item)}
             onMouseEnter={() => setHighlight(i)}
-            className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white transition-colors hover:bg-[hsl(0_0%_25%)] focus:outline-none ${
+            className={`group flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white transition-colors hover:bg-[hsl(0_0%_25%)] focus:outline-none ${
               i === highlight ? 'bg-[hsl(0_0%_22%)]' : ''
             }`}
           >
-            <ToolLogo id={item.logo} label={item.label} />
+            {/* Same lift as the trigger's fanned icons: the logo rises with a
+                soft shadow while the row is hovered or keyboard-highlighted.
+                drop-shadow (not box-shadow) so it hugs the logo shape. */}
+            <span
+              className={`flex shrink-0 transition-[transform,filter] duration-200 ease-out will-change-transform group-hover:-translate-y-0.5 group-hover:drop-shadow-md motion-reduce:!translate-y-0 motion-reduce:!drop-shadow-none motion-reduce:transition-none ${
+                i === highlight ? '-translate-y-0.5 drop-shadow-md' : ''
+              }`}
+            >
+              <ToolLogo id={item.logo} label={item.label} />
+            </span>
             <span className="flex-1 font-main">{item.label}</span>
           </button>
         ))}
