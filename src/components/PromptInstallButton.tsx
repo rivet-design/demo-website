@@ -240,10 +240,13 @@ const PromptInstallButton = ({
       </PopoverTrigger>
 
       {/* Dropdown menu — one row per agent, on the dark menu surface. */}
+      {/* The menu matches the trigger's width exactly, so the dropdown reads
+          as an extension of the button it opens from. */}
       <PopoverContent
         align={fullWidth ? 'center' : 'start'}
         sideOffset={6}
-        className="min-w-[16rem] py-1"
+        matchTriggerWidth
+        className="py-1"
         onKeyDown={handleMenuKeyDown}
       >
         {AGENT_ITEMS.map((item, i) => (

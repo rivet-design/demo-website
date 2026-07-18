@@ -119,6 +119,7 @@ type PopoverContentProps = {
   align?: PopoverAlign;
   side?: PopoverSide;
   sideOffset?: number;
+  matchTriggerWidth?: boolean;
   onKeyDown?: React.KeyboardEventHandler<HTMLDivElement>;
 };
 
@@ -128,6 +129,7 @@ export const PopoverContent = ({
   align = 'start',
   side = 'bottom',
   sideOffset = 6,
+  matchTriggerWidth = false,
   onKeyDown,
 }: PopoverContentProps) => {
   const { open, triggerRef, contentRef } = usePopover();
@@ -147,6 +149,7 @@ export const PopoverContent = ({
       if (!t) return;
       const r = t.getBoundingClientRect();
       const next: CSSProperties = { position: 'fixed' };
+      if (matchTriggerWidth) next.width = r.width;
       if (side === 'bottom') next.top = r.bottom + sideOffset;
       else next.bottom = window.innerHeight - r.top + sideOffset;
       if (align === 'start') next.left = r.left;
@@ -166,7 +169,7 @@ export const PopoverContent = ({
       window.removeEventListener('scroll', compute, true);
       window.removeEventListener('resize', compute);
     };
-  }, [open, align, side, sideOffset, triggerRef]);
+  }, [open, align, side, sideOffset, matchTriggerWidth, triggerRef]);
 
   if (!open || !style) return null;
 
