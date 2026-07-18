@@ -10,15 +10,12 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { posthog } from '@/lib/posthog';
+import {
+  AGENT_LOGOS as TOOL_LOGOS,
+  INSTALL_COMMANDS,
+  type InstallAgentId as AgentLogo,
+} from '@/lib/install';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
-
-type AgentLogo = 'claude' | 'cursor' | 'codex';
-
-const TOOL_LOGOS: Record<AgentLogo, string> = {
-  claude: '/images/claude.svg',
-  cursor: '/images/cursor.svg',
-  codex: '/images/codex.svg',
-};
 
 // Logo rendered from public/ image files. `invert` flips it white (for dark
 // button tones); otherwise it stays black (for the light tone).
@@ -84,8 +81,7 @@ const AGENT_ITEMS: AgentItem[] = [
     label: 'Claude',
     logo: 'claude',
     action: 'copy',
-    prompt:
-      'Please set up Rivet for Claude Code and Claude Desktop by running: npx -y rivet-design@latest install claude-code claude-desktop',
+    prompt: `Please set up Rivet for Claude Code and Claude Desktop by running: ${INSTALL_COMMANDS.claude}`,
   },
   {
     id: 'cursor',
@@ -100,8 +96,7 @@ const AGENT_ITEMS: AgentItem[] = [
     label: 'Codex',
     logo: 'codex',
     action: 'copy',
-    prompt:
-      'Please set up Rivet for Codex by running: npx -y rivet-design@latest install codex',
+    prompt: `Please set up Rivet for Codex by running: ${INSTALL_COMMANDS.codex}`,
   },
 ];
 
