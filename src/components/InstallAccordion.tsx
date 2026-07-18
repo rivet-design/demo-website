@@ -93,7 +93,7 @@ const InstallAccordion = () => {
         aria-expanded={open}
         className="mx-auto flex items-center gap-1.5 font-main text-sm font-medium text-black/70 transition-colors hover:text-black"
       >
-        Or paste this into your agent
+        Or run the install command yourself
         <ChevronIcon open={open} />
       </button>
 

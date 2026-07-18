@@ -436,7 +436,12 @@ const App = () => {
               Rivet understands your references, and then explores dozens of
               design directions with you.
             </span>
-            <PromptInstallButton size="lg" />
+            {/* Button + accordion share a tighter sub-column so the CLI option
+                hangs off the CTA like it does in the download panel. */}
+            <div className="flex w-full max-w-xl flex-col items-center gap-6">
+              <PromptInstallButton size="lg" />
+              <InstallAccordion />
+            </div>
           </div>
         </FadeInText>
 
