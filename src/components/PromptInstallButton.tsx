@@ -252,11 +252,20 @@ const PromptInstallButton = ({
             type="button"
             onClick={() => activate(item)}
             onMouseEnter={() => setHighlight(i)}
-            className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white transition-colors hover:bg-[hsl(0_0%_25%)] focus:outline-none ${
+            className={`group flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white transition-colors hover:bg-[hsl(0_0%_25%)] focus:outline-none ${
               i === highlight ? 'bg-[hsl(0_0%_22%)]' : ''
             }`}
           >
-            <ToolLogo id={item.logo} label={item.label} />
+            {/* Same lift as the trigger's fanned icons: the logo rises with a
+                soft shadow while the row is hovered or keyboard-highlighted.
+                drop-shadow (not box-shadow) so it hugs the logo shape. */}
+            <span
+              className={`flex shrink-0 transition-[transform,filter] duration-200 ease-out will-change-transform group-hover:-translate-y-0.5 group-hover:drop-shadow-md motion-reduce:!translate-y-0 motion-reduce:!drop-shadow-none motion-reduce:transition-none ${
+                i === highlight ? '-translate-y-0.5 drop-shadow-md' : ''
+              }`}
+            >
+              <ToolLogo id={item.logo} label={item.label} />
+            </span>
             <span className="flex-1 font-main">{item.label}</span>
           </button>
         ))}
