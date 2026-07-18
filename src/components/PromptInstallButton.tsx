@@ -175,13 +175,8 @@ const PromptInstallButton = ({
       });
     } else {
       navigator.clipboard.writeText(item.prompt).then(() => {
-        toast.success('Prompt copied to clipboard', {
+        toast('Prompt copied to clipboard', {
           description: `Paste into ${item.label} to get started.`,
-          action: {
-            label: 'Learn more',
-            onClick: () =>
-              window.open('https://docs.rivet.design/quickstart', '_blank'),
-          },
         });
       });
     }
