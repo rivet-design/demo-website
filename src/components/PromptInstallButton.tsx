@@ -175,7 +175,7 @@ const PromptInstallButton = ({
       });
     } else {
       navigator.clipboard.writeText(item.prompt).then(() => {
-        toast('Prompt copied to clipboard', {
+        toast.success('Prompt copied to clipboard', {
           description: `Paste into ${item.label} to get started.`,
         });
       });
