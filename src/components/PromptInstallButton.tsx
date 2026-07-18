@@ -171,12 +171,12 @@ const PromptInstallButton = ({
       window.location.href =
         isWindows && item.windowsUrl ? item.windowsUrl : item.url;
       toast.success('Opening Cursor…', {
-        description: 'Accept the prompt to add the Rivet MCP server.',
+        description: 'Accept the prompt to install the Rivet MCP.',
       });
     } else {
       navigator.clipboard.writeText(item.prompt).then(() => {
         toast.success('Prompt copied to clipboard', {
-          description: 'Paste into your agent to install the Rivet MCP.',
+          description: `Paste into ${item.label} to install the Rivet MCP.`,
         });
       });
     }
