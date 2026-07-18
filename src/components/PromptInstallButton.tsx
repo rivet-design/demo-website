@@ -176,7 +176,7 @@ const PromptInstallButton = ({
     } else {
       navigator.clipboard.writeText(item.prompt).then(() => {
         toast.success('Prompt copied to clipboard', {
-          description: `Paste into ${item.label} to get started.`,
+          description: 'Paste into your agent to install the Rivet MCP.',
         });
       });
     }
