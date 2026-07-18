@@ -180,7 +180,7 @@ const PromptInstallButton = ({
           action: {
             label: 'Learn more',
             onClick: () =>
-              window.open('https://docs.rivet.design/mcp-guide', '_blank'),
+              window.open('https://docs.rivet.design/quickstart', '_blank'),
           },
         });
       });
