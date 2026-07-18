@@ -333,7 +333,7 @@ const App = () => {
   };
   return (
     <>
-      <Toaster position="bottom-right" theme="light" duration={8000} />
+      <Toaster position="bottom-right" theme="dark" duration={8000} />
       {/* Paper texture behind all content. Applied to the scrolling container
           (not fixed) so it travels with the page; tiled vertically to cover the
           full scroll height at the same horizontal scale across the viewport. */}
