@@ -3,6 +3,7 @@
 // each with its own copy-to-clipboard button. Styled with the Rivet design
 // system; the grid-rows 0fr->1fr trick gives a smooth height animation.
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { posthog } from '@/lib/posthog';
 import {
   AGENT_LOGOS,
@@ -77,6 +78,7 @@ const InstallAccordion = () => {
       download_type: id,
     });
     navigator.clipboard.writeText(INSTALL_COMMANDS[id]).then(() => {
+      toast.success('Command copied to clipboard');
       setCopiedId(id);
       setTimeout(
         () => setCopiedId((cur) => (cur === id ? null : cur)),
