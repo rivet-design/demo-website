@@ -69,50 +69,39 @@ export const HERO_SESSION: Turn[] = [
 // call with arguments/results shaped like the live ones.
 export const SESSION: Turn[] = [
   {
-    command:
-      'Explore different creative ways to style my Jersey customizer app — refs: pinterest.com/maya/football-kits',
+    command: 'Restyle my jersey app — refs: pinterest.com/maya/football-kits',
     response: [
-      { kind: 'thinking', text: 'Reading your Pinterest board for visual direction…' },
+      { kind: 'thinking', text: 'Reading your Pinterest board…' },
       {
         kind: 'tool',
         tool: 'fetch_pinterest',
-        arg: 'url: pinterest.com/maya/football-kits',
-        result: '42 pins · retro print, neon, halftone palettes',
+        arg: 'pinterest.com/maya/football-kits',
+        result: '42 pins · retro, neon, halftone',
       },
       {
         kind: 'tool',
         tool: 'capture_design_evidence',
-        arg: 'synthesize design system from the board',
-        result: 'palette · display type · kit motifs → DESIGN.md',
-      },
-      {
-        kind: 'text',
-        text: 'Pulled the recurring themes from your board — bold retro palettes, halftone print texture, and chunky display type — and grounded four directions in them.',
+        arg: 'synthesize a design system',
+        result: 'palette · type · motifs → DESIGN.md',
       },
       {
         kind: 'tool',
         tool: 'start_variants',
-        arg: 'mode: "existing", userContext: [board], briefs × 4',
+        arg: 'mode: "existing", briefs × 4',
         result: '4 worktrees · editor → :4001',
       },
-      {
-        kind: 'tool',
-        tool: 'report_variant_complete',
-        arg: '4 × status: "succeeded"',
-        result: 'Retro print · Neon night · Halftone · Chrome foil',
-      },
-      { kind: 'result', text: '4 directions drawn from your board — cycle them in the preview.' },
+      { kind: 'result', text: '4 directions ready — cycle them in the preview.' },
     ],
   },
   {
-    command: 'refine "Halftone" — punchier dots, use the team colors',
+    command: 'refine "Halftone" — punchier dots, team colors',
     response: [
-      { kind: 'thinking', text: 'Forking the “Halftone” direction with your refinement…' },
+      { kind: 'thinking', text: 'Forking the “Halftone” direction…' },
       {
         kind: 'tool',
         tool: 'continue_variants',
         arg: 'action: "refine_variant", variantId: "Halftone"',
-        result: 'regenerating in worktree',
+        result: 'regenerating',
       },
       {
         kind: 'diff',
@@ -130,16 +119,10 @@ export const SESSION: Turn[] = [
       {
         kind: 'tool',
         tool: 'commit_variant',
-        arg: 'variantId: "Halftone", confirmedByUser: true',
-        result: 'diff queued',
+        arg: 'variantId: "Halftone"',
+        result: 'applied to working tree',
       },
-      {
-        kind: 'tool',
-        tool: 'get_pending_changes',
-        arg: 'refresh_git: true',
-        result: '1 file changed, applied to working tree',
-      },
-      { kind: 'result', text: 'Committed “Halftone” — drawn from your board and applied.' },
+      { kind: 'result', text: 'Committed “Halftone”.' },
     ],
   },
 ];

@@ -154,19 +154,20 @@ const renderCommand = (text: string): ReactNode => {
 };
 
 // Fake the feel of tokens streaming back from an agent: split the reply into
-// words and cascade them in with a quick fade + de-blur, so prose materialises
+// words and cascade them in with a fade + de-blur, so prose materialises
 // smoothly left-to-right instead of popping in as one block. The stagger is
-// tuned fast (~22ms/word) so a sentence lands in well under a second.
+// tuned to a calm ~40ms/word so the reply reads like it's being generated
+// rather than dumped in all at once.
 const STREAM_CONTAINER = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.022 } },
+  visible: { transition: { staggerChildren: 0.04 } },
 };
 const STREAM_WORD = {
   hidden: { opacity: 0, filter: 'blur(4px)' },
   visible: {
     opacity: 1,
     filter: 'blur(0px)',
-    transition: { duration: 0.18, ease: 'easeOut' as const },
+    transition: { duration: 0.24, ease: 'easeOut' as const },
   },
 };
 const StreamingText = ({ text }: { text: string }) => {
@@ -349,11 +350,56 @@ const AgentTerminal = ({
     }
   }, [allDone, onComplete]);
 
-  // Keep the latest streamed output in view as rows reveal.
+  // Keep the latest streamed output in view as rows reveal — but only while the
+  // user is parked at the bottom. If they scroll up (to re-read an earlier tool
+  // call while the agent keeps generating), stop yanking them back down; re-pin
+  // the moment they scroll back to the bottom. This lets the user freely scroll
+  // the transcript mid-generation instead of fighting the auto-scroll.
   const scrollRef = useRef<HTMLDivElement>(null);
+  const pinnedRef = useRef(true);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const atBottom = () => el.scrollHeight - el.scrollTop - el.clientHeight < 24;
+    // Unpin on the user's INTENT to move up, not on the resulting position: a
+    // `wheel` fires before scrollTop changes, so from a pinned-at-bottom state
+    // the element still reports atBottom — keying off direction is what makes
+    // "scroll up mid-generation" actually stick. An upward wheel (deltaY < 0)
+    // or a downward finger drag (content moves up) both mean "let me read back".
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY < 0) pinnedRef.current = false;
+    };
+    let touchY = 0;
+    const onTouchStart = (e: TouchEvent) => {
+      touchY = e.touches[0]?.clientY ?? 0;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      const y = e.touches[0]?.clientY ?? touchY;
+      if (y > touchY) pinnedRef.current = false;
+      touchY = y;
+    };
+    // The `scroll` handler only ever RE-pins — landing back at the bottom (by
+    // the user or by our own smooth-scroll settling) resumes auto-follow. It
+    // never unpins, so the programmatic scroll's mid-flight events can't fight
+    // the user.
+    const onScroll = () => {
+      if (atBottom()) pinnedRef.current = true;
+    };
+    el.addEventListener('wheel', onWheel, { passive: true });
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchmove', onTouchMove, { passive: true });
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove', onTouchMove);
+      el.removeEventListener('scroll', onScroll);
+    };
+  }, []);
+
   const revealed = history.reduce((n, t) => n + t.revealed, 0);
   useEffect(() => {
-    if (!inView) return;
+    if (!inView || !pinnedRef.current) return;
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });

@@ -372,22 +372,6 @@
   }
 }
 
-/* Minimize for the hero agent chat — the exact reverse of the browser window's
-   open (scale 1 -> 0.35, opacity 1 -> 0, with the mirrored easing applied on the
-   element), collapsing toward the bottom-left (transform-origin set there),
-   where the chat now floats over the left-docked directions panel. The leading
-   translate keeps it anchored while it shrinks. */
-@keyframes rivet-chat-minimize {
-  0% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -50%) translate(-14%, 14%) scale(0.35);
-    opacity: 0;
-  }
-}
-
 /* Mobile hero handoff: the in-flow agent window scales/fades down (no translate
    centering, unlike the desktop floating chat) so the editor can maximize in
    its place. */

@@ -39,10 +39,10 @@ type Phase =
   | { t: 'restart' };
 
 const TYPE_MS = 42; // per-character typing speed for commands
-const THINK_MS = 620; // pause showing the working indicator
-const BLOCK_MS = 520; // gap between streamed response blocks
-const TURN_GAP_MS = 1100; // pause between turns
-const LOOP_GAP_MS = 2600; // pause before clearing + looping
+const THINK_MS = 1000; // pause showing the working indicator
+const BLOCK_MS = 900; // gap between streamed response blocks
+const TURN_GAP_MS = 1400; // pause between turns
+const LOOP_GAP_MS = 3000; // pause before clearing + looping
 
 export const useTerminalPlayer = (
   script: Turn[],

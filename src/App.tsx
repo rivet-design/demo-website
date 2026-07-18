@@ -223,19 +223,11 @@ const App = () => {
   }, []);
 
   // Hero choreography: the agent chat starts centered (drawing the eye to the
-  // prompt as it types), then slides to the left — over the directions panel —
-  // once the browser window has animated in.
+  // prompt as it types), then slides to the RIGHT — clearing the directions
+  // panel on the left — once the browser window has animated in. It then stays
+  // put: the chat is persistent, not a one-shot that fades away, so the agent
+  // conversation keeps reading alongside the generated directions.
   const [chatMoved, setChatMoved] = useState(false);
-  // Once the agent finishes all its MCP calls, the chat minimizes out.
-  const [chatMinimized, setChatMinimized] = useState(false);
-  // After the minimize animation finishes we UNMOUNT the chat for good. It's a
-  // `hidden lg:flex` element, so otherwise crossing the lg breakpoint on resize
-  // re-displays it and replays the minimize animation — flashing the panel back
-  // in. The intro is one-shot, so once it's gone it should stay gone.
-  const [chatGone, setChatGone] = useState(false);
-  // The minimize step is scheduled from the chat's onComplete; keep the handle
-  // so we can cancel it if the tree unmounts before it fires.
-  const minimizeTimer = useRef<number>();
   useEffect(() => {
     // No intro this session → settle the chat into its final position at once
     // (it isn't rendered, but this keeps the choreography state coherent).
@@ -246,17 +238,6 @@ const App = () => {
     const t = setTimeout(() => setChatMoved(true), HERO_WINDOW_OPEN_MS + 900);
     return () => clearTimeout(t);
   }, [playHeroIntro]);
-  useEffect(() => {
-    if (!chatMinimized) return;
-    const t = setTimeout(() => setChatGone(true), 700);
-    return () => clearTimeout(t);
-  }, [chatMinimized]);
-  useEffect(
-    () => () => {
-      if (minimizeTimer.current) clearTimeout(minimizeTimer.current);
-    },
-    [],
-  );
 
   // Mobile hero phase machine: 'agent' (the agent window types alone) →
   // 'minimizing' (it scales/fades out) → 'editor' (the editor maximizes in its
@@ -397,32 +378,22 @@ const App = () => {
             </BrowserFrame>
           )}
 
-          {/* Floating agent chat (bottom-left, over the left-docked directions
-              panel) that "drives" the demo: it types the prompt + Rivet MCP
-              tool calls, then the window opens and the directions generate and
-              fade in. Decorative, so pointer-events are off; hidden on small
-              screens where the hero is already tight. It's a one-shot intro —
-              unmounted once it has minimized so a resize can never bring it
-              back. */}
-          {playHeroIntro && !chatGone && (
+          {/* Floating agent chat that "drives" the demo: it types the prompt +
+              Rivet MCP tool calls, then the window opens and the directions
+              generate and fade in. It starts centered, then slides to the RIGHT
+              and STAYS there — a persistent companion to the generated
+              directions rather than a one-shot intro that fades out. Decorative,
+              so pointer-events are off; hidden on small screens where the hero is
+              already tight (mobile keeps its own agent → editor handoff). */}
+          {playHeroIntro && (
             <AgentTerminal
               compact
               loop={false}
               script={HERO_SESSION}
-              onComplete={() => {
-                minimizeTimer.current = window.setTimeout(
-                  () => setChatMinimized(true),
-                  1100,
-                );
-              }}
               className={`ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none absolute z-20 hidden h-[240px] w-[300px] -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-700 lg:flex lg:h-[300px] lg:w-[380px] ${
                 chatMoved
-                  ? 'left-[30%] top-[61%] lg:left-[23%] lg:top-[63%]'
+                  ? 'left-[74%] top-[70%] lg:left-[80%] lg:top-[72%]'
                   : 'left-1/2 top-1/2'
-              } ${
-                chatMinimized
-                  ? 'origin-bottom-left animate-[rivet-chat-minimize_0.6s_cubic-bezier(0.7,0,0.84,0)_forwards]'
-                  : ''
               }`}
             />
           )}
