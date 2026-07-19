@@ -217,10 +217,10 @@ const PromptInstallButton = ({
           fullWidth ? 'w-full justify-center' : 'w-fit'
         } transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
       >
-        <span className="whitespace-nowrap">{label}</span>
-        {/* Already-fanned icon row. At rest each icon is fully visible with a
-            clear gap. On hover/focus the gap widens and each icon lifts up with
-            a soft drop shadow. `motion-reduce` keeps the icons static. */}
+        {/* Already-fanned icon row, leading the label. At rest each icon is
+            fully visible with a clear gap. On hover/focus the gap widens and
+            each icon lifts up with a soft drop shadow. `motion-reduce` keeps
+            the icons static. */}
         <span
           className="flex shrink-0 items-center gap-1 transition-[gap] duration-200 ease-out group-hover:gap-1.5 group-focus-within:gap-1.5 motion-reduce:!gap-1 motion-reduce:transition-none"
           aria-hidden
@@ -234,6 +234,7 @@ const PromptInstallButton = ({
             </span>
           ))}
         </span>
+        <span className="whitespace-nowrap">{label}</span>
       </PopoverTrigger>
 
       {/* Dropdown menu — one row per agent, on the dark menu surface. */}

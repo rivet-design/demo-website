@@ -16,6 +16,7 @@ import VariantsShowcase from './components/variantsDemo/VariantsShowcase';
 import AgentTerminalSection from './components/AgentTerminalSection';
 import { SKEUOMORPHIC_DECK_ID } from './components/variantsDemo/data';
 import AgentTerminal from './components/sandbox/AgentTerminal';
+import ReplayButton from './components/ReplayButton';
 import { HERO_SESSION } from './components/sandbox/terminalScript';
 import { pageBackground } from './lib/background';
 
@@ -222,6 +223,9 @@ const App = () => {
     return () => mq.removeEventListener('change', update);
   }, []);
 
+  // Bumped by the hero's replay button: keys the intro players/window so they
+  // remount, and re-arms the choreography effect below.
+  const [heroRun, setHeroRun] = useState(0);
   // Hero choreography: the agent chat starts centered (drawing the eye to the
   // prompt as it types), then slides to the left — over the directions panel —
   // once the browser window has animated in.
@@ -245,7 +249,7 @@ const App = () => {
     }
     const t = setTimeout(() => setChatMoved(true), HERO_WINDOW_OPEN_MS + 900);
     return () => clearTimeout(t);
-  }, [playHeroIntro]);
+  }, [playHeroIntro, heroRun]);
   useEffect(() => {
     if (!chatMinimized) return;
     const t = setTimeout(() => setChatGone(true), 700);
@@ -274,6 +278,22 @@ const App = () => {
     );
   };
   useEffect(() => () => mobileTimers.current.forEach(clearTimeout), []);
+  // Replay the hero's terminal intro from the top: cancel any pending
+  // choreography timers, rewind the chat states, and bump heroRun so the keyed
+  // terminal players remount and the scripted typing starts over. The browser
+  // window + variant iframes are intentionally NOT keyed/remounted — tearing
+  // them down respawns every demo iframe (reads as new windows popping in);
+  // only the typing animation restarts.
+  const replayHero = () => {
+    mobileTimers.current.forEach(clearTimeout);
+    mobileTimers.current = [];
+    if (minimizeTimer.current) clearTimeout(minimizeTimer.current);
+    setChatMoved(false);
+    setChatMinimized(false);
+    setChatGone(false);
+    setMobilePhase(playHeroIntroMobile ? 'agent' : 'editor');
+    setHeroRun((n) => n + 1);
+  };
   // During the agent phase the editor isn't mounted yet; it takes over once the
   // agent has minimized out.
   const showMobileAgent = playHeroIntroMobile && mobilePhase !== 'editor';
@@ -298,7 +318,7 @@ const App = () => {
         {/* White card with badge, title, subtitle, CTAs */}
         <FadeInText>
           <div
-            className={`flex flex-col items-start gap-5 rounded-lg text-left`}
+            className={`flex flex-col items-center gap-5 rounded-lg text-center`}
           >
             {/* Top: New / MCP badge */}
             {SHOW_MCP_BADGE && (
@@ -319,12 +339,13 @@ const App = () => {
               </a>
             )}
 
-            {/* Title only, centered. The subtitle + CTA now live below the
-                UI variants shell; the nav also carries a CTA. */}
-            <div className="flex flex-col items-start gap-4">
+            {/* Title with the black install CTA directly beneath it — the CTA
+                moved here from the nav's top-right slot. */}
+            <div className="flex flex-col items-center gap-8">
               <span className="hero-title-size hero-title-text font-main font-normal normal-case leading-[1.12] text-black">
                 Explore dozens of design directions from your agent.
               </span>
+              <PromptInstallButton tone="dark" label="Install Rivet" />
             </div>
           </div>
         </FadeInText>
@@ -344,10 +365,11 @@ const App = () => {
         {/* Hand-drawn blueprint guide lines, behind all content. */}
         <SketchGuides />
         <NavBar />
-        {/* px-4 below lg gives the hero title a symmetric gutter on mobile; at
-            lg it switches to lg:pl-8 so the title sits off the page's left guide
-            rule by the same inset as the workflow panel titles. */}
-        <div className="relative z-10 flex w-full items-start justify-start px-4 lg:px-0 lg:pl-8 min-[1920px]:pl-4">
+        {/* Hero copy gets 3x the horizontal padding of the content panels
+            (p-4/sm:p-6/lg:p-8 → px-12/sm:px-[4.5rem]/lg:px-24), symmetric on
+            both ends. The hero-title-text font formula subtracts this same
+            12rem (lg) so the two-line title exactly fills the padded width. */}
+        <div className="relative z-10 flex w-full items-start justify-start px-12 sm:px-[4.5rem] lg:px-24">
           {renderHeroText()}
         </div>
 
@@ -361,6 +383,7 @@ const App = () => {
             // own (full hero box), then minimizes to hand off to the editor.
             <div className="w-full" style={{ height: '58vh', minHeight: 440 }}>
               <AgentTerminal
+                key={heroRun}
                 loop={false}
                 typeMs={28}
                 script={HERO_SESSION}
@@ -406,6 +429,7 @@ const App = () => {
               back. */}
           {playHeroIntro && !chatGone && (
             <AgentTerminal
+              key={heroRun}
               compact
               loop={false}
               script={HERO_SESSION}
@@ -426,6 +450,10 @@ const App = () => {
               }`}
             />
           )}
+
+          {/* Replays the whole intro: typing chat → window open → directions.
+              z-30 keeps it above the floating chat (z-20). */}
+          <ReplayButton className="z-30" onClick={replayHero} />
         </div>
 
         {/* Subtitle + CTA, moved below the fold to sit under the UI variants
