@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 /**
- * "Blueprint" guide lines for the landing page — Rivet-orange margin/column
+ * "Blueprint" guide lines for the landing page — grey margin/column
  * rules with little sparkle marks where they cross. Drawn as plain SVG lines:
  * completely straight, with the left/right verticals styled identically so the
  * frame reads symmetric.
@@ -19,7 +19,11 @@ import { useEffect, useRef, useState } from 'react';
  * opaque immediately.
  */
 
-const ORANGE = '#E14017';
+// Same token the footer's border-t uses (Tailwind `border-border`), applied
+// via style so the CSS var resolves — the guides and the footer rule are the
+// exact same grey by construction. Drawn at full opacity for the same reason:
+// the footer border isn't translucent, so the guides can't be either.
+const GUIDE_STROKE = 'hsl(var(--border))';
 const NS = 'http://www.w3.org/2000/svg';
 
 // Sparkle/inkblot marks at guide intersections — flagged off for now while we
@@ -41,7 +45,7 @@ const sparkle = (
       `L ${cx + inner} ${cy + inner} L ${cx} ${cy + r} L ${cx - inner} ${cy + inner} ` +
       `L ${cx - r} ${cy} L ${cx - inner} ${cy - inner} Z`,
   );
-  p.setAttribute('fill', ORANGE);
+  p.style.fill = GUIDE_STROKE;
   p.setAttribute('opacity', '0.75');
   return p;
 };
@@ -216,7 +220,13 @@ const SketchGuides = () => {
     const { w, h, vh, top, divider, heroBottom, workflowTop, footerTop, rows } =
       size;
 
-    // Plain straight stroke shared by every rule.
+    // Plain straight stroke shared by every rule. Coordinates are snapped to
+    // the half-pixel grid: a 1px stroke centered on x.5 fills exactly one pixel
+    // row/column, so every line rasterizes identically. Centered on a whole
+    // pixel it would straddle two rows and antialias into a fuzzy ~2px line —
+    // and which lines went fuzzy varied, which is why thickness looked
+    // inconsistent.
+    const snap = (v: number) => Math.round(v) + 0.5;
     const line = (
       x1: number,
       y1: number,
@@ -224,13 +234,14 @@ const SketchGuides = () => {
       y2: number,
     ): SVGLineElement => {
       const el = document.createElementNS(NS, 'line');
-      el.setAttribute('x1', String(x1));
-      el.setAttribute('y1', String(y1));
-      el.setAttribute('x2', String(x2));
-      el.setAttribute('y2', String(y2));
-      el.setAttribute('stroke', ORANGE);
-      el.setAttribute('stroke-width', '1.2');
-      el.setAttribute('opacity', '0.5');
+      // Horizontal lines snap y; vertical lines snap x.
+      const horizontal = y1 === y2;
+      el.setAttribute('x1', String(horizontal ? x1 : snap(x1)));
+      el.setAttribute('y1', String(horizontal ? snap(y1) : y1));
+      el.setAttribute('x2', String(horizontal ? x2 : snap(x2)));
+      el.setAttribute('y2', String(horizontal ? snap(y2) : y2));
+      el.style.stroke = GUIDE_STROKE;
+      el.setAttribute('stroke-width', '1');
       return el;
     };
 
@@ -274,9 +285,13 @@ const SketchGuides = () => {
     // last), now that the grey panel backgrounds are gone. They hug the panel
     // edge with no visible gap.
     rows.forEach((ry) => hline(0, ry, w));
-    // Margin verticals run the FULL page height — both solid, symmetric.
-    vline(Lx, 0, Vy);
-    vline(Rx, 0, Vy);
+    // Margin verticals run the FULL page height — both solid, symmetric. They
+    // end 1px PAST the footer's top edge so they overlap the footer's own
+    // border-t (the same 1px, same-color rule): butt line caps plus sub-pixel
+    // rounding can otherwise leave a hairline gap right where the vertical
+    // should meet that line.
+    vline(Lx, 0, Vy + 1);
+    vline(Rx, 0, Vy + 1);
 
     // Sparkles at the prominent corners / crossings. Flagged off for now.
     if (SHOW_SPARKLES) {
