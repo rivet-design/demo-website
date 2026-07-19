@@ -171,12 +171,11 @@
        subtraction is the hero copy block's px-24 (6rem per side — 3x the
        content panels' lg:p-8). text-wrap: balance keeps the two lines close
        to equal instead of a long first line + short orphan. */
+    /* The two-line split is an explicit <br> after "directions" (lg+ only —
+       below lg the title wraps naturally), so no balance/max-width here: the
+       divisor keeps the longer top line (~17em) comfortably inside the padded
+       content width (~21em). */
     .hero-title-text {
-      text-wrap: balance;
-      /* At this scale the whole sentence (~24.5em) would fit on one line, so
-         cap the line length to keep the two-line wrap; balance then splits
-         the lines evenly. */
-      max-inline-size: 14em;
       font-size: clamp(
         1.5rem,
         calc((100vw - (var(--page-gutter-x) * 2) - 12rem) / 21),

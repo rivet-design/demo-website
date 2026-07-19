@@ -343,7 +343,8 @@ const App = () => {
                 moved here from the nav's top-right slot. */}
             <div className="flex flex-col items-center gap-8">
               <span className="hero-title-size hero-title-text font-main font-normal normal-case leading-[1.12] text-black">
-                Explore dozens of design directions from your agent.
+                Explore dozens of design directions
+                <br className="hidden lg:inline" /> from your agent.
               </span>
               <PromptInstallButton tone="dark" label="Install Rivet" />
             </div>
