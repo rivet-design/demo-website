@@ -260,7 +260,7 @@ const SketchGuides = () => {
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Verticals run the full page height as a single stroke.
+    // Verticals run from the nav's bottom edge to the footer as a single stroke.
     const vline = (x: number, y1: number, y2: number) => {
       if (!verticalSvg) return;
       verticalSvg.appendChild(line(x, y1, x, y2));
@@ -285,13 +285,14 @@ const SketchGuides = () => {
     // last), now that the grey panel backgrounds are gone. They hug the panel
     // edge with no visible gap.
     rows.forEach((ry) => hline(0, ry, w));
-    // Margin verticals run the FULL page height — both solid, symmetric. They
-    // end 1px PAST the footer's top edge so they overlap the footer's own
-    // border-t (the same 1px, same-color rule): butt line caps plus sub-pixel
-    // rounding can otherwise leave a hairline gap right where the vertical
-    // should meet that line.
-    vline(Lx, 0, Vy + 1);
-    vline(Rx, 0, Vy + 1);
+    // Margin verticals — both solid, symmetric. They start at the nav's bottom
+    // edge (not y=0) so they never show inside the nav bar, and end 1px PAST
+    // the footer's top edge so they overlap the footer's own border-t (the
+    // same 1px, same-color rule): butt line caps plus sub-pixel rounding can
+    // otherwise leave a hairline gap right where the vertical should meet
+    // that line.
+    vline(Lx, Ty, Vy + 1);
+    vline(Rx, Ty, Vy + 1);
 
     // Sparkles at the prominent corners / crossings. Flagged off for now.
     if (SHOW_SPARKLES) {
@@ -353,7 +354,9 @@ const SketchGuides = () => {
         aria-hidden
         width={size.w}
         height={size.h}
-        className="pointer-events-none absolute left-0 top-0 z-[75] block overflow-visible"
+        // Below the sticky nav (z-[70]) so the verticals never paint over the
+        // nav bar while it's stuck mid-scroll, but above the page content.
+        className="pointer-events-none absolute left-0 top-0 z-[60] block overflow-visible"
       />
     </>
   );
