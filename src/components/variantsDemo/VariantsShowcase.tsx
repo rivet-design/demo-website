@@ -127,6 +127,7 @@ const VariantsShowcase = ({
     }
   });
   const [resizingPanel, setResizingPanel] = useState(false);
+  const resizeCleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     try {
@@ -136,20 +137,33 @@ const VariantsShowcase = ({
     }
   }, [panelWidth]);
 
+  useEffect(
+    () => () => {
+      resizeCleanupRef.current?.();
+    },
+    [],
+  );
+
   const startPanelResize = useCallback(
     (e: ReactPointerEvent) => {
       e.preventDefault();
+      resizeCleanupRef.current?.();
       const startX = e.clientX;
       const startWidth = panelWidth;
       setResizingPanel(true);
       const onMove = (ev: PointerEvent) =>
         setPanelWidth(clampPanelWidth(startWidth + (ev.clientX - startX)));
-      const end = () => {
-        setResizingPanel(false);
+      const cleanup = () => {
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerup', end);
         window.removeEventListener('pointercancel', end);
+        resizeCleanupRef.current = null;
       };
+      const end = () => {
+        cleanup();
+        setResizingPanel(false);
+      };
+      resizeCleanupRef.current = cleanup;
       window.addEventListener('pointermove', onMove);
       window.addEventListener('pointerup', end);
       window.addEventListener('pointercancel', end);
@@ -313,22 +327,26 @@ const VariantsShowcase = ({
           below the preview on mobile. Hidden for the mobile hero, where the
           preview cycles options on its own. The demo panel never collapses:
           the header's close chip is rendered for parity but is inert. */}
-      {showDirections && isDesktop && (
-        <div
-          className="order-first h-full shrink-0"
-          style={{ width: panelWidth }}
-        >
-          <DirectionsPanel
-            ctrl={ctrl}
-            desktop
-            onClose={() => {}}
-            onResizeStart={startPanelResize}
-            onResizeReset={resetPanelWidth}
-            resizing={resizingPanel}
-          />
-        </div>
+      {showDirections && (
+        <>
+          <div
+            className="order-first hidden h-full shrink-0 sm:block"
+            style={{ width: panelWidth }}
+          >
+            <DirectionsPanel
+              ctrl={ctrl}
+              desktop
+              onClose={() => {}}
+              onResizeStart={startPanelResize}
+              onResizeReset={resetPanelWidth}
+              resizing={resizingPanel}
+            />
+          </div>
+          <div className="contents sm:hidden">
+            <DirectionsPanel ctrl={ctrl} />
+          </div>
+        </>
       )}
-      {showDirections && !isDesktop && <DirectionsPanel ctrl={ctrl} />}
 
       {/* While drag-resizing, shield the preview iframe so it can't swallow
           pointer events mid-drag (core's resize overlay). */}
