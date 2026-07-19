@@ -171,10 +171,7 @@ const VariantsShowcase = ({
     [panelWidth],
   );
 
-  const resetPanelWidth = useCallback(
-    () => setPanelWidth(PANEL_DEFAULT_W),
-    [],
-  );
+  const resetPanelWidth = useCallback(() => setPanelWidth(PANEL_DEFAULT_W), []);
 
   // Measure the preview pane so each variant page can be contain-scaled to fit.
   useEffect(() => {
@@ -320,7 +317,6 @@ const VariantsShowcase = ({
             )}
           </div>
         )}
-
       </div>
 
       {/* Directions panel — docked on the LEFT at sm+ (order-first), stacked
