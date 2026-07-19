@@ -178,8 +178,8 @@
     .hero-title-text {
       font-size: clamp(
         1.5rem,
-        calc((100vw - (var(--page-gutter-x) * 2) - 12rem) / 21),
-        4.25rem
+        calc((100vw - (var(--page-gutter-x) * 2) - 12rem) / 18),
+        5rem
       );
     }
   }
