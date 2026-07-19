@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import Logo from './Logo';
 import PromptInstallButton from './PromptInstallButton';
@@ -10,6 +10,19 @@ const NavBar = () => {
 
   // The nav previously shrank its width on scroll. That behavior is removed —
   // the nav now stays a constant full-width pill, simply sticky at the top.
+
+  // Slight elevation once the page is scrolled, so the stuck nav reads as a
+  // layer floating over the content instead of blending into it. Lenis
+  // animates native window scroll, so window.scrollY / the window scroll
+  // event work as usual. A small threshold keeps the flat, seamless look
+  // while the page is at (or within a hair of) the very top.
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 4);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   // The nav previously switched to the dark theme while the #demo-panel
   // section was in view, via an IntersectionObserver that called
@@ -31,8 +44,11 @@ const NavBar = () => {
         // breaks it out of the page gutters so it spans the full viewport width, and
         // top-0 leaves no gap above — so no scrolling content is ever visible
         // above or beside the nav.
-        'bleed-page-gutter-x relative sticky top-0 z-[70] transition-colors duration-150',
+        'bleed-page-gutter-x relative sticky top-0 z-[70] transition-[color,background-color,box-shadow] duration-200',
         isDark ? 'bg-accent-foreground text-white' : 'text-black',
+        scrolled
+          ? 'shadow-[0_1px_2px_rgba(0,0,0,0.03),0_3px_10px_rgba(0,0,0,0.035)]'
+          : 'shadow-none',
       ].join(' ')}
     >
       <div
