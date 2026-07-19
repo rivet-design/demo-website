@@ -109,24 +109,24 @@
     @apply bg-background text-foreground;
   }
   :root {
-    --page-gutter-x: 5vw;
-    --landing-body-text-size: 1rem;
+    --page-gutter-x: 6.6vw;
+    --landing-body-text-size: 0.9375rem;
   }
   @media (min-width: 768px) {
     :root {
-      --page-gutter-x: clamp(5rem, 8vw, 14rem);
-      --landing-body-text-size: 1.0625rem;
+      --page-gutter-x: clamp(6.6rem, 10.56vw, 18.48rem);
+      --landing-body-text-size: 1rem;
     }
   }
   @media (min-width: 1280px) {
     :root {
-      --landing-body-text-size: 1.1875rem;
+      --landing-body-text-size: 1.125rem;
     }
   }
   @media (min-width: 1920px) {
     :root {
-      --page-gutter-x: clamp(16rem, 15vw, 30rem);
-      --landing-body-text-size: 1.25rem;
+      --page-gutter-x: clamp(21.12rem, 19.8vw, 39.6rem);
+      --landing-body-text-size: 1.1875rem;
     }
   }
   ::selection {
@@ -163,8 +163,24 @@
       );
     }
 
+    /* The main hero title runs as TWO balanced lines. The divisor works like
+       the one-line formula above (the sentence is ~24.5em set on one line,
+       ~12.75em as the longer of two balanced lines), scaled to 60% of the
+       fill-the-width size (12.75 / 0.6 = 21.25) — so the two lines occupy
+       ~60% of the padded content width instead of filling it. The 12rem
+       subtraction is the hero copy block's px-24 (6rem per side — 3x the
+       content panels' lg:p-8). text-wrap: balance keeps the two lines close
+       to equal instead of a long first line + short orphan. */
+    /* The two-line split is an explicit <br> after "directions" (lg+ only —
+       below lg the title wraps naturally), so no balance/max-width here: the
+       divisor keeps the longer top line (~17em) comfortably inside the padded
+       content width (~21em). */
     .hero-title-text {
-      white-space: nowrap;
+      font-size: clamp(
+        1.5rem,
+        calc((100vw - (var(--page-gutter-x) * 2) - 12rem) / 18),
+        5rem
+      );
     }
   }
 

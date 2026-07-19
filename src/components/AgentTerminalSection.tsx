@@ -1,5 +1,6 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import AgentTerminal from './sandbox/AgentTerminal';
+import ReplayButton from './ReplayButton';
 
 // Inline vendor mark + name. The shipped SVGs are single-color exports (Claude
 // uses currentColor, Cursor/Codex are light/white for dark UIs), so they'd be
@@ -45,6 +46,8 @@ const Vendor = ({
  * the title leads on mobile.
  */
 const AgentTerminalSection = () => {
+  // Bumping the key remounts the terminal, restarting its scripted animation.
+  const [runId, setRunId] = useState(0);
   return (
     <div className="page-gutter-x relative flex w-full justify-center py-8 lg:py-16">
       <div className="grid w-full grid-cols-1 items-center gap-16 lg:grid-cols-[2.5fr_1fr]">
@@ -64,12 +67,13 @@ const AgentTerminalSection = () => {
               takes over. */}
           <div
             data-guide-row
-            className="aspect-panel-portrait max-h-[500px] w-full overflow-visible border border-black/10 bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 lg:aspect-panel lg:max-h-none lg:overflow-hidden lg:p-8"
+            className="relative aspect-panel-portrait max-h-[500px] w-full overflow-visible border border-black/10 bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 lg:aspect-panel lg:max-h-none lg:overflow-hidden lg:p-8"
             style={{ backgroundImage: "url('/images/bg2.webp')" }}
           >
             {/* Type the command 1.5× faster than the default (42ms → 28ms/char)
                 so the chat-box text lands quicker in this section. */}
-            <AgentTerminal typeMs={28} />
+            <AgentTerminal key={runId} typeMs={28} />
+            <ReplayButton onClick={() => setRunId((n) => n + 1)} />
           </div>
         </div>
 

@@ -2,6 +2,7 @@ import { memo, useState } from 'react';
 import { telemetry } from '@/lib/telemetry';
 import CommentDemoShell from './commentsDemo/CommentDemoShell';
 import BrowserFrame from './BrowserFrame';
+import ReplayButton from './ReplayButton';
 
 const REQUEST_TEXT = 'Try simpler layouts';
 
@@ -31,6 +32,14 @@ const CommentDemoSection = () => {
     };
   });
 
+  // Replay support: bumping a run id remounts that breakpoint's shell, which
+  // restarts the scripted drag/comment/vary sequence. An explicit replay also
+  // forces play=true — the user asked for the animation, so it runs even if
+  // the initial mount skipped playback (e.g. reduced motion or the other
+  // breakpoint was active at load).
+  const [desktopRun, setDesktopRun] = useState(0);
+  const [mobileRun, setMobileRun] = useState(0);
+
   const handleDraftCreated = () => {
     telemetry.trackCommentDemoDraftCreated({
       source: 'drag',
@@ -59,17 +68,19 @@ const CommentDemoSection = () => {
               more of the masonry grid. */}
           <div
             data-guide-row
-            className="block aspect-panel-portrait w-full overflow-visible bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 lg:hidden"
+            className="relative block aspect-panel-portrait w-full overflow-visible bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 lg:hidden"
             style={{ backgroundImage: "url('/images/bg3.webp')" }}
           >
             <BrowserFrame url="localhost:3000" className="h-full w-full">
               <CommentDemoShell
+                key={mobileRun}
                 mobile
-                play={playMobile}
+                play={playMobile || mobileRun > 0}
                 onDraftCreated={handleDraftCreated}
                 onCommentCreated={handleCommentCreated}
               />
             </BrowserFrame>
+            <ReplayButton onClick={() => setMobileRun((n) => n + 1)} />
           </div>
 
           {/* Desktop: the scripted two-pane shell (gallery + directions) inside a
@@ -78,7 +89,7 @@ const CommentDemoSection = () => {
               three match in size; the frame and shell fill it (h-full). */}
           <div
             data-guide-row
-            className="hidden w-full overflow-hidden bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 lg:block lg:p-8"
+            className="relative hidden w-full overflow-hidden bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 lg:block lg:p-8"
             style={{
               backgroundImage: "url('/images/bg3.webp')",
               aspectRatio: '16 / 11',
@@ -90,11 +101,13 @@ const CommentDemoSection = () => {
               className="h-full w-full"
             >
               <CommentDemoShell
-                play={playDesktop}
+                key={desktopRun}
+                play={playDesktop || desktopRun > 0}
                 onDraftCreated={handleDraftCreated}
                 onCommentCreated={handleCommentCreated}
               />
             </BrowserFrame>
+            <ReplayButton onClick={() => setDesktopRun((n) => n + 1)} />
           </div>
         </div>
 

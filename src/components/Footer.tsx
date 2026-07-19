@@ -53,13 +53,13 @@ const Footer = () => {
           {/* Link columns - right aligned, each left-aligned internally */}
           <div className="flex flex-wrap gap-x-20 gap-y-8">
             <div className="flex flex-col items-start gap-4">
-              <span className="type-label-lg font-semibold uppercase tracking-wide text-[#EC4423]">Rivet</span>
+              <span className="type-label-lg font-medium text-black/45">Rivet</span>
               <div className="flex flex-col gap-3">
                 <a
                   href={RELEASES_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
+                  className="font-main text-lg font-normal text-black transition-colors hover:text-black/70"
                 >
                   Releases
                 </a>
@@ -67,13 +67,13 @@ const Footer = () => {
                   href={MCP_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
+                  className="font-main text-lg font-normal text-black transition-colors hover:text-black/70"
                 >
                   MCP
                 </a>
                 <a
                   href={`mailto:${EMAIL}`}
-                  className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
+                  className="font-main text-lg font-normal text-black transition-colors hover:text-black/70"
                 >
                   Contact
                 </a>
@@ -81,13 +81,13 @@ const Footer = () => {
             </div>
 
             <div className="flex flex-col items-start gap-4">
-              <span className="type-label-lg font-semibold uppercase tracking-wide text-[#EC4423]">Community</span>
+              <span className="type-label-lg font-medium text-black/45">Community</span>
               <div className="flex flex-col gap-3">
                 <a
                   href={X_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
+                  className="font-main text-lg font-normal text-black transition-colors hover:text-black/70"
                 >
                   Twitter
                 </a>
@@ -95,7 +95,7 @@ const Footer = () => {
                   href={LINKEDIN_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
+                  className="font-main text-lg font-normal text-black transition-colors hover:text-black/70"
                 >
                   LinkedIn
                 </a>
@@ -103,7 +103,7 @@ const Footer = () => {
                   href={INSTAGRAM_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-main text-lg font-medium text-black/80 transition-colors hover:text-black"
+                  className="font-main text-lg font-normal text-black transition-colors hover:text-black/70"
                 >
                   Instagram
                 </a>

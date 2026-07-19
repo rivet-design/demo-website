@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import Logo from './Logo';
-import PromptInstallButton from './PromptInstallButton';
 import { surfaceBackground } from '../lib/background';
 
 const NavBar = () => {
@@ -58,6 +57,19 @@ const NavBar = () => {
         <Logo />
         <div className="flex items-center gap-2 lg:gap-3">
           <a
+            href="https://docs.rivet.design/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={[
+              'type-label hidden cursor-pointer rounded-lg px-3 py-1.5 transition-colors lg:inline-block lg:px-4 lg:py-2 lg:text-sm',
+              isDark
+                ? 'text-white hover:text-white/60'
+                : 'text-black hover:text-black/60',
+            ].join(' ')}
+          >
+            Docs
+          </a>
+          <a
             href="https://docs.rivet.design/releases"
             target="_blank"
             rel="noopener noreferrer"
@@ -92,12 +104,6 @@ const NavBar = () => {
             </svg>
             Community
           </a>
-          <div className="hidden lg:block">
-            <PromptInstallButton
-              tone={isDark ? 'light' : 'dark'}
-              label="Install Rivet"
-            />
-          </div>
         </div>
       </div>
     </motion.nav>
