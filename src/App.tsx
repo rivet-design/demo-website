@@ -369,8 +369,10 @@ const App = () => {
         {/* Hero copy gets 3x the horizontal padding of the content panels
             (p-4/sm:p-6/lg:p-8 → px-12/sm:px-[4.5rem]/lg:px-24), symmetric on
             both ends. The hero-title-text font formula subtracts this same
-            12rem (lg) so the two-line title exactly fills the padded width. */}
-        <div className="relative z-10 flex w-full items-start justify-start px-12 sm:px-[4.5rem] lg:px-24">
+            12rem (lg) so the two-line title exactly fills the padded width.
+            py-8 doubles the block's effective vertical spacing: the page
+            column's gap-8 (2rem) + this 2rem = 4rem above and below. */}
+        <div className="relative z-10 flex w-full items-start justify-start px-12 py-8 sm:px-[4.5rem] lg:px-24">
           {renderHeroText()}
         </div>
 
