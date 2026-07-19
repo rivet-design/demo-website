@@ -36,7 +36,7 @@ const NavBar = () => {
       ].join(' ')}
     >
       <div
-        className="relative z-10 flex w-full items-center justify-between py-1 pl-[calc(var(--page-gutter-x)+1rem)] pr-[var(--page-gutter-x)] lg:pl-[calc(var(--page-gutter-x)+2rem)] min-[1920px]:pl-[calc(var(--page-gutter-x)+1rem)]"
+        className="relative z-10 flex w-full items-center justify-between px-[calc(var(--page-gutter-x)+1rem)] py-1 lg:px-[calc(var(--page-gutter-x)+2rem)] min-[1920px]:px-[calc(var(--page-gutter-x)+1rem)]"
         style={{ height: 60 }}
       >
         <Logo />

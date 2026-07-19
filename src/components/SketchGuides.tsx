@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import rough from 'roughjs';
 
 /**
- * Hand-drawn "blueprint" guide lines for the landing page — wobbly Rivet-orange
- * margin/column rules with little sparkle marks where they cross. Drawn with
- * Rough.js so every stroke has a genuine (but very subtle) hand-sketched waver,
- * seeded so it stays put across re-renders.
+ * "Blueprint" guide lines for the landing page — Rivet-orange margin/column
+ * rules with little sparkle marks where they cross. Drawn as plain SVG lines:
+ * completely straight, with the left/right verticals styled identically so the
+ * frame reads symmetric.
  *
  * The overlay is absolutely positioned inside the scrolling content container
  * and sized to the container's FULL height, so the verticals run from the nav
@@ -214,17 +213,25 @@ const SketchGuides = () => {
         verticalSvg.removeChild(verticalSvg.firstChild);
     }
 
-    const rc = rough.svg(svg);
-    const verticalRc = verticalSvg ? rough.svg(verticalSvg) : null;
     const { w, h, vh, top, divider, heroBottom, workflowTop, footerTop, rows } =
       size;
-    // Very subtle hand-drawn character — nearly straight with a faint waver. A
-    // fixed seed per stroke keeps the wobble stable so it never "jitters".
-    const base = {
-      stroke: ORANGE,
-      strokeWidth: 1.2,
-      roughness: 0.4,
-      bowing: 0.5,
+
+    // Plain straight stroke shared by every rule.
+    const line = (
+      x1: number,
+      y1: number,
+      x2: number,
+      y2: number,
+    ): SVGLineElement => {
+      const el = document.createElementNS(NS, 'line');
+      el.setAttribute('x1', String(x1));
+      el.setAttribute('y1', String(y1));
+      el.setAttribute('x2', String(x2));
+      el.setAttribute('y2', String(y2));
+      el.setAttribute('stroke', ORANGE);
+      el.setAttribute('stroke-width', '1.2');
+      el.setAttribute('opacity', '0.5');
+      return el;
     };
 
     const parent = svg.parentElement;
@@ -242,78 +249,34 @@ const SketchGuides = () => {
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Verticals run the full page height as a SINGLE stroke. (They used to be
-    // split into stacked segments to support a per-band scroll reveal; without
-    // that reveal the segmentation only made the line read as broken where the
-    // independently-perturbed segment endpoints failed to meet.)
-    const vline = (
-      x: number,
-      y1: number,
-      y2: number,
-      seed: number,
-      dashed = false,
-    ) => {
-      if (!verticalSvg || !verticalRc) return;
-      const g = verticalRc.line(x, y1, x, y2, {
-        ...base,
-        seed,
-        ...(dashed ? { strokeLineDash: [7, 7] } : {}),
-      });
-      g.setAttribute('opacity', '0.5');
-      verticalSvg.appendChild(g);
+    // Verticals run the full page height as a single stroke.
+    const vline = (x: number, y1: number, y2: number) => {
+      if (!verticalSvg) return;
+      verticalSvg.appendChild(line(x, y1, x, y2));
     };
 
-    const hline = (
-      x1: number,
-      y1: number,
-      x2: number,
-      y2: number,
-      seed: number,
-      dashed = false,
-      // Framing rules that hug a panel are drawn nearly straight (no bow): a
-      // bowed full-bleed line arcs several px into the opaque panel and gets
-      // painted over, which is why a flush rule used to "disappear". Flat rules
-      // stay put, so they can sit ~1px off the edge and read as flush with no
-      // visible white gap.
-      flat = false,
-    ) => {
-      const g = rc.line(x1, y1, x2, y2, {
-        ...base,
-        ...(flat ? { bowing: 0 } : {}),
-        seed,
-        ...(dashed ? { strokeLineDash: [7, 7] } : {}),
-      });
-      g.setAttribute('opacity', '0.5');
-      svg.appendChild(g);
+    const hline = (x1: number, y: number, x2: number) => {
+      svg.appendChild(line(x1, y, x2, y));
     };
 
     // Full-bleed horizontals: at the nav, the hero divider, and the page bottom.
-    hline(0, Ty, w, Ty, 11);
+    hline(0, Ty, w);
     // The hero asset (z-10) paints its backdrop over anything drawn at its exact
-    // edge. Drawn flat (no bow) the rule stays straight, so a hair's-breadth
-    // offset clears the backdrop while reading as flush against the asset.
+    // edge, so a hair's-breadth offset clears the backdrop while still reading
+    // as flush against the asset.
     const HERO_RULE_GAP = 1;
-    hline(0, My - HERO_RULE_GAP, w, My - HERO_RULE_GAP, 12, false, true);
+    hline(0, My - HERO_RULE_GAP, w);
     // Rule along the bottom of the hero asset, mirroring the divider above.
-    if (heroBottom)
-      hline(
-        0,
-        heroBottom + HERO_RULE_GAP,
-        w,
-        heroBottom + HERO_RULE_GAP,
-        16,
-        false,
-        true,
-      );
-    if (workflowTop) hline(0, workflowTop, w, workflowTop, 17, false, true);
-    hline(0, By, w, By, 13);
+    if (heroBottom) hline(0, heroBottom + HERO_RULE_GAP, w);
+    if (workflowTop) hline(0, workflowTop, w);
+    hline(0, By, w);
     // Per-panel rules framing each workflow panel (top of each + bottom of the
-    // last), now that the grey panel backgrounds are gone. Flat so they hug the
-    // panel edge with no visible gap.
-    rows.forEach((ry, i) => hline(0, ry, w, ry, 20 + i, false, true));
-    // Margin verticals run the FULL page height — left solid, right dashed.
-    vline(Lx, 0, Vy, 14);
-    vline(Rx, 0, Vy, 15, true);
+    // last), now that the grey panel backgrounds are gone. They hug the panel
+    // edge with no visible gap.
+    rows.forEach((ry) => hline(0, ry, w));
+    // Margin verticals run the FULL page height — both solid, symmetric.
+    vline(Lx, 0, Vy);
+    vline(Rx, 0, Vy);
 
     // Sparkles at the prominent corners / crossings. Flagged off for now.
     if (SHOW_SPARKLES) {
