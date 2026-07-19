@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import DirectionsPanel from './DirectionsPanel';
 import SparkleLoader from './SparkleLoader';
 import { useVariantsDemo } from './useVariantsDemo';
@@ -23,6 +29,19 @@ const PORTRAIT_H_TO_W = 920 / 412;
 // Keep the shell at a reasonable minimum height so it stays a believable browser
 // window and the chat always fits inside it.
 const MIN_DESKTOP_H = 440;
+
+// Panel width bounds — mirrors core's App.tsx (PANEL_MIN/MAX/DEFAULT_WIDTH_PX):
+// drag-resizable within [274, 395], default ≈ the midpoint scaled up 10%,
+// persisted across visits.
+const PANEL_MIN_W = 274;
+const PANEL_MAX_W = 395;
+const PANEL_DEFAULT_W = Math.min(
+  PANEL_MAX_W,
+  Math.round(((PANEL_MIN_W + PANEL_MAX_W) / 2) * 1.1),
+);
+const PANEL_WIDTH_KEY = 'rivet-demo:panelWidth';
+const clampPanelWidth = (w: number) =>
+  Math.min(PANEL_MAX_W, Math.max(PANEL_MIN_W, w));
 
 /**
  * The Rivet variants interaction — the inner content of a BrowserFrame: the
@@ -95,6 +114,64 @@ const VariantsShowcase = ({
   const previewRef = useRef<HTMLDivElement>(null);
   const [paneSize, setPaneSize] = useState({ w: 0, h: 0 });
   const [isDesktop, setIsDesktop] = useState(false);
+
+  // --- Panel width state (port of core's App.tsx resize plumbing) ---
+  const [panelWidth, setPanelWidth] = useState(() => {
+    try {
+      const stored = Number(localStorage.getItem(PANEL_WIDTH_KEY));
+      return Number.isFinite(stored) && stored > 0
+        ? clampPanelWidth(stored)
+        : PANEL_DEFAULT_W;
+    } catch {
+      return PANEL_DEFAULT_W;
+    }
+  });
+  const [resizingPanel, setResizingPanel] = useState(false);
+  const resizeCleanupRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PANEL_WIDTH_KEY, String(panelWidth));
+    } catch {
+      // Storage unavailable (private mode) — width just won't persist.
+    }
+  }, [panelWidth]);
+
+  useEffect(
+    () => () => {
+      resizeCleanupRef.current?.();
+    },
+    [],
+  );
+
+  const startPanelResize = useCallback(
+    (e: ReactPointerEvent) => {
+      e.preventDefault();
+      resizeCleanupRef.current?.();
+      const startX = e.clientX;
+      const startWidth = panelWidth;
+      setResizingPanel(true);
+      const onMove = (ev: PointerEvent) =>
+        setPanelWidth(clampPanelWidth(startWidth + (ev.clientX - startX)));
+      const cleanup = () => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', end);
+        window.removeEventListener('pointercancel', end);
+        resizeCleanupRef.current = null;
+      };
+      const end = () => {
+        cleanup();
+        setResizingPanel(false);
+      };
+      resizeCleanupRef.current = cleanup;
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', end);
+      window.addEventListener('pointercancel', end);
+    },
+    [panelWidth],
+  );
+
+  const resetPanelWidth = useCallback(() => setPanelWidth(PANEL_DEFAULT_W), []);
 
   // Measure the preview pane so each variant page can be contain-scaled to fit.
   useEffect(() => {
@@ -242,11 +319,36 @@ const VariantsShowcase = ({
         )}
       </div>
 
-      {/* Directions panel — docked on the LEFT at sm+ (the aside carries
-          sm:order-first, mirroring core's order-first panel); stacks below the
-          preview on mobile. Hidden for the mobile hero, where the preview
-          cycles options on its own. */}
-      {showDirections && <DirectionsPanel ctrl={ctrl} />}
+      {/* Directions panel — docked on the LEFT at sm+ (order-first), stacked
+          below the preview on mobile. Hidden for the mobile hero, where the
+          preview cycles options on its own. The demo panel never collapses:
+          the header's close chip is rendered for parity but is inert. */}
+      {showDirections && (
+        <>
+          <div
+            className="order-first hidden h-full shrink-0 sm:block"
+            style={{ width: panelWidth }}
+          >
+            <DirectionsPanel
+              ctrl={ctrl}
+              desktop
+              onClose={() => {}}
+              onResizeStart={startPanelResize}
+              onResizeReset={resetPanelWidth}
+              resizing={resizingPanel}
+            />
+          </div>
+          <div className="contents sm:hidden">
+            <DirectionsPanel ctrl={ctrl} />
+          </div>
+        </>
+      )}
+
+      {/* While drag-resizing, shield the preview iframe so it can't swallow
+          pointer events mid-drag (core's resize overlay). */}
+      {resizingPanel && (
+        <div className="fixed inset-0 z-[100] cursor-col-resize" />
+      )}
     </div>
   );
 };

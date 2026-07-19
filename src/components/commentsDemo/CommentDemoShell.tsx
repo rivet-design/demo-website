@@ -91,7 +91,10 @@ const FluidDirections = ({
     );
   }, [ctrl.selectedId, ctrl.readyIds, ctrl.selected, onSelect]);
 
-  return <DirectionsPanel ctrl={ctrl} />;
+  // Desktop shell chrome (full-height panel, core header) — the fixed-width
+  // scale wrapper around this component supplies the width, and this scripted
+  // panel is deliberately not resizable/collapsible, so no handlers are passed.
+  return <DirectionsPanel ctrl={ctrl} desktop />;
 };
 
 const CommentDemoShell = ({

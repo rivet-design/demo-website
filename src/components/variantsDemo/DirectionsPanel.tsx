@@ -1,10 +1,17 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   CaretDown,
   Copy,
   MagnifyingGlass,
   PencilSimple,
+  SidebarSimple,
   Trash,
 } from '@phosphor-icons/react';
 import { cn } from './cn';
@@ -345,7 +352,32 @@ const VariantTable = ({
 };
 
 // --- Panel ----------------------------------------------------------------
-const DirectionsPanel = ({ ctrl }: { ctrl: VariantsDemoController }) => {
+type DirectionsPanelProps = {
+  ctrl: VariantsDemoController;
+  /**
+   * Desktop mode: the panel fills an absolutely-positioned slide wrapper (the
+   * showcase owns its width + open/close), gets the core shell chrome
+   * (shadow, resize handle, close button) and drops the mobile stack styles.
+   */
+  desktop?: boolean;
+  /** Collapse the panel (header close chip). Rendered only when provided. */
+  onClose?: () => void;
+  /** Begin a drag-resize from the right-edge handle. */
+  onResizeStart?: (e: ReactPointerEvent) => void;
+  /** Reset to the default width (double-click on the handle). */
+  onResizeReset?: () => void;
+  /** True while a drag-resize is in flight (keeps the handle highlighted). */
+  resizing?: boolean;
+};
+
+const DirectionsPanel = ({
+  ctrl,
+  desktop = false,
+  onClose,
+  onResizeStart,
+  onResizeReset,
+  resizing = false,
+}: DirectionsPanelProps) => {
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
@@ -360,13 +392,35 @@ const DirectionsPanel = ({ ctrl }: { ctrl: VariantsDemoController }) => {
 
   return (
     <aside
-      className="rivet-variants flex h-[42%] w-full shrink-0 flex-col overflow-hidden border-t border-[var(--main-border)] bg-[var(--main)] font-main text-content sm:order-first sm:h-full sm:w-[340px] sm:border-r sm:border-t-0"
+      className={cn(
+        'rivet-variants flex shrink-0 flex-col overflow-hidden bg-[var(--main)] font-main text-content',
+        desktop
+          ? // Core shell (ElementInspector): fills the slide wrapper, elevated
+            // over the preview. With a resize handle its hairline draws the
+            // right edge; without one, fall back to a plain border.
+            cn(
+              'relative h-full w-full shadow-2xl',
+              !onResizeStart && 'border-r border-[var(--main-border)]',
+            )
+          : 'h-[42%] w-full border-t border-[var(--main-border)]',
+      )}
     >
-      {/* Header */}
-      <div className="flex shrink-0 items-center px-3 py-2">
-        <span className="truncate text-sm font-medium text-content" title="Directions">
+      {/* Header — port of core's GitHome bar: title + close chip. */}
+      <div className="z-10 flex shrink-0 items-center justify-between gap-2 border-b border-[var(--main-border)] bg-[var(--main-light)] px-2.5 py-2.5">
+        <span className="min-w-0 truncate text-sm font-medium text-content" title="Directions">
           Directions
         </span>
+        {onClose && (
+          <button
+            type="button"
+            aria-label="Close panel"
+            title="Close panel"
+            onClick={onClose}
+            className="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded p-1 text-content-muted transition-colors hover:bg-[var(--main-input)] hover:text-content focus:outline-none focus-visible:ring-1 focus-visible:ring-content-muted/40"
+          >
+            <SidebarSimple size={16} weight="bold" />
+          </button>
+        )}
       </div>
 
       {/* Search */}
@@ -387,8 +441,9 @@ const DirectionsPanel = ({ ctrl }: { ctrl: VariantsDemoController }) => {
         </div>
       </div>
 
-      {/* Variant table */}
-      <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-2">
+      {/* Variant table — scrolls without rendering a scrollbar, matching the
+          core shell's scrollbar-hide. */}
+      <div className="scrollbar-hide flex-1 overflow-y-auto overscroll-contain px-3 py-2">
         {filtered.length > 0 ? (
           <VariantTable
             variants={filtered}
@@ -437,6 +492,29 @@ const DirectionsPanel = ({ ctrl }: { ctrl: VariantsDemoController }) => {
           </button>
         </div>
       </div>
+
+      {/* Resize handle — port of core's right-edge separator: a 12px grab zone
+          whose hairline doubles as the panel's right border, thickening on
+          hover/drag. Double-click resets to the default width. */}
+      {desktop && onResizeStart && (
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize panel"
+          onPointerDown={onResizeStart}
+          onDoubleClick={onResizeReset}
+          className="group/resize absolute inset-y-0 right-0 z-20 flex w-3 cursor-col-resize touch-none items-center justify-end"
+        >
+          <span
+            className={cn(
+              'h-full transition-all duration-150',
+              resizing
+                ? 'w-0.5 bg-content-muted'
+                : 'w-px bg-[#4b5563] group-hover/resize:w-0.5 group-hover/resize:bg-content-muted',
+            )}
+          />
+        </div>
+      )}
     </aside>
   );
 };
