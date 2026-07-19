@@ -5,7 +5,6 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
 import DirectionsPanel from './DirectionsPanel';
 import SparkleLoader from './SparkleLoader';
 import { useVariantsDemo } from './useVariantsDemo';
@@ -43,9 +42,6 @@ const PANEL_DEFAULT_W = Math.min(
 const PANEL_WIDTH_KEY = 'rivet-demo:panelWidth';
 const clampPanelWidth = (w: number) =>
   Math.min(PANEL_MAX_W, Math.max(PANEL_MIN_W, w));
-
-// Slide open/close — core's crisp transform-only ease-out.
-const PANEL_SLIDE = { duration: 0.2, ease: [0.22, 1, 0.36, 1] as const };
 
 /**
  * The Rivet variants interaction — the inner content of a BrowserFrame: the
@@ -118,9 +114,8 @@ const VariantsShowcase = ({
   const previewRef = useRef<HTMLDivElement>(null);
   const [paneSize, setPaneSize] = useState({ w: 0, h: 0 });
   const [isDesktop, setIsDesktop] = useState(false);
-  const reduceMotion = useReducedMotion();
 
-  // --- Panel width / open state (port of core's App.tsx panel plumbing) ---
+  // --- Panel width state (port of core's App.tsx resize plumbing) ---
   const [panelWidth, setPanelWidth] = useState(() => {
     try {
       const stored = Number(localStorage.getItem(PANEL_WIDTH_KEY));
@@ -131,11 +126,6 @@ const VariantsShowcase = ({
       return PANEL_DEFAULT_W;
     }
   });
-  const [panelOpen, setPanelOpen] = useState(true);
-  // Layout width is only reserved after the open slide settles, and released
-  // up-front on close, so the preview iframe reflows exactly once per toggle —
-  // hidden behind the covering panel (core's isPanelSpaceReserved).
-  const [panelSpaceReserved, setPanelSpaceReserved] = useState(true);
   const [resizingPanel, setResizingPanel] = useState(false);
 
   useEffect(() => {
@@ -171,13 +161,6 @@ const VariantsShowcase = ({
     () => setPanelWidth(PANEL_DEFAULT_W),
     [],
   );
-
-  const togglePanel = useCallback(() => {
-    setPanelOpen((open) => {
-      if (open) setPanelSpaceReserved(false);
-      return !open;
-    });
-  }, []);
 
   // Measure the preview pane so each variant page can be contain-scaled to fit.
   useEffect(() => {
@@ -258,7 +241,7 @@ const VariantsShowcase = ({
 
   return (
     <div
-      className={`relative flex flex-col overflow-hidden sm:flex-row ${
+      className={`flex flex-col sm:flex-row ${
         fixedDesktopHeight ? '' : heightClassName
       }`}
       style={
@@ -324,60 +307,26 @@ const VariantsShowcase = ({
           </div>
         )}
 
-        {/* Control-bar launcher — port of core's RivetPanelLauncher: the
-            floating circle with the Rivet mark that toggles the panel, parked
-            at its default bottom-right spot in the sample app. */}
-        {showDirections && isDesktop && (
-          <motion.button
-            type="button"
-            aria-label={panelOpen ? 'Close panel' : 'Open panel'}
-            title={panelOpen ? 'Close panel' : 'Open panel'}
-            onClick={togglePanel}
-            whileTap={reduceMotion ? undefined : { scale: 0.95 }}
-            className="absolute bottom-4 right-4 z-40 flex h-11 w-11 cursor-pointer select-none items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[#1c1c20] shadow-[0_2px_8px_rgba(0,0,0,0.2),0_4px_16px_rgba(0,0,0,0.1)] transition-[background-color,box-shadow] duration-150 hover:bg-[#2a2a2a] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75"
-          >
-            <img
-              src="/images/riv-logo-white.svg"
-              alt=""
-              className="h-4 w-4"
-              draggable={false}
-            />
-          </motion.button>
-        )}
       </div>
 
-      {/* Directions panel — docked on the LEFT at sm+, stacked below the
-          preview on mobile. Hidden for the mobile hero, where the preview
-          cycles options on its own. Desktop mirrors core's App.tsx: a spacer
-          reserves the layout width while an absolutely-positioned wrapper
-          slides the opaque panel with a transform-only animation. */}
+      {/* Directions panel — docked on the LEFT at sm+ (order-first), stacked
+          below the preview on mobile. Hidden for the mobile hero, where the
+          preview cycles options on its own. The demo panel never collapses:
+          the header's close chip is rendered for parity but is inert. */}
       {showDirections && isDesktop && (
-        <>
-          <div
-            aria-hidden
-            className="order-first h-full shrink-0"
-            style={{ width: panelSpaceReserved ? panelWidth : 0 }}
+        <div
+          className="order-first h-full shrink-0"
+          style={{ width: panelWidth }}
+        >
+          <DirectionsPanel
+            ctrl={ctrl}
+            desktop
+            onClose={() => {}}
+            onResizeStart={startPanelResize}
+            onResizeReset={resetPanelWidth}
+            resizing={resizingPanel}
           />
-          <motion.div
-            className="absolute inset-y-0 left-0 z-30"
-            style={{ width: panelWidth, willChange: 'transform' }}
-            initial={false}
-            animate={{ x: panelOpen ? 0 : -panelWidth }}
-            transition={reduceMotion ? { duration: 0 } : PANEL_SLIDE}
-            onAnimationComplete={() => {
-              if (panelOpen) setPanelSpaceReserved(true);
-            }}
-          >
-            <DirectionsPanel
-              ctrl={ctrl}
-              desktop
-              onClose={togglePanel}
-              onResizeStart={startPanelResize}
-              onResizeReset={resetPanelWidth}
-              resizing={resizingPanel}
-            />
-          </motion.div>
-        </>
+        </div>
       )}
       {showDirections && !isDesktop && <DirectionsPanel ctrl={ctrl} />}
 
