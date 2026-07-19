@@ -179,8 +179,8 @@
       max-inline-size: 14em;
       font-size: clamp(
         1.5rem,
-        calc((100vw - (var(--page-gutter-x) * 2) - 12rem) / 26.5),
-        3.25rem
+        calc((100vw - (var(--page-gutter-x) * 2) - 12rem) / 24),
+        3.625rem
       );
     }
   }
