@@ -77,7 +77,10 @@ const NavBar = () => {
             Community
           </a>
           <div className="hidden lg:block">
-            <PromptInstallButton tone={isDark ? 'light' : 'dark'} />
+            <PromptInstallButton
+              tone={isDark ? 'light' : 'dark'}
+              label="Install Rivet"
+            />
           </div>
         </div>
       </div>

@@ -134,12 +134,14 @@ type PromptInstallButtonProps = {
   tone?: Tone;
   size?: 'md' | 'lg';
   fullWidth?: boolean;
+  label?: string;
 };
 
 const PromptInstallButton = ({
   tone = 'orange',
   size = 'md',
   fullWidth = false,
+  label = 'Add Rivet to your agent',
 }: PromptInstallButtonProps) => {
   const [open, setOpen] = useState(false);
   // Keyboard highlight within the menu (-1 = no row highlighted).
@@ -215,7 +217,7 @@ const PromptInstallButton = ({
           fullWidth ? 'w-full justify-center' : 'w-fit'
         } transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
       >
-        <span className="whitespace-nowrap">Add Rivet to your agent</span>
+        <span className="whitespace-nowrap">{label}</span>
         {/* Already-fanned icon row. At rest each icon is fully visible with a
             clear gap. On hover/focus the gap widens and each icon lifts up with
             a soft drop shadow. `motion-reduce` keeps the icons static. */}
