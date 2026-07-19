@@ -396,9 +396,12 @@ const DirectionsPanel = ({
         'rivet-variants flex shrink-0 flex-col overflow-hidden bg-[var(--main)] font-main text-content',
         desktop
           ? // Core shell (ElementInspector): fills the slide wrapper, elevated
-            // over the preview. The right edge is drawn by the resize handle's
-            // hairline instead of a border.
-            'relative h-full w-full shadow-2xl'
+            // over the preview. With a resize handle its hairline draws the
+            // right edge; without one, fall back to a plain border.
+            cn(
+              'relative h-full w-full shadow-2xl',
+              !onResizeStart && 'border-r border-[var(--main-border)]',
+            )
           : 'h-[42%] w-full border-t border-[var(--main-border)]',
       )}
     >
