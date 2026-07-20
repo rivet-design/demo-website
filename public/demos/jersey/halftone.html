@@ -901,7 +901,7 @@
         CLUBCALL &gt;&gt; LATEST SOCCER &gt;&gt; DESIGN YOUR STRIP
       </div>
       <div class="flashmsg" id="flash">
-        PICK A BODY COLOUR TO RESTYLE YOUR STRIP...
+        SELECT A NUMBERED MENU ITEM TO BEGIN...
       </div>
 
       <div class="tt-body">
@@ -1168,7 +1168,22 @@
 
         <!-- ===== MENU PANEL ===== -->
         <section class="menu-panel">
-          <div class="menu-head">&gt;&gt; PICK YOUR COLOURS &lt;&lt;</div>
+          <div class="menu-head">&gt;&gt; SELECT OPTION 1-4 &lt;&lt;</div>
+          <div class="menu-row">
+            <div class="menu-item active" data-page="colour">
+              <span class="knum">1</span><span class="c-yel">COLOUR</span>
+            </div>
+            <div class="menu-item" data-page="pattern">
+              <span class="knum">2</span><span class="c-grn">PATTERN</span>
+            </div>
+            <div class="menu-item" data-page="number">
+              <span class="knum">3</span><span class="c-mag">NUMBER</span>
+            </div>
+            <div class="menu-item" data-page="name">
+              <span class="knum">4</span><span class="c-cyan">NAME</span>
+            </div>
+          </div>
+
           <div class="opts">
             <!-- COLOUR PANE -->
             <div class="opts-pane show" id="pane-colour">
@@ -1176,16 +1191,72 @@
                 <span class="opts-title">P411.1 BODY COLOUR</span>
                 <div id="bodySwatches"></div>
               </div>
+              <div class="cgroup">
+                <span class="opts-title">ACCENT / SLEEVE + COLLAR</span>
+                <div id="accentSwatches"></div>
+              </div>
+            </div>
+            <!-- PATTERN PANE -->
+            <div class="opts-pane" id="pane-pattern">
+              <span class="opts-title">P411.2 STRIP PATTERN</span>
+              <div id="patternRows"></div>
+            </div>
+            <!-- NUMBER PANE -->
+            <div class="opts-pane" id="pane-number">
+              <span class="opts-title">P411.3 SQUAD NUMBER</span>
+              <div class="tt-input-row">
+                <label>NUMBER:</label>
+                <input
+                  class="tt-input num"
+                  id="numInput"
+                  type="number"
+                  min="1"
+                  max="99"
+                  value="10"
+                  inputmode="numeric"
+                />
+                <span class="blinkcur">_</span>
+              </div>
+              <span class="opts-title" style="margin-top: var(--sp-2)"
+                >NUMBER + TRIM COLOUR</span
+              >
+              <div id="numColRows"></div>
+              <div class="hint">ENTER 1-99. THIS IS YOUR HERO DIGIT.</div>
+            </div>
+            <!-- NAME PANE -->
+            <div class="opts-pane" id="pane-name">
+              <span class="opts-title">P411.4 PLAYER NAME</span>
+              <div class="tt-input-row">
+                <label>NAME:</label>
+                <input
+                  class="tt-input"
+                  id="nameInput"
+                  type="text"
+                  maxlength="12"
+                  value="ZICO"
+                />
+                <span class="blinkcur">_</span>
+              </div>
+              <div class="hint">UP TO 12 CHARACTERS. SHOWN ABOVE NUMBER.</div>
             </div>
           </div>
         </section>
       </div>
+
+      <!-- ===== FASTEXT BAR ===== -->
+      <nav class="fastext" aria-label="Fastext">
+        <button class="ft-btn ft-red" id="ft-red">RED RANDOM</button>
+        <button class="ft-btn ft-grn" id="ft-grn">GREEN RESET</button>
+        <button class="ft-btn ft-yel" id="ft-yel">YELLOW SAVE</button>
+        <button class="ft-btn ft-cyan" id="ft-cyan">CYAN INDEX</button>
+      </nav>
     </main>
 
     <script>
       (function () {
         'use strict';
         var root = document.documentElement;
+        var shirt = document.querySelector('svg.shirt');
 
         // ---- palette ----
         var SAMBA = [
@@ -1198,7 +1269,22 @@
           { name: 'NAVY', hex: '#00075F' },
           { name: 'OFF-WHITE', hex: '#EDE8DA' },
         ];
-        // ---- state (fixed kit; only body colour is customisable) ----
+        var PATTERNS = [
+          { id: 'solid', name: 'SOLID' },
+          { id: 'stripes', name: 'VERTICAL STRIPES' },
+          { id: 'hoops', name: 'HOOPS' },
+          { id: 'sash', name: 'SASH' },
+          { id: 'halftone', name: 'HALFTONE / TIGER' },
+        ];
+        var TRIMS = [
+          { name: 'WHITE', hex: '#FFFFFF' },
+          { name: 'INK BLACK', hex: '#111111' },
+          { name: 'SAMBA YELLOW', hex: '#FFD400' },
+          { name: 'CREAM', hex: '#F4EFE2' },
+          { name: 'COBALT', hex: '#2230C8' },
+        ];
+
+        // ---- state ----
         var state = {
           body: '#1E8A3C',
           accent: '#FFD400',
@@ -1245,7 +1331,7 @@
           document.getElementById('metaNum').textContent = ' ' + state.num;
         }
 
-        // ---- build the body colour swatch row ----
+        // ---- build colour swatch rows ----
         function buildSwatchSet(containerId, key) {
           var c = document.getElementById(containerId);
           c.className = 'swatch-grid';
@@ -1259,12 +1345,100 @@
               state[key] = s.hex;
               render();
               markChip(c, chip);
-              flash('BODY SET TO ' + s.name);
+              flash((key === 'body' ? 'BODY' : 'ACCENT') + ' SET TO ' + s.name);
             });
             c.appendChild(chip);
           });
         }
 
+        function buildPatternRows() {
+          var c = document.getElementById('patternRows');
+          c.innerHTML = '';
+          PATTERNS.forEach(function (p) {
+            var row = document.createElement('div');
+            row.className = 'opt-row' + (state.pattern === p.id ? ' sel' : '');
+            row.innerHTML =
+              '<span class="swatch" style="background:' +
+              patPreview(p.id) +
+              '"></span><span class="opt-label">' +
+              p.name +
+              '</span>';
+            row.addEventListener('click', function () {
+              state.pattern = p.id;
+              render();
+              markSel(c, row);
+              flash('PATTERN: ' + p.name);
+            });
+            c.appendChild(row);
+          });
+        }
+        function patPreview(id) {
+          switch (id) {
+            case 'stripes':
+              return (
+                'repeating-linear-gradient(90deg,' +
+                state.accent +
+                ' 0 6px,' +
+                state.body +
+                ' 6px 12px)'
+              );
+            case 'hoops':
+              return (
+                'repeating-linear-gradient(0deg,' +
+                state.accent +
+                ' 0 6px,' +
+                state.body +
+                ' 6px 12px)'
+              );
+            case 'sash':
+              return (
+                'repeating-linear-gradient(45deg,' +
+                state.accent +
+                ' 0 6px,' +
+                state.body +
+                ' 6px 12px)'
+              );
+            case 'halftone':
+              return (
+                'repeating-conic-gradient(' +
+                state.accent +
+                ' 0 25%,' +
+                state.body +
+                ' 0 50%) 0 0/10px 10px'
+              );
+            default:
+              return state.body;
+          }
+        }
+
+        function buildTrimRows() {
+          var c = document.getElementById('numColRows');
+          c.className = 'swatch-grid trim';
+          c.innerHTML = '';
+          TRIMS.forEach(function (t) {
+            var chip = document.createElement('div');
+            chip.className = 'chip' + (state.trim === t.hex ? ' sel' : '');
+            chip.style.background = t.hex;
+            chip.title = t.name;
+            chip.addEventListener('click', function () {
+              state.trim = t.hex;
+              render();
+              markChip(c, chip);
+              flash('TRIM SET TO ' + t.name);
+            });
+            c.appendChild(chip);
+          });
+        }
+
+        function markSel(container, row) {
+          Array.prototype.forEach.call(
+            container.querySelectorAll('.opt-row'),
+            function (r) {
+              r.classList.remove('sel');
+            },
+          );
+          row.classList.add('sel');
+        }
         function markChip(container, chip) {
           Array.prototype.forEach.call(
             container.querySelectorAll('.chip'),
@@ -1274,6 +1448,74 @@
           );
           chip.classList.add('sel');
         }
+
+        // ---- menu paging ----
+        var items = document.querySelectorAll('.menu-item');
+        var panes = {
+          colour: document.getElementById('pane-colour'),
+          pattern: document.getElementById('pane-pattern'),
+          number: document.getElementById('pane-number'),
+          name: document.getElementById('pane-name'),
+        };
+        function showPage(pg) {
+          Array.prototype.forEach.call(items, function (it) {
+            it.classList.toggle('active', it.getAttribute('data-page') === pg);
+          });
+          Object.keys(panes).forEach(function (k) {
+            panes[k].classList.toggle('show', k === pg);
+          });
+          if (pg === 'pattern') {
+            buildPatternRows();
+          }
+          flash(
+            'PAGE 411.' +
+              { colour: 1, pattern: 2, number: 3, name: 4 }[pg] +
+              ' LOADED',
+          );
+        }
+        Array.prototype.forEach.call(items, function (it) {
+          it.addEventListener('click', function () {
+            showPage(it.getAttribute('data-page'));
+          });
+        });
+        // keyboard 1-4
+        document.addEventListener('keydown', function (e) {
+          if (
+            document.activeElement &&
+            /INPUT/.test(document.activeElement.tagName)
+          )
+            return;
+          var map = { 1: 'colour', 2: 'pattern', 3: 'number', 4: 'name' };
+          if (map[e.key]) {
+            showPage(map[e.key]);
+          }
+        });
+
+        // ---- inputs ----
+        var nameInput = document.getElementById('nameInput');
+        nameInput.addEventListener('input', function () {
+          state.name = nameInput.value;
+          render();
+        });
+        var numInput = document.getElementById('numInput');
+        numInput.addEventListener('input', function () {
+          var v = parseInt(numInput.value, 10);
+          if (isNaN(v)) v = '';
+          else {
+            if (v < 1) v = 1;
+            if (v > 99) v = 99;
+          }
+          if (v !== '') numInput.value = v;
+          state.num = v === '' ? '' : String(v);
+          render();
+        });
+        numInput.addEventListener('blur', function () {
+          if (state.num === '') {
+            state.num = '1';
+            numInput.value = '1';
+            render();
+          }
+        });
 
         // ---- flash msg ----
         var flashEl = document.getElementById('flash');
@@ -1327,8 +1569,71 @@
         tick();
         setInterval(tick, 1000);
 
+        // ---- fastext actions ----
+        function rand(a) {
+          return a[Math.floor(Math.random() * a.length)];
+        }
+        document
+          .getElementById('ft-red')
+          .addEventListener('click', function () {
+            var b = rand(SAMBA),
+              a = rand(SAMBA);
+            while (a.hex === b.hex) {
+              a = rand(SAMBA);
+            }
+            state.body = b.hex;
+            state.accent = a.hex;
+            state.pattern = rand(PATTERNS).id;
+            state.trim = rand(TRIMS).hex;
+            state.num = String(1 + Math.floor(Math.random() * 99));
+            numInput.value = state.num;
+            refreshAll();
+            flash('RANDOM STRIP GENERATED!');
+          });
+        document
+          .getElementById('ft-grn')
+          .addEventListener('click', function () {
+            state = {
+              body: '#1E8A3C',
+              accent: '#FFD400',
+              pattern: 'solid',
+              trim: '#FFFFFF',
+              num: '10',
+              name: 'ZICO',
+            };
+            nameInput.value = 'ZICO';
+            numInput.value = '10';
+            refreshAll();
+            flash('RESET TO DEFAULT KIT');
+          });
+        document
+          .getElementById('ft-yel')
+          .addEventListener('click', function () {
+            flash(
+              'KIT SAVED: ' +
+                (state.name || '-').toUpperCase() +
+                ' #' +
+                state.num +
+                ' OK',
+            );
+          });
+        document
+          .getElementById('ft-cyan')
+          .addEventListener('click', function () {
+            showPage('colour');
+            flash('RETURN TO INDEX P411.1');
+          });
+
+        function refreshAll() {
+          buildSwatchSet('bodySwatches', 'body');
+          buildSwatchSet('accentSwatches', 'accent');
+          buildPatternRows();
+          buildTrimRows();
+          render();
+        }
+
         // ---- init ----
-        buildSwatchSet('bodySwatches', 'body');
+        refreshAll();
         render();
       })();
     </script>
