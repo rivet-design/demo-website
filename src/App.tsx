@@ -14,7 +14,7 @@ import BrowserFrame from './components/BrowserFrame';
 import SketchGuides from './components/SketchGuides';
 import VariantsShowcase from './components/variantsDemo/VariantsShowcase';
 import AgentTerminalSection from './components/AgentTerminalSection';
-import { SKEUOMORPHIC_DECK_ID } from './components/variantsDemo/data';
+import { MACINTOSH_SYSTEM_ID } from './components/variantsDemo/data';
 import AgentTerminal from './components/sandbox/AgentTerminal';
 import ReplayButton from './components/ReplayButton';
 import { HERO_SESSION } from './components/sandbox/terminalScript';
@@ -449,7 +449,7 @@ const App = () => {
                 showDirections={!isMobileViewport}
                 portrait={isMobileViewport}
                 autoAdvanceMs={2000}
-                initialVariantId={SKEUOMORPHIC_DECK_ID}
+                initialVariantId={MACINTOSH_SYSTEM_ID}
                 loadDelayMs={loadDelayMs}
               />
             </BrowserFrame>

@@ -31,8 +31,11 @@ export type DemoVariant = {
 /** Shared run label (manifest `runLabel`) shown as the chip on each direction. */
 export const RUN_LABEL = 'Teletext Designs';
 
-/** The tactile Skeuomorphic Deck — used as the pinned default for the hero. */
+/** The tactile Skeuomorphic Deck. */
 export const SKEUOMORPHIC_DECK_ID = 'ee859344-5023-425f-8db3-7aa596346e09';
+
+/** The 1984 Macintosh System — used as the pinned default for the hero. */
+export const MACINTOSH_SYSTEM_ID = '00368aee-9194-4bdd-be73-00f40704dbf2';
 
 /** The prompt that produced the run (manifest `sessionPrompt`). */
 export const SESSION_PROMPT =
