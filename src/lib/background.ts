@@ -39,5 +39,5 @@ export const surfaceBackground: CSSProperties = USE_PAPER_TEXTURE
  * backdrop).
  */
 export const footerBackground: CSSProperties = {
-  backgroundColor: '#ffffff',
+  backgroundColor: '#f5f5f5',
 };

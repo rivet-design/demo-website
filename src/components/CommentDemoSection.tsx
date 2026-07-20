@@ -113,13 +113,16 @@ const CommentDemoSection = () => {
 
         {/* Copy is the outer (right) column at lg. Shared copy-block padding
             keeps workflow panel title/subtitle spacing consistent. */}
-        <div className="workflow-copy-block order-1 lg:order-2">
-          <h2 className="workflow-title-size max-w-[11ch] font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
-            Explore with precision.
+        {/* lg:ml-auto pins the copy to the column's right edge, and lg:pr-8
+            insets the text off the right guide rule by the same 2rem the
+            references panel's copy keeps off the LEFT rule (its lg:pl-8). */}
+        <div className="workflow-copy-block order-1 lg:order-2 lg:ml-auto lg:pr-8">
+          <h2 className="workflow-title-size max-w-[18ch] font-main font-normal leading-[1.15] tracking-[-0.01em] text-black">
+            Explore more ideas with precision.
           </h2>
           <p className="landing-subtext mt-4 text-black/70">
-            Comment on any part of your interface and Rivet explores focused
-            design directions for just that region.
+            Vary layout, color, motion, type and more. Describe changes from
+            your agent and then compare and view them from Rivet.
           </p>
         </div>
       </div>
