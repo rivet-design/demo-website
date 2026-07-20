@@ -102,6 +102,12 @@
   }
 }
 
+/* no-sidebar: the Collections rail isn't rendered at all (hero demo) — give
+   the main content the full width. */
+.rivet-gallery.no-sidebar .app {
+  grid-template-columns: 0 1fr;
+}
+
 .rivet-gallery.compact .app {
   grid-template-columns: 0 1fr;
 }
