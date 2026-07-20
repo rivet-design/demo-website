@@ -8,6 +8,8 @@ import {
 import DirectionsPanel from './DirectionsPanel';
 import SparkleLoader from './SparkleLoader';
 import { useVariantsDemo } from './useVariantsDemo';
+import Gallery from '../gallery/Gallery';
+import type { DemoVariant } from './data';
 
 // Each variant page is rendered at a fixed, generously-tall logical viewport so
 // it fits without an internal scroll (a scrolling iframe would trap the page's
@@ -66,6 +68,8 @@ const VariantsShowcase = ({
   showDirections = true,
   autoAdvanceMs,
   portrait = false,
+  variants,
+  preview = 'iframe',
 }: {
   heightClassName?: string;
   /** When false, the showcase stays pinned to the initial variant (no loop). */
@@ -87,12 +91,24 @@ const VariantsShowcase = ({
    * mobile hero, where the pane is a vertical rectangle.
    */
   portrait?: boolean;
+  /**
+   * Custom variant list (defaults to the jersey run). MUST be a stable
+   * module-level reference — see useVariantsDemo.
+   */
+  variants?: DemoVariant[];
+  /**
+   * 'iframe' (default) renders each variant's static page in a crossfading
+   * iframe stack. 'gallery' renders a single live <Gallery> restyled by the
+   * selected variant's `gallery` config — same pipes as the comments demo.
+   */
+  preview?: 'iframe' | 'gallery';
 }) => {
   const ctrl = useVariantsDemo({
     autoPlay,
     initialId: initialVariantId,
     startDelayMs: loadDelayMs,
     autoAdvanceMs,
+    variants,
   });
   const [visited, setVisited] = useState<Set<string>>(
     () => new Set([ctrl.selected.src]),
@@ -219,7 +235,9 @@ const VariantsShowcase = ({
     return () => window.removeEventListener('keydown', onKey);
   }, [hovered, ctrl]);
 
-  const activeLoaded = loaded.has(ctrl.selected.src);
+  // Gallery mode has no iframe load step — the live component is ready as
+  // soon as the direction has "generated".
+  const activeLoaded = preview === 'gallery' || loaded.has(ctrl.selected.src);
   // The preview only reveals once the direction has "generated" (faked) AND its
   // iframe has loaded — so the shell shows a generating state on first paint.
   const selectedReady = ctrl.readyIds.has(ctrl.selected.id);
@@ -269,7 +287,33 @@ const VariantsShowcase = ({
         ref={previewRef}
         className="relative min-h-0 min-w-0 flex-1 overflow-hidden bg-white"
       >
-        {ctrl.variants
+        {preview === 'gallery' ? (
+          // One live Gallery in the same design-space box the iframes use,
+          // restyled in place by the selected direction's `gallery` config —
+          // layout/tokens morph rather than crossfading between pages.
+          <div
+            style={{
+              width: portrait ? portraitViewportW : DESIGN_W,
+              height: portrait ? portraitViewportH : DESIGN_H,
+              position: 'absolute',
+              left: '50%',
+              top: portrait ? 0 : '50%',
+              transform: portrait
+                ? `translateX(-50%) scale(${fitScale})`
+                : `translate(-50%, -50%) scale(${fitScale})`,
+              transformOrigin: portrait ? 'top center' : 'center center',
+              opacity: activeReady ? 1 : 0,
+              zIndex: 20,
+            }}
+            className="transition-opacity duration-300 ease-in-out"
+          >
+            <Gallery
+              variant={ctrl.selected.gallery}
+              compact={portrait}
+            />
+          </div>
+        ) : (
+          ctrl.variants
           .filter((v) => visited.has(v.src))
           .map((v) => {
             const isActive = v.src === ctrl.selected.src;
@@ -300,7 +344,8 @@ const VariantsShowcase = ({
                 }`}
               />
             );
-          })}
+          })
+        )}
         {!activeReady && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center gap-2 bg-white">
             {selectedReady ? (
