@@ -310,6 +310,7 @@ const VariantsShowcase = ({
             <Gallery
               variant={ctrl.selected.gallery}
               compact={portrait}
+              hideSidebar
             />
           </div>
         ) : (
