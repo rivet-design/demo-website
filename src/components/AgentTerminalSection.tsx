@@ -79,9 +79,12 @@ const AgentTerminalSection = () => {
 
         {/* Copy — right on lg+, above the terminal on mobile. Shared copy-block
             padding keeps workflow panel title/subtitle spacing consistent. */}
-        <div className="workflow-copy-block order-1 lg:order-2">
-          <h2 className="workflow-title-size max-w-[11ch] font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
-            Works with your agent.
+        {/* lg:ml-auto pins the copy to the column's right edge, and lg:pr-8
+            insets the text off the right guide rule by the same 2rem the
+            references panel's copy keeps off the LEFT rule (its lg:pl-8). */}
+        <div className="workflow-copy-block order-1 lg:order-2 lg:ml-auto lg:pr-8">
+          <h2 className="workflow-title-size max-w-[18ch] font-main font-normal leading-[1.15] tracking-[-0.01em] text-black">
+            Start new directions from your agent.
           </h2>
           <p className="landing-subtext mt-4 text-black/70">
             Use Rivet with your{' '}

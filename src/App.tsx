@@ -370,14 +370,13 @@ const App = () => {
               </a>
             )}
 
-            {/* Title with the black install CTA directly beneath it — the CTA
-                moved here from the nav's top-right slot. */}
+            {/* Title only — the black install CTA lives below the intro
+                statement section now. */}
             <div className="flex flex-col items-center gap-8">
               <span className="hero-title-size hero-title-text font-main font-normal normal-case leading-[1.12] text-black">
                 Explore dozens of design directions
                 <br className="hidden lg:inline" /> from your agent.
               </span>
-              <PromptInstallButton tone="dark" label="Install Rivet" />
             </div>
           </div>
         </FadeInText>
@@ -495,20 +494,33 @@ const App = () => {
           <ReplayButton className="z-30" onClick={replayHero} />
         </div>
 
-        {/* Below-the-fold statement, under the UI variants shell. Copy only —
-            the CTA button + install accordion were removed from this block
-            (the hero title carries the install CTA). */}
+        {/* Below-the-fold statement, under the UI variants shell — the
+            "What is Rivet, exact copy" Rivet direction, adapted per review:
+            centered instead of left-aligned, label removed, and the lead
+            sentence stepped down from hero-title-size to a ~2xl/3xl scale.
+            Copy only, no CTA (the hero title carries the install CTA). */}
         <FadeInText>
-          <div className="relative z-10 flex flex-col items-center gap-6 px-4 pb-4 pt-12 text-center lg:px-0 lg:pb-14 lg:pt-6">
-            <span className="hero-title-size max-w-[26ch] font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
-              Rivet helps designers explore more ideas for the software they
-              craft. It&rsquo;s a tool for generating and viewing dozens of
-              different design directions.
-            </span>
-            <span className="landing-subtext max-w-[46ch] text-black/70">
-              It&rsquo;s an MCP tool that you can spin up anytime from the
-              agents that you already use.
-            </span>
+          {/* Mobile is left-aligned like the workflow copy blocks. At lg the
+              BLOCK centers in the page (items-center) but the text inside
+              stays left-aligned — a centered column of left-set copy. */}
+          <div
+            id="intro-statement"
+            className="relative z-10 flex flex-col items-start px-4 pb-4 pt-12 text-left md:px-10 lg:items-center lg:px-0 lg:pb-14 lg:pt-6"
+          >
+            {/* Inner stack owns the shared left edge: the outer flex centers
+                THIS box at lg while both text blocks stay left-set and
+                left-aligned to each other. */}
+            <div className="flex max-w-[52ch] flex-col items-start gap-6">
+              <span className="max-w-[32ch] font-main text-2xl font-normal leading-[1.25] tracking-[-0.01em] text-black md:text-3xl">
+                Rivet helps designers explore more ideas for the software they
+                craft.
+              </span>
+              <span className="landing-subtext text-black/70">
+                It&rsquo;s a tool for generating and viewing dozens of
+                different design directions. Use Rivet anytime from the
+                agents that you already have set up.
+              </span>
+            </div>
           </div>
         </FadeInText>
 
@@ -527,10 +539,10 @@ const App = () => {
           id="demo-panel"
         >
           {/* <WorkflowPanels /> */}
-          <AgentTerminalSection />
+          <CommentDemoSection />
           <ReferencesDemoSection />
           {SHOW_VARIANTS_PANEL && <VariantsDemoSection />}
-          <CommentDemoSection />
+          <AgentTerminalSection />
           {SHOW_MANIFESTO_PANEL && <CodePanel />}
         </div>
         {/* <FeaturePanel /> */}

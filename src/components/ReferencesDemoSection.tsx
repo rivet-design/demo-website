@@ -155,8 +155,7 @@ const ReferencesDemoSection = () => {
             page's left guide rule by the same inset the cards keep off the right. */}
         <div className="workflow-copy-block lg:max-w-none lg:pl-8">
           <h2 className="workflow-title-size font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
-            <span className="block whitespace-nowrap">Bring your design</span>
-            <span className="block whitespace-nowrap">references.</span>
+            Create interfaces based on your design references.
           </h2>
           <p className="landing-subtext mt-4 text-black/70">
             Pull in inspiration from{' '}
