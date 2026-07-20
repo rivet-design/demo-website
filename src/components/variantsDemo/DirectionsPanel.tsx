@@ -195,12 +195,12 @@ const VariantRow = ({
                 e.stopPropagation();
                 onStartRename(variant.id);
               }}
-              className="min-w-0 flex-1 cursor-text select-text truncate text-sm font-medium text-content"
+              className="min-w-0 flex-1 cursor-pointer select-text truncate text-sm font-medium text-content"
             >
               {variant.label}
             </span>
           </span>
-          <span className="mt-0.5 line-clamp-2 block cursor-text select-text text-xs leading-snug text-content-muted">
+          <span className="mt-0.5 line-clamp-2 block cursor-pointer select-text text-xs leading-snug text-content-muted">
             {variant.brief}
           </span>
         </span>
