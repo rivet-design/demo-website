@@ -495,20 +495,20 @@ const App = () => {
           <ReplayButton className="z-30" onClick={replayHero} />
         </div>
 
-        {/* Subtitle + CTA, moved below the fold to sit under the UI variants
-            shell. */}
+        {/* Below-the-fold statement, under the UI variants shell. Copy only —
+            the CTA button + install accordion were removed from this block
+            (the hero title carries the install CTA). */}
         <FadeInText>
-          <div className="relative z-10 flex flex-col items-center gap-8 px-4 pb-4 pt-12 text-center lg:gap-10 lg:px-0 lg:pb-14 lg:pt-6">
-            <span className="hero-title-size max-w-[24ch] font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
-              Rivet understands your references, and then explores dozens of
-              design directions with you.
+          <div className="relative z-10 flex flex-col items-center gap-6 px-4 pb-4 pt-12 text-center lg:px-0 lg:pb-14 lg:pt-6">
+            <span className="hero-title-size max-w-[26ch] font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
+              Rivet helps designers explore more ideas for the software they
+              craft. It&rsquo;s a tool for generating and viewing dozens of
+              different design directions.
             </span>
-            {/* Button + accordion share a tighter sub-column so the CLI option
-                hangs off the CTA like it does in the download panel. */}
-            <div className="flex w-full max-w-xl flex-col items-center gap-6">
-              <PromptInstallButton size="lg" />
-              <InstallAccordion />
-            </div>
+            <span className="landing-subtext max-w-[46ch] text-black/70">
+              It&rsquo;s an MCP tool that you can spin up anytime from the
+              agents that you already use.
+            </span>
           </div>
         </FadeInText>
 
