@@ -1,9 +1,12 @@
-// Workflow panel: "Create interfaces based on your design references."
+// Workflow panel: "Bring your design references."
 //
-// Copy on the left, a loose masonry of reference PHOTOS on the right —
-// real-world imagery (Unsplash) standing in for a user's pulled-in design
-// references, replacing the earlier generated line-art/dot-grid cards.
-import { memo } from 'react';
+// Copy on the left, a loose masonry of reference cards on the right. Each card
+// echoes one of the hero bento's right-hand panels — a peach panel with the
+// GeometricLines line-art, or an orange panel with the CircleGridArt. Built on
+// the Rivet design system.
+import { memo, useEffect, useState } from 'react';
+import { GeometricLines } from './FadeInText';
+import CircleGridArt from './CircleGridArt';
 
 // Brand marks for the reference sources. Pinterest is the swirl glyph (filled
 // with the brand red via currentColor) ported from Rivet Core's design-
@@ -22,54 +25,97 @@ const PinterestIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+// lg+ gets a denser grid (more rows) than small screens, where the cards are
+// narrow and want fewer, more-spaced dots.
+const useIsDesktop = () => {
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+  return isDesktop;
+};
+
+// Each card echoes one of the hero bento's right-hand panels — line-art or
+// circle-grid — but every card gets a unique background + art color from the
 // Rivet palette so the wall reads as a varied set of references.
+type Motif = 'lines' | 'grid';
 type Card = {
   col: 0 | 1 | 2;
   aspect: string;
-  /** Reference photo (public/images/references, pre-sized to 800w JPEG). */
-  src: string;
+  motif: Motif;
+  bg: string; // background color (tailwind class)
+  color: string; // art stroke color
 };
 
-// Seven Unsplash reference photos, distributed across the three masonry
-// columns. Aspects roughly follow each photo's orientation so object-cover
-// crops stay gentle; the middle column carries a third card since the wall
-// bleeds vertically anyway.
+// Cards follow the Rivet multicolor wordmark palette (same four colors as the
+// footer logo): red #EF3517, blue #1FD0D3, yellow #ECE44D, dark green #214C16.
+// Every background and art stroke is drawn from these four — each card pairs one
+// brand color as the fill with a contrasting brand color for the motif. The `bg`
+// classes are written as literal arbitrary values so Tailwind's JIT scanner
+// picks them up (it can't resolve template-built class names); `color` is an SVG
+// stroke value so it can stay a JS constant.
+// Art-stroke colors (used as SVG values). Card backgrounds are written as literal
+// `bg-[...]` classes (so Tailwind's JIT picks them up); these constants are only
+// for the line-art stroke colors.
+const YELLOW = '#ECE44D';
+const GREEN = '#214C16';
+// Tone-on-tone strokes for the grid-dot cards: deeper shades of each card's
+// own background instead of the flipped complementary brand color (red dots
+// on blue / blue dots on red read as jarring at this size).
+const BLUE_DEEP = '#0E9EA1';
+const RED_DEEP = '#C22A10';
+// Near-black middle panel, matching the original dark reference card
+// (Tailwind `accent-foreground` ≈ hsl(0 0% 9%)); its line-art is soft white.
+const DARK_ART = 'rgba(255,255,255,0.85)';
+
 const CARDS: Card[] = [
   {
     col: 0,
     aspect: 'aspect-[3/4]',
-    src: '/images/references/paul-blenkhorn.jpg',
+    motif: 'lines',
+    bg: 'bg-[#EF3517]',
+    color: YELLOW,
   },
   {
     col: 0,
     aspect: 'aspect-square',
-    src: '/images/references/marvin-van.jpg',
+    motif: 'grid',
+    bg: 'bg-[#1FD0D3]',
+    color: BLUE_DEEP,
   },
   {
-    // Landscape shot anchors the top-middle of the wall.
+    // Near-black panel anchors the top-middle of the wall.
     col: 1,
     aspect: 'aspect-[4/3]',
-    src: '/images/references/josiah-rock.jpg',
+    motif: 'grid',
+    bg: 'bg-accent-foreground',
+    color: DARK_ART,
   },
   {
+    // Yellow anchors the bottom-middle of the wall.
     col: 1,
     aspect: 'aspect-[5/6]',
-    src: '/images/references/tim-mossholder.jpg',
-  },
-  {
-    col: 1,
-    aspect: 'aspect-[3/4]',
-    src: '/images/references/robert-clark.jpg',
+    motif: 'lines',
+    bg: 'bg-[#ECE44D]',
+    color: GREEN,
   },
   {
     col: 2,
     aspect: 'aspect-[4/5]',
-    src: '/images/references/resul-mentes.jpg',
+    motif: 'lines',
+    bg: 'bg-[#1FD0D3]',
+    color: YELLOW,
   },
   {
     col: 2,
     aspect: 'aspect-square',
-    src: '/images/references/diego-gonzalez.jpg',
+    motif: 'grid',
+    bg: 'bg-[#EF3517]',
+    color: RED_DEEP,
   },
 ];
 
@@ -79,22 +125,30 @@ const COLUMNS: Card[][] = [
   CARDS.filter((c) => c.col === 2),
 ];
 
-const CardFace = ({ card }: { card: Card }) => (
+const CardFace = ({
+  card,
+  gridSpacing,
+}: {
+  card: Card;
+  gridSpacing: number;
+}) => (
   <div
-    className={`relative ${card.aspect} overflow-hidden rounded-xl bg-black/5`}
+    className={`relative ${card.aspect} overflow-hidden rounded-xl ${card.bg}`}
   >
-    <img
-      src={card.src}
-      alt=""
-      aria-hidden
-      loading="lazy"
-      draggable={false}
-      className="absolute inset-0 h-full w-full object-cover"
-    />
+    {/* Hero-bento motifs, recolored per card for variety. Fewer columns keeps
+        the grid from overrunning the right edge on narrow (mobile) cards;
+        spacing (row density) tightens on desktop for a few more rows. */}
+    {card.motif === 'lines' ? (
+      <GeometricLines color={card.color} />
+    ) : (
+      <CircleGridArt color={card.color} cols={5} spacing={gridSpacing} />
+    )}
   </div>
 );
 
 const ReferencesDemoSection = () => {
+  // More dot rows on desktop, fewer (well-spaced) on small screens.
+  const gridSpacing = useIsDesktop() ? 22 : 30;
   return (
     <div className="page-gutter-x relative flex w-full justify-center py-8 lg:py-16">
       <div className="grid w-full grid-cols-1 items-center gap-16 lg:grid-cols-[1fr_2.5fr]">
@@ -165,7 +219,7 @@ const ReferencesDemoSection = () => {
                   }}
                 >
                   {col.map((card, i) => (
-                    <CardFace key={i} card={card} />
+                    <CardFace key={i} card={card} gridSpacing={gridSpacing} />
                   ))}
                 </div>
               ))}
