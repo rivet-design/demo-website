@@ -73,18 +73,4 @@ export const VARIANTS: DemoVariant[] = [
     src: '/demos/jersey/frutiger-aero.html',
     tag: 'Retro flair',
   },
-  {
-    id: '8a4fd242-4c19-486c-a2b3-79f5e8b82dac',
-    label: 'Halftone',
-    brief: 'Retro CMYK Ben-Day halftone dots.',
-    src: '/demos/jersey/halftone.html',
-    tag: 'Retro flair',
-  },
-  {
-    id: '8acd812d-13fc-405c-a82d-f27932bdec94',
-    label: 'Discomorphic',
-    brief: '1980s CRT teletext over disco green.',
-    src: '/demos/jersey/discomorphic.html',
-    tag: 'Retro flair',
-  },
 ];

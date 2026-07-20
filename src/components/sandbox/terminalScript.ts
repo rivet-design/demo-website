@@ -50,16 +50,16 @@ export const HERO_SESSION: Turn[] = [
       {
         kind: 'tool',
         tool: 'start_variants',
-        arg: 'mode: "existing", briefs × 6',
-        result: '6 worktrees · editor → :4000',
+        arg: 'mode: "existing", briefs × 4',
+        result: '4 worktrees · editor → :4000',
       },
       {
         kind: 'tool',
         tool: 'report_variant_complete',
-        arg: '6 × status: "succeeded"',
-        result: 'Skeuomorphic · Liquid Glass · Halftone · …',
+        arg: '4 × status: "succeeded"',
+        result: 'Macintosh · Skeuomorphic · Liquid Glass · …',
       },
-      { kind: 'result', text: '6 texture directions ready — cycle them in the preview.' },
+      { kind: 'result', text: '4 texture directions ready — cycle them in the preview.' },
     ],
   },
 ];
