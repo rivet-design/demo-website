@@ -41,9 +41,17 @@ export const MACINTOSH_SYSTEM_ID = '00368aee-9194-4bdd-be73-00f40704dbf2';
 export const SESSION_PROMPT =
   'Render every teletext design in the jersey kit studio as a Rivet variant.';
 
-// Curated order — leads with the tactile Skeuomorphic Deck (the project's
-// default index.html), then the most visually distinct directions.
+// Curated order — leads with the Macintosh System (the hero's pinned
+// default, listed as the most recent direction), then the most visually
+// distinct directions.
 export const VARIANTS: DemoVariant[] = [
+  {
+    id: '00368aee-9194-4bdd-be73-00f40704dbf2',
+    label: 'Macintosh System',
+    brief: 'Faithful 1984 black-and-white Macintosh, bitmap type.',
+    src: '/demos/jersey/macintosh-system.html',
+    tag: 'Legacy Apple',
+  },
   {
     id: 'ee859344-5023-425f-8db3-7aa596346e09',
     label: 'Skeuomorphic Deck',
@@ -56,13 +64,6 @@ export const VARIANTS: DemoVariant[] = [
     label: 'Liquid Glass',
     brief: 'Frosted glass islands over a live pitch.',
     src: '/demos/jersey/liquid-glass.html',
-    tag: 'Legacy Apple',
-  },
-  {
-    id: '00368aee-9194-4bdd-be73-00f40704dbf2',
-    label: 'Macintosh System',
-    brief: 'Faithful 1984 black-and-white Macintosh, bitmap type.',
-    src: '/demos/jersey/macintosh-system.html',
     tag: 'Legacy Apple',
   },
   {
