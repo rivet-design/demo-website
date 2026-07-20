@@ -272,8 +272,61 @@ const App = () => {
     mobileTimers.current.forEach(clearTimeout);
     mobileTimers.current = [];
     setChatMoved(false);
+    setChatPos(null);
     setMobilePhase(playHeroIntroMobile ? 'agent' : 'editor');
     setHeroRun((n) => n + 1);
+  };
+
+  // --- Draggable chat ------------------------------------------------------
+  // Once the user grabs the chat, `chatPos` pins it at explicit pixel
+  // coordinates (top-left, relative to the hero showcase) and the
+  // choreography's class-based centering/slide no longer applies. Replay
+  // resets it to null so the intro positions take over again.
+  const heroShowcaseRef = useRef<HTMLDivElement>(null);
+  const chatWrapRef = useRef<HTMLDivElement>(null);
+  const [chatPos, setChatPos] = useState<{ x: number; y: number } | null>(
+    null,
+  );
+  const [chatDragging, setChatDragging] = useState(false);
+  const chatDragCleanup = useRef<(() => void) | null>(null);
+  useEffect(() => () => chatDragCleanup.current?.(), []);
+  const startChatDrag = (e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    const wrap = chatWrapRef.current;
+    const hero = heroShowcaseRef.current;
+    if (!wrap || !hero) return;
+    e.preventDefault();
+    chatDragCleanup.current?.();
+    const rect = wrap.getBoundingClientRect();
+    const heroRect = hero.getBoundingClientRect();
+    const grabX = e.clientX - rect.left;
+    const grabY = e.clientY - rect.top;
+    setChatDragging(true);
+    const onMove = (ev: PointerEvent) => {
+      const x = Math.min(
+        Math.max(ev.clientX - heroRect.left - grabX, 0),
+        heroRect.width - rect.width,
+      );
+      const y = Math.min(
+        Math.max(ev.clientY - heroRect.top - grabY, 0),
+        heroRect.height - rect.height,
+      );
+      setChatPos({ x, y });
+    };
+    const cleanup = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', end);
+      window.removeEventListener('pointercancel', end);
+      chatDragCleanup.current = null;
+    };
+    const end = () => {
+      cleanup();
+      setChatDragging(false);
+    };
+    chatDragCleanup.current = cleanup;
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
   };
   // During the agent phase the editor isn't mounted yet; it takes over once the
   // agent has minimized out.
@@ -359,6 +412,7 @@ const App = () => {
 
         <div
           id="hero-showcase"
+          ref={heroShowcaseRef}
           className="relative z-10 flex w-full justify-center bg-cover bg-center p-4 sm:p-6 lg:p-8"
           style={{ backgroundImage: "url('/images/halftone-bg.webp')" }}
         >
@@ -410,21 +464,35 @@ const App = () => {
               Rivet MCP tool calls, then the window opens and the directions
               generate and fade in. It starts centered, slides to the RIGHT
               side of the showcase, and persists there with the finished
-              transcript — it never minimizes or unmounts. Decorative, so
-              pointer-events are off; hidden on small screens where the hero
-              is already tight. */}
+              transcript — it never minimizes or unmounts. The user can grab
+              and move it anywhere within the hero (clamped to the showcase);
+              until first grabbed, the intro choreography positions it.
+              Hidden on small screens where the hero is already tight. */}
           {playHeroIntro && (
-            <AgentTerminal
-              key={heroRun}
-              compact
-              loop={false}
-              script={HERO_SESSION}
-              className={`ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none absolute z-20 hidden h-[240px] w-[300px] -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-700 lg:flex lg:h-[300px] lg:w-[380px] ${
-                chatMoved
-                  ? 'left-[70%] top-[61%] lg:left-[77%] lg:top-[63%]'
-                  : 'left-1/2 top-1/2'
+            <div
+              ref={chatWrapRef}
+              onPointerDown={startChatDrag}
+              className={`absolute z-20 hidden h-[240px] w-[300px] touch-none select-none lg:block lg:h-[300px] lg:w-[380px] ${
+                chatDragging ? 'cursor-grabbing' : 'cursor-grab'
+              } ${
+                chatPos
+                  ? ''
+                  : `ease-[cubic-bezier(0.16,1,0.3,1)] -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-700 ${
+                      chatMoved
+                        ? 'left-[70%] top-[61%] lg:left-[77%] lg:top-[63%]'
+                        : 'left-1/2 top-1/2'
+                    }`
               }`}
-            />
+              style={chatPos ? { left: chatPos.x, top: chatPos.y } : undefined}
+            >
+              <AgentTerminal
+                key={heroRun}
+                compact
+                loop={false}
+                script={HERO_SESSION}
+                className="pointer-events-none h-full w-full lg:flex"
+              />
+            </div>
           )}
 
           {/* Replays the whole intro: typing chat → window open → directions.
