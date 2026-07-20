@@ -69,13 +69,13 @@ export const HERO_SESSION: Turn[] = [
 export const SESSION: Turn[] = [
   {
     command:
-      'Explore different creative ways to style my Jersey customizer app — refs: pinterest.com/maya/football-kits',
+      'Try some different creative textures for my app — refs: pinterest.com/samjgorman/orange',
     response: [
       { kind: 'thinking', text: 'Reading your Pinterest board for visual direction…' },
       {
         kind: 'tool',
         tool: 'rivet_design_context',
-        arg: 'url: "pinterest.com/maya/football-kits"',
+        arg: 'url: "pinterest.com/samjgorman/orange"',
         result: '42 pins · retro print, neon, halftone palettes',
       },
       {
