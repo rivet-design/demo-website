@@ -69,14 +69,14 @@ export const HERO_SESSION: Turn[] = [
 export const SESSION: Turn[] = [
   {
     command:
-      'Try some different creative textures for my app — refs: pinterest.com/samjgorman/orange',
+      'Try some different layouts and color palettes for my app — refs: pinterest.com/samjgorman/orange',
     response: [
       { kind: 'thinking', text: 'Reading your Pinterest board for visual direction…' },
       {
         kind: 'tool',
         tool: 'rivet_design_context',
         arg: 'url: "pinterest.com/samjgorman/orange"',
-        result: '42 pins · retro print, neon, halftone palettes',
+        result: '38 pins · burnt orange, amber gradients, warm neutrals',
       },
       {
         kind: 'tool',
@@ -86,7 +86,7 @@ export const SESSION: Turn[] = [
       },
       {
         kind: 'text',
-        text: 'Pulled the recurring themes from your board — bold retro palettes, halftone print texture, and chunky display type — and grounded four directions in them.',
+        text: 'Pulled the recurring themes from your board — burnt oranges, warm amber gradients, and airy editorial layouts — and grounded four directions in them.',
       },
       {
         kind: 'tool',
@@ -97,42 +97,48 @@ export const SESSION: Turn[] = [
       {
         kind: 'tool',
         tool: 'rivet_status',
-        arg: 'project: "jersey-app"',
-        result: '4/4 succeeded — Retro print · Neon night · Halftone · Chrome foil',
+        arg: 'project: "my-app"',
+        result: '4/4 succeeded — Amber split-screen · Terracotta grid · Sunset stacked · Warm minimal',
       },
       { kind: 'result', text: '4 directions drawn from your board — cycle them in the preview.' },
     ],
   },
   {
-    command: 'refine "Halftone" — punchier dots, use the team colors',
+    command: 'refine "Terracotta grid" — tighter grid, lean into the board’s orange',
     response: [
-      { kind: 'thinking', text: 'Forking the “Halftone” direction with your refinement…' },
+      {
+        kind: 'thinking',
+        text: 'Forking the “Terracotta grid” direction with your refinement…',
+      },
       {
         kind: 'tool',
         tool: 'rivet_variants',
-        arg: 'action: "start", target: "…:halftone", briefs × 1',
+        arg: 'action: "start", target: "…:terracotta-grid", briefs × 1',
         result: 'vary queued — regenerating in worktree',
       },
       {
         kind: 'diff',
-        file: 'src/components/KitCanvas.tsx',
+        file: 'src/components/HomeGrid.tsx',
         added: 2,
         removed: 2,
         lines: [
-          { sign: ' ', text: '<pattern id="halftone" patternUnits="userSpaceOnUse"' },
-          { sign: '-', text: '  width={8} height={8}>' },
-          { sign: '+', text: '  width={5} height={5}>' },
-          { sign: '-', text: '  <circle r={1.4} fill="#9aa3ad" />' },
-          { sign: '+', text: '  <circle r={2.3} fill="var(--team-primary)" />' },
+          { sign: ' ', text: '<section className="home-grid"' },
+          { sign: '-', text: '  style={{ gridTemplateColumns: "repeat(2, 1fr)", gap: 24 }}>' },
+          { sign: '+', text: '  style={{ gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>' },
+          { sign: '-', text: '  <h2 style={{ color: "#9aa3ad" }}>' },
+          { sign: '+', text: '  <h2 style={{ color: "var(--brand-orange)" }}>' },
         ],
       },
       {
         kind: 'tool',
         tool: 'rivet_variants',
-        arg: 'action: "commit", variantId: "halftone"',
+        arg: 'action: "commit", variantId: "terracotta-grid"',
         result: '1 file changed · applied to working tree',
       },
-      { kind: 'result', text: 'Committed “Halftone” — drawn from your board and applied.' },
+      {
+        kind: 'result',
+        text: 'Committed “Terracotta grid” — drawn from your board and applied.',
+      },
     ],
   },
 ];
