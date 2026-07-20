@@ -1002,27 +1002,14 @@
       <!-- ===== HEADER ===== -->
       <header class="tt-headbar">
         <div class="left">
-          <span class="pageno">P411</span>
           <span class="title-dbl">CLUBCALL</span>
           <span class="dbl c-grn">KIT BUILDER</span>
         </div>
-        <div style="text-align: right">
-          <div class="clock" id="clock">--:--:--</div>
-          <div class="mux" id="mux">CEEFAX 2 Tue 16 Jun</div>
-        </div>
       </header>
-      <div class="ruler"></div>
-      <div class="subhead">
-        CLUBCALL &gt;&gt; LATEST SOCCER &gt;&gt; DESIGN YOUR STRIP
-      </div>
-      <div class="flashmsg" id="flash">
-        SELECT A NUMBERED MENU ITEM TO BEGIN...
-      </div>
 
       <div class="tt-body">
         <!-- ===== JERSEY PANEL ===== -->
         <section class="kit-panel">
-          <div class="kit-caption">*** LIVE KIT PREVIEW ***</div>
           <div class="kit-svg-wrap">
             <svg
               class="shirt"
@@ -1031,78 +1018,6 @@
               shape-rendering="crispEdges"
               aria-label="Football shirt preview"
             >
-              <defs>
-                <!-- vertical stripes -->
-                <pattern
-                  id="pat-stripes"
-                  width="32"
-                  height="16"
-                  patternUnits="userSpaceOnUse"
-                >
-                  <rect width="32" height="16" fill="var(--body-fill)" />
-                  <rect
-                    x="0"
-                    width="16"
-                    height="16"
-                    fill="var(--accent-fill)"
-                  />
-                </pattern>
-                <!-- hoops -->
-                <pattern
-                  id="pat-hoops"
-                  width="16"
-                  height="32"
-                  patternUnits="userSpaceOnUse"
-                >
-                  <rect width="16" height="32" fill="var(--body-fill)" />
-                  <rect
-                    y="0"
-                    width="16"
-                    height="16"
-                    fill="var(--accent-fill)"
-                  />
-                </pattern>
-                <!-- halftone / tiger: blocky dot grid -->
-                <pattern
-                  id="pat-halftone"
-                  width="16"
-                  height="16"
-                  patternUnits="userSpaceOnUse"
-                >
-                  <rect width="16" height="16" fill="var(--body-fill)" />
-                  <rect
-                    x="0"
-                    y="0"
-                    width="8"
-                    height="8"
-                    fill="var(--accent-fill)"
-                  />
-                  <rect
-                    x="8"
-                    y="8"
-                    width="8"
-                    height="8"
-                    fill="var(--accent-fill)"
-                  />
-                </pattern>
-                <!-- sash diagonal -->
-                <pattern
-                  id="pat-sash"
-                  width="40"
-                  height="40"
-                  patternUnits="userSpaceOnUse"
-                  patternTransform="rotate(45)"
-                >
-                  <rect width="40" height="40" fill="var(--body-fill)" />
-                  <rect
-                    x="0"
-                    width="20"
-                    height="40"
-                    fill="var(--accent-fill)"
-                  />
-                </pattern>
-              </defs>
-
               <!-- LEFT SLEEVE (blocky) -->
               <g id="sleeveL">
                 <rect
@@ -1281,99 +1196,26 @@
           </div>
         </section>
 
-        <!-- ===== MENU PANEL ===== -->
+        <!-- ===== COLOUR PANEL ===== -->
         <section class="menu-panel">
-          <div class="menu-head">&gt;&gt; SELECT OPTION 1-4 &lt;&lt;</div>
-          <div class="menu-row">
-            <div class="menu-item active" data-page="colour">
-              <span class="knum">1</span><span class="c-yel">COLOUR</span>
-            </div>
-            <div class="menu-item" data-page="pattern">
-              <span class="knum">2</span><span class="c-grn">PATTERN</span>
-            </div>
-            <div class="menu-item" data-page="number">
-              <span class="knum">3</span><span class="c-mag">NUMBER</span>
-            </div>
-            <div class="menu-item" data-page="name">
-              <span class="knum">4</span><span class="c-cyan">NAME</span>
-            </div>
-          </div>
-
           <div class="opts">
-            <!-- COLOUR PANE -->
             <div class="opts-pane show" id="pane-colour">
               <div class="cgroup">
                 <span class="opts-title">BODY COLOUR</span>
                 <div id="bodySwatches"></div>
               </div>
-              <div class="cgroup">
-                <span class="opts-title">ACCENT / SLEEVE + COLLAR</span>
-                <div id="accentSwatches"></div>
-              </div>
-            </div>
-            <!-- PATTERN PANE -->
-            <div class="opts-pane" id="pane-pattern">
-              <span class="opts-title">STRIP PATTERN</span>
-              <div id="patternRows"></div>
-            </div>
-            <!-- NUMBER PANE -->
-            <div class="opts-pane" id="pane-number">
-              <span class="opts-title">SQUAD NUMBER</span>
-              <div class="tt-input-row">
-                <label>NUMBER:</label>
-                <input
-                  class="tt-input num"
-                  id="numInput"
-                  type="number"
-                  min="1"
-                  max="99"
-                  value="10"
-                  inputmode="numeric"
-                />
-                <span class="blinkcur">_</span>
-              </div>
-              <span class="opts-title" style="margin-top: var(--sp-2)"
-                >NUMBER + TRIM COLOUR</span
-              >
-              <div id="numColRows"></div>
-              <div class="hint">ENTER 1-99. THIS IS YOUR HERO DIGIT.</div>
-            </div>
-            <!-- NAME PANE -->
-            <div class="opts-pane" id="pane-name">
-              <span class="opts-title">PLAYER NAME</span>
-              <div class="tt-input-row">
-                <label>NAME:</label>
-                <input
-                  class="tt-input"
-                  id="nameInput"
-                  type="text"
-                  maxlength="12"
-                  value="ZICO"
-                />
-                <span class="blinkcur">_</span>
-              </div>
-              <div class="hint">UP TO 12 CHARACTERS. SHOWN ABOVE NUMBER.</div>
             </div>
           </div>
         </section>
       </div>
-
-      <!-- ===== FASTEXT BAR ===== -->
-      <nav class="fastext" aria-label="Fastext">
-        <button class="ft-btn ft-red" id="ft-red">RED RANDOM</button>
-        <button class="ft-btn ft-grn" id="ft-grn">GREEN RESET</button>
-        <button class="ft-btn ft-yel" id="ft-yel">YELLOW SAVE</button>
-        <button class="ft-btn ft-cyan" id="ft-cyan">CYAN INDEX</button>
-      </nav>
     </main>
 
     <script>
       (function () {
         'use strict';
         var root = document.documentElement;
-        var shirt = document.querySelector('svg.shirt');
 
-        // ---- palette ----
+        // ---- palette (body / kit colour) ----
         var SAMBA = [
           { name: 'SAMBA YELLOW', hex: '#FFD400' },
           { name: 'PITCH GREEN', hex: '#1E8A3C' },
@@ -1384,32 +1226,15 @@
           { name: 'NAVY', hex: '#00075F' },
           { name: 'OFF-WHITE', hex: '#EDE8DA' },
         ];
-        var PATTERNS = [
-          { id: 'solid', name: 'SOLID' },
-          { id: 'stripes', name: 'VERTICAL STRIPES' },
-          { id: 'hoops', name: 'HOOPS' },
-          { id: 'sash', name: 'SASH' },
-          { id: 'halftone', name: 'HALFTONE / TIGER' },
-        ];
-        var TRIMS = [
-          { name: 'WHITE', hex: '#FFFFFF' },
-          { name: 'INK BLACK', hex: '#111111' },
-          { name: 'SAMBA YELLOW', hex: '#FFD400' },
-          { name: 'CREAM', hex: '#F4EFE2' },
-          { name: 'COBALT', hex: '#2230C8' },
-        ];
 
-        // ---- state ----
+        // ---- fixed kit state (only body colour is adjustable) ----
         var state = {
           body: '#1E8A3C',
           accent: '#FFD400',
-          pattern: 'solid',
           trim: '#FFFFFF',
-          num: '10',
-          name: 'ZICO',
         };
 
-        function setVars() {
+        function render() {
           root.style.setProperty('--body-fill', state.body);
           root.style.setProperty('--accent-fill', state.accent);
           root.style.setProperty('--trim-fill', state.trim);
@@ -1417,338 +1242,32 @@
             '--num-fill',
             state.body === state.accent ? state.trim : state.accent,
           );
-          // body paint -> solid colour OR pattern url
-          var paint = state.body;
-          if (state.pattern !== 'solid') {
-            paint = 'url(#pat-' + state.pattern + ')';
-          }
-          root.style.setProperty('--body-paint', paint);
+          root.style.setProperty('--body-paint', state.body);
         }
 
-        function applyNumColour() {
-          // number uses accent normally, but if body==accent fall back to trim for contrast
-          var nf =
-            state.accent.toLowerCase() === state.body.toLowerCase()
-              ? state.trim
-              : state.accent;
-          document.getElementById('numText').setAttribute('fill', nf);
-          document.getElementById('numText').setAttribute('stroke', state.trim);
-        }
-
-        function render() {
-          setVars();
-          applyNumColour();
-          var nm = (state.name || '').toUpperCase();
-          document.getElementById('nameText').textContent = nm;
-          document.getElementById('numText').textContent = state.num;
-          document.getElementById('numShadow').textContent = state.num;
-          document.getElementById('metaName').textContent = ' ' + (nm || '-');
-          document.getElementById('metaNum').textContent = ' ' + state.num;
-        }
-
-        // ---- build colour swatch rows ----
-        function buildSwatchSet(containerId, key) {
-          var c = document.getElementById(containerId);
-          c.className = 'swatch-grid';
-          c.innerHTML = '';
-          SAMBA.forEach(function (s) {
-            var chip = document.createElement('div');
-            chip.className = 'chip' + (state[key] === s.hex ? ' sel' : '');
-            chip.style.background = s.hex;
-            chip.title = s.name;
-            chip.addEventListener('click', function () {
-              state[key] = s.hex;
-              render();
-              markChip(c, chip);
-              flash((key === 'body' ? 'BODY' : 'ACCENT') + ' SET TO ' + s.name);
-            });
-            c.appendChild(chip);
-          });
-        }
-
-        function buildPatternRows() {
-          var c = document.getElementById('patternRows');
-          c.innerHTML = '';
-          PATTERNS.forEach(function (p) {
-            var row = document.createElement('div');
-            row.className = 'opt-row' + (state.pattern === p.id ? ' sel' : '');
-            row.innerHTML =
-              '<span class="swatch" style="background:' +
-              patPreview(p.id) +
-              '"></span><span class="opt-label">' +
-              p.name +
-              '</span>';
-            row.addEventListener('click', function () {
-              state.pattern = p.id;
-              render();
-              markSel(c, row);
-              flash('PATTERN: ' + p.name);
-            });
-            c.appendChild(row);
-          });
-        }
-        function patPreview(id) {
-          switch (id) {
-            case 'stripes':
-              return (
-                'repeating-linear-gradient(90deg,' +
-                state.accent +
-                ' 0 6px,' +
-                state.body +
-                ' 6px 12px)'
-              );
-            case 'hoops':
-              return (
-                'repeating-linear-gradient(0deg,' +
-                state.accent +
-                ' 0 6px,' +
-                state.body +
-                ' 6px 12px)'
-              );
-            case 'sash':
-              return (
-                'repeating-linear-gradient(45deg,' +
-                state.accent +
-                ' 0 6px,' +
-                state.body +
-                ' 6px 12px)'
-              );
-            case 'halftone':
-              return (
-                'repeating-conic-gradient(' +
-                state.accent +
-                ' 0 25%,' +
-                state.body +
-                ' 0 50%) 0 0/10px 10px'
-              );
-            default:
-              return state.body;
-          }
-        }
-
-        function buildTrimRows() {
-          var c = document.getElementById('numColRows');
-          c.className = 'swatch-grid trim';
-          c.innerHTML = '';
-          TRIMS.forEach(function (t) {
-            var chip = document.createElement('div');
-            chip.className = 'chip' + (state.trim === t.hex ? ' sel' : '');
-            chip.style.background = t.hex;
-            chip.title = t.name;
-            chip.addEventListener('click', function () {
-              state.trim = t.hex;
-              render();
-              markChip(c, chip);
-              flash('TRIM SET TO ' + t.name);
-            });
-            c.appendChild(chip);
-          });
-        }
-
-        function markSel(container, row) {
-          Array.prototype.forEach.call(
-            container.querySelectorAll('.opt-row'),
-            function (r) {
-              r.classList.remove('sel');
-            },
-          );
-          row.classList.add('sel');
-        }
-        function markChip(container, chip) {
-          Array.prototype.forEach.call(
-            container.querySelectorAll('.chip'),
-            function (r) {
-              r.classList.remove('sel');
-            },
-          );
-          chip.classList.add('sel');
-        }
-
-        // ---- menu paging ----
-        var items = document.querySelectorAll('.menu-item');
-        var panes = {
-          colour: document.getElementById('pane-colour'),
-          pattern: document.getElementById('pane-pattern'),
-          number: document.getElementById('pane-number'),
-          name: document.getElementById('pane-name'),
-        };
-        function showPage(pg) {
-          Array.prototype.forEach.call(items, function (it) {
-            it.classList.toggle('active', it.getAttribute('data-page') === pg);
-          });
-          Object.keys(panes).forEach(function (k) {
-            panes[k].classList.toggle('show', k === pg);
-          });
-          if (pg === 'pattern') {
-            buildPatternRows();
-          }
-          flash(
-            'PAGE 411.' +
-              { colour: 1, pattern: 2, number: 3, name: 4 }[pg] +
-              ' LOADED',
-          );
-        }
-        Array.prototype.forEach.call(items, function (it) {
-          it.addEventListener('click', function () {
-            showPage(it.getAttribute('data-page'));
-          });
-        });
-        // keyboard 1-4
-        document.addEventListener('keydown', function (e) {
-          if (
-            document.activeElement &&
-            /INPUT/.test(document.activeElement.tagName)
-          )
-            return;
-          var map = { 1: 'colour', 2: 'pattern', 3: 'number', 4: 'name' };
-          if (map[e.key]) {
-            showPage(map[e.key]);
-          }
-        });
-
-        // ---- inputs ----
-        var nameInput = document.getElementById('nameInput');
-        nameInput.addEventListener('input', function () {
-          state.name = nameInput.value;
-          render();
-        });
-        var numInput = document.getElementById('numInput');
-        numInput.addEventListener('input', function () {
-          var v = parseInt(numInput.value, 10);
-          if (isNaN(v)) v = '';
-          else {
-            if (v < 1) v = 1;
-            if (v > 99) v = 99;
-          }
-          if (v !== '') numInput.value = v;
-          state.num = v === '' ? '' : String(v);
-          render();
-        });
-        numInput.addEventListener('blur', function () {
-          if (state.num === '') {
-            state.num = '1';
-            numInput.value = '1';
+        // ---- body colour swatch row ----
+        var c = document.getElementById('bodySwatches');
+        c.className = 'swatch-grid';
+        SAMBA.forEach(function (s) {
+          var chip = document.createElement('div');
+          chip.className = 'chip' + (state.body === s.hex ? ' sel' : '');
+          chip.style.background = s.hex;
+          chip.title = s.name;
+          chip.addEventListener('click', function () {
+            state.body = s.hex;
             render();
-          }
-        });
-
-        // ---- flash msg ----
-        var flashEl = document.getElementById('flash');
-        var flashT;
-        function flash(msg) {
-          flashEl.textContent = '> ' + msg;
-          flashEl.classList.remove('on');
-          void flashEl.offsetWidth;
-          flashEl.classList.add('on');
-          clearTimeout(flashT);
-          flashT = setTimeout(function () {
-            flashEl.textContent = '> READY.';
-          }, 2600);
-        }
-
-        // ---- clock ----
-        var DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        var MON = [
-          'Jan',
-          'Feb',
-          'Mar',
-          'Apr',
-          'May',
-          'Jun',
-          'Jul',
-          'Aug',
-          'Sep',
-          'Oct',
-          'Nov',
-          'Dec',
-        ];
-        function pad(n) {
-          return (n < 10 ? '0' : '') + n;
-        }
-        function tick() {
-          var d = new Date();
-          document.getElementById('clock').textContent =
-            pad(d.getHours()) +
-            ':' +
-            pad(d.getMinutes()) +
-            ':' +
-            pad(d.getSeconds());
-          document.getElementById('mux').textContent =
-            'CEEFAX 2  ' +
-            DAYS[d.getDay()] +
-            ' ' +
-            pad(d.getDate()) +
-            ' ' +
-            MON[d.getMonth()];
-        }
-        tick();
-        setInterval(tick, 1000);
-
-        // ---- fastext actions ----
-        function rand(a) {
-          return a[Math.floor(Math.random() * a.length)];
-        }
-        document
-          .getElementById('ft-red')
-          .addEventListener('click', function () {
-            var b = rand(SAMBA),
-              a = rand(SAMBA);
-            while (a.hex === b.hex) {
-              a = rand(SAMBA);
-            }
-            state.body = b.hex;
-            state.accent = a.hex;
-            state.pattern = rand(PATTERNS).id;
-            state.trim = rand(TRIMS).hex;
-            state.num = String(1 + Math.floor(Math.random() * 99));
-            numInput.value = state.num;
-            refreshAll();
-            flash('RANDOM STRIP GENERATED!');
-          });
-        document
-          .getElementById('ft-grn')
-          .addEventListener('click', function () {
-            state = {
-              body: '#1E8A3C',
-              accent: '#FFD400',
-              pattern: 'solid',
-              trim: '#FFFFFF',
-              num: '10',
-              name: 'ZICO',
-            };
-            nameInput.value = 'ZICO';
-            numInput.value = '10';
-            refreshAll();
-            flash('RESET TO DEFAULT KIT');
-          });
-        document
-          .getElementById('ft-yel')
-          .addEventListener('click', function () {
-            flash(
-              'KIT SAVED: ' +
-                (state.name || '-').toUpperCase() +
-                ' #' +
-                state.num +
-                ' OK',
+            Array.prototype.forEach.call(
+              c.querySelectorAll('.chip'),
+              function (r) {
+                r.classList.remove('sel');
+              },
             );
+            chip.classList.add('sel');
           });
-        document
-          .getElementById('ft-cyan')
-          .addEventListener('click', function () {
-            showPage('colour');
-            flash('RETURN TO INDEX P411.1');
-          });
-
-        function refreshAll() {
-          buildSwatchSet('bodySwatches', 'body');
-          buildSwatchSet('accentSwatches', 'accent');
-          buildPatternRows();
-          buildTrimRows();
-          render();
-        }
+          c.appendChild(chip);
+        });
 
         // ---- init ----
-        refreshAll();
         render();
       })();
     </script>

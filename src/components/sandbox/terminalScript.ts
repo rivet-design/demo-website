@@ -38,28 +38,28 @@ export type Turn = {
 // the current app's design, starts a set of variants, and reports them ready.
 export const HERO_SESSION: Turn[] = [
   {
-    command: '/rivet explore some new layouts for my gallery app',
+    command: '/rivet try some new textures for my world cup jersey app',
     response: [
-      { kind: 'thinking', text: 'Exploring new layout directions for your gallery…' },
+      { kind: 'thinking', text: 'Exploring new texture directions for your kit studio…' },
       {
         kind: 'tool',
         tool: 'capture_design_evidence',
-        arg: 'snapshot the current gallery app',
+        arg: 'snapshot the current jersey app',
         result: 'palette · display type · layout → DESIGN.md',
       },
       {
         kind: 'tool',
         tool: 'start_variants',
-        arg: 'mode: "existing", briefs × 3',
-        result: '3 worktrees · editor → :4000',
+        arg: 'mode: "existing", briefs × 6',
+        result: '6 worktrees · editor → :4000',
       },
       {
         kind: 'tool',
         tool: 'report_variant_complete',
-        arg: '3 × status: "succeeded"',
-        result: 'Artful grid · Compact · Single list',
+        arg: '6 × status: "succeeded"',
+        result: 'Skeuomorphic · Liquid Glass · Halftone · …',
       },
-      { kind: 'result', text: '3 layout directions ready — cycle them in the preview.' },
+      { kind: 'result', text: '6 texture directions ready — cycle them in the preview.' },
     ],
   },
 ];
