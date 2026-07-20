@@ -416,7 +416,13 @@ const App = () => {
           {showMobileAgent ? (
             // Mobile intro: the agent window types the request + MCP calls on its
             // own (full hero box), then minimizes to hand off to the editor.
-            <div className="w-full" style={{ height: '58vh', minHeight: 440 }}>
+            // pointer-events-none: the transcript is an overflow-y-auto region
+            // that would otherwise trap touch scrolling — on mobile a swipe over
+            // the hero must always scroll the page (auto-scroll still works).
+            <div
+              className="pointer-events-none w-full"
+              style={{ height: '58vh', minHeight: 440 }}
+            >
               <AgentTerminal
                 key={heroRun}
                 loop={false}
@@ -433,7 +439,9 @@ const App = () => {
           ) : (
             <BrowserFrame
               url="localhost:4000"
-              draggable
+              // Desktop-only: the title bar's touch-none drag handle would
+              // swallow page-scroll swipes on mobile.
+              draggable={!isMobileViewport}
               animateOpen
               openDelayMs={windowOpenDelayMs}
               className="w-full"

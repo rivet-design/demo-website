@@ -154,6 +154,26 @@
   .hero-title-size {
     font-size: clamp(1.5rem, 7.5vw, 2.5rem);
   }
+  /* Main hero title only, below lg: step up from the shared hero-title-size,
+     capped at THREE lines. The title alone bleeds 1.5rem into the hero copy
+     block's gutters (same idea as .bleed-page-gutter-x) — without the bleed
+     the phone-width column only fits a ~31px title at three lines.
+     The divisor comes from the sentence's three-line split: the longest line
+     ("Explore dozens of") measures ~7.75em in Satoshi; /8.25 keeps it inside
+     the available width, which is 100vw minus the page gutters (6.6vw per
+     side below md) minus the bled px-12 (3rem − 1.5rem per side) =
+     86.8vw − 3rem. The ~6% slack over 7.75 covers a classic (non-overlay)
+     scrollbar: 100vw includes its ~15px but the layout doesn't, so a tighter
+     divisor wraps to four lines in scrollbar-always browsers around 500px.
+     Above ~615px the 3.5rem cap binds and fits comfortably up to lg.
+     balance evens the three lines. */
+  @media (max-width: 1023px) {
+    .hero-title-text {
+      margin-inline: -1.5rem;
+      font-size: clamp(1.75rem, calc((86.8vw - 3rem) / 8.25), 3.5rem);
+      text-wrap: balance;
+    }
+  }
   @media (min-width: 1024px) {
     .hero-title-size {
       font-size: clamp(

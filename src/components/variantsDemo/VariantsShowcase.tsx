@@ -345,7 +345,11 @@ const VariantsShowcase = ({
                   zIndex: isActive ? 20 : isPrev ? 10 : 0,
                 }}
                 className={`border-0 transition-opacity duration-300 ease-in-out ${
-                  isActive ? '' : 'pointer-events-none'
+                  // Portrait (mobile hero): the demo is a non-interactive
+                  // slideshow — touches must fall through to the page so a
+                  // swipe scrolls the LANDING page, never the variant inside
+                  // the iframe (iOS ignores scrolling="no" for touch).
+                  isActive && !portrait ? '' : 'pointer-events-none'
                 }`}
               />
             );
