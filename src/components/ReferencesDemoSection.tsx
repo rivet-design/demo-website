@@ -61,10 +61,13 @@ type Card = {
 // Art-stroke colors (used as SVG values). Card backgrounds are written as literal
 // `bg-[...]` classes (so Tailwind's JIT picks them up); these constants are only
 // for the line-art stroke colors.
-const BLUE = '#1FD0D3';
 const YELLOW = '#ECE44D';
 const GREEN = '#214C16';
-const RED = '#EF3517';
+// Tone-on-tone strokes for the grid-dot cards: deeper shades of each card's
+// own background instead of the flipped complementary brand color (red dots
+// on blue / blue dots on red read as jarring at this size).
+const BLUE_DEEP = '#0E9EA1';
+const RED_DEEP = '#C22A10';
 // Near-black middle panel, matching the original dark reference card
 // (Tailwind `accent-foreground` ≈ hsl(0 0% 9%)); its line-art is soft white.
 const DARK_ART = 'rgba(255,255,255,0.85)';
@@ -82,7 +85,7 @@ const CARDS: Card[] = [
     aspect: 'aspect-square',
     motif: 'grid',
     bg: 'bg-[#1FD0D3]',
-    color: RED,
+    color: BLUE_DEEP,
   },
   {
     // Near-black panel anchors the top-middle of the wall.
@@ -112,7 +115,7 @@ const CARDS: Card[] = [
     aspect: 'aspect-square',
     motif: 'grid',
     bg: 'bg-[#EF3517]',
-    color: BLUE,
+    color: RED_DEEP,
   },
 ];
 
@@ -183,7 +186,7 @@ const ReferencesDemoSection = () => {
               />
               Local Files
             </span>
-            . Rivet learns your taste the more you use it.
+            .
           </p>
         </div>
 
@@ -223,18 +226,6 @@ const ReferencesDemoSection = () => {
             </div>
           </div>
 
-          {/* Soft top/bottom fades so the bleeding wall reads as intentional.
-              Only from sm up, where the wall is taller than the box and actually
-              bleeds — on mobile it's fully contained, so a fade there would just
-              dim complete cards and read as truncation. */}
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 hidden h-10 bg-gradient-to-b from-white to-transparent sm:block"
-          />
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-10 bg-gradient-to-t from-white to-transparent sm:block"
-          />
         </div>
       </div>
     </div>

@@ -14,9 +14,15 @@ const Footer = () => {
           deep bottom padding (pb-[26vw]) so the multicolor logo — pulled up
           ~23.8vw below — clears the link text instead of overlapping it. Desktop
           keeps the original pt-14 / pb-10. */}
+      {/* Full-bleed via bleed-page-gutter-x (negative margins equal to the
+          page gutter) rather than w-screen + 50%-50vw: 100vw includes the
+          scrollbar, which shifted the whole block — and its page-gutter-x
+          contents — a few px left of the blueprint guide rules. The negative
+          margin resolves from the same --page-gutter-x the guides measure,
+          so the content edges sit exactly on the rules. */}
       <div
-        className="w-screen border-t border-border pt-8 pb-[26vw] md:pt-14 md:pb-0"
-        style={{ marginLeft: 'calc(50% - 50vw)', ...footerBackground }}
+        className="bleed-page-gutter-x border-t border-border pt-8 pb-[26vw] md:pt-14 md:pb-0"
+        style={footerBackground}
       >
        <div className="page-gutter-x">
         <div className="flex w-full flex-wrap items-start gap-x-20 gap-y-8">
@@ -130,8 +136,8 @@ const Footer = () => {
           above reserves pb-[26vw] so this pull lands just below the links rather
           than overlapping them; reset to 0 from md up. */}
       <div
-        className="page-gutter-x pointer-events-none w-screen -mt-[23.8vw] md:-mt-12 lg:-mt-20"
-        style={{ marginLeft: 'calc(50% - 50vw)', ...footerBackground }}
+        className="bleed-page-gutter-x page-gutter-x pointer-events-none -mt-[23.8vw] md:-mt-12 lg:-mt-20"
+        style={footerBackground}
       >
         {/* object-cover + object-top crops the bottom while anchoring the top
             (the hand-drawn dot over the "i"). This is independent of the SVG's

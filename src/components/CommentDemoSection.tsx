@@ -121,8 +121,8 @@ const CommentDemoSection = () => {
             Explore more ideas with precision.
           </h2>
           <p className="landing-subtext mt-4 text-black/70">
-            Vary layout, color, motion, type and more. Describe changes from
-            your agent and then compare and view them from Rivet.
+            Vary layout, color, motion, type and more, then compare the
+            changes in Rivet.
           </p>
         </div>
       </div>
