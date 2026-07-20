@@ -25,7 +25,7 @@
     height:100%;
   }
 
-  /* ===== DESKTOP (50% gray dither + tiled wordmark watermark) ===== */
+  /* ===== DESKTOP (50% gray dither) ===== */
   .desktop{
     position:fixed; inset:0;
     background-color:#fff;
@@ -47,24 +47,8 @@
     padding:1px 11px; line-height:var(--menubar-h); height:var(--menubar-h);
     display:inline-flex; align-items:center; cursor:default;
   }
-  .menu.open > .mlabel, .menu > .mlabel:hover{ background:#000; color:#fff; }
   .menu .apple{ font-size:16px; padding:0 12px; }
   .menubar .clock{ margin-left:auto; padding:0 12px; font-size:14px; letter-spacing:.5px; }
-  .dropdown{
-    display:none; position:absolute; top:var(--menubar-h); left:0; min-width:188px;
-    background:#fff; border:2px solid #000; box-shadow:3px 3px 0 #000;
-    padding:3px 0; z-index:1001;
-  }
-  .menu.open .dropdown{ display:block; }
-  .ditem{
-    padding:2px 22px; font-size:14px; white-space:nowrap;
-    display:flex; justify-content:space-between; gap:24px; cursor:default;
-  }
-  .ditem:hover:not(.disabled){ background:#000; color:#fff; }
-  .ditem.disabled{ color:#aaa; }
-  .ditem .key{ color:inherit; opacity:.7; }
-  .ditem .chk{ width:14px; display:inline-block; margin-left:-18px; }
-  .dsep{ height:2px; margin:4px 0; background:repeating-linear-gradient(90deg,#000 0 1px,transparent 1px 2px); }
 
   /* ===== WINDOWS ===== */
   .win{ position:absolute; background:#fff; border:2px solid #000; box-shadow:1px 1px 0 #000; }
@@ -74,33 +58,13 @@
     background:repeating-linear-gradient(#000 0 1px,#fff 1px 2px);
     cursor:default; touch-action:none;
   }
-  .win.inactive .titlebar{ background:#fff; }
-  .closebox{ width:12px; height:12px; margin-left:8px; border:2px solid #000; background:#fff; flex:0 0 auto; cursor:pointer; }
-  .closebox:active{ background:#000; }
-  .win.inactive .closebox{ visibility:hidden; }
+  .closebox{ width:12px; height:12px; margin-left:8px; border:2px solid #000; background:#fff; flex:0 0 auto; }
   .title{
     position:absolute; left:50%; transform:translateX(-50%); background:#fff;
     padding:0 10px; font-size:15px; font-weight:bold; white-space:nowrap;
     max-width:74%; overflow:hidden; text-overflow:ellipsis;
   }
-  .win.inactive .title{ color:#888; }
   .win-body{ padding:12px; position:relative; }
-  /* classic grow box / resize corner */
-  .growbox{
-    position:absolute; right:0; bottom:0; width:15px; height:15px;
-    background:#fff; border-left:2px solid #000; border-top:2px solid #000;
-    background-image:repeating-linear-gradient(135deg,#000 0 1px,transparent 1px 3px);
-  }
-
-  /* 1-bit scrollbars */
-  .win-body ::-webkit-scrollbar{ width:15px; height:15px; }
-  .win-body ::-webkit-scrollbar-track{
-    background:repeating-linear-gradient(45deg,#000 0 1px,#fff 1px 2px); border-left:2px solid #000; }
-  .win-body ::-webkit-scrollbar-thumb{ background:#fff; border:2px solid #000; }
-  .win-body ::-webkit-scrollbar-corner{ background:#fff; }
-
-  .ico{ display:inline-flex; }
-  .ico svg{ display:block; image-rendering:pixelated; }
 
   /* ===== PREVIEW WINDOW ===== */
   #win-preview{ left:22px; top:50px; width:312px; }
@@ -112,37 +76,8 @@
   }
   .meta-row .lbl{ font-weight:bold; }
   .meta-row .val{ font-family:'Monaco','Geneva',monospace; }
-  .preview-actions{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
 
-  /* ===== CONTROL PANEL WINDOW ===== */
-  #win-control{ left:352px; top:50px; width:500px; }
-  .cp-layout{ display:grid; grid-template-columns:116px 1fr; gap:10px; }
-  .cp-list{ border:2px solid #000; background:#fff; height:300px; overflow:auto; }
-  .cp-icon{
-    display:flex; flex-direction:column; align-items:center; gap:3px;
-    padding:9px 4px; border-bottom:2px solid #000; cursor:pointer;
-    font-size:12px; text-align:center; background:#fff;
-  }
-  .cp-icon:last-child{ border-bottom:none; }
-  .cp-icon .ico{
-    width:34px; height:34px; border:2px solid #000;
-    align-items:center; justify-content:center; background:#fff;
-  }
-  .cp-icon .ico svg{ width:26px; height:26px; }
-  .cp-icon.sel{ background:#000; color:#fff; }
-  .cp-icon.sel .ico{ border-color:#fff; background:#000; }
-  .cp-icon.sel .ico svg{ filter:invert(1); }
-
-  .cp-detail{ border:2px solid #000; background:#fff; height:300px; padding:12px; overflow:auto; }
-  .pane{ display:none; }
-  .pane.show{ display:block; }
-  .pane h3{ margin:0 0 10px; font-size:15px; font-weight:bold; border-bottom:2px solid #000; padding-bottom:6px; }
-  .pane h4{ margin:14px 0 7px; font-size:13px; font-weight:bold; }
-  .pane h4:first-of-type{ margin-top:0; }
-  .help{
-    font-size:12px; margin-top:10px; line-height:1.4; border:2px solid #000; padding:6px 8px;
-    background:repeating-linear-gradient(45deg,#fff 0 6px,#eee 6px 12px);
-  }
+  .fill-section h4{ margin:12px 0 7px; font-size:13px; font-weight:bold; }
 
   /* MacPaint-style pattern palette */
   .pat-grid{ display:grid; grid-template-columns:repeat(8,1fr); gap:0; border:2px solid #000; width:max-content; }
@@ -156,108 +91,9 @@
   .pat-cell.sel::after{ content:""; position:absolute; inset:0; box-shadow:inset 0 0 0 1px #000; }
   .pat-name{ font-family:'Monaco','Geneva',monospace; font-size:12px; margin-top:6px; min-height:14px; }
 
-  /* radio buttons */
-  .radio-row{ display:flex; align-items:center; gap:8px; padding:4px 0; cursor:pointer; font-size:14px; }
-  .radio{ width:14px; height:14px; border:2px solid #000; border-radius:50%; flex:0 0 auto; background:#fff; position:relative; }
-  .radio-row.sel .radio::after{ content:""; position:absolute; inset:3px; background:#000; border-radius:50%; }
-  .radio-swatch{ width:22px; height:14px; border:1px solid #000; margin-left:auto; }
-
-  /* text fields */
-  .field-row{ display:flex; align-items:center; gap:10px; margin:10px 0; font-size:14px; }
-  .field-row label{ min-width:70px; font-weight:bold; }
-  .tf{
-    border:2px solid #000; background:#fff; font-family:'Monaco','Geneva',monospace; font-size:15px;
-    padding:3px 6px; color:#000; outline:none; box-shadow:inset 1px 1px 0 #bbb;
-  }
-  .tf:focus{ box-shadow:inset 1px 1px 0 #888; }
-  .tf.full{ flex:1; }
-  .tf.num{ width:70px; text-align:center; }
-
-  /* push buttons */
-  .btn{
-    font-family:inherit; font-size:14px; border:2px solid #000; border-radius:9px;
-    background:#fff; color:#000; padding:3px 16px; cursor:pointer; box-shadow:1px 1px 0 #000;
-  }
-  .btn:active{ background:#000; color:#fff; }
-  .btn.default{ box-shadow:0 0 0 2px #fff, 0 0 0 4px #000, 1px 1px 0 #000; margin:2px; }
-  .btn.sm{ padding:2px 10px; font-size:13px; }
-
-  /* ===== CALCULATOR WINDOW ===== */
-  #win-calc{ left:700px; top:300px; width:178px; }
-  .calc-screen{
-    border:2px solid #000; background:#fff; text-align:right;
-    font-family:'Monaco','Geneva',monospace; font-size:22px; padding:5px 8px;
-    margin-bottom:8px; box-shadow:inset 1px 1px 0 #bbb; overflow:hidden;
-  }
-  .calc-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:5px; }
-  .calc-key{
-    border:2px solid #000; background:#fff; font-family:inherit; font-size:16px;
-    padding:7px 0; cursor:pointer; box-shadow:1px 1px 0 #000; border-radius:4px;
-  }
-  .calc-key:active, .calc-key.op-active{ background:#000; color:#fff; }
-  .calc-key.op{ background:repeating-linear-gradient(45deg,#fff 0 4px,#eee 4px 8px); }
-  .calc-key.eq{ grid-column:span 1; }
-
-  /* ===== PUZZLE WINDOW ===== */
-  #win-puzzle{ left:34px; top:372px; width:212px; }
-  .puzzle-grid{
-    display:grid; grid-template-columns:repeat(4,1fr); gap:3px;
-    border:2px solid #000; padding:3px; background:#000; width:max-content; margin:0 auto;
-  }
-  .ptile{
-    width:40px; height:40px; background:#fff; border:2px solid #000;
-    font-family:'Chicago','Monaco',monospace; font-weight:bold; font-size:18px;
-    display:flex; align-items:center; justify-content:center; cursor:pointer;
-  }
-  .ptile.blank{ background:repeating-linear-gradient(45deg,#000 0 2px,#fff 2px 4px); border-color:#000; cursor:default; }
-  .puzzle-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:9px; font-size:12px; }
-
-  /* ===== KEY CAPS WINDOW ===== */
-  #win-keycaps{ left:268px; top:392px; width:560px; }
-  .kc-board{ border:2px solid #000; padding:6px; background:repeating-linear-gradient(45deg,#fff 0 6px,#f2f2f2 6px 12px); }
-  .kc-row{ display:flex; gap:4px; justify-content:center; margin:4px 0; }
-  .kc-key{
-    min-width:28px; height:28px; padding:0 5px; border:2px solid #000; background:#fff;
-    border-radius:4px; font-family:'Monaco','Geneva',monospace; font-size:13px;
-    display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:1px 1px 0 #000;
-    user-select:none;
-  }
-  .kc-key:active, .kc-key.lit{ background:#000; color:#fff; }
-  .kc-key.wide{ min-width:60px; }
-  .kc-key.xwide{ min-width:120px; }
-  .kc-hint{ font-size:11px; text-align:center; margin-top:6px; }
-
-  /* ===== DESKTOP ICONS ===== */
-  .desk-icons{ position:absolute; top:50px; right:18px; display:flex; flex-direction:column; gap:18px; align-items:center; z-index:1; }
-  .desk-icon{ display:flex; flex-direction:column; align-items:center; gap:3px; width:80px; cursor:pointer; user-select:none; }
-  .desk-icon .pic{ width:46px; height:44px; display:flex; align-items:center; justify-content:center; }
-  .desk-icon .pic svg{ width:42px; height:42px; }
-  .desk-icon .cap{ font-size:12px; padding:1px 4px; background:#fff; text-align:center; border:1px solid #000; }
-  .desk-icon.sel .pic svg{ filter:invert(1); }
-  .desk-icon.sel .cap{ background:#000; color:#fff; }
-
-  /* ===== DIALOG ===== */
-  .scrim{ display:none; position:fixed; inset:0; z-index:2000; align-items:center; justify-content:center; }
-  .scrim.show{ display:flex; }
-  .dialog{
-    background:#fff; border:2px solid #000;
-    box-shadow:0 0 0 2px #fff, 0 0 0 4px #000, 6px 6px 0 rgba(0,0,0,.4);
-    width:392px; max-width:90vw; padding:18px;
-  }
-  .dialog .d-top{ display:flex; gap:16px; align-items:flex-start; }
-  .dialog .d-icon{ width:46px; height:46px; flex:0 0 auto; }
-  .dialog .d-icon svg{ width:46px; height:46px; }
-  .dialog .d-msg{ font-size:14px; line-height:1.45; }
-  .dialog .d-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:18px; }
-
   @media (max-width:900px){
     .win{ position:relative !important; left:auto !important; top:auto !important; width:auto !important; margin:14px; }
     .desktop{ display:block; }
-    .desk-icons{ position:static; flex-direction:row; flex-wrap:wrap; margin:14px; right:auto; top:auto; }
-    .cp-layout{ grid-template-columns:1fr; }
-    .cp-list{ height:auto; display:flex; }
-    .cp-icon{ border-bottom:none; border-right:2px solid #000; flex:1; }
-    .cp-detail{ height:auto; }
   }
 </style>
 </head>
@@ -265,60 +101,11 @@
 
 <!-- ===== MENU BAR ===== -->
 <div class="menubar" id="menubar">
-  <div class="menu" data-menu="apple">
-    <span class="mlabel apple"></span>
-    <div class="dropdown">
-      <div class="ditem" data-act="about">About Kit Builder…</div>
-      <div class="dsep"></div>
-      <div class="ditem" data-act="open-calc">Calculator</div>
-      <div class="ditem" data-act="open-keycaps">Key Caps</div>
-      <div class="ditem" data-act="open-puzzle">Puzzle</div>
-      <div class="ditem disabled">Note Pad</div>
-    </div>
-  </div>
-  <div class="menu" data-menu="file">
-    <span class="mlabel">File</span>
-    <div class="dropdown">
-      <div class="ditem" data-act="new">New Kit<span class="key">⌘N</span></div>
-      <div class="ditem" data-act="save">Save Kit…<span class="key">⌘S</span></div>
-      <div class="ditem" data-act="random">Random Kit<span class="key">⌘R</span></div>
-      <div class="dsep"></div>
-      <div class="ditem disabled">Page Setup…</div>
-      <div class="ditem disabled">Print…<span class="key">⌘P</span></div>
-      <div class="dsep"></div>
-      <div class="ditem disabled">Quit<span class="key">⌘Q</span></div>
-    </div>
-  </div>
-  <div class="menu" data-menu="edit">
-    <span class="mlabel">Edit</span>
-    <div class="dropdown">
-      <div class="ditem disabled">Undo<span class="key">⌘Z</span></div>
-      <div class="dsep"></div>
-      <div class="ditem disabled">Cut<span class="key">⌘X</span></div>
-      <div class="ditem disabled">Copy<span class="key">⌘C</span></div>
-      <div class="ditem disabled">Paste<span class="key">⌘V</span></div>
-      <div class="ditem disabled">Clear</div>
-    </div>
-  </div>
-  <div class="menu" data-menu="view">
-    <span class="mlabel">View</span>
-    <div class="dropdown">
-      <div class="ditem" data-act="view-pattern"><span class="chk">✓</span>by Pattern</div>
-      <div class="ditem" data-act="view-name"><span class="chk"></span>by Name</div>
-      <div class="ditem" data-act="view-num"><span class="chk"></span>by Number</div>
-    </div>
-  </div>
-  <div class="menu" data-menu="special">
-    <span class="mlabel">Special</span>
-    <div class="dropdown">
-      <div class="ditem" data-act="random">Random Kit</div>
-      <div class="ditem" data-act="new">Reset to Default</div>
-      <div class="ditem" data-act="shuffle-puzzle">Shuffle Puzzle</div>
-      <div class="dsep"></div>
-      <div class="ditem disabled">Clean Up Desktop</div>
-      <div class="ditem disabled">Empty Trash</div>
-    </div>
-  </div>
+  <div class="menu"><span class="mlabel apple"></span></div>
+  <div class="menu"><span class="mlabel">File</span></div>
+  <div class="menu"><span class="mlabel">Edit</span></div>
+  <div class="menu"><span class="mlabel">View</span></div>
+  <div class="menu"><span class="mlabel">Special</span></div>
   <span class="clock" id="clock">--:--</span>
 </div>
 
@@ -328,8 +115,8 @@
   <!-- ===== PREVIEW WINDOW ===== -->
   <section class="win" id="win-preview">
     <div class="titlebar" data-drag="win-preview">
-      <span class="closebox" title="close"></span>
-      <span class="title">Kit Preview</span>
+      <span class="closebox"></span>
+      <span class="title">Kit Builder 1.0</span>
     </div>
     <div class="win-body">
       <div class="preview-stage">
@@ -368,7 +155,6 @@
           </g>
 
           <g id="bodyGroup" clip-path="url(#bodyClip)"><rect x="48" y="40" width="144" height="192" fill="var(--body-fill)"/></g>
-          <g id="overlay" clip-path="url(#bodyClip)" fill="var(--accent-fill)"></g>
 
           <g fill="none" stroke="#000" stroke-width="2">
             <rect x="56" y="40" width="128" height="16"/><rect x="48" y="56" width="144" height="160"/><rect x="56" y="216" width="128" height="16"/>
@@ -392,146 +178,17 @@
       </div>
 
       <div class="meta-row">
-        <span><span class="lbl">Name:</span> <span class="val" id="metaName">ZICO</span></span>
-        <span><span class="lbl">No.</span> <span class="val" id="metaNum">10</span></span>
+        <span><span class="lbl">Name:</span> <span class="val">ZICO</span></span>
+        <span><span class="lbl">No.</span> <span class="val">10</span></span>
       </div>
-      <div class="preview-actions">
-        <button class="btn" id="btn-random">Random</button>
-        <button class="btn" id="btn-reset">Reset</button>
-        <button class="btn default" id="btn-save">Save…</button>
-      </div>
-    </div>
-  </section>
 
-  <!-- ===== CONTROL PANEL WINDOW ===== -->
-  <section class="win" id="win-control">
-    <div class="titlebar" data-drag="win-control">
-      <span class="closebox" title="close"></span>
-      <span class="title">Control Panel — Kit Builder</span>
-    </div>
-    <div class="win-body">
-      <div class="cp-layout">
-        <!-- icon list -->
-        <div class="cp-list" id="cpList">
-          <div class="cp-icon sel" data-page="colour"><span class="ico" data-ico="shirt"></span>Colours</div>
-          <div class="cp-icon" data-page="pattern"><span class="ico" data-ico="brush"></span>Pattern</div>
-          <div class="cp-icon" data-page="number"><span class="ico" data-ico="hash"></span>Number</div>
-          <div class="cp-icon" data-page="name"><span class="ico" data-ico="tag"></span>Name</div>
-        </div>
-
-        <!-- detail -->
-        <div class="cp-detail">
-          <div class="pane show" id="pane-colour">
-            <h3>Colours &amp; Fills</h3>
-            <h4>Body Fill</h4>
-            <div class="pat-grid" id="bodyPats"></div>
-            <div class="pat-name" id="bodyPatName"></div>
-            <h4>Accent — Sleeves &amp; Collar</h4>
-            <div class="pat-grid" id="accentPats"></div>
-            <div class="pat-name" id="accentPatName"></div>
-          </div>
-          <div class="pane" id="pane-pattern">
-            <h3>Strip Pattern</h3>
-            <div id="layoutRows"></div>
-            <div class="help">Choose how the accent fill is laid across the body of the strip.</div>
-          </div>
-          <div class="pane" id="pane-number">
-            <h3>Squad Number</h3>
-            <div class="field-row"><label for="numInput">Number:</label>
-              <input class="tf num" id="numInput" type="number" min="1" max="99" value="10" inputmode="numeric"></div>
-            <h4>Trim Fill — Number &amp; Hem</h4>
-            <div class="pat-grid" id="trimPats"></div>
-            <div class="pat-name" id="trimPatName"></div>
-            <div class="help">Enter 1–99. This is your hero digit on the back of the strip.</div>
-          </div>
-          <div class="pane" id="pane-name">
-            <h3>Player Name</h3>
-            <div class="field-row"><label for="nameInput">Name:</label>
-              <input class="tf full" id="nameInput" type="text" maxlength="12" value="ZICO"></div>
-            <div class="help">Up to 12 characters. Type with the keyboard — or open <b>Key Caps</b> from the&nbsp;menu and click keys.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="growbox"></div>
-  </section>
-
-  <!-- ===== CALCULATOR ===== -->
-  <section class="win" id="win-calc">
-    <div class="titlebar" data-drag="win-calc">
-      <span class="closebox" title="close"></span>
-      <span class="title">Calculator</span>
-    </div>
-    <div class="win-body">
-      <div class="calc-screen" id="calcScreen">0</div>
-      <div class="calc-grid" id="calcGrid">
-        <button class="calc-key" data-k="C">C</button>
-        <button class="calc-key" data-k="neg">±</button>
-        <button class="calc-key" data-k="pct">%</button>
-        <button class="calc-key op" data-k="/">÷</button>
-        <button class="calc-key" data-k="7">7</button>
-        <button class="calc-key" data-k="8">8</button>
-        <button class="calc-key" data-k="9">9</button>
-        <button class="calc-key op" data-k="*">×</button>
-        <button class="calc-key" data-k="4">4</button>
-        <button class="calc-key" data-k="5">5</button>
-        <button class="calc-key" data-k="6">6</button>
-        <button class="calc-key op" data-k="-">−</button>
-        <button class="calc-key" data-k="1">1</button>
-        <button class="calc-key" data-k="2">2</button>
-        <button class="calc-key" data-k="3">3</button>
-        <button class="calc-key op" data-k="+">+</button>
-        <button class="calc-key" data-k="0" style="grid-column:span 2;">0</button>
-        <button class="calc-key" data-k=".">.</button>
-        <button class="calc-key op" data-k="=">=</button>
+      <div class="fill-section">
+        <h4>Body Fill</h4>
+        <div class="pat-grid" id="bodyPats"></div>
+        <div class="pat-name" id="bodyPatName"></div>
       </div>
     </div>
   </section>
-
-  <!-- ===== PUZZLE ===== -->
-  <section class="win" id="win-puzzle">
-    <div class="titlebar" data-drag="win-puzzle">
-      <span class="closebox" title="close"></span>
-      <span class="title">Puzzle</span>
-    </div>
-    <div class="win-body">
-      <div class="puzzle-grid" id="puzzleGrid"></div>
-      <div class="puzzle-foot">
-        <span id="puzzleMoves">Moves: 0</span>
-        <button class="btn sm" id="puzzleShuffle">Shuffle</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== KEY CAPS ===== -->
-  <section class="win" id="win-keycaps">
-    <div class="titlebar" data-drag="win-keycaps">
-      <span class="closebox" title="close"></span>
-      <span class="title">Key Caps</span>
-    </div>
-    <div class="win-body">
-      <div class="kc-board" id="kcBoard"></div>
-      <div class="kc-hint">Click keys to type into the player <b>Name</b>.</div>
-    </div>
-  </section>
-
-  <!-- ===== DESKTOP ICONS ===== -->
-  <div class="desk-icons">
-    <div class="desk-icon"><span class="pic ico" data-ico="floppy"></span><span class="cap">System Disk</span></div>
-    <div class="desk-icon"><span class="pic ico" data-ico="folder"></span><span class="cap">Kit Folder</span></div>
-    <div class="desk-icon" id="trashIcon"><span class="pic ico" data-ico="trash"></span><span class="cap">Trash</span></div>
-  </div>
-</div>
-
-<!-- ===== DIALOG ===== -->
-<div class="scrim" id="scrim">
-  <div class="dialog" role="dialog" aria-modal="true">
-    <div class="d-top">
-      <div class="d-icon ico" id="dIcon" data-ico="shirt"></div>
-      <div class="d-msg" id="dMsg"></div>
-    </div>
-    <div class="d-actions"><button class="btn default" id="dOk">OK</button></div>
-  </div>
 </div>
 
 <script>
@@ -539,32 +196,10 @@
   "use strict";
   var root=document.documentElement;
 
-  /* ===== pixel-art icons (1-bit) ===== */
-  var ICONS={
-    floppy:"<svg viewBox='0 0 32 32' shape-rendering='crispEdges'><path d='M4 4 H23 L28 9 V28 H4 Z' fill='#fff' stroke='#000' stroke-width='2'/><rect x='9' y='4' width='11' height='9' fill='#fff' stroke='#000' stroke-width='2'/><rect x='15' y='5' width='3' height='7' fill='#000'/><rect x='8' y='17' width='16' height='9' fill='#fff' stroke='#000' stroke-width='2'/><rect x='10' y='20' width='12' height='1.6' fill='#000'/><rect x='10' y='23' width='9' height='1.6' fill='#000'/></svg>",
-    folder:"<svg viewBox='0 0 32 32' shape-rendering='crispEdges'><path d='M3 10 H11 L14 7 H22 V10 H29 V25 H3 Z' fill='#fff' stroke='#000' stroke-width='2' stroke-linejoin='round'/><line x1='3' y1='13' x2='29' y2='13' stroke='#000' stroke-width='2'/></svg>",
-    trash:"<svg viewBox='0 0 32 32' shape-rendering='crispEdges'><rect x='13' y='3' width='6' height='3' fill='#fff' stroke='#000' stroke-width='2'/><rect x='8' y='6' width='16' height='4' fill='#fff' stroke='#000' stroke-width='2'/><path d='M10 10 L12 28 H20 L22 10 Z' fill='#fff' stroke='#000' stroke-width='2' stroke-linejoin='round'/><line x1='14' y1='13' x2='15' y2='25' stroke='#000' stroke-width='1.5'/><line x1='18' y1='13' x2='17' y2='25' stroke='#000' stroke-width='1.5'/></svg>",
-    shirt:"<svg viewBox='0 0 32 32' shape-rendering='crispEdges'><path d='M12 5 L7 8 L3 13 L7 17 L11 14 L11 28 H21 V14 L25 17 L29 13 L25 8 L20 5 L16 10 Z' fill='#fff' stroke='#000' stroke-width='2' stroke-linejoin='round'/></svg>",
-    brush:"<svg viewBox='0 0 32 32' shape-rendering='crispEdges'><rect x='13' y='3' width='6' height='13' fill='#fff' stroke='#000' stroke-width='2'/><rect x='11' y='16' width='10' height='5' fill='#000'/><path d='M11 21 L21 21 L19 28 L13 28 Z' fill='#fff' stroke='#000' stroke-width='2' stroke-linejoin='round'/><line x1='14' y1='22' x2='14' y2='27' stroke='#000'/><line x1='16' y1='22' x2='16' y2='28' stroke='#000'/><line x1='18' y1='22' x2='18' y2='27' stroke='#000'/></svg>",
-    hash:"<svg viewBox='0 0 32 32'><text x='16' y='25' font-size='26' font-weight='bold' text-anchor='middle' font-family='Chicago,Helvetica,sans-serif'>#</text></svg>",
-    tag:"<svg viewBox='0 0 32 32' shape-rendering='crispEdges'><rect x='3' y='8' width='26' height='16' fill='#fff' stroke='#000' stroke-width='2'/><text x='10' y='21' font-size='13' font-weight='bold' text-anchor='middle' font-family='Chicago,Helvetica,sans-serif'>A</text><rect x='16' y='11' width='10' height='2' fill='#000'/><rect x='16' y='15' width='10' height='2' fill='#000'/><rect x='16' y='19' width='7' height='2' fill='#000'/></svg>",
-    speaker:"<svg viewBox='0 0 32 32' shape-rendering='crispEdges'><path d='M5 13 H10 L15 8 V24 L10 19 H5 Z' fill='#000' stroke='#000' stroke-width='2' stroke-linejoin='round'/><path d='M18 11 Q22 16 18 21' fill='none' stroke='#000' stroke-width='2'/><path d='M21 8 Q27 16 21 24' fill='none' stroke='#000' stroke-width='2'/></svg>",
-    keyboard:"<svg viewBox='0 0 32 32' shape-rendering='crispEdges'><rect x='2' y='9' width='28' height='15' fill='#fff' stroke='#000' stroke-width='2'/><g fill='#000'><rect x='5' y='12' width='3' height='3'/><rect x='10' y='12' width='3' height='3'/><rect x='15' y='12' width='3' height='3'/><rect x='20' y='12' width='3' height='3'/><rect x='25' y='12' width='2' height='3'/><rect x='6' y='17' width='3' height='3'/><rect x='11' y='17' width='3' height='3'/><rect x='16' y='17' width='3' height='3'/><rect x='21' y='17' width='3' height='3'/><rect x='9' y='21' width='14' height='2'/></g></svg>",
-    mouse:"<svg viewBox='0 0 32 32' shape-rendering='crispEdges'><line x1='16' y1='3' x2='16' y2='8' stroke='#000' stroke-width='2'/><rect x='11' y='8' width='10' height='18' rx='5' fill='#fff' stroke='#000' stroke-width='2'/><line x1='16' y1='9' x2='16' y2='14' stroke='#000' stroke-width='1.5'/></svg>",
-    clock:"<svg viewBox='0 0 32 32' shape-rendering='crispEdges'><circle cx='16' cy='18' r='9' fill='#fff' stroke='#000' stroke-width='2'/><line x1='16' y1='18' x2='16' y2='12' stroke='#000' stroke-width='2'/><line x1='16' y1='18' x2='20' y2='20' stroke='#000' stroke-width='2'/><line x1='9' y1='6' x2='12' y2='10' stroke='#000' stroke-width='2'/><line x1='23' y1='6' x2='20' y2='10' stroke='#000' stroke-width='2'/></svg>",
-    calendar:"<svg viewBox='0 0 32 32' shape-rendering='crispEdges'><rect x='5' y='7' width='22' height='20' fill='#fff' stroke='#000' stroke-width='2'/><rect x='5' y='7' width='22' height='6' fill='#000'/><line x1='11' y1='4' x2='11' y2='9' stroke='#000' stroke-width='2'/><line x1='21' y1='4' x2='21' y2='9' stroke='#000' stroke-width='2'/><g fill='#000'><rect x='8' y='16' width='3' height='3'/><rect x='14' y='16' width='3' height='3'/><rect x='20' y='16' width='3' height='3'/><rect x='8' y='21' width='3' height='3'/><rect x='14' y='21' width='3' height='3'/></g></svg>"
-  };
-  document.querySelectorAll('.ico[data-ico]').forEach(function(el){ el.innerHTML=ICONS[el.getAttribute('data-ico')]||''; });
-  function setIco(el,name){ el.setAttribute('data-ico',name); el.innerHTML=ICONS[name]||''; }
-
   /* ===== MacPaint pattern set ===== */
   var PATS=[
     {id:'white',name:'WHITE'},{id:'gray25',name:'25% GRAY'},{id:'gray50',name:'50% GRAY'},{id:'black',name:'BLACK'},
     {id:'horiz',name:'LINES H'},{id:'vert',name:'LINES V'},{id:'diag',name:'DIAGONAL'},{id:'cross',name:'WEAVE'}
-  ];
-  var LAYOUTS=[
-    {id:'solid',name:'Solid'},{id:'stripes',name:'Vertical Stripes'},{id:'hoops',name:'Hoops'},
-    {id:'sash',name:'Sash'},{id:'halftone',name:'Halftone / Tiger'}
   ];
   function patCSS(id){
     switch(id){
@@ -580,206 +215,54 @@
     }
   }
   function patName(id){ for(var i=0;i<PATS.length;i++){ if(PATS[i].id===id) return PATS[i].name; } return id; }
-  function layoutName(id){ for(var i=0;i<LAYOUTS.length;i++){ if(LAYOUTS[i].id===id) return LAYOUTS[i].name; } return id; }
 
   /* ===== state ===== */
-  var state={ body:'gray50', accent:'black', layout:'solid', trim:'white', num:'10', name:'ZICO' };
+  var state={ body:'gray50' };
 
-  function setVars(){
-    root.style.setProperty('--body-fill','url(#pat-'+state.body+')');
-    root.style.setProperty('--accent-fill','url(#pat-'+state.accent+')');
-    root.style.setProperty('--trim-fill','url(#pat-'+state.trim+')');
-  }
-  function rect(x,y,w,h){
-    var r=document.createElementNS('http://www.w3.org/2000/svg','rect');
-    r.setAttribute('x',x); r.setAttribute('y',y); r.setAttribute('width',w); r.setAttribute('height',h);
-    return r;
-  }
-  function buildOverlay(){
-    var ov=document.getElementById('overlay'); ov.innerHTML='';
-    if(state.layout==='stripes'){ [48,80,112,144,176].forEach(function(x){ ov.appendChild(rect(x,40,16,192)); }); }
-    else if(state.layout==='hoops'){ [40,72,104,136,168,200].forEach(function(y){ ov.appendChild(rect(48,y,144,16)); }); }
-    else if(state.layout==='sash'){ var r=rect(40,-40,40,360); r.setAttribute('transform','rotate(45 120 136)'); ov.appendChild(r); }
-    else if(state.layout==='halftone'){
-      for(var col=0;col<18;col++){ for(var row=0;row<24;row++){ if((col+row)%2===0){ ov.appendChild(rect(48+col*8,40+row*8,8,8)); } } }
-    }
-  }
   function render(){
-    setVars(); buildOverlay();
-    var nm=(state.name||'').toUpperCase();
-    document.getElementById('nameText').textContent=nm;
-    document.getElementById('numText').textContent=state.num;
-    document.getElementById('metaName').textContent=nm||'—';
-    document.getElementById('metaNum').textContent=state.num||'—';
+    root.style.setProperty('--body-fill','url(#pat-'+state.body+')');
+    root.style.setProperty('--accent-fill','url(#pat-black)');
+    root.style.setProperty('--trim-fill','url(#pat-white)');
     document.getElementById('bodyPatName').textContent='= '+patName(state.body);
-    document.getElementById('accentPatName').textContent='= '+patName(state.accent);
-    document.getElementById('trimPatName').textContent='= '+patName(state.trim);
   }
 
-  /* ===== palettes ===== */
-  function buildPalette(containerId,key){
-    var c=document.getElementById(containerId); c.innerHTML='';
-    PATS.forEach(function(p){
-      var cell=document.createElement('div');
-      cell.className='pat-cell'+(state[key]===p.id?' sel':'');
-      cell.setAttribute('style',patCSS(p.id)); cell.title=p.name;
-      cell.addEventListener('click',function(){ state[key]=p.id; render(); updatePalettes(); });
-      c.appendChild(cell);
-    });
-  }
-  function updatePalettes(){ syncPalette('bodyPats','body'); syncPalette('accentPats','accent'); syncPalette('trimPats','trim'); }
-  function syncPalette(containerId,key){
-    var cells=document.getElementById(containerId).querySelectorAll('.pat-cell');
-    Array.prototype.forEach.call(cells,function(cell,i){ cell.classList.toggle('sel',PATS[i].id===state[key]); });
-  }
-  function buildLayouts(){
-    var c=document.getElementById('layoutRows'); c.innerHTML='';
-    LAYOUTS.forEach(function(l){
-      var row=document.createElement('div');
-      row.className='radio-row'+(state.layout===l.id?' sel':'');
-      row.innerHTML='<span class="radio"></span><span>'+l.name+'</span>';
-      row.addEventListener('click',function(){
-        state.layout=l.id; render();
-        Array.prototype.forEach.call(c.querySelectorAll('.radio-row'),function(r){r.classList.remove('sel');});
-        row.classList.add('sel');
+  /* ===== body-fill palette ===== */
+  var palette=document.getElementById('bodyPats');
+  PATS.forEach(function(p){
+    var cell=document.createElement('div');
+    cell.className='pat-cell'+(state.body===p.id?' sel':'');
+    cell.setAttribute('style',patCSS(p.id)); cell.title=p.name;
+    cell.addEventListener('click',function(){
+      state.body=p.id; render();
+      Array.prototype.forEach.call(palette.querySelectorAll('.pat-cell'),function(c,i){
+        c.classList.toggle('sel',PATS[i].id===state.body);
       });
-      c.appendChild(row);
     });
-  }
-
-  /* ===== control-panel paging ===== */
-  var cpIcons=document.querySelectorAll('.cp-icon');
-  var panes={ colour:document.getElementById('pane-colour'), pattern:document.getElementById('pane-pattern'),
-    number:document.getElementById('pane-number'), name:document.getElementById('pane-name') };
-  function showPage(pg){
-    Array.prototype.forEach.call(cpIcons,function(it){ it.classList.toggle('sel',it.getAttribute('data-page')===pg); });
-    Object.keys(panes).forEach(function(k){ panes[k].classList.toggle('show',k===pg); });
-  }
-  Array.prototype.forEach.call(cpIcons,function(it){ it.addEventListener('click',function(){ showPage(it.getAttribute('data-page')); }); });
-
-  /* ===== inputs ===== */
-  var nameInput=document.getElementById('nameInput');
-  nameInput.addEventListener('input',function(){ state.name=nameInput.value; render(); });
-  var numInput=document.getElementById('numInput');
-  numInput.addEventListener('input',function(){
-    var v=parseInt(numInput.value,10);
-    if(isNaN(v)) v=''; else{ if(v<1)v=1; if(v>99)v=99; numInput.value=v; }
-    state.num=(v==='')?'':String(v); render();
-  });
-  numInput.addEventListener('blur',function(){ if(state.num===''){ state.num='1'; numInput.value='1'; render(); } });
-
-  /* ===== dialog ===== */
-  var scrim=document.getElementById('scrim');
-  function openDialog(html,iconName){
-    document.getElementById('dMsg').innerHTML=html;
-    setIco(document.getElementById('dIcon'),iconName||'shirt');
-    scrim.classList.add('show');
-  }
-  function closeDialog(){ scrim.classList.remove('show'); }
-  document.getElementById('dOk').addEventListener('click',closeDialog);
-  scrim.addEventListener('click',function(e){ if(e.target===scrim) closeDialog(); });
-
-  /* ===== actions ===== */
-  function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
-  function doRandom(){
-    var b=pick(PATS).id, a=pick(PATS).id; while(a===b){ a=pick(PATS).id; }
-    state.body=b; state.accent=a; state.layout=pick(LAYOUTS).id; state.trim=pick(PATS).id;
-    state.num=String(1+Math.floor(Math.random()*99)); numInput.value=state.num;
-    buildLayouts(); updatePalettes(); render();
-  }
-  function doReset(){
-    state={body:'gray50',accent:'black',layout:'solid',trim:'white',num:'10',name:'ZICO'};
-    nameInput.value='ZICO'; numInput.value='10'; buildLayouts(); updatePalettes(); render();
-  }
-  function doSave(){
-    var nm=(state.name||'—').toUpperCase();
-    openDialog('Kit saved to <b>Kit Folder</b>.<br><br>“'+nm+' #'+state.num+'”<br>'+
-      'Body: '+patName(state.body)+' &nbsp; Accent: '+patName(state.accent)+'<br>'+
-      'Pattern: '+layoutName(state.layout),'floppy');
-  }
-  function doAbout(){
-    openDialog('<b>Kit Builder 1.0</b><br>System Software for Football Strips<br><br>'+
-      'A 1-bit kit designer in the spirit of the<br>original Macintosh. © 1984.','shirt');
-  }
-  document.getElementById('btn-random').addEventListener('click',doRandom);
-  document.getElementById('btn-reset').addEventListener('click',doReset);
-  document.getElementById('btn-save').addEventListener('click',doSave);
-
-  /* ===== window open/close ===== */
-  function openWin(id){ var w=document.getElementById(id); w.style.display='block'; bringFront(w); }
-
-  /* ===== menus ===== */
-  var menus=document.querySelectorAll('.menu');
-  function closeMenus(){ Array.prototype.forEach.call(menus,function(m){m.classList.remove('open');}); }
-  Array.prototype.forEach.call(menus,function(m){
-    m.querySelector('.mlabel').addEventListener('click',function(e){
-      e.stopPropagation(); var was=m.classList.contains('open'); closeMenus(); if(!was) m.classList.add('open');
-    });
-    m.addEventListener('mouseenter',function(){ if(document.querySelector('.menu.open')){ closeMenus(); m.classList.add('open'); } });
-  });
-  document.addEventListener('click',closeMenus);
-  document.querySelectorAll('.ditem').forEach(function(it){
-    it.addEventListener('click',function(e){
-      e.stopPropagation(); if(it.classList.contains('disabled')) return;
-      var act=it.getAttribute('data-act'); closeMenus();
-      if(act==='about') doAbout();
-      else if(act==='new') doReset();
-      else if(act==='save') doSave();
-      else if(act==='random') doRandom();
-      else if(act==='view-pattern') showPage('colour');
-      else if(act==='view-name') showPage('name');
-      else if(act==='view-num') showPage('number');
-      else if(act==='open-calc') openWin('win-calc');
-      else if(act==='open-keycaps') openWin('win-keycaps');
-      else if(act==='open-puzzle') openWin('win-puzzle');
-      else if(act==='shuffle-puzzle'){ openWin('win-puzzle'); shufflePuzzle(); }
-    });
+    palette.appendChild(cell);
   });
 
-  /* ===== keyboard shortcuts ===== */
-  document.addEventListener('keydown',function(e){
-    if(e.metaKey||e.ctrlKey){
-      var k=e.key.toLowerCase();
-      if(k==='n'){ e.preventDefault(); doReset(); }
-      else if(k==='s'){ e.preventDefault(); doSave(); }
-      else if(k==='r'){ e.preventDefault(); doRandom(); }
-    } else {
-      if(document.activeElement&&/INPUT/.test(document.activeElement.tagName)) return;
-      var map={'1':'colour','2':'pattern','3':'number','4':'name'};
-      if(map[e.key]) showPage(map[e.key]);
-    }
-  });
-
-  /* ===== draggable windows ===== */
-  var zTop=10, manuallyMoved=false;
-  function bringFront(win){
-    zTop++; win.style.zIndex=zTop;
-    document.querySelectorAll('.win').forEach(function(w){ w.classList.add('inactive'); });
-    win.classList.remove('inactive');
+  /* ===== clock ===== */
+  function pad(n){return (n<10?'0':'')+n;}
+  function tick(){
+    var d=new Date(), h=d.getHours(), ap=h<12?'AM':'PM'; h=h%12; if(h===0)h=12;
+    document.getElementById('clock').textContent=h+':'+pad(d.getMinutes())+' '+ap;
   }
-  /* center the whole cluster of open windows in the viewport */
+  tick(); setInterval(tick,1000);
+
+  /* ===== draggable window ===== */
+  var manuallyMoved=false;
   function centerWindows(){
     if(window.innerWidth<=900) return; /* mobile layout stacks in flow */
-    var wins=Array.prototype.filter.call(document.querySelectorAll('.win'),function(w){
-      return w.style.display!=='none' && w.offsetParent!==null;
-    });
-    if(!wins.length) return;
-    var minL=Infinity,minT=Infinity,maxR=-Infinity,maxB=-Infinity;
-    wins.forEach(function(w){
-      var l=w.offsetLeft,t=w.offsetTop,r=l+w.offsetWidth,b=t+w.offsetHeight;
-      if(l<minL)minL=l; if(t<minT)minT=t; if(r>maxR)maxR=r; if(b>maxB)maxB=b;
-    });
+    var w=document.getElementById('win-preview');
     var mb=22;
-    var dx=Math.round((window.innerWidth-(maxR-minL))/2 - minL);
-    var dy=Math.round(mb + (window.innerHeight-mb-(maxB-minT))/2 - minT);
-    wins.forEach(function(w){ w.style.left=(w.offsetLeft+dx)+'px'; w.style.top=(w.offsetTop+dy)+'px'; });
+    w.style.left=Math.round((window.innerWidth-w.offsetWidth)/2)+'px';
+    w.style.top=Math.round(mb+(window.innerHeight-mb-w.offsetHeight)/2)+'px';
   }
-  function makeDraggable(barEl){
+  document.querySelectorAll('[data-drag]').forEach(function(barEl){
     var win=document.getElementById(barEl.getAttribute('data-drag'));
     var sx,sy,ox,oy,dragging=false;
     barEl.addEventListener('pointerdown',function(e){
-      if(e.target.classList.contains('closebox')) return;
-      manuallyMoved=true; bringFront(win); dragging=true;
+      manuallyMoved=true; dragging=true;
       var r=win.getBoundingClientRect();
       win.style.left=r.left+'px'; win.style.top=r.top+'px';
       sx=e.clientX; sy=e.clientY; ox=r.left; oy=r.top;
@@ -791,128 +274,10 @@
       win.style.top=Math.max(24,(oy+e.clientY-sy))+'px';
     });
     barEl.addEventListener('pointerup',function(){ dragging=false; });
-  }
-  document.querySelectorAll('[data-drag]').forEach(makeDraggable);
-  document.querySelectorAll('.win').forEach(function(w){ w.addEventListener('pointerdown',function(){ bringFront(w); }); });
-  document.querySelectorAll('.closebox').forEach(function(cb){
-    cb.addEventListener('click',function(e){ e.stopPropagation(); cb.closest('.win').style.display='none'; });
   });
-
-  /* desktop icons */
-  document.querySelectorAll('.desk-icon').forEach(function(ic){
-    ic.addEventListener('click',function(e){
-      e.stopPropagation();
-      document.querySelectorAll('.desk-icon').forEach(function(x){x.classList.remove('sel');});
-      ic.classList.add('sel');
-    });
-  });
-  document.getElementById('desktop').addEventListener('click',function(){
-    document.querySelectorAll('.desk-icon').forEach(function(x){x.classList.remove('sel');});
-  });
-
-  /* ===== clock ===== */
-  function pad(n){return (n<10?'0':'')+n;}
-  function tick(){
-    var d=new Date(), h=d.getHours(), ap=h<12?'AM':'PM'; h=h%12; if(h===0)h=12;
-    document.getElementById('clock').textContent=h+':'+pad(d.getMinutes())+' '+ap;
-  }
-  tick(); setInterval(tick,1000);
-
-  /* ===== CALCULATOR ===== */
-  (function(){
-    var screen=document.getElementById('calcScreen');
-    var cur='0', stored=null, op=null, fresh=true;
-    function show(){ screen.textContent=cur.length>12?(+cur).toPrecision(8):cur; }
-    function clearOpHi(){ document.querySelectorAll('#calcGrid .calc-key.op').forEach(function(b){b.classList.remove('op-active');}); }
-    function compute(a,b,o){ a=+a; b=+b; switch(o){case '+':return a+b;case '-':return a-b;case '*':return a*b;case '/':return b===0?0:a/b;} return b; }
-    document.getElementById('calcGrid').addEventListener('click',function(e){
-      var b=e.target.closest('.calc-key'); if(!b) return;
-      var k=b.getAttribute('data-k');
-      if(/[0-9]/.test(k)){ if(fresh){ cur=k; fresh=false; } else { cur=(cur==='0')?k:cur+k; } clearOpHi(); }
-      else if(k==='.'){ if(fresh){ cur='0.'; fresh=false; } else if(cur.indexOf('.')<0){ cur+='.'; } clearOpHi(); }
-      else if(k==='C'){ cur='0'; stored=null; op=null; fresh=true; clearOpHi(); }
-      else if(k==='neg'){ cur=(cur.charAt(0)==='-')?cur.slice(1):(cur==='0'?cur:'-'+cur); }
-      else if(k==='pct'){ cur=String((+cur)/100); }
-      else if(k==='+'||k==='-'||k==='*'||k==='/'){
-        if(op&&!fresh){ cur=String(compute(stored,cur,op)); }
-        stored=cur; op=k; fresh=true; clearOpHi(); b.classList.add('op-active');
-      }
-      else if(k==='='){ if(op){ cur=String(compute(stored,cur,op)); op=null; stored=null; fresh=true; } clearOpHi(); }
-      show();
-    });
-    show();
-  })();
-
-  /* ===== 15-PUZZLE ===== */
-  var puzzle=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0];
-  var puzzleMoves=0;
-  function renderPuzzle(){
-    var g=document.getElementById('puzzleGrid'); g.innerHTML='';
-    puzzle.forEach(function(v,i){
-      var t=document.createElement('div');
-      t.className='ptile'+(v===0?' blank':'');
-      t.textContent=v===0?'':v;
-      if(v!==0) t.addEventListener('click',function(){ tryMove(i); });
-      g.appendChild(t);
-    });
-    document.getElementById('puzzleMoves').textContent='Moves: '+puzzleMoves;
-  }
-  function tryMove(i){
-    var blank=puzzle.indexOf(0);
-    var r1=Math.floor(i/4),c1=i%4,r2=Math.floor(blank/4),c2=blank%4;
-    if(Math.abs(r1-r2)+Math.abs(c1-c2)===1){
-      puzzle[blank]=puzzle[i]; puzzle[i]=0; puzzleMoves++; renderPuzzle();
-      if(puzzle.join(',')==='1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0' && puzzleMoves>0){
-        setTimeout(function(){ openDialog('<b>Puzzle solved!</b><br><br>Tidy work — '+puzzleMoves+' moves.','clock'); },120);
-      }
-    }
-  }
-  function shufflePuzzle(){
-    for(var n=0;n<200;n++){
-      var blank=puzzle.indexOf(0), nb=[], r=Math.floor(blank/4),c=blank%4;
-      if(r>0)nb.push(blank-4); if(r<3)nb.push(blank+4); if(c>0)nb.push(blank-1); if(c<3)nb.push(blank+1);
-      var t=nb[Math.floor(Math.random()*nb.length)];
-      puzzle[blank]=puzzle[t]; puzzle[t]=0;
-    }
-    puzzleMoves=0; renderPuzzle();
-  }
-  document.getElementById('puzzleShuffle').addEventListener('click',shufflePuzzle);
-  renderPuzzle();
-
-  /* ===== KEY CAPS (types into Name) ===== */
-  (function(){
-    var rows=['1234567890','QWERTYUIOP','ASDFGHJKL','ZXCVBNM'];
-    var board=document.getElementById('kcBoard');
-    rows.forEach(function(rw){
-      var rEl=document.createElement('div'); rEl.className='kc-row';
-      rw.split('').forEach(function(ch){
-        var k=document.createElement('div'); k.className='kc-key'; k.textContent=ch;
-        k.addEventListener('click',function(){ typeChar(ch); flashKey(k); });
-        rEl.appendChild(k);
-      });
-      board.appendChild(rEl);
-    });
-    var last=document.createElement('div'); last.className='kc-row';
-    var del=document.createElement('div'); del.className='kc-key wide'; del.textContent='⌫ Delete';
-    del.addEventListener('click',function(){ state.name=state.name.slice(0,-1); nameInput.value=state.name; render(); flashKey(del); });
-    var spc=document.createElement('div'); spc.className='kc-key xwide'; spc.textContent='space';
-    spc.addEventListener('click',function(){ typeChar(' '); flashKey(spc); });
-    var clr=document.createElement('div'); clr.className='kc-key wide'; clr.textContent='Clear';
-    clr.addEventListener('click',function(){ state.name=''; nameInput.value=''; render(); flashKey(clr); });
-    last.appendChild(del); last.appendChild(spc); last.appendChild(clr);
-    board.appendChild(last);
-    function typeChar(ch){ if(state.name.length<12){ state.name+=ch; nameInput.value=state.name; render(); } }
-    function flashKey(k){ k.classList.add('lit'); setTimeout(function(){ k.classList.remove('lit'); },120); }
-  })();
 
   /* ===== init ===== */
-  buildPalette('bodyPats','body'); buildPalette('accentPats','accent'); buildPalette('trimPats','trim');
-  buildLayouts(); render();
-  bringFront(document.getElementById('win-keycaps'));
-  bringFront(document.getElementById('win-puzzle'));
-  bringFront(document.getElementById('win-calc'));
-  bringFront(document.getElementById('win-control'));
-  bringFront(document.getElementById('win-preview'));
+  render();
   requestAnimationFrame(centerWindows);
   window.addEventListener('resize',function(){ if(!manuallyMoved) centerWindows(); });
 })();
