@@ -334,7 +334,8 @@ const App = () => {
       <div className="relative z-10 hidden flex-col items-center py-16 lg:flex">
         <div className="flex flex-col gap-6">
           <h2 className="hero-title-size text-center font-main font-normal leading-[1.12]">
-            Built for designers on the frontier of code and design.
+            Built for designers on the frontier
+            <br /> of code and design.
           </h2>
           <PromptInstallButton size="lg" fullWidth />
           <InstallAccordion />
