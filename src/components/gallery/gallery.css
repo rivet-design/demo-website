@@ -103,9 +103,17 @@
 }
 
 /* no-sidebar: the Collections rail isn't rendered at all (hero demo) — give
-   the main content the full width. */
+   the main content the full width, but keep an adequate horizontal inset:
+   without the sidebar the grid would otherwise sit flush against the app
+   edge (the compact-gap variant drops --gallery-gap to 4px). The inset
+   matches the content-header's 24px so everything stays on one left line. */
 .rivet-gallery.no-sidebar .app {
   grid-template-columns: 0 1fr;
+}
+
+.rivet-gallery.no-sidebar .gallery-scroll {
+  padding-left: 24px;
+  padding-right: 24px;
 }
 
 .rivet-gallery.compact .app {

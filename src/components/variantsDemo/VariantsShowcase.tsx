@@ -296,12 +296,16 @@ const VariantsShowcase = ({
               width: portrait ? portraitViewportW : DESIGN_W,
               height: portrait ? portraitViewportH : DESIGN_H,
               position: 'absolute',
-              left: '50%',
+              // Desktop anchors to the pane's LEFT edge (not centered): when
+              // the cover scale overflows the pane, a centered box crops the
+              // app's left padding behind the directions panel — anchoring
+              // left preserves it and crops only the right edge.
+              left: portrait ? '50%' : 0,
               top: portrait ? 0 : '50%',
               transform: portrait
                 ? `translateX(-50%) scale(${fitScale})`
-                : `translate(-50%, -50%) scale(${fitScale})`,
-              transformOrigin: portrait ? 'top center' : 'center center',
+                : `translateY(-50%) scale(${fitScale})`,
+              transformOrigin: portrait ? 'top center' : 'left center',
               opacity: activeReady ? 1 : 0,
               zIndex: 20,
             }}
