@@ -36,6 +36,12 @@ type Props = {
   items?: GalleryItemData[];
   /** Force the compact embedded layout regardless of container query width. */
   compact?: boolean;
+  /**
+   * Drop the Collections sidebar entirely so the layout is just topbar +
+   * gallery — used by the hero demo, where the sidebar reads as visual noise
+   * and the point is the gallery layout itself.
+   */
+  hideSidebar?: boolean;
 };
 
 /**
@@ -52,6 +58,7 @@ export default function Gallery({
   theme = 'dark',
   items = ITEMS,
   compact = false,
+  hideSidebar = false,
 }: Props = {}) {
   const [activeCollection, setActiveCollection] = useState('All Works');
   const [activeTab, setActiveTab] = useState('Library');
@@ -87,6 +94,7 @@ export default function Gallery({
         'rivet-gallery',
         theme === 'light' ? 'light' : '',
         compact ? 'compact' : '',
+        hideSidebar ? 'no-sidebar' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -158,7 +166,9 @@ export default function Gallery({
         </header>
 
         {/* Sidebar — minimal: a single Collections list (no counts, no Smart
-            Albums section) so it stays compact when the panel is narrow. */}
+            Albums section) so it stays compact when the panel is narrow.
+            Skipped entirely in no-sidebar mode (the hero demo). */}
+        {!hideSidebar && (
         <aside className="sidebar">
           <div>
             <div className="sidebar-section-title">Collections</div>
@@ -179,6 +189,7 @@ export default function Gallery({
             </div>
           </div>
         </aside>
+        )}
 
         {/* Main — variant cssVars are applied here (not the wrapper) so the
             palette change is localized to the gallery section. Topbar and

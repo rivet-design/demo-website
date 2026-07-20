@@ -14,7 +14,7 @@ import BrowserFrame from './components/BrowserFrame';
 import SketchGuides from './components/SketchGuides';
 import VariantsShowcase from './components/variantsDemo/VariantsShowcase';
 import AgentTerminalSection from './components/AgentTerminalSection';
-import { SKEUOMORPHIC_DECK_ID } from './components/variantsDemo/data';
+import { MACINTOSH_SYSTEM_ID } from './components/variantsDemo/data';
 import AgentTerminal from './components/sandbox/AgentTerminal';
 import ReplayButton from './components/ReplayButton';
 import { HERO_SESSION } from './components/sandbox/terminalScript';
@@ -227,19 +227,11 @@ const App = () => {
   // remount, and re-arms the choreography effect below.
   const [heroRun, setHeroRun] = useState(0);
   // Hero choreography: the agent chat starts centered (drawing the eye to the
-  // prompt as it types), then slides to the left — over the directions panel —
-  // once the browser window has animated in.
+  // prompt as it types), then slides to the RIGHT side of the showcase once
+  // the browser window has animated in — and PERSISTS there. It never
+  // minimizes or unmounts: the finished transcript stays as a fixture of the
+  // hero composition.
   const [chatMoved, setChatMoved] = useState(false);
-  // Once the agent finishes all its MCP calls, the chat minimizes out.
-  const [chatMinimized, setChatMinimized] = useState(false);
-  // After the minimize animation finishes we UNMOUNT the chat for good. It's a
-  // `hidden lg:flex` element, so otherwise crossing the lg breakpoint on resize
-  // re-displays it and replays the minimize animation — flashing the panel back
-  // in. The intro is one-shot, so once it's gone it should stay gone.
-  const [chatGone, setChatGone] = useState(false);
-  // The minimize step is scheduled from the chat's onComplete; keep the handle
-  // so we can cancel it if the tree unmounts before it fires.
-  const minimizeTimer = useRef<number>();
   useEffect(() => {
     // No intro this session → settle the chat into its final position at once
     // (it isn't rendered, but this keeps the choreography state coherent).
@@ -250,17 +242,6 @@ const App = () => {
     const t = setTimeout(() => setChatMoved(true), HERO_WINDOW_OPEN_MS + 900);
     return () => clearTimeout(t);
   }, [playHeroIntro, heroRun]);
-  useEffect(() => {
-    if (!chatMinimized) return;
-    const t = setTimeout(() => setChatGone(true), 700);
-    return () => clearTimeout(t);
-  }, [chatMinimized]);
-  useEffect(
-    () => () => {
-      if (minimizeTimer.current) clearTimeout(minimizeTimer.current);
-    },
-    [],
-  );
 
   // Mobile hero phase machine: 'agent' (the agent window types alone) →
   // 'minimizing' (it scales/fades out) → 'editor' (the editor maximizes in its
@@ -287,12 +268,62 @@ const App = () => {
   const replayHero = () => {
     mobileTimers.current.forEach(clearTimeout);
     mobileTimers.current = [];
-    if (minimizeTimer.current) clearTimeout(minimizeTimer.current);
     setChatMoved(false);
-    setChatMinimized(false);
-    setChatGone(false);
+    setChatPos(null);
     setMobilePhase(playHeroIntroMobile ? 'agent' : 'editor');
     setHeroRun((n) => n + 1);
+  };
+
+  // --- Draggable chat ------------------------------------------------------
+  // Once the user grabs the chat, `chatPos` pins it at explicit pixel
+  // coordinates (top-left, relative to the hero showcase) and the
+  // choreography's class-based centering/slide no longer applies. Replay
+  // resets it to null so the intro positions take over again.
+  const heroShowcaseRef = useRef<HTMLDivElement>(null);
+  const chatWrapRef = useRef<HTMLDivElement>(null);
+  const [chatPos, setChatPos] = useState<{ x: number; y: number } | null>(
+    null,
+  );
+  const [chatDragging, setChatDragging] = useState(false);
+  const chatDragCleanup = useRef<(() => void) | null>(null);
+  useEffect(() => () => chatDragCleanup.current?.(), []);
+  const startChatDrag = (e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    const wrap = chatWrapRef.current;
+    const hero = heroShowcaseRef.current;
+    if (!wrap || !hero) return;
+    e.preventDefault();
+    chatDragCleanup.current?.();
+    const rect = wrap.getBoundingClientRect();
+    const heroRect = hero.getBoundingClientRect();
+    const grabX = e.clientX - rect.left;
+    const grabY = e.clientY - rect.top;
+    setChatDragging(true);
+    const onMove = (ev: PointerEvent) => {
+      const x = Math.min(
+        Math.max(ev.clientX - heroRect.left - grabX, 0),
+        heroRect.width - rect.width,
+      );
+      const y = Math.min(
+        Math.max(ev.clientY - heroRect.top - grabY, 0),
+        heroRect.height - rect.height,
+      );
+      setChatPos({ x, y });
+    };
+    const cleanup = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', end);
+      window.removeEventListener('pointercancel', end);
+      chatDragCleanup.current = null;
+    };
+    const end = () => {
+      cleanup();
+      setChatDragging(false);
+    };
+    chatDragCleanup.current = cleanup;
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
   };
   // During the agent phase the editor isn't mounted yet; it takes over once the
   // agent has minimized out.
@@ -378,6 +409,7 @@ const App = () => {
 
         <div
           id="hero-showcase"
+          ref={heroShowcaseRef}
           className="relative z-10 flex w-full justify-center bg-cover bg-center p-4 sm:p-6 lg:p-8"
           style={{ backgroundImage: "url('/images/halftone-bg.webp')" }}
         >
@@ -417,41 +449,45 @@ const App = () => {
                 showDirections={!isMobileViewport}
                 portrait={isMobileViewport}
                 autoAdvanceMs={2000}
-                initialVariantId={SKEUOMORPHIC_DECK_ID}
+                initialVariantId={MACINTOSH_SYSTEM_ID}
                 loadDelayMs={loadDelayMs}
               />
             </BrowserFrame>
           )}
 
-          {/* Floating agent chat (bottom-left, over the left-docked directions
-              panel) that "drives" the demo: it types the prompt + Rivet MCP
-              tool calls, then the window opens and the directions generate and
-              fade in. Decorative, so pointer-events are off; hidden on small
-              screens where the hero is already tight. It's a one-shot intro —
-              unmounted once it has minimized so a resize can never bring it
-              back. */}
-          {playHeroIntro && !chatGone && (
-            <AgentTerminal
-              key={heroRun}
-              compact
-              loop={false}
-              script={HERO_SESSION}
-              onComplete={() => {
-                minimizeTimer.current = window.setTimeout(
-                  () => setChatMinimized(true),
-                  1100,
-                );
-              }}
-              className={`ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none absolute z-20 hidden h-[240px] w-[300px] -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-700 lg:flex lg:h-[300px] lg:w-[380px] ${
-                chatMoved
-                  ? 'left-[30%] top-[61%] lg:left-[23%] lg:top-[63%]'
-                  : 'left-1/2 top-1/2'
+          {/* Floating agent chat that "drives" the demo: it types the prompt +
+              Rivet MCP tool calls, then the window opens and the directions
+              generate and fade in. It starts centered, slides to the RIGHT
+              side of the showcase, and persists there with the finished
+              transcript — it never minimizes or unmounts. The user can grab
+              and move it anywhere within the hero (clamped to the showcase);
+              until first grabbed, the intro choreography positions it.
+              Hidden on small screens where the hero is already tight. */}
+          {playHeroIntro && (
+            <div
+              ref={chatWrapRef}
+              onPointerDown={startChatDrag}
+              className={`absolute z-20 hidden h-[240px] w-[300px] touch-none select-none lg:block lg:h-[300px] lg:w-[380px] ${
+                chatDragging ? 'cursor-grabbing' : 'cursor-grab'
               } ${
-                chatMinimized
-                  ? 'origin-bottom-left animate-[rivet-chat-minimize_0.6s_cubic-bezier(0.7,0,0.84,0)_forwards]'
-                  : ''
+                chatPos
+                  ? ''
+                  : `ease-[cubic-bezier(0.16,1,0.3,1)] -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-700 ${
+                      chatMoved
+                        ? 'left-[70%] top-[61%] lg:left-[77%] lg:top-[63%]'
+                        : 'left-1/2 top-1/2'
+                    }`
               }`}
-            />
+              style={chatPos ? { left: chatPos.x, top: chatPos.y } : undefined}
+            >
+              <AgentTerminal
+                key={heroRun}
+                compact
+                loop={false}
+                script={HERO_SESSION}
+                className="pointer-events-none h-full w-full lg:flex"
+              />
+            </div>
           )}
 
           {/* Replays the whole intro: typing chat → window open → directions.

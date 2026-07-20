@@ -6,16 +6,15 @@
 // The renderer (useTerminalPlayer) walks this script with timers so the whole
 // thing plays back like a live agent session — no backend involved.
 //
-// The tool rows are the REAL Rivet MCP tools, in the order a coding agent drives
-// them for a source-grounded run: `fetch_pinterest` reads the user's board (pins
-// + palettes via their connected account), `capture_design_evidence` renders the
-// references and pulls out design tokens/type/screenshot, and `start_variants`
-// (mode "existing", with the board passed as `userContext`) turns that captured
-// context into N parallel directions in isolated worktrees + the visual editor.
-// Then `continue_variants` (action `refine_variant`) forks a chosen direction
-// with a follow-up instruction, and `commit_variant` + `get_pending_changes`
-// apply the winner's diff. The story: pull real visual taste from a Pinterest
-// board, explore directions grounded in it, then refine and commit one.
+// The tool rows are the REAL Rivet MCP tools — the updated contract exposes
+// exactly three: `rivet_design_context` (pass any URL; Pinterest/Are.na routes
+// to the connected account's reference data, anything else is rendered live
+// for visual evidence), `rivet_variants` (the variant lifecycle — action
+// "start" explores N directions, "start" + `target` refines an existing one,
+// "commit" writes the winner to the working tree), and `rivet_status`
+// (read-only progress polling). The story: pull real visual taste from a
+// Pinterest board, explore directions grounded in it, then refine and commit
+// one.
 
 export type ResponseBlock =
   | { kind: 'text'; text: string }
@@ -43,23 +42,23 @@ export const HERO_SESSION: Turn[] = [
       { kind: 'thinking', text: 'Exploring new texture directions for your kit studio…' },
       {
         kind: 'tool',
-        tool: 'capture_design_evidence',
-        arg: 'snapshot the current jersey app',
-        result: 'palette · display type · layout → DESIGN.md',
+        tool: 'rivet_design_context',
+        arg: 'url: "localhost:3000", screenshot: true',
+        result: 'screenshot · palette · display type · layout',
       },
       {
         kind: 'tool',
-        tool: 'start_variants',
-        arg: 'mode: "existing", briefs × 6',
-        result: '6 worktrees · editor → :4000',
+        tool: 'rivet_variants',
+        arg: 'action: "start", runLabel: "Jersey textures", briefs × 4',
+        result: '4 directions queued · editor → :4000',
       },
       {
         kind: 'tool',
-        tool: 'report_variant_complete',
-        arg: '6 × status: "succeeded"',
-        result: 'Skeuomorphic · Liquid Glass · Halftone · …',
+        tool: 'rivet_status',
+        arg: 'project: "jersey-app"',
+        result: '4/4 succeeded — Macintosh · Skeuomorphic · …',
       },
-      { kind: 'result', text: '6 texture directions ready — cycle them in the preview.' },
+      { kind: 'result', text: '4 texture directions ready — cycle them in the preview.' },
     ],
   },
 ];
@@ -75,15 +74,15 @@ export const SESSION: Turn[] = [
       { kind: 'thinking', text: 'Reading your Pinterest board for visual direction…' },
       {
         kind: 'tool',
-        tool: 'fetch_pinterest',
-        arg: 'url: pinterest.com/maya/football-kits',
+        tool: 'rivet_design_context',
+        arg: 'url: "pinterest.com/maya/football-kits"',
         result: '42 pins · retro print, neon, halftone palettes',
       },
       {
         kind: 'tool',
-        tool: 'capture_design_evidence',
-        arg: 'synthesize design system from the board',
-        result: 'palette · display type · kit motifs → DESIGN.md',
+        tool: 'rivet_design_context',
+        arg: 'url: "localhost:3000", screenshot: true',
+        result: 'rendered evidence · palette · display type',
       },
       {
         kind: 'text',
@@ -91,15 +90,15 @@ export const SESSION: Turn[] = [
       },
       {
         kind: 'tool',
-        tool: 'start_variants',
-        arg: 'mode: "existing", userContext: [board], briefs × 4',
-        result: '4 worktrees · editor → :4001',
+        tool: 'rivet_variants',
+        arg: 'action: "start", runLabel: "Board looks", briefs × 4',
+        result: '4 directions queued · editor → :4001',
       },
       {
         kind: 'tool',
-        tool: 'report_variant_complete',
-        arg: '4 × status: "succeeded"',
-        result: 'Retro print · Neon night · Halftone · Chrome foil',
+        tool: 'rivet_status',
+        arg: 'project: "jersey-app"',
+        result: '4/4 succeeded — Retro print · Neon night · Halftone · Chrome foil',
       },
       { kind: 'result', text: '4 directions drawn from your board — cycle them in the preview.' },
     ],
@@ -110,9 +109,9 @@ export const SESSION: Turn[] = [
       { kind: 'thinking', text: 'Forking the “Halftone” direction with your refinement…' },
       {
         kind: 'tool',
-        tool: 'continue_variants',
-        arg: 'action: "refine_variant", variantId: "Halftone"',
-        result: 'regenerating in worktree',
+        tool: 'rivet_variants',
+        arg: 'action: "start", target: "…:halftone", briefs × 1',
+        result: 'vary queued — regenerating in worktree',
       },
       {
         kind: 'diff',
@@ -129,15 +128,9 @@ export const SESSION: Turn[] = [
       },
       {
         kind: 'tool',
-        tool: 'commit_variant',
-        arg: 'variantId: "Halftone", confirmedByUser: true',
-        result: 'diff queued',
-      },
-      {
-        kind: 'tool',
-        tool: 'get_pending_changes',
-        arg: 'refresh_git: true',
-        result: '1 file changed, applied to working tree',
+        tool: 'rivet_variants',
+        arg: 'action: "commit", variantId: "halftone"',
+        result: '1 file changed · applied to working tree',
       },
       { kind: 'result', text: 'Committed “Halftone” — drawn from your board and applied.' },
     ],

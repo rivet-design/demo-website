@@ -195,12 +195,12 @@ const VariantRow = ({
                 e.stopPropagation();
                 onStartRename(variant.id);
               }}
-              className="min-w-0 flex-1 cursor-text select-text truncate text-sm font-medium text-content"
+              className="min-w-0 flex-1 cursor-pointer select-text truncate text-sm font-medium text-content"
             >
               {variant.label}
             </span>
           </span>
-          <span className="mt-0.5 line-clamp-2 block cursor-text select-text text-xs leading-snug text-content-muted">
+          <span className="mt-0.5 line-clamp-2 block cursor-pointer select-text text-xs leading-snug text-content-muted">
             {variant.brief}
           </span>
         </span>
@@ -299,10 +299,27 @@ const VariantTable = ({
   return (
     <div
       ref={containerRef}
-      className="relative"
+      className="relative cursor-pointer"
       onMouseEnter={handlers.onMouseEnter}
       onMouseMove={handlers.onMouseMove}
       onMouseLeave={handlers.onMouseLeave}
+      // The proximity overlay highlights the nearest row even while the
+      // cursor is in the container's padding / the gap between rows — but the
+      // row button doesn't extend there, so a click in that zone used to do
+      // nothing. Catch those clicks here and select the highlighted row, so
+      // wherever the hover highlight shows, clicking selects it. Clicks that
+      // land ON a row (or its action buttons / rename input) are handled by
+      // the row itself.
+      onClick={(e) => {
+        if (activeIndex === null) return;
+        if ((e.target as HTMLElement).closest('[data-proximity-index]'))
+          return;
+        const v = variants[activeIndex];
+        if (!v || !readyIds.has(v.id)) return;
+        const selection = window.getSelection();
+        if (selection && !selection.isCollapsed) return;
+        onSelect(v.id);
+      }}
     >
       <AnimatePresence>
         {activeRect && (
