@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import Logo from './Logo';
+import PromptInstallButton from './PromptInstallButton';
 import { surfaceBackground } from '../lib/background';
 
 const NavBar = () => {
@@ -104,6 +105,12 @@ const NavBar = () => {
             </svg>
             Community
           </a>
+          <div className="hidden lg:block">
+            <PromptInstallButton
+              tone={isDark ? 'light' : 'dark'}
+              label="Install Rivet"
+            />
+          </div>
         </div>
       </div>
     </motion.nav>

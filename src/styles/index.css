@@ -189,8 +189,11 @@
     line-height: 1.65;
   }
 
+  /* Sized down (~20%) so the longer panel titles ("Start new directions
+     from your agent", "Create interfaces based on your design references")
+     wrap on two or three comfortable lines instead of towering stacks. */
   .workflow-title-size {
-    font-size: clamp(1.75rem, 6vw, 2.5rem);
+    font-size: clamp(1.5rem, 5vw, 2rem);
   }
 
   .workflow-copy-block {
@@ -199,9 +202,21 @@
     padding: 0.75rem 1rem;
   }
 
+  /* Tablet-to-just-under-lg (~768-1023px, e.g. 1013px): the panels are still
+     in their stacked mobile layout but the viewport is wide, so the copy
+     hugging the panel edge at 1rem reads cramped — give the content more
+     horizontal breathing room until the lg layout takes over. */
+  @media (min-width: 768px) and (max-width: 1023.98px) {
+    .workflow-copy-block {
+      max-width: none;
+      padding-left: 2.5rem;
+      padding-right: 2.5rem;
+    }
+  }
+
   @media (min-width: 1024px) {
     .workflow-title-size {
-      font-size: clamp(2rem, 2.75vw, 3.625rem);
+      font-size: clamp(1.75rem, 2.2vw, 2.75rem);
     }
 
     .workflow-copy-block {
