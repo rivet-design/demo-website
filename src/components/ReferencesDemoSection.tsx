@@ -132,7 +132,7 @@ const ReferencesDemoSection = () => {
               />
               Local Files
             </span>
-            . Rivet learns your taste the more you use it.
+            .
           </p>
         </div>
 
