@@ -214,7 +214,7 @@
   /* ===================================================== */
   /*  CONSOLE — the control surface                        */
   /* ===================================================== */
-  .console{display:flex;flex-direction:column;gap:13px;justify-content:center;}
+  .console{display:flex;flex-direction:column;gap:13px;}
   .ctl-block{
     padding:11px 12px 12px;border-radius:13px;
     background:
@@ -603,12 +603,61 @@
           <div class="btn-row" id="bodySwatches"></div>
         </div>
 
+        <div class="ctl-block">
+          <div class="ctl-label">Accent &middot; Cuffs &amp; Collar</div>
+          <div class="btn-row" id="accentSwatches"></div>
+        </div>
+
+        <div class="ctl-block">
+          <div class="ctl-label">Stripe Pattern</div>
+          <div class="seg" id="patternSeg"></div>
+        </div>
+
+        <div class="ctl-row2">
+          <div class="ctl-block">
+            <div class="ctl-label">Squad Number</div>
+            <div class="num-control">
+              <button class="step" id="numDown" aria-label="Decrease number">&minus;</button>
+              <input class="lcd num-lcd" id="numInput" type="number" min="1" max="99" value="10" inputmode="numeric">
+              <button class="step" id="numUp" aria-label="Increase number">+</button>
+            </div>
+          </div>
+          <div class="ctl-block">
+            <div class="ctl-label">Number &middot; Trim Colour</div>
+            <div class="btn-row small" id="numColRows"></div>
+          </div>
+        </div>
+
+        <div class="ctl-block">
+          <div class="ctl-label">Player Name</div>
+          <input class="name-field" id="nameInput" type="text" maxlength="12" value="Zico" placeholder="Enter name">
+        </div>
+
+        <div class="ctl-row2 switches">
+          <div class="switch-cell">
+            <div class="ctl-label">Name on Shirt</div>
+            <div class="toggle on" id="tg-name" role="switch" aria-checked="true"><span class="cap"></span></div>
+          </div>
+          <div class="switch-cell">
+            <div class="ctl-label">Number Shadow</div>
+            <div class="toggle on" id="tg-shadow" role="switch" aria-checked="true"><span class="cap"></span></div>
+          </div>
+          <div class="switch-cell knob-cell">
+            <div class="ctl-label">Fabric Sheen</div>
+            <div class="knob-wrap" id="knob" role="slider" aria-label="Fabric sheen" tabindex="0"><div class="knob-dial"></div></div>
+          </div>
+        </div>
       </section>
     </div>
 
     <!-- ===== FOOTER ===== -->
     <footer class="deck-foot">
-      <div class="lcd status-lcd" id="flash">Select a colour to begin&hellip;</div>
+      <div class="lcd status-lcd" id="flash">Select a control to begin&hellip;</div>
+      <div class="actions">
+        <button class="pill red"   id="ft-red">Shuffle</button>
+        <button class="pill steel" id="ft-grn">Reset</button>
+        <button class="pill green" id="ft-yel">Save</button>
+      </div>
     </footer>
   </main>
 
@@ -628,12 +677,31 @@
     {name:'Navy',hex:'#00075F'},
     {name:'Off-White',hex:'#EDE8DA'}
   ];
+  var PATTERNS=[
+    {id:'solid',name:'Solid',short:'Solid'},
+    {id:'stripes',name:'Vertical stripes',short:'Stripes'},
+    {id:'hoops',name:'Hoops',short:'Hoops'},
+    {id:'sash',name:'Sash',short:'Sash'},
+    {id:'halftone',name:'Halftone / tiger',short:'Tiger'}
+  ];
+  var TRIMS=[
+    {name:'White',hex:'#FFFFFF'},
+    {name:'Ink Black',hex:'#111111'},
+    {name:'Samba Yellow',hex:'#FFD400'},
+    {name:'Cobalt',hex:'#2230C8'}
+  ];
+
   // ---- state ----
   var state={
     body:'#1E8A3C',
     accent:'#FFD400',
     pattern:'stripes',
-    trim:'#FFFFFF'
+    trim:'#FFFFFF',
+    num:'10',
+    name:'Zico',
+    nameOn:true,
+    numShadow:true,
+    sheen:0.5
   };
 
   function setVars(){
@@ -655,6 +723,17 @@
   function render(){
     setVars();
     applyNumColour();
+    var nm=(state.name||'');
+    var nameEl=document.getElementById('nameText');
+    nameEl.textContent=nm;
+    nameEl.style.display=state.nameOn?'':'none';
+    document.getElementById('numText').textContent=state.num;
+    var shadowEl=document.getElementById('numShadow');
+    shadowEl.textContent=state.num;
+    shadowEl.style.display=state.numShadow?'':'none';
+    document.getElementById('nameplate').textContent=(state.nameOn&&nm?nm:'—')+' · '+state.num;
+    // keep pattern previews in sync with current colours
+    updateSegPreviews();
   }
 
   // ---- round glossy colour buttons ----
@@ -672,15 +751,120 @@
         state[key]=s.hex;
         render();
         markSel(c,b);
-        flash('Body › '+s.name);
+        flash(labelFor(key)+' › '+s.name);
       });
       c.appendChild(b);
     });
   }
+  function labelFor(k){return k==='body'?'Body':k==='accent'?'Accent':'Trim';}
   function markSel(container,el){
     Array.prototype.forEach.call(container.querySelectorAll('.cbtn'),function(x){x.classList.remove('sel');});
     el.classList.add('sel');
   }
+
+  // ---- segmented pattern selector ----
+  function buildPatternSeg(){
+    var c=document.getElementById('patternSeg');
+    c.innerHTML='';
+    PATTERNS.forEach(function(p){
+      var it=document.createElement('button');
+      it.className='seg-item'+(state.pattern===p.id?' sel':'');
+      it.setAttribute('aria-label',p.name);
+      it.innerHTML='<span class="seg-led"></span>'+
+                   '<span class="seg-prev" data-pat="'+p.id+'" style="background:'+patPreview(p.id)+'"></span>'+
+                   '<span class="seg-name">'+p.short+'</span>';
+      it.addEventListener('click',function(){
+        state.pattern=p.id;
+        render();
+        Array.prototype.forEach.call(c.querySelectorAll('.seg-item'),function(x){x.classList.remove('sel');});
+        it.classList.add('sel');
+        flash('Pattern › '+p.name);
+      });
+      c.appendChild(it);
+    });
+  }
+  function updateSegPreviews(){
+    Array.prototype.forEach.call(document.querySelectorAll('.seg-prev'),function(sp){
+      sp.style.background=patPreview(sp.getAttribute('data-pat'));
+    });
+  }
+  function patPreview(id){
+    switch(id){
+      case 'stripes':return 'repeating-linear-gradient(90deg,'+state.accent+' 0 5px,'+state.body+' 5px 10px)';
+      case 'hoops':return 'repeating-linear-gradient(0deg,'+state.accent+' 0 5px,'+state.body+' 5px 10px)';
+      case 'sash':return 'repeating-linear-gradient(45deg,'+state.accent+' 0 5px,'+state.body+' 5px 10px)';
+      case 'halftone':return 'repeating-conic-gradient('+state.accent+' 0 25%,'+state.body+' 0 50%) 0 0/9px 9px';
+      default:return state.body;
+    }
+  }
+
+  // ---- number steppers + LCD ----
+  var numInput=document.getElementById('numInput');
+  function clampNum(v){ v=parseInt(v,10); if(isNaN(v))return null; if(v<1)v=1; if(v>99)v=99; return v; }
+  function setNum(v,announce){
+    state.num=String(v);
+    numInput.value=v;
+    render();
+    if(announce)flash('Squad number › '+v);
+  }
+  numInput.addEventListener('input',function(){
+    var v=clampNum(numInput.value);
+    if(v===null){ state.num=''; render(); return; }
+    if(String(v)!==numInput.value)numInput.value=v;
+    state.num=String(v); render();
+  });
+  numInput.addEventListener('blur',function(){
+    if(state.num===''){ setNum(1); }
+  });
+  document.getElementById('numUp').addEventListener('click',function(){
+    setNum(clampNum((parseInt(state.num,10)||0)+1),true);
+  });
+  document.getElementById('numDown').addEventListener('click',function(){
+    setNum(clampNum((parseInt(state.num,10)||2)-1),true);
+  });
+
+  // ---- name field ----
+  var nameInput=document.getElementById('nameInput');
+  nameInput.addEventListener('input',function(){ state.name=nameInput.value; render(); });
+
+  // ---- toggle switches ----
+  function wireToggle(id,key,labelTxt){
+    var t=document.getElementById(id);
+    t.addEventListener('click',function(){
+      state[key]=!state[key];
+      t.classList.toggle('on',state[key]);
+      t.setAttribute('aria-checked',String(state[key]));
+      render();
+      flash(labelTxt+' › '+(state[key]?'On':'Off'));
+    });
+  }
+  wireToggle('tg-name','nameOn','Name on shirt');
+  wireToggle('tg-shadow','numShadow','Number shadow');
+
+  // ---- rotary sheen knob (drag / wheel / keys) ----
+  var knob=document.getElementById('knob');
+  var dial=knob.querySelector('.knob-dial');
+  function setSheen(v,announce){
+    v=Math.max(0,Math.min(1,v));
+    state.sheen=v;
+    dial.style.transform='rotate('+(-135+v*270)+'deg)';
+    document.getElementById('screen').style.setProperty('--sheen',v.toFixed(2));
+    knob.setAttribute('aria-valuenow',Math.round(v*100));
+    if(announce)flash('Fabric sheen › '+Math.round(v*100)+'%');
+  }
+  var dragging=false,lastY=0;
+  knob.addEventListener('pointerdown',function(e){dragging=true;lastY=e.clientY;knob.setPointerCapture(e.pointerId);e.preventDefault();});
+  knob.addEventListener('pointermove',function(e){
+    if(!dragging)return;
+    var dy=lastY-e.clientY;lastY=e.clientY;
+    setSheen(state.sheen+dy*0.012);
+  });
+  knob.addEventListener('pointerup',function(e){if(dragging){dragging=false;flash('Fabric sheen › '+Math.round(state.sheen*100)+'%');}});
+  knob.addEventListener('wheel',function(e){e.preventDefault();setSheen(state.sheen+(e.deltaY<0?0.05:-0.05),true);},{passive:false});
+  knob.addEventListener('keydown',function(e){
+    if(e.key==='ArrowUp'||e.key==='ArrowRight'){setSheen(state.sheen+0.05,true);e.preventDefault();}
+    if(e.key==='ArrowDown'||e.key==='ArrowLeft'){setSheen(state.sheen-0.05,true);e.preventDefault();}
+  });
 
   // ---- status LCD / EDIT led ----
   var flashEl=document.getElementById('flash');
@@ -701,8 +885,38 @@
   }
   tick();setInterval(tick,1000);
 
+  // ---- footer actions ----
+  function rand(a){return a[Math.floor(Math.random()*a.length)];}
+  document.getElementById('ft-red').addEventListener('click',function(){
+    var b=rand(SAMBA),a=rand(SAMBA);
+    while(a.hex===b.hex){a=rand(SAMBA);}
+    state.body=b.hex;state.accent=a.hex;
+    state.pattern=rand(PATTERNS).id;state.trim=rand(TRIMS).hex;
+    state.num=String(1+Math.floor(Math.random()*99));
+    numInput.value=state.num;
+    refreshAll();flash('Random strip generated');
+  });
+  document.getElementById('ft-grn').addEventListener('click',function(){
+    state.body='#1E8A3C';state.accent='#FFD400';state.pattern='stripes';state.trim='#FFFFFF';
+    state.num='10';state.name='Zico';
+    nameInput.value='Zico';numInput.value='10';
+    refreshAll();flash('Reset to default kit');
+  });
+  document.getElementById('ft-yel').addEventListener('click',function(){
+    flash('Kit saved: '+(state.name||'-')+' #'+state.num);
+  });
+
+  function refreshAll(){
+    buildColorButtons('bodySwatches','body',SAMBA);
+    buildColorButtons('accentSwatches','accent',SAMBA);
+    buildColorButtons('numColRows','trim',TRIMS);
+    buildPatternSeg();
+    render();
+  }
+
   // ---- init ----
-  buildColorButtons('bodySwatches','body',SAMBA);
+  refreshAll();
+  setSheen(state.sheen);
   render();
 })();
 </script>

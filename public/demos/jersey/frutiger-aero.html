@@ -1335,18 +1335,81 @@
 
             <!-- on-screen options -->
             <div class="info">
+              <nav class="tabs" role="tablist" aria-label="Builder sections">
+                <div class="menu-item active" data-page="colour">
+                  <span class="num">1</span><span>Colour</span>
+                </div>
+                <div class="menu-item" data-page="pattern">
+                  <span class="num">2</span><span>Pattern</span>
+                </div>
+                <div class="menu-item" data-page="number">
+                  <span class="num">3</span><span>Number</span>
+                </div>
+                <div class="menu-item" data-page="name">
+                  <span class="num">4</span><span>Name</span>
+                </div>
+              </nav>
+
               <div class="opts">
+                <!-- COLOUR PANE -->
                 <div class="opts-pane show" id="pane-colour">
                   <div class="cgroup">
                     <span class="opts-title">Body colour</span>
                     <div id="bodySwatches"></div>
                   </div>
+                  <div class="cgroup">
+                    <span class="opts-title">Accent / sleeve + collar</span>
+                    <div id="accentSwatches"></div>
+                  </div>
+                </div>
+                <!-- PATTERN PANE -->
+                <div class="opts-pane" id="pane-pattern">
+                  <span class="opts-title">Strip pattern</span>
+                  <div id="patternRows"></div>
+                </div>
+                <!-- NUMBER PANE -->
+                <div class="opts-pane" id="pane-number">
+                  <span class="opts-title">Squad number</span>
+                  <div class="tt-input-row">
+                    <label>Number</label>
+                    <input
+                      class="tt-input num"
+                      id="numInput"
+                      type="number"
+                      min="1"
+                      max="99"
+                      value="10"
+                      inputmode="numeric"
+                    />
+                    <span class="blinkcur">_</span>
+                  </div>
+                  <span class="opts-title">Number + trim colour</span>
+                  <div id="numColRows"></div>
+                  <div class="hint">Enter 1-99. This is your hero digit.</div>
+                </div>
+                <!-- NAME PANE -->
+                <div class="opts-pane" id="pane-name">
+                  <span class="opts-title">Player name</span>
+                  <div class="tt-input-row">
+                    <label>Name</label>
+                    <input
+                      class="tt-input"
+                      id="nameInput"
+                      type="text"
+                      maxlength="12"
+                      value="Zico"
+                    />
+                    <span class="blinkcur">_</span>
+                  </div>
+                  <div class="hint">
+                    Up to 12 characters. Shown above number.
+                  </div>
                 </div>
               </div>
 
               <div class="meta">
-                <span>NAME<span class="val"> Zico</span></span>
-                <span>NO<span class="val"> 10</span></span>
+                <span>NAME<span class="val" id="metaName"> Zico</span></span>
+                <span>NO<span class="val" id="metaNum"> 10</span></span>
               </div>
             </div>
           </div>
@@ -1361,6 +1424,59 @@
         </div>
       </section>
 
+      <!-- ===== RIGHT CLUSTER → actions (icon caps on the spine) ===== -->
+      <div class="cluster right" aria-label="Actions">
+        <div class="btn" id="ft-red" title="Random strip">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M16 4h4v4" />
+            <path d="M20 4l-7 7" />
+            <path d="M4 5h3l4 4" />
+            <path d="M16 20h4v-4" />
+            <path d="M20 20l-7-7" />
+            <path d="M4 19h3l3-3" />
+          </svg>
+        </div>
+        <div class="btn" id="ft-grn" title="Reset">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M19 12a7 7 0 1 1-2.05-4.95" />
+            <path d="M19 4v4h-4" />
+          </svg>
+        </div>
+        <div class="btn" id="ft-yel" title="Save">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M5 4h11l3 3v13H5z" />
+            <path d="M8 4v5h7V4" />
+            <path d="M8 13h8v7H8z" />
+          </svg>
+        </div>
+        <div class="btn" id="ft-cyan" title="Home">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 3 2 12h3v8h6v-5h2v5h6v-8h3z" />
+          </svg>
+        </div>
+      </div>
+
       <span class="led" aria-hidden="true"></span>
     </main>
 
@@ -1368,6 +1484,7 @@
       (function () {
         'use strict';
         var root = document.documentElement;
+        var shirt = document.querySelector('svg.shirt');
 
         // ---- palette ----
         var SAMBA = [
@@ -1380,27 +1497,62 @@
           { name: 'Navy', hex: '#00075F' },
           { name: 'Off-White', hex: '#EDE8DA' },
         ];
+        var PATTERNS = [
+          { id: 'solid', name: 'Solid' },
+          { id: 'stripes', name: 'Vertical stripes' },
+          { id: 'hoops', name: 'Hoops' },
+          { id: 'sash', name: 'Sash' },
+          { id: 'halftone', name: 'Halftone / tiger' },
+        ];
+        var TRIMS = [
+          { name: 'White', hex: '#FFFFFF' },
+          { name: 'Ink Black', hex: '#111111' },
+          { name: 'Samba Yellow', hex: '#FFD400' },
+          { name: 'Cream', hex: '#F4EFE2' },
+          { name: 'Cobalt', hex: '#2230C8' },
+        ];
 
-        // ---- fixed kit (only body colour is customisable) ----
-        var ACCENT = '#FFD400';
-        var TRIM = '#FFFFFF';
-        var state = { body: '#1E8A3C' };
+        // ---- state ----
+        var state = {
+          body: '#1E8A3C',
+          accent: '#FFD400',
+          pattern: 'solid',
+          trim: '#FFFFFF',
+          num: '10',
+          name: 'Zico',
+        };
 
-        function render() {
+        function setVars() {
           root.style.setProperty('--body-fill', state.body);
-          root.style.setProperty('--accent-fill', ACCENT);
-          root.style.setProperty('--trim-fill', TRIM);
-          var numFill =
-            state.body.toLowerCase() === ACCENT.toLowerCase() ? TRIM : ACCENT;
-          root.style.setProperty('--num-fill', numFill);
-          document.getElementById('numText').setAttribute('fill', numFill);
-          renderSleeves();
+          root.style.setProperty('--accent-fill', state.accent);
+          root.style.setProperty('--trim-fill', state.trim);
+          root.style.setProperty(
+            '--num-fill',
+            state.body === state.accent ? state.trim : state.accent,
+          );
+          // body paint -> solid colour OR pattern url
+          var paint = state.body;
+          if (state.pattern !== 'solid') {
+            paint = 'url(#pat-' + state.pattern + ')';
+          }
+          root.style.setProperty('--body-paint', paint);
         }
 
-        // accent sleeve bands drawn as translucent glass bands over the shirt
-        function renderSleeves() {
+        function applyNumColour() {
+          var nf =
+            state.accent.toLowerCase() === state.body.toLowerCase()
+              ? state.trim
+              : state.accent;
+          var nt = document.getElementById('numText');
+          nt.setAttribute('fill', nf);
+          nt.removeAttribute('stroke');
+        }
+        // pattern + accent trim drawn as translucent glass bands over the shirt
+        function renderPattern() {
           var g = document.getElementById('patternGroup');
           if (!g) return;
+          var a = state.accent,
+            s = '';
           function band(x, y, w, h, o) {
             return (
               '<rect x="' +
@@ -1412,34 +1564,159 @@
               '" height="' +
               h +
               '" fill="' +
-              ACCENT +
+              a +
               '" opacity="' +
-              o +
+              (o || 0.55) +
               '"/>'
             );
           }
-          g.innerHTML =
-            band(8, 121, 74, 15, 0.85) + band(278, 121, 74, 15, 0.85);
+          s += band(8, 121, 74, 15, 0.85) + band(278, 121, 74, 15, 0.85);
+          if (state.pattern === 'stripes') {
+            for (var x = 0; x < 360; x += 46) s += band(x, 0, 23, 400);
+          } else if (state.pattern === 'hoops') {
+            for (var y = 0; y < 400; y += 46) s += band(0, y, 360, 23);
+          } else if (state.pattern === 'sash') {
+            s +=
+              '<g transform="rotate(34 180 200)">' +
+              band(150, -160, 72, 720) +
+              '</g>';
+          } else if (state.pattern === 'halftone') {
+            for (var yy = 24; yy < 384; yy += 34) {
+              for (var xx = 22; xx < 340; xx += 34) {
+                s +=
+                  '<circle cx="' +
+                  xx +
+                  '" cy="' +
+                  yy +
+                  '" r="9" fill="' +
+                  a +
+                  '" opacity="0.5"/>';
+              }
+            }
+          }
+          g.innerHTML = s;
         }
 
-        // ---- body colour swatch row ----
-        function buildSwatches() {
-          var c = document.getElementById('bodySwatches');
+        function render() {
+          setVars();
+          applyNumColour();
+          renderPattern();
+          var nm = (state.name || '').toUpperCase();
+          document.getElementById('nameText').textContent = nm;
+          document.getElementById('numText').textContent = state.num;
+          document.getElementById('numShadow').textContent = state.num;
+          document.getElementById('metaName').textContent =
+            ' ' + ((state.name || '').trim() || '-');
+          document.getElementById('metaNum').textContent = ' ' + state.num;
+        }
+
+        // ---- build colour swatch rows ----
+        function buildSwatchSet(containerId, key) {
+          var c = document.getElementById(containerId);
           c.className = 'swatch-grid';
           c.innerHTML = '';
           SAMBA.forEach(function (s) {
             var chip = document.createElement('div');
-            chip.className = 'chip' + (state.body === s.hex ? ' sel' : '');
+            chip.className = 'chip' + (state[key] === s.hex ? ' sel' : '');
             chip.style.background = s.hex;
             chip.title = s.name;
             chip.addEventListener('click', function () {
-              state.body = s.hex;
+              state[key] = s.hex;
               render();
               markChip(c, chip);
-              flash('BODY SET TO ' + s.name);
+              flash((key === 'body' ? 'BODY' : 'ACCENT') + ' SET TO ' + s.name);
             });
             c.appendChild(chip);
           });
+        }
+
+        function buildPatternRows() {
+          var c = document.getElementById('patternRows');
+          c.innerHTML = '';
+          PATTERNS.forEach(function (p) {
+            var row = document.createElement('div');
+            row.className = 'opt-row' + (state.pattern === p.id ? ' sel' : '');
+            row.innerHTML =
+              '<span class="swatch" style="background:' +
+              patPreview(p.id) +
+              '"></span><span class="opt-label">' +
+              p.name +
+              '</span>';
+            row.addEventListener('click', function () {
+              state.pattern = p.id;
+              render();
+              markSel(c, row);
+              flash('PATTERN: ' + p.name);
+            });
+            c.appendChild(row);
+          });
+        }
+        function patPreview(id) {
+          switch (id) {
+            case 'stripes':
+              return (
+                'repeating-linear-gradient(90deg,' +
+                state.accent +
+                ' 0 6px,' +
+                state.body +
+                ' 6px 12px)'
+              );
+            case 'hoops':
+              return (
+                'repeating-linear-gradient(0deg,' +
+                state.accent +
+                ' 0 6px,' +
+                state.body +
+                ' 6px 12px)'
+              );
+            case 'sash':
+              return (
+                'repeating-linear-gradient(45deg,' +
+                state.accent +
+                ' 0 6px,' +
+                state.body +
+                ' 6px 12px)'
+              );
+            case 'halftone':
+              return (
+                'repeating-conic-gradient(' +
+                state.accent +
+                ' 0 25%,' +
+                state.body +
+                ' 0 50%) 0 0/10px 10px'
+              );
+            default:
+              return state.body;
+          }
+        }
+
+        function buildTrimRows() {
+          var c = document.getElementById('numColRows');
+          c.className = 'swatch-grid trim';
+          c.innerHTML = '';
+          TRIMS.forEach(function (t) {
+            var chip = document.createElement('div');
+            chip.className = 'chip' + (state.trim === t.hex ? ' sel' : '');
+            chip.style.background = t.hex;
+            chip.title = t.name;
+            chip.addEventListener('click', function () {
+              state.trim = t.hex;
+              render();
+              markChip(c, chip);
+              flash('TRIM SET TO ' + t.name);
+            });
+            c.appendChild(chip);
+          });
+        }
+
+        function markSel(container, row) {
+          Array.prototype.forEach.call(
+            container.querySelectorAll('.opt-row'),
+            function (r) {
+              r.classList.remove('sel');
+            },
+          );
+          row.classList.add('sel');
         }
         function markChip(container, chip) {
           Array.prototype.forEach.call(
@@ -1450,6 +1727,70 @@
           );
           chip.classList.add('sel');
         }
+
+        // ---- menu paging ----
+        var items = document.querySelectorAll('.menu-item');
+        var panes = {
+          colour: document.getElementById('pane-colour'),
+          pattern: document.getElementById('pane-pattern'),
+          number: document.getElementById('pane-number'),
+          name: document.getElementById('pane-name'),
+        };
+        function showPage(pg) {
+          Array.prototype.forEach.call(items, function (it) {
+            it.classList.toggle('active', it.getAttribute('data-page') === pg);
+          });
+          Object.keys(panes).forEach(function (k) {
+            panes[k].classList.toggle('show', k === pg);
+          });
+          if (pg === 'pattern') {
+            buildPatternRows();
+          }
+          flash(pg.toUpperCase() + ' SELECTED');
+        }
+        Array.prototype.forEach.call(items, function (it) {
+          it.addEventListener('click', function () {
+            showPage(it.getAttribute('data-page'));
+          });
+        });
+        // keyboard 1-4
+        document.addEventListener('keydown', function (e) {
+          if (
+            document.activeElement &&
+            /INPUT/.test(document.activeElement.tagName)
+          )
+            return;
+          var map = { 1: 'colour', 2: 'pattern', 3: 'number', 4: 'name' };
+          if (map[e.key]) {
+            showPage(map[e.key]);
+          }
+        });
+
+        // ---- inputs ----
+        var nameInput = document.getElementById('nameInput');
+        nameInput.addEventListener('input', function () {
+          state.name = nameInput.value;
+          render();
+        });
+        var numInput = document.getElementById('numInput');
+        numInput.addEventListener('input', function () {
+          var v = parseInt(numInput.value, 10);
+          if (isNaN(v)) v = '';
+          else {
+            if (v < 1) v = 1;
+            if (v > 99) v = 99;
+          }
+          if (v !== '') numInput.value = v;
+          state.num = v === '' ? '' : String(v);
+          render();
+        });
+        numInput.addEventListener('blur', function () {
+          if (state.num === '') {
+            state.num = '1';
+            numInput.value = '1';
+            render();
+          }
+        });
 
         // ---- flash msg ----
         var flashEl = document.getElementById('flash');
@@ -1507,8 +1848,71 @@
         tick();
         setInterval(tick, 1000);
 
+        // ---- fastext actions ----
+        function rand(a) {
+          return a[Math.floor(Math.random() * a.length)];
+        }
+        document
+          .getElementById('ft-red')
+          .addEventListener('click', function () {
+            var b = rand(SAMBA),
+              a = rand(SAMBA);
+            while (a.hex === b.hex) {
+              a = rand(SAMBA);
+            }
+            state.body = b.hex;
+            state.accent = a.hex;
+            state.pattern = rand(PATTERNS).id;
+            state.trim = rand(TRIMS).hex;
+            state.num = String(1 + Math.floor(Math.random() * 99));
+            numInput.value = state.num;
+            refreshAll();
+            flash('RANDOM STRIP GENERATED!');
+          });
+        document
+          .getElementById('ft-grn')
+          .addEventListener('click', function () {
+            state = {
+              body: '#1E8A3C',
+              accent: '#FFD400',
+              pattern: 'solid',
+              trim: '#FFFFFF',
+              num: '10',
+              name: 'Zico',
+            };
+            nameInput.value = 'Zico';
+            numInput.value = '10';
+            refreshAll();
+            flash('Reset to default kit');
+          });
+        document
+          .getElementById('ft-yel')
+          .addEventListener('click', function () {
+            flash(
+              'KIT SAVED: ' +
+                (state.name || '-').toUpperCase() +
+                ' #' +
+                state.num +
+                ' OK',
+            );
+          });
+        document
+          .getElementById('ft-cyan')
+          .addEventListener('click', function () {
+            showPage('colour');
+            flash('BACK TO START');
+          });
+
+        function refreshAll() {
+          buildSwatchSet('bodySwatches', 'body');
+          buildSwatchSet('accentSwatches', 'accent');
+          buildPatternRows();
+          buildTrimRows();
+          render();
+        }
+
         // ---- init ----
-        buildSwatches();
+        refreshAll();
         render();
       })();
     </script>
