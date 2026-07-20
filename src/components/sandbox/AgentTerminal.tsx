@@ -51,13 +51,10 @@ const isStepBlock = (b: ResponseBlock) =>
 // Map a tool name to a lucide icon for its step row. Falls back to a generic
 // glyph for anything unrecognised so new script tools still render sensibly.
 const TOOL_ICON: Record<string, IconName> = {
-  fetch_pinterest: 'image',
-  capture_design_evidence: 'pipette',
-  start_variants: 'rocket',
-  continue_variants: 'rotate-ccw',
-  report_variant_complete: 'check',
-  commit_variant: 'check',
-  get_pending_changes: 'corner-down-right',
+  // The updated Rivet MCP contract exposes exactly three tools.
+  rivet_design_context: 'pipette',
+  rivet_variants: 'rocket',
+  rivet_status: 'check',
 };
 
 const Folder = ({ size = 14 }: { size?: number }) => {
