@@ -78,6 +78,29 @@ class Telemetry {
     });
   }
 
+  // ----- OAuth callback (/auth-success) -----
+
+  /** OAuth callback page completed the proxy handshake. */
+  trackLandingAuthCompleted(): void {
+    this.track('landing_auth_completed');
+  }
+
+  /**
+   * OAuth callback page failed. `missing_session` with `had_access_token`
+   * means Supabase fell back to the Site URL (redirect_to not allowlisted) —
+   * the login succeeded upstream but the CLI handshake was severed. Reasons
+   * are coarse categories; token values are never captured.
+   */
+  trackLandingAuthFailed(props: {
+    reason: 'missing_session' | 'missing_token' | 'proxy_rejected' | 'exception';
+    hadAccessToken: boolean;
+  }): void {
+    this.track('landing_auth_failed', {
+      reason: props.reason,
+      had_access_token: props.hadAccessToken,
+    });
+  }
+
   // ----- Variants demo -----
 
   /** Variants demo entered the loading phase (first visible to the user). */
