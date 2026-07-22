@@ -16,6 +16,10 @@ export const AGENT_LOGOS: Record<InstallAgentId, string> = {
 
 export const INSTALL_COMMANDS: Record<InstallAgentId, string> = {
   claude: 'npx -y rivet-design@latest install claude-code claude-desktop',
-  cursor: 'npx -y rivet-design@latest install cursor',
+  // `--mcp` registers the `rivet mcp serve` server in ~/.cursor/mcp.json so
+  // Rivet's MCP tools are available to Cursor. The install's global bootstrap
+  // makes the registration durable (absolute path to the globally-installed
+  // bin, not the ephemeral npx cache).
+  cursor: 'npx -y rivet-design@latest install cursor --mcp',
   codex: 'npx -y rivet-design@latest install codex',
 };
