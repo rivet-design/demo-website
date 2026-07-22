@@ -4,24 +4,58 @@ const PROXY_URL = 'https://rivet-proxy.onrender.com';
 
 type AuthState = 'processing' | 'success' | 'error';
 
+/** Friendly copy for the PKCE callback's ?reason= codes (see proxy auth.ts). */
+const PKCE_ERROR_MESSAGES: Record<string, string> = {
+  session_expired:
+    'This sign-in link expired. Start the sign-in again from your editor or terminal.',
+  provider_denied: 'Google did not complete the sign-in. Please try again.',
+  exchange_failed:
+    'The sign-in could not be completed (the link may have been used already). Please try again.',
+  verification_failed: 'The sign-in could not be verified. Please try again.',
+  session_invalid: 'This sign-in link is invalid. Please start again.',
+  internal: 'Something went wrong on our side. Please try again.',
+};
+
 /**
- * OAuth callback page for Rivet authentication (used by both the MCP and
- * desktop login flows, which have no local UI server to catch the callback)
- * Extracts tokens from URL hash and completes the OAuth flow
+ * OAuth callback page for Rivet authentication.
+ *
+ * PKCE flow (current): the proxy has already completed the login server-side
+ * and redirects here with ?login=complete|error — this page is purely
+ * informational and no tokens ever reach the browser.
+ *
+ * Implicit flow (legacy desktop/MCP clients): tokens arrive in the URL hash
+ * and this page relays them to the proxy's /complete endpoint.
  */
 const AuthSuccessPage = () => {
   const [authState, setAuthState] = useState<AuthState>('processing');
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * @effect Extract tokens from URL hash and complete OAuth flow
+   * @effect Render the PKCE outcome, or relay legacy implicit-flow tokens
    * @deps None - runs once on mount
    */
   useEffect(() => {
     const completeAuth = async () => {
       try {
-        // Get session ID from query params
         const urlParams = new URLSearchParams(window.location.search);
+
+        // PKCE flow: the proxy already finished the login; just render it.
+        const pkceOutcome = urlParams.get('login');
+        if (pkceOutcome === 'complete') {
+          setAuthState('success');
+          return;
+        }
+        if (pkceOutcome === 'error') {
+          const reason = urlParams.get('reason') ?? '';
+          setError(
+            PKCE_ERROR_MESSAGES[reason] ??
+              'Something went wrong. Please try again.',
+          );
+          setAuthState('error');
+          return;
+        }
+
+        // Legacy implicit flow: relay hash tokens to the proxy.
         const sessionId = urlParams.get('session');
 
         if (!sessionId) {
