@@ -38,7 +38,11 @@ available without imports:
   <SquareImage src="/images/two.png" alt="Describe the second image" />
 </ImageGrid>
 
-<SplitImageText src="/images/example.png" alt="Describe the image">
+<SplitImageText
+  src="/images/example.png"
+  alt="Describe the image"
+  format="square"
+>
   Text in this block appears to the right of the image on larger screens.
 </SplitImageText>
 

@@ -24,9 +24,9 @@ const AboutPage = () => {
 
   return (
     <BlogShell>
-      <article className="mx-auto w-full max-w-4xl px-4 pb-28 pt-16 sm:px-8 sm:pt-24">
-        <header className="mx-auto max-w-[52rem]">
-          <h1 className="font-main text-4xl font-normal leading-[1.08] tracking-[-0.035em] text-black lg:whitespace-nowrap">
+      <article className="mx-auto w-full max-w-6xl px-4 pb-28 pt-16 sm:px-8 sm:pt-24">
+        <header className="mx-auto max-w-[64rem]">
+          <h1 className="font-main text-4xl font-normal leading-[1.08] tracking-[-0.035em] text-black sm:text-5xl xl:whitespace-nowrap">
             {meta.title}
           </h1>
         </header>

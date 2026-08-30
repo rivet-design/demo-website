@@ -95,11 +95,17 @@ export const ImageGrid = ({ children }: { children: ReactNode }) => (
 
 type SplitImageTextProps = Omit<ArticleImageProps, 'caption'> & {
   children: ReactNode;
+  format?: ArticleImageFormat;
 };
 
-export const SplitImageText = ({ src, alt, children }: SplitImageTextProps) => (
+export const SplitImageText = ({
+  src,
+  alt,
+  children,
+  format = 'rectangle',
+}: SplitImageTextProps) => (
   <section className="not-prose relative left-1/2 my-10 grid w-[min(54rem,calc(100vw-2rem))] -translate-x-1/2 gap-6 md:grid-cols-2 md:items-center md:gap-8">
-    <ImageFrame src={src} alt={alt} format="rectangle" />
+    <ImageFrame src={src} alt={alt} format={format} />
     <div className="font-main text-lg leading-[1.45] text-black [&>p+p]:mt-4 [&>p]:m-0">
       {children}
     </div>
