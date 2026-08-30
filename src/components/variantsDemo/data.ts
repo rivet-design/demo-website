@@ -14,8 +14,10 @@ export type DemoVariant = {
   brief: string;
   /** URL of the hosted static page for this variant. */
   src: string;
-  /** Run tag shown as the chip on the direction row. */
+  /** Run label retained as a fallback folder name for older demo data. */
   tag: string;
+  /** Folder label used by the current Rivet directions-panel grouping. */
+  folder?: string;
   /**
    * Optional in-app gallery restyle config. Unused by the hero (which renders
    * `src` in an iframe) and ignored by DirectionsPanel; the comments demo uses
@@ -56,6 +58,7 @@ export const VARIANTS: DemoVariant[] = [
     brief: 'The hero exactly as it ships today.',
     src: '/?embed=1&variant=original',
     tag: 'Baseline',
+    folder: 'Layout changes',
   },
   {
     id: WITH_SPLASH_ID,
@@ -63,6 +66,7 @@ export const VARIANTS: DemoVariant[] = [
     brief: 'Plays the splash screen first, then lands on the hero.',
     src: '/?embed=1&variant=with-splash',
     tag: 'Baseline',
+    folder: 'Layout changes',
   },
   {
     id: LEFT_ALIGNED_ID,
@@ -70,6 +74,7 @@ export const VARIANTS: DemoVariant[] = [
     brief: 'Lockup, headline and CTAs set flush left instead of centred.',
     src: '/?embed=1&variant=left-aligned',
     tag: 'Baseline',
+    folder: 'Layout changes',
   },
   {
     id: MACINTOSH_SYSTEM_ID,
@@ -77,6 +82,7 @@ export const VARIANTS: DemoVariant[] = [
     brief: '1984 black-and-white Macintosh chrome and bitmap type.',
     src: '/demos/landing/macintosh-system.html',
     tag: 'Random direction',
+    folder: 'Visual refresh',
   },
 ];
 
