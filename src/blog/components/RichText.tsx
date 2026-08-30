@@ -119,7 +119,7 @@ export const SplitImageText = ({
 );
 
 export const PullQuote = ({ children }: { children: ReactNode }) => (
-  <blockquote className="not-prose relative my-12 px-10 py-2 font-main text-2xl font-medium leading-snug tracking-[-0.01em] text-black sm:px-12 sm:text-3xl">
+  <blockquote className="not-prose relative my-12 break-inside-avoid px-10 py-2 font-main text-2xl font-medium leading-snug tracking-[-0.01em] text-black sm:px-12 sm:text-3xl">
     <span
       aria-hidden="true"
       className="pointer-events-none absolute left-0 top-0 select-none text-6xl font-semibold leading-none text-primary"
