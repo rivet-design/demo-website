@@ -34,14 +34,32 @@ type ArticleImageProps = {
 type ArticleImageFormat = 'rectangle' | 'square';
 
 const imageFrameClass: Record<ArticleImageFormat, string> = {
-  rectangle: 'max-w-[36rem]',
-  square: 'max-w-[26rem]',
+  rectangle: 'max-w-[38rem]',
+  square: 'max-w-[28rem]',
 };
 
 const imageAspectClass: Record<ArticleImageFormat, string> = {
   rectangle: 'aspect-[3/2]',
   square: 'aspect-square',
 };
+
+const ImageFrame = ({
+  src,
+  alt,
+  format,
+}: ArticleImageProps & { format: ArticleImageFormat }) => (
+  <div
+    className={`w-full overflow-hidden rounded-xl border border-black/10 ${imageAspectClass[format]}`}
+  >
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      className="h-full w-full object-cover"
+    />
+  </div>
+);
 
 const ArticleImage = ({
   src,
@@ -52,17 +70,7 @@ const ArticleImage = ({
   <figure
     className={`not-prose mx-auto my-10 w-full ${imageFrameClass[format]}`}
   >
-    <div
-      className={`w-full overflow-hidden rounded-xl border border-black/10 ${imageAspectClass[format]}`}
-    >
-      <img
-        src={src}
-        alt={alt}
-        loading="lazy"
-        decoding="async"
-        className="h-full w-full object-cover"
-      />
-    </div>
+    <ImageFrame src={src} alt={alt} format={format} />
     {caption && (
       <figcaption className="mt-3 font-main text-sm leading-[1.4] text-black">
         {caption}
@@ -80,9 +88,22 @@ export const SquareImage = (props: ArticleImageProps) => (
 );
 
 export const ImageGrid = ({ children }: { children: ReactNode }) => (
-  <div className="not-prose mx-auto my-10 grid max-w-[40rem] items-start gap-4 sm:grid-cols-2 [&>figure]:my-0">
+  <div className="not-prose mx-auto my-10 grid max-w-[42rem] items-start gap-4 sm:grid-cols-2 [&>figure]:my-0">
     {children}
   </div>
+);
+
+type SplitImageTextProps = Omit<ArticleImageProps, 'caption'> & {
+  children: ReactNode;
+};
+
+export const SplitImageText = ({ src, alt, children }: SplitImageTextProps) => (
+  <section className="not-prose relative left-1/2 my-10 grid w-[min(54rem,calc(100vw-2rem))] -translate-x-1/2 gap-6 md:grid-cols-2 md:items-center md:gap-8">
+    <ImageFrame src={src} alt={alt} format="rectangle" />
+    <div className="font-main text-lg leading-[1.45] text-black [&>p+p]:mt-4 [&>p]:m-0">
+      {children}
+    </div>
+  </section>
 );
 
 export const PullQuote = ({ children }: { children: ReactNode }) => (

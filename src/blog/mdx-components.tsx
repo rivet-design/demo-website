@@ -4,6 +4,7 @@ import {
   ImageGrid,
   PullQuote,
   RectangleImage,
+  SplitImageText,
   SquareImage,
   Steps,
 } from './components/RichText';
@@ -13,6 +14,7 @@ export const mdxComponents: MDXComponents = {
   ImageGrid,
   PullQuote,
   RectangleImage,
+  SplitImageText,
   SquareImage,
   Steps,
   a: ({ href = '', ...props }) => {

@@ -38,6 +38,10 @@ available without imports:
   <SquareImage src="/images/two.png" alt="Describe the second image" />
 </ImageGrid>
 
+<SplitImageText src="/images/example.png" alt="Describe the image">
+  Text in this block appears to the right of the image on larger screens.
+</SplitImageText>
+
 <PullQuote>A short statement worth emphasizing.</PullQuote>
 
 <Steps>
