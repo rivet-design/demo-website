@@ -35,14 +35,29 @@
   .nav{display:flex;align-items:center;justify-content:space-between;
        padding:14px 44px;}
   .lock{display:flex;align-items:center;gap:11px;}
-  .mark{width:22px;height:22px;border:2px solid #000;transform:rotate(45deg);position:relative;}
-  .mark::after{content:"";position:absolute;inset:3px;border:2px solid #000;}
+  /* Real Rivet wordmark, masked so each direction paints it in its own ink.
+     (SVG-as-image drops the artwork's foreignObject blur decorations, which is
+     exactly what a flat silhouette wants.) */
+  .wm{
+    display:block;height:20px;aspect-ratio:333/105;background:#000;
+    -webkit-mask:url('/images/rivet-wordmark-text.svg') center/contain no-repeat;
+    mask:url('/images/rivet-wordmark-text.svg') center/contain no-repeat;
+  }
+  .hero .wm{height:28px;}
+  /* The real Rivet mark, painted flat in the direction's own ink. A CSS mask
+     rather than an <img> so the artwork's fills don't fight the palette. */
+  .mark{
+    width:22px;height:22px;background:#000;
+    -webkit-mask:url('/images/rivet-icon-mark.svg') center/contain no-repeat;
+    mask:url('/images/rivet-icon-mark.svg') center/contain no-repeat;
+  }
   .lock b{font-size:24px;letter-spacing:-.5px;}
   .links{display:flex;align-items:center;gap:26px;font-size:14px;}
   .links a:not(.btn){color:#000;text-decoration:none;}
   .links a:not(.btn):hover{text-decoration:underline;}
 
   /* classic System buttons: 6px radius, 1px rule; the "default" one is ringed */
+  .community{display:none;}
   .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid #000;
        background:#fff;color:#000;padding:7px 16px;font-size:14px;
        text-decoration:none;border-radius:6px;}
@@ -55,8 +70,9 @@
   .hero .lock{justify-content:center;margin-bottom:24px;}
   .hero .mark{width:30px;height:30px;}
   .hero .lock b{font-size:32px;}
-  h1{font-size:56px;line-height:1.1;letter-spacing:-1.6px;font-weight:400;
-     margin:0 auto 30px;max-width:15ch;}
+  /* Viewport-relative so a narrow preview doesn't render a 56px headline. */
+  h1{font-size:clamp(24px,4vw,52px);line-height:1.12;letter-spacing:-1.6px;
+     font-weight:400;margin:0 auto 30px;max-width:min(30ch,100%);}
   .cta{display:flex;gap:12px;justify-content:center;}
 
   /* ---- showcase: bare art panel, no window chrome ---------------------- */
@@ -84,27 +100,47 @@
   .field-in{border-top:1px solid #000;padding:11px 16px;font-size:13px;color:#000;opacity:.55;}
   .foot{border-top:1px solid #000;padding:6px 16px;display:flex;justify-content:space-between;font-size:11px;}
 
+
+  /* Narrow previews: stop the nav from wrapping and pull the type in. */
+  @media (max-width: 720px){
+    .page{padding:0 20px 40px;}
+    .nav{padding:10px 20px;}
+    .links{gap:14px;font-size:12px;}
+    .lock b{font-size:18px;}
+    .hero .lock b{font-size:24px;}
+    .mark{width:18px;height:18px;}
+    .hero .mark{width:24px;height:24px;}
+    .btn{padding:6px 11px;font-size:12px;}
+    .links a{white-space:nowrap;}
+    .panel{height:300px;}
+    .agent{width:min(92%,452px);}
+    /* Mobile nav mirrors the real site: the three desktop links collapse
+       to the single Community link rather than wrapping into a stack. */
+    .links .desk{display:none;}
+    .links .community{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;}
+  }
 </style>
 </head>
 <body>
   <div class="navbar">
     <div class="nav">
-      <div class="lock"><i class="mark"></i><b class="pixel">rivet</b></div>
+      <div class="lock"><i class="mark"></i><i class="wm"></i></div>
       <div class="links">
-        <a href="#">Docs</a>
-        <a href="#">Release notes</a>
-        <a href="#" class="btn btn-def">Install Rivet</a>
+        <a href="#" class="desk">Docs</a>
+        <a href="#" class="desk">Release notes</a>
+        <a href="#" class="btn btn-def desk">Install Rivet</a>
+        <a href="#" class="community"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg> Community</a>
       </div>
     </div>
   </div>
 
   <div class="page">
     <div class="hero">
-      <div class="lock"><i class="mark"></i><b class="pixel">rivet</b></div>
-      <h1>Explore dozens of design directions from your agent.</h1>
+      <div class="lock"><i class="mark"></i><i class="wm"></i></div>
+      <h1>Explore dozens of design<br>directions from your agent.</h1>
       <div class="cta">
         <a href="#" class="btn">Watch Demo</a>
-        <a href="#" class="btn btn-def">Quick install now</a>
+        <a href="#" class="btn btn-def">Try Rivet for free</a>
       </div>
     </div>
 

@@ -71,7 +71,8 @@ export const useVariantsDemo = (
   const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [selectedId, setSelectedId] = useState(initialId);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [autoPlay, setAutoPlay] = useState(options?.autoPlay ?? true);
+  const wantAutoPlay = options?.autoPlay ?? true;
+  const [autoPlay, setAutoPlay] = useState(wantAutoPlay);
   const [readyIds, setReadyIds] = useState<Set<string>>(() => new Set());
 
   // Fake the Rivet generation flow once on mount: skeletons first, then the
@@ -95,6 +96,18 @@ export const useVariantsDemo = (
       clearTimeout(restTimer);
     };
   }, [SOURCE, initialId, startDelayMs, firstReadyMs, allReadyMs, start]);
+
+  // `autoPlay` can flip AFTER mount: the hero only wants the loop in its
+  // mobile layout, and that flag is reactive to viewport width. Seeding state
+  // once left a desktop -> mobile resize pinned on the first direction
+  // forever. Re-sync on an actual prop change only — not on every render — so
+  // a user take-over (which clears the flag) still sticks.
+  const prevWantAutoPlayRef = useRef(wantAutoPlay);
+  useEffect(() => {
+    if (prevWantAutoPlayRef.current === wantAutoPlay) return;
+    prevWantAutoPlayRef.current = wantAutoPlay;
+    setAutoPlay(wantAutoPlay);
+  }, [wantAutoPlay]);
 
   const variants = useMemo(
     () =>

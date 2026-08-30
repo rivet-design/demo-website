@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -375,23 +376,48 @@ const FOLDER_EASE = [0.33, 1, 0.68, 1] as const;
 const FOLDER_MOTION_DURATION = 0.22;
 
 /**
- * Current Rivet folder treatment: a borderless tinted surface, blue folder
- * icon, sentence-case label, and indented direction rows.
+ * Folder icon colours, assigned round-robin in source order so each group
+ * reads as distinct at a glance. Rivet's own orange (the Install CTA's
+ * gradient start) and the violet already in RUN_LABEL_COLORS, so the panel
+ * stays inside the palette it already uses.
+ */
+const FOLDER_COLORS = ['#63729d', '#9aa6c6'] as const;
+
+/**
+ * Current Rivet folder treatment: a borderless tinted surface, a coloured
+ * folder icon, sentence-case label, and indented direction rows.
  */
 const DirectionFolder = ({
   label,
   directionCount,
+  color,
+  active,
   children,
 }: {
   label: string;
   directionCount: number;
+  color: string;
+  /** True when the selected direction lives in this folder. */
+  active: boolean;
   children: ReactNode;
 }) => {
-  const [collapsed, setCollapsed] = useState(false);
+  // Exactly one folder is open at a time: the one holding the selected
+  // direction. Seeded from `active` too, so on arrival only the first folder
+  // is expanded and the later ones open as the selection reaches them, rather
+  // than every group being open at once.
+  const [collapsed, setCollapsed] = useState(!active);
+  useEffect(() => {
+    setCollapsed(!active);
+  }, [active]);
   const reduceMotion = useReducedMotion();
 
   return (
-    <li className="overflow-hidden rounded-lg bg-white/[0.012]">
+    // No overflow-hidden here: this element is rounded, so it was clipping the
+    // selected row's ring at its own corner radius — visible as a shaved
+    // corner on whichever row sat flush against the folder's bottom edge. The
+    // height animation below has its own overflow-hidden, which is the only
+    // place it is actually needed.
+    <li className="rounded-lg bg-white/[0.012]">
       <button
         type="button"
         onClick={() => setCollapsed((value) => !value)}
@@ -403,13 +429,15 @@ const DirectionFolder = ({
           <FolderSimple
             size={13}
             weight="fill"
-            className="shrink-0 text-sky-400"
+            className="shrink-0"
+            style={{ color }}
           />
         ) : (
           <FolderOpen
             size={13}
             weight="fill"
-            className="shrink-0 text-sky-400"
+            className="shrink-0"
+            style={{ color }}
           />
         )}
         <span className="min-w-0 flex-1 truncate text-sm font-medium text-content">
@@ -433,7 +461,7 @@ const DirectionFolder = ({
                     ease: FOLDER_EASE,
                   }
             }
-            className="overflow-hidden"
+            className="overflow-hidden pb-1"
           >
             {children}
           </motion.div>
@@ -556,11 +584,13 @@ const DirectionsPanel = ({
       <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-2 scrollbar-hide">
         {folders.length > 0 ? (
           <ul className="flex flex-col gap-2">
-            {folders.map((folder) => (
+            {folders.map((folder, folderIndex) => (
               <DirectionFolder
                 key={folder.label}
                 label={folder.label}
                 directionCount={folder.variants.length}
+                color={FOLDER_COLORS[folderIndex % FOLDER_COLORS.length]}
+                active={folder.variants.some((v) => v.id === ctrl.selectedId)}
               >
                 <VariantTable
                   variants={folder.variants}

@@ -12,21 +12,21 @@ import {
 // last. Then it settles on the flat resting icon instead of freezing
 // mid-flash. The mark stays small and centered — like the crop-marked
 // thumbnails in the source Figma file — not full-bleed.
-const FLASH_FRAME_MS = 100;
-const SETTLE_FADE_MS = 300;
-const SETTLE_HOLD_MS = 300;
+const FLASH_FRAME_MS = 85;
+const SETTLE_FADE_MS = 260;
+const SETTLE_HOLD_MS = 220;
 // Canvas → full-screen and the lockup's text reveal run together, not as
 // separate sequential steps — the wordmark is already moving into place as
 // soon as the canvas starts expanding.
-const EXPAND_MS = 1160;
+const EXPAND_MS = 980;
 // Kept short on purpose: the canvas filling tan and the lockup shrinking
 // into place (which is also what kicks off the hero's blur-fade-slide-up,
 // via rivet:splash-landing) should read as one continuous motion, not two
 // separate beats with a pause between them.
-const EXPAND_HOLD_MS = 60;
-const LAND_MS = 620;
-const LAND_HOLD_MS = 150;
-const EXIT_FADE_MS = 350;
+const EXPAND_HOLD_MS = 50;
+const LAND_MS = 540;
+const LAND_HOLD_MS = 120;
+const EXIT_FADE_MS = 300;
 // Shared by the canvas expand AND the lockup opening (see the aliases below).
 // Still a dramatic ease-in-out — quiet wind-up, strong middle, long glide —
 // but deliberately NOT full expo (was 0.87/0.13). The canvas sweeps ~1600px
@@ -42,9 +42,8 @@ const EXPAND_EASE = 'cubic-bezier(0.62, 0, 0.30, 1)';
 // which reads as the logo leading and the canvas settling in behind it. The
 // lead is held on the CANVAS side — slow the expand rather than speeding the
 // wordmark up — because the wordmark's clip only travels ~170px and shortening
-// it further makes it snap rather than unveil. Currently 1160 vs 940: a 220ms
-// lead, up from 140ms.
-const LOCKUP_OPEN_MS = 940;
+// it further makes it snap rather than unveil. Currently 980 vs 800: a 180ms lead.
+const LOCKUP_OPEN_MS = 800;
 const LOCKUP_EASE = EXPAND_EASE;
 // Expo out for the FLIP onto the real hero lockup: leaves instantly, then
 // decelerates almost forever, so it shoots toward the hero and eases in late.

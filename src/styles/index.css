@@ -175,6 +175,13 @@
        161.254vh) so it scales with the stage, but CAPPED at 90vw so a short,
        wide viewport — fullscreen, most obviously — can't make it wider than
        the screen. min() makes whichever limit binds first the one that wins. */
+    /* Height of the fixed page nav. The pinned layers pad by it so the
+       prototype container sits below the nav instead of under it. */
+    /* The white margin the footer panel sits inside, and the nav's own
+       horizontal inset — one value so the nav's wordmark lines up with the
+       panel's edge instead of the two being set independently. */
+    --frame-inset-x: clamp(13px, 1.3vw, 24px);
+    --page-nav-h: 76px;
     --prototype-w: min(90vw, 161.254vh);
     /* Derived from the width above, with no independent floor: any floor here
        would let the two disagree exactly when the cap is active, which is what
@@ -211,7 +218,13 @@
   @media (max-width: 1023px) {
     .hero-title-text {
       margin-inline: -1.5rem;
-      font-size: clamp(1.75rem, calc((86.8vw - 3rem) / 8.25), 3.5rem);
+      /* Divisor raised from 8.25 and the cap lowered from 3.5rem: /8.25 was
+         the tightest size that still fit the longest line ("Explore dozens
+         of", ~7.75em), which left the title filling most of a phone screen
+         and spilling to four lines. /10 leaves real slack inside the same
+         available width (100vw − gutters − the bled px-12), so it sets at a
+         comfortable three lines. */
+      font-size: clamp(1.5rem, calc((86.8vw - 3rem) / 10), 2.5rem);
       text-wrap: balance;
     }
   }
@@ -497,6 +510,36 @@
 /* Gentle drift for the loose decorative brand shapes floating around the hero
    showcase — gives each one its own bob without needing a separate keyframe
    per shape (duration/delay are set per-element via inline style). */
+/* Footer mark heartbeat — a CSS rendering of the spring-driven HEARTBEAT in
+   rivet-brand/animations/logo-motion.html: a strong first beat (lub) at ~60ms,
+   a quieter, quicker second (dub) at ~215ms, then ~570ms of diastole fully at
+   rest before repeating. Never a metronomic pulse. 850ms ≈ 70bpm. The small
+   upward lift rides along with each beat, as it does there. */
+@keyframes rivet-heartbeat {
+  0%   { transform: scale(1)     translateY(0); }
+  7%   { transform: scale(1)     translateY(0); }
+  11%  { transform: scale(1.075) translateY(-1.2%); }
+  17%  { transform: scale(0.995) translateY(0); }
+  25%  { transform: scale(1)     translateY(0); }
+  29%  { transform: scale(1.04)  translateY(-0.6%); }
+  36%  { transform: scale(0.998) translateY(0); }
+  42%  { transform: scale(1)     translateY(0); }
+  100% { transform: scale(1)     translateY(0); }
+}
+.footer-heart {
+  transform-origin: 50% 60%;
+  will-change: transform;
+}
+/* Hover the HEART, not its container. `.footer-mark:hover` covered the whole
+   footer graphic — a full-width box — so the pulse fired whenever the cursor
+   was anywhere near the bottom of the page. */
+.footer-heart:hover {
+  animation: rivet-heartbeat 850ms ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .footer-heart:hover { animation: none; }
+}
+
 @keyframes rivet-float {
   0%,
   100% {

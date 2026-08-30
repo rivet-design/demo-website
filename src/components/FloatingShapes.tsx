@@ -49,6 +49,52 @@ const SHAPES: {
   },
 ];
 
+// Portrait (mobile hero) placement. The landscape canvas above is cover-scaled
+// to fill its box, which on a 4:5 panel blows it so far past the left and right
+// edges that all three shapes land off-screen — the blobs simply vanished below
+// lg. These are positioned against the BOX instead (fractions of its width), so
+// they overhang the panel's own edges the way the desktop composition does.
+const PORTRAIT_SHAPES: {
+  src: string;
+  /** Width as a fraction of the box width; height follows the art's ratio. */
+  w: number;
+  ratio: number;
+  left?: number;
+  right?: number;
+  top?: number;
+  bottom?: number;
+  duration: number;
+  delay: number;
+}[] = [
+  {
+    src: '/images/floating/pill-row.svg',
+    w: 0.28,
+    ratio: 65.43 / 147.19,
+    right: -0.15,
+    top: 0.03,
+    duration: 9,
+    delay: 1.2,
+  },
+  {
+    src: '/images/floating/circle-arc.svg',
+    w: 0.44,
+    ratio: 149.12 / 257.59,
+    right: -0.24,
+    bottom: 0.06,
+    duration: 8.5,
+    delay: 0.6,
+  },
+  {
+    src: '/images/floating/union-big.svg',
+    w: 0.34,
+    ratio: 246 / 287,
+    left: -0.2,
+    top: 0.32,
+    duration: 10,
+    delay: 2,
+  },
+];
+
 type FloatingShapesProps = {
   /**
    * Entry offset in px. Shapes on the RIGHT half of the design canvas are
@@ -64,9 +110,18 @@ type FloatingShapesProps = {
    * side, and the brown cluster pushes further out to the right edge.
    */
   leftAlignedLayout?: boolean;
+  /**
+   * Lay the shapes out against a portrait panel (the mobile hero) instead of
+   * cover-scaling the landscape design canvas — see PORTRAIT_SHAPES.
+   */
+  portrait?: boolean;
 };
 
-const FloatingShapes = ({ offsetX, leftAlignedLayout }: FloatingShapesProps) => {
+const FloatingShapes = ({
+  offsetX,
+  leftAlignedLayout,
+  portrait,
+}: FloatingShapesProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState({ w: DESIGN_W, h: DESIGN_H });
 
@@ -88,6 +143,48 @@ const FloatingShapes = ({ offsetX, leftAlignedLayout }: FloatingShapesProps) => 
   const rightX = offsetX ?? zero;
   const leftX = useTransform(rightX, (v) => -v);
 
+  if (portrait) {
+    return (
+      <div
+        ref={containerRef}
+        className="pointer-events-none absolute inset-0 z-40 overflow-visible"
+      >
+        {PORTRAIT_SHAPES.map((shape) => {
+          const w = box.w * shape.w;
+          const fromRight = shape.right !== undefined;
+          return (
+            <motion.div
+              key={shape.src}
+              className="absolute"
+              style={{
+                x: fromRight ? rightX : leftX,
+                width: w,
+                height: w * shape.ratio,
+                left:
+                  shape.left !== undefined ? box.w * shape.left : undefined,
+                right:
+                  shape.right !== undefined ? box.w * shape.right : undefined,
+                top: shape.top !== undefined ? box.h * shape.top : undefined,
+                bottom:
+                  shape.bottom !== undefined ? box.h * shape.bottom : undefined,
+              }}
+            >
+              <img
+                src={shape.src}
+                alt=""
+                className="rivet-float absolute inset-0 h-full w-full"
+                style={{
+                  animationDuration: `${shape.duration}s`,
+                  animationDelay: `${shape.delay}s`,
+                }}
+              />
+            </motion.div>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div ref={containerRef} className="pointer-events-none absolute inset-0 z-40 overflow-visible">
       <div
@@ -102,14 +199,19 @@ const FloatingShapes = ({ offsetX, leftAlignedLayout }: FloatingShapesProps) => 
           const fromRight = shape.left + shape.w / 2 > DESIGN_W / 2;
           let { left, top } = shape;
           if (leftAlignedLayout) {
+            // Pulled INWARD, not outward. In this layout the canvas is the
+            // whole viewport and cover-scaled, which already pushes the design
+            // positions (-260 on the left, 1388 on the right) clear of both
+            // edges — nudging them further out tipped them off-screen
+            // entirely. Moving them in is what makes them peek.
             if (!fromRight) {
-              // out of the headline's way, and further past the edge
-              left -= 40;
-              top = DESIGN_H - shape.h * 0.55;
+              left += 120;
+              top = DESIGN_H - shape.h * 0.55; // clear of the headline
             } else if (shape.top < DESIGN_H / 2) {
+              left -= 120;
               top += 170; // the top-right pill slides down the side
             } else {
-              left += 40; // the brown cluster pushes back out
+              left -= 120;
             }
           }
           return (

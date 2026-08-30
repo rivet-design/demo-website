@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, type MotionValue } from 'motion/react';
 import Logo from './Logo';
 import PromptInstallButton from './PromptInstallButton';
+import { surfaceBackground } from '../lib/background';
 
 const NavBar = ({
   motionOpacity,
@@ -10,6 +11,7 @@ const NavBar = ({
   motionScale,
   motionRadius,
   rootRef,
+  featherBackground,
 }: {
   /**
    * Optional scroll-driven motion values — used by the hero's shrink
@@ -30,6 +32,13 @@ const NavBar = ({
    * to compute its own shrink-FLIP geometry toward the same landing target
    * the hero card uses). */
   rootRef?: (el: HTMLElement | null) => void;
+  /**
+   * Paints the bar as a fill in this colour that FEATHERS OUT below the bar
+   * rather than ending on a hard edge. Used by the page nav, which travels
+   * over grounds of different colours: the caller drives the colour to match
+   * the current ground, and the feather hides the transition.
+   */
+  featherBackground?: MotionValue<string>;
 } = {}) => {
   // Experiment: keep the nav white throughout (isDark stays false).
   const [isDark] = useState(false);
@@ -50,11 +59,14 @@ const NavBar = ({
     <motion.nav
       ref={rootRef}
       style={{
-        // No fill in the light theme: the bar reads as part of whatever
-        // surface is behind it — the paper page at rest, the #fafafa ground
-        // mid-shrink, the card's own paper once it's inside the card — rather
-        // than as a separate opaque strip laid over them. (It used to paint
-        // `surfaceBackground` so scrolling content couldn't show through.)
+        // Filled with the SITE background itself (surfaceBackground and
+        // pageBackground both resolve to #F1EFE8), so the bar is opaque —
+        // nothing scrolls through a fixed nav — while still reading as the
+        // same surface as the page rather than a separate strip laid over it.
+        // `transparent` hands the fill to the caller — used by the page-level
+        // nav during the pinned sequence, where the surface behind it is the
+        // stage's #fafafa rather than the site fill.
+        ...(isDark || featherBackground ? undefined : surfaceBackground),
         ...(motionOpacity ? { opacity: motionOpacity } : undefined),
         ...(motionX ? { x: motionX } : undefined),
         ...(motionY ? { y: motionY } : undefined),
@@ -66,24 +78,41 @@ const NavBar = ({
         // breaks it out of the page gutters so it spans the full viewport width, and
         // top-0 leaves no gap above — so no scrolling content is ever visible
         // above or beside the nav.
-        'bleed-page-gutter-x relative sticky top-0 z-[70] mb-6 shrink-0 overflow-hidden transition-[color,background-color,box-shadow] duration-200',
+        'bleed-page-gutter-x relative sticky top-0 z-[70] mb-6 shrink-0 transition-[color,background-color,box-shadow] duration-200',
         isDark ? 'bg-accent-foreground text-white' : 'text-black',
         // Flat at all times — the scrolled-state drop shadow is deliberately
         // off (it read as a seam across the shrinking page card).
         'shadow-none',
       ].join(' ')}
     >
+      {featherBackground && (
+        <motion.div
+          aria-hidden
+          // A short overhang (-bottom-3) with the fill holding solid across the
+          // bar itself and softening only over the last stretch. The long
+          // 96px ramp this replaced read as a gradient panel in its own right
+          // rather than as an edge that simply stops being visible.
+          className="pointer-events-none absolute inset-x-0 -bottom-3 top-0 z-0"
+          style={{
+            backgroundColor: featherBackground,
+            WebkitMaskImage:
+              'linear-gradient(to bottom, #000 78%, rgba(0,0,0,0.6) 90%, transparent)',
+            maskImage:
+              'linear-gradient(to bottom, #000 78%, rgba(0,0,0,0.6) 90%, transparent)',
+          }}
+        />
+      )}
       <div
         // Generous, symmetric breathing room on all four sides: the bar's own
         // height carries the vertical margin (there's no fixed height any
         // more — py sets it), and the horizontal padding steps up with the
         // viewport so the logo/links never crowd the screen edges.
-        // Horizontal inset tracks the live-prototype container's own left and
-        // right edges (see --prototype-inset-x) so the nav lines up with it
-        // rather than sitting on its own margin.
+        // Horizontal inset matches the footer panel's white margin
+        // (--frame-inset-x), so the nav's wordmark sits on the same line as
+        // the panel's edge rather than on its own separate margin.
         style={{
-          paddingLeft: 'var(--prototype-inset-x)',
-          paddingRight: 'var(--prototype-inset-x)',
+          paddingLeft: 'var(--frame-inset-x)',
+          paddingRight: 'var(--frame-inset-x)',
         }}
         className="relative z-10 flex w-full items-center justify-between py-5"
       >
@@ -120,10 +149,12 @@ const NavBar = ({
             target="_blank"
             rel="noopener noreferrer"
             className={[
-              'no-external-icon type-label flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition-colors lg:hidden',
+              // Plain coloured link, matching the desktop nav's treatment —
+              // no background pill.
+              'no-external-icon type-label flex cursor-pointer items-center gap-2 px-2 py-1.5 transition-colors lg:hidden',
               isDark
-                ? 'bg-white text-accent-foreground hover:text-accent-foreground/80'
-                : 'bg-green text-white hover:text-white/60',
+                ? 'text-white hover:text-white/60'
+                : 'text-[#ec4423] hover:text-[#ec4423]/60',
             ].join(' ')}
           >
             <svg

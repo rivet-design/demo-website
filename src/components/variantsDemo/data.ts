@@ -36,6 +36,9 @@ export const RUN_LABEL = 'Landing Directions';
 /** The 1984 Macintosh System — the one genuinely off-the-wall direction. */
 export const MACINTOSH_SYSTEM_ID = '00368aee-9194-4bdd-be73-00f40704dbf2';
 
+/** Cyanotype drafting sheet: same composition, drawn instead of designed. */
+export const BLUEPRINT_DRAFT_ID = '5b1c0f7e-92a4-4c31-9f66-2c8ad4e10b73';
+
 /**
  * The three directions that are THIS app, re-rendered with a different
  * treatment. They load the real site in the preview iframe rather than a
@@ -82,7 +85,15 @@ export const VARIANTS: DemoVariant[] = [
     brief: '1984 black-and-white Macintosh chrome and bitmap type.',
     src: '/demos/landing/macintosh-system.html',
     tag: 'Random direction',
-    folder: 'Visual refresh',
+    folder: 'Rough explorations',
+  },
+  {
+    id: BLUEPRINT_DRAFT_ID,
+    label: 'Blueprint Draft',
+    brief: 'Cyanotype sheet with construction grid and drafting annotations.',
+    src: '/demos/landing/blueprint-draft.html',
+    tag: 'Random direction',
+    folder: 'Rough explorations',
   },
 ];
 
@@ -97,4 +108,13 @@ export const VARIANTS: DemoVariant[] = [
  */
 export const EMBED_SAFE_VARIANTS: DemoVariant[] = VARIANTS.filter(
   (v) => !v.src.startsWith('/?'),
+);
+
+/**
+ * Mobile drops the left-aligned direction from the auto-shuffle: it is a
+ * two-column layout, and a 32/57 split inside a portrait panel is unreadable.
+ * Module-level so the reference stays stable (see useVariantsDemo's `variants`).
+ */
+export const MOBILE_VARIANTS: DemoVariant[] = VARIANTS.filter(
+  (v) => v.id !== LEFT_ALIGNED_ID,
 );

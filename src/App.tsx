@@ -12,11 +12,9 @@ import {
   animate,
   useMotionValue,
   useMotionTemplate,
-  useSpring,
   useVelocity,
   useTransform,
 } from 'motion/react';
-import { Download } from 'lucide-react';
 import { Toaster } from 'sonner';
 import NavBar from './components/NavBar';
 import SplashScreen from './components/SplashScreen';
@@ -38,6 +36,7 @@ import { useVariantsDemo } from './components/variantsDemo/useVariantsDemo';
 import AgentTerminalSection from './components/AgentTerminalSection';
 import {
   EMBED_SAFE_VARIANTS,
+  MOBILE_VARIANTS,
   MACINTOSH_SYSTEM_ID,
   ORIGINAL_ID,
   VARIANTS,
@@ -45,7 +44,12 @@ import {
 import AgentTerminal from './components/sandbox/AgentTerminal';
 import ReplayButton from './components/ReplayButton';
 import { HERO_SESSION } from './components/sandbox/terminalScript';
-import { pageBackground, surfaceBackground } from './lib/background';
+import {
+  FOOTER_FILL,
+  SITE_FILL,
+  pageBackground,
+  surfaceBackground,
+} from './lib/background';
 
 // Hide the "Made for people who design." manifesto panel (CodePanel). Flip to
 // true to restore.
@@ -88,8 +92,32 @@ const HERO_TEXT_LEFT = IS_EMBED && EMBED_VARIANT === 'left-aligned';
 // height, so the container can never grow wider than the viewport and the nav
 // — which derives its inset from the same variable — stays aligned with it at
 // every window size, fullscreen included.
+// The preview pane's share of the window's width — the rest is the Directions
+// panel at w-[26%]. Keep in sync with it.
+const OUTER_PANE_FRACTION = 0.74;
+
+// The prototype window is authored at ONE fixed width and then uniformly
+// scaled to fit, rather than reflowing at every viewport. Reflowing meant its
+// chrome — Directions type, title bar, search field — stayed at absolute px
+// while the frame around it shrank, so the whole thing read at the wrong
+// scale on smaller screens. A locked design + transform keeps every internal
+// proportion identical at any size.
+const OUTER_DESIGN_W = 1440;
+const OUTER_WINDOW_FRACTION = 0.89;
+/** Window chrome above the pane, in design px. */
+const OUTER_TITLEBAR_H = 56;
+/** Share of the panel's height the window is allowed to occupy. */
+const OUTER_WINDOW_V_FIT = 0.86;
+/** The backdrop artwork's own ratio — the panel's minimum shape. */
+const OUTER_ART_RATIO = 713 / 1409;
+
+// GEOMETRY ONLY — no paint. Three stacked layers share this box (the
+// container, the terminal, the blobs), so anything visible here is drawn three
+// times over; the stroke lives on the container alone, below.
+// Height comes from a style prop (see outerPanelStyle) rather than a class:
+// it has to grow when the window inside it does.
 const OUTER_PANEL_BOX =
-  'relative flex w-[var(--prototype-w)] aspect-[1409/713] items-center justify-center';
+  'relative flex w-[var(--prototype-w)] items-center justify-center';
 
 // const FeaturePanel = () => {
 //   return (
@@ -235,6 +263,22 @@ const App = () => {
     return () => document.removeEventListener('click', swallow, true);
   }, []);
 
+  // The app sets `overscroll-behavior: none` on html/body, which stops a
+  // preview's scroll from chaining out to the host page once it reaches the
+  // end of its own content. Inside an embed that is exactly what we want to
+  // happen, so opt back in.
+  useEffect(() => {
+    if (!IS_EMBED) return;
+    const prevHtml = document.documentElement.style.overscrollBehavior;
+    const prevBody = document.body.style.overscrollBehavior;
+    document.documentElement.style.overscrollBehavior = 'auto';
+    document.body.style.overscrollBehavior = 'auto';
+    return () => {
+      document.documentElement.style.overscrollBehavior = prevHtml;
+      document.body.style.overscrollBehavior = prevBody;
+    };
+  }, []);
+
   const [heroRevealed, setHeroRevealed] = useState(!SHOW_SPLASH);
   useEffect(() => {
     const onSplashLanding = () => setHeroRevealed(true);
@@ -302,25 +346,60 @@ const App = () => {
   // Captured once: which intro to PLAY is decided on first paint (replaying the
   // typing choreography on a resize would be jarring), and reduced-motion rarely
   // toggles mid-session.
-  const [{ motionOK, isMobileHero }] = useState(() => {
-    if (typeof window === 'undefined')
-      return { motionOK: false, isMobileHero: false };
-    return {
-      motionOK: !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-      isMobileHero: !window.matchMedia('(min-width: 1024px)').matches,
-    };
-  });
-  // Desktop (lg+): the agent chat floats over the editor and types while the
-  // window opens — both visible at once. Mobile: there isn't room for that, so
-  // the intro is sequential (agent types alone → minimizes → editor maximizes
-  // and cycles options). Reduced-motion users get neither and land on the editor.
-  const playHeroIntro = motionOK && !isMobileHero && !IS_EMBED;
-  const playHeroIntroMobile = motionOK && isMobileHero;
+  const [motionOK] = useState(() =>
+    typeof window === 'undefined'
+      ? false
+      : !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
+
+  // The pinned sequence needs a viewport that is WIDE **and LANDSCAPE**, not
+  // merely >= lg. Its geometry is height-derived (--prototype-w is 161vh
+  // capped at 90vw) while the preview pane's aspect tracks the viewport's, so
+  // on a tall-ish window the pane grows taller than the panel that houses it
+  // and the whole composition breaks out of its own container — which is what
+  // 1133x838 (aspect 1.35) was showing. 3/2 is the point below which the frame
+  // stops fitting the backdrop art's 1409x713.
+  //
+  // Reactive, unlike the reduced-motion check: this is a "can this layout even
+  // work" test, so resizing into an unsupported shape must fall back rather
+  // than stay broken until reload.
+  // Was `(min-width: 1280px) and (min-aspect-ratio: 3/2)`: the sequence needed
+  // a wide landscape window because the window reflowed and burst its panel on
+  // anything else. Now that it is a locked design scaled uniformly (see
+  // OUTER_DESIGN_W) that constraint is gone, so tablets and phones get it too.
+  // Desktop only. It was briefly opened up to phones; the sequence is driven
+  // by scroll position over a 3.6x-viewport runway and did not hold together
+  // there, so it is gated back to lg. The window's locked-ratio design means
+  // the old `min-aspect-ratio: 3/2` guard is no longer needed alongside it.
+  const HERO_INTRO_MQ = '(min-width: 1024px)';
+  const [heroIntroFits, setHeroIntroFits] = useState(() =>
+    typeof window === 'undefined'
+      ? false
+      : window.matchMedia(HERO_INTRO_MQ).matches,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia(HERO_INTRO_MQ);
+    const update = () => setHeroIntroFits(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
+  const playHeroIntro = motionOK && heroIntroFits && !IS_EMBED;
+  // Phones and narrow windows go straight to the live product demo. The old
+  // staged mobile intro (agent types alone -> minimizes -> editor maximizes)
+  // is gone: it was a second choreography to maintain for the viewport least
+  // able to show it, and the demo itself is the point.
+  const playHeroIntroMobile = false;
 
   // The editor's steady-state LAYOUT (portrait iframes, no directions panel,
   // auto-cycling) must track the viewport — unlike the one-shot intro above —
   // so widening past 1024px after a phone load lands on the desktop layout.
-  const [isMobileViewport, setIsMobileViewport] = useState(isMobileHero);
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window === 'undefined'
+      ? false
+      : !window.matchMedia('(min-width: 1024px)').matches,
+  );
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 1024px)');
     const update = () => setIsMobileViewport(!mq.matches);
@@ -348,10 +427,10 @@ const App = () => {
   // total scroll distance (px) the whole sequence spans; viewport-relative,
   // recomputed on resize.
   const [runwayPx, setRunwayPx] = useState(() =>
-    typeof window === 'undefined' ? 1200 : window.innerHeight * 3.6,
+    typeof window === 'undefined' ? 1200 : window.innerHeight * 6,
   );
   useEffect(() => {
-    const onResize = () => setRunwayPx(window.innerHeight * 3.6);
+    const onResize = () => setRunwayPx(window.innerHeight * 6);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
@@ -388,10 +467,15 @@ const App = () => {
   //                            #fafafa ground.
   //   [SHRINK_END, PHASE2_END] frame 2 → 3: the browser frame expands in and
   //                            the card slides right into its preview pane.
-  const SHRINK_END = 0.22;
-  const PHASE2_END = 0.42;
+  // These are fractions of a runway that is now 6x the viewport height (it was
+  // 3.6x). They were moved down to match, so the BUILD stays close to the pace
+  // it was tuned at — roughly 1.7 viewports instead of 1.5 — while the cycling
+  // region grows from ~1.8 viewports to ~3.9, which is where six directions
+  // were going by too fast to read.
+  const SHRINK_END = 0.15;
+  const PHASE2_END = 0.29;
   // From here the rest of the scroll cycles through the directions.
-  const CYCLE_START = 0.5;
+  const CYCLE_START = 0.35;
 
   // The whole-page card. CARD_SCALE leaves the even margin of #fafafa on
   // every side that storyboard frame 2 shows; scaling about the card's own
@@ -420,10 +504,48 @@ const App = () => {
   // instead makes it lay out as a ~950px-wide viewport, which is why the
   // "Original" direction didn't match the hero.
   const [stageSize, setStageSize] = useState({ w: 0, h: 0 });
+  // Width of the decorative panel, which sets the window's uniform scale.
+  const outerPanelBoxRef = useRef<HTMLDivElement>(null);
+  const [outerPanelW, setOuterPanelW] = useState(0);
+  useEffect(() => {
+    const el = outerPanelBoxRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) =>
+      setOuterPanelW(entry.contentRect.width),
+    );
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [playHeroIntro]);
+  // The panel is at LEAST the artwork's ratio, and taller whenever the window
+  // needs it to be. The window's height tracks the viewport's aspect (its pane
+  // is a scale model of the viewport) while the artwork's ratio is fixed — so
+  // on a tallish window the two diverge and the frame grew straight through
+  // the panel's top and bottom edges. Deriving the panel from the window keeps
+  // a margin at every viewport; the backdrop covers the extra height.
+  const outerPanelRatio = Math.max(
+    OUTER_ART_RATIO,
+    ((OUTER_DESIGN_W * OUTER_PANE_FRACTION) / stageAspect + OUTER_TITLEBAR_H) /
+      OUTER_DESIGN_W /
+      OUTER_WINDOW_V_FIT *
+      OUTER_WINDOW_FRACTION,
+  );
+  const outerPanelStyle = { aspectRatio: String(1 / outerPanelRatio) };
+
+  const outerChromeScale =
+    outerPanelW > 0
+      ? (outerPanelW * OUTER_WINDOW_FRACTION) / OUTER_DESIGN_W
+      : 0;
   const [landing, setLanding] = useState({
     dx: 0,
     dy: 0,
     scale: CARD_SCALE,
+    // Separate scale for the preview iframe. The card is a sibling of the
+    // window and lives in VISUAL coordinates, so it uses the pane's
+    // getBoundingClientRect. The iframe lives INSIDE the window, which is
+    // itself scaled by outerChromeScale — so measuring it visually and then
+    // scaling would apply that factor twice and leave the preview short of the
+    // pane. offsetWidth is the pane's LAYOUT width, which is the right basis.
+    iframeScale: 1,
     top: 0,
     right: 0,
     bottom: 0,
@@ -455,6 +577,7 @@ const App = () => {
         // overflow to clip, which is what was cutting the nav off the top when
         // this was a Math.max cover.
         scale: p.width / s.width,
+        iframeScale: outerPaneEl.offsetWidth / s.width,
         dx: p.left + p.width / 2 - (s.left + s.width / 2),
         dy: p.top + p.height / 2 - (s.top + s.height / 2),
         top: p.top - s.top,
@@ -472,7 +595,13 @@ const App = () => {
       ro.disconnect();
       window.removeEventListener('resize', measure);
     };
-  }, [playHeroIntro, outerPaneEl]);
+    // outerChromeScale is a DEPENDENCY, not just an input: the window is
+    // scaled by a transform, and ResizeObserver watches border-box size, which
+    // a transform never changes. So when the scale goes from its initial 0 (the
+    // panel width is not measured on first paint) to its real value, the RO
+    // never fires and the landing rect stays at its guarded default — the card
+    // ends up unclipped and covering the whole stage, chrome and all.
+  }, [playHeroIntro, outerPaneEl, outerChromeScale]);
 
   // Beat 1 shrinks the card IN PLACE (no translation — it must not drift);
   // only beat 2 moves it, into the new container's preview pane.
@@ -528,7 +657,7 @@ const App = () => {
   // already sitting there waiting when the card starts flying into it.
   const outerFrameOpacity = useTransform(
     heroScrollProgress,
-    [SHRINK_END, SHRINK_END + 0.08],
+    [SHRINK_END, SHRINK_END + 0.055],
     [0, 1],
     { clamp: true },
   );
@@ -540,7 +669,7 @@ const App = () => {
   // opacity is still 0, so it's never seen.
   const outerFrameScale = useTransform(
     heroScrollProgress,
-    [0, SHRINK_END, SHRINK_END + 0.08],
+    [0, SHRINK_END, SHRINK_END + 0.055],
     [1, 0.92, 1],
     { clamp: true },
   );
@@ -553,7 +682,7 @@ const App = () => {
     // AFTER the hero has landed in the pane (PHASE2_END), not alongside the
     // container's own entrance — they're the last decorative beat, drifting in
     // around a composition that has already settled.
-    [PHASE2_END, PHASE2_END + 0.06],
+    [PHASE2_END, PHASE2_END + 0.04],
     [160, 0],
     { clamp: true },
   );
@@ -568,30 +697,61 @@ const App = () => {
   // rather than reverse; stepping back through the directions is a normal
   // selection change and should stay clean, so left-aligned → with-splash →
   // original reads as smooth iteration, not a blur every time.
-  const reverseBlurRaw = useTransform(
-    [scrollVelocity, heroScrollProgress],
-    (vals: number[]) =>
-      vals[1] < CYCLE_START && vals[0] < 0
-        ? Math.min(-vals[0] * 12, 10)
-        : 0,
-  );
-  const reverseBlur = useSpring(reverseBlurRaw, { stiffness: 500, damping: 45 });
+  //
+  // Driven by a LATCHED direction, not by instantaneous velocity. Scrolling a
+  // trackpad produces a velocity that oscillates and repeatedly crosses zero,
+  // so scaling the blur by |velocity| (what this used to do) made the effect
+  // pulse in and out several times per gesture. Hysteresis instead: engage
+  // only past a real reverse speed, release on any forward motion or once the
+  // gesture settles, and animate a single 0->1 amount so the dissolve is one
+  // continuous move regardless of how ragged the input is.
+  const [reversing, setReversing] = useState(false);
+  useMotionValueEvent(scrollVelocity, 'change', (v) => {
+    const p = heroScrollProgress.get();
+    if (p >= CYCLE_START) {
+      setReversing((was) => (was ? false : was));
+      return;
+    }
+    if (v < -0.06) setReversing((was) => (was ? was : true));
+    else if (v > 0.02 || Math.abs(v) < 0.005)
+      setReversing((was) => (was ? false : was));
+  });
+  const reverseAmount = useMotionValue(0);
+  useEffect(() => {
+    const controls = animate(reverseAmount, reversing ? 1 : 0, {
+      duration: reversing ? 0.18 : 0.32,
+      ease: 'easeOut',
+    });
+    return () => controls.stop();
+  }, [reversing, reverseAmount]);
+  const reverseBlur = useTransform(reverseAmount, (v) => v * 10);
   const outerFilter = useMotionTemplate`blur(${reverseBlur}px)`;
-  const reverseFadeRaw = useTransform(
-    [scrollVelocity, heroScrollProgress],
-    (vals: number[]): number =>
-      vals[1] < CYCLE_START && vals[0] < 0 ? 0.4 : 1,
-  );
-  const reverseFade = useSpring(reverseFadeRaw, { stiffness: 500, damping: 45 });
+  const reverseFade = useTransform(reverseAmount, (v) => 1 - v * 0.6);
   const outerOpacity = useTransform(
     [outerFrameOpacity, reverseFade],
     (v: number[]) => v[0] * v[1],
   );
+  // The blobs fade in ACROSS THEIR OWN SLIDE rather than being already-visible
+  // when it starts: they inherit the container's opacity ramp, which finishes
+  // long before PHASE2_END, so without this they simply appeared and then
+  // travelled. Multiplied with outerOpacity so they still dissolve with
+  // everything else on reverse scroll.
+  const blobsFade = useTransform(
+    heroScrollProgress,
+    [PHASE2_END, PHASE2_END + 0.04],
+    [0, 1],
+    { clamp: true },
+  );
+  const blobsOpacity = useTransform(
+    [outerOpacity, blobsFade],
+    (v: number[]) => v[0] * v[1],
+  );
+
   // The terminal arrives after the container has settled — it's the last beat,
   // not part of the container's own entrance.
   const terminalOpacityRaw = useTransform(
     heroScrollProgress,
-    [SHRINK_END + 0.14, SHRINK_END + 0.24],
+    [SHRINK_END + 0.10, SHRINK_END + 0.165],
     [0, 1],
     { clamp: true },
   );
@@ -603,9 +763,15 @@ const App = () => {
   // Its own Directions list — same data/behaviour as the hero's panel.
   const outerCtrl = useVariantsDemo({
     start: containerReached,
+    // Far quicker than the defaults (200/1000/2800). The skeletons begin when
+    // the container appears rather than at first scroll, so the whole hold is
+    // watched rather than elapsing off-screen — it only has to read as
+    // "generating", not make you wait for it.
+    startDelayMs: 0,
+    firstReadyMs: 180,
+    allReadyMs: 620,
     initialId: ORIGINAL_ID,
     autoPlay: false,
-    startDelayMs: 200,
   });
   // "Original" IS this hero — so for that direction the landed card simply
   // stays as the preview's content. Nothing swaps in, nothing crossfades,
@@ -630,6 +796,71 @@ const App = () => {
     v > 0.5 ? 'auto' : 'none',
   );
 
+  // Switching direction blur-fades the preview through, rather than hard
+  // cutting: the iframe is keyed on src so it remounts instantly, and even the
+  // card<->iframe swap was a plain crossfade. Retriggered on every selection
+  // change, including selections made by the scroll cycler.
+  const directionMix = useMotionValue(1);
+  useEffect(() => {
+    directionMix.set(0);
+    const controls = animate(directionMix, 1, {
+      duration: 0.4,
+      ease: 'easeOut',
+    });
+    return () => controls.stop();
+  }, [outerCtrl.selectedId, directionMix]);
+  const directionBlur = useTransform(
+    directionMix,
+    (v) => `blur(${(1 - v) * 10}px)`,
+  );
+  const cardOpacity = useTransform(
+    [originalMix, directionMix],
+    (v: number[]) => v[0] * v[1],
+  );
+  const previewOpacityMixed = useTransform(
+    [previewOpacity, directionMix],
+    (v: number[]) => v[0] * v[1],
+  );
+
+  const MIN_DIRECTION_MS = 420;
+  const lastDirectionAt = useRef(0);
+  const pendingDirection = useRef<string | null>(null);
+  const directionTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (directionTimer.current !== null) {
+        window.clearTimeout(directionTimer.current);
+      }
+    },
+    [],
+  );
+
+  // Scroll resistance, CYCLING REGION ONLY. The build — page shrinking, window
+  // arriving, card landing — should stay as responsive as the scroll that
+  // drives it; damping it just made entering the demo feel heavy. The problem
+  // is only past CYCLE_START, where one trackpad flick can carry enough delta
+  // to flip through every direction at once. Wheel input alone is damped;
+  // keyboard, scrollbar and programmatic scrolling are untouched.
+  const SCROLL_RESISTANCE = 0.45;
+  useEffect(() => {
+    if (!playHeroIntro) return;
+    const onWheel = (e: WheelEvent) => {
+      const p = heroScrollProgress.get();
+      // Before the cycling region — and after the runway ends — this must not
+      // interfere at all.
+      if (p < CYCLE_START || p >= 1) return;
+      // The agent terminal has its own scrollable transcript — let it keep it.
+      const target = e.target as Node | null;
+      if (target && outerChatWrapRef.current?.contains(target)) return;
+      e.preventDefault();
+      const unit =
+        e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1;
+      window.scrollBy(0, e.deltaY * unit * SCROLL_RESISTANCE);
+    };
+    window.addEventListener('wheel', onWheel, { passive: false });
+    return () => window.removeEventListener('wheel', onWheel);
+  }, [playHeroIntro, heroScrollProgress, CYCLE_START]);
+
   // Past the handoff, the remaining scroll steps through the directions — the
   // run "generating" in front of you rather than something you have to click.
   // Manual clicks still work: the next scroll step simply takes over again.
@@ -651,7 +882,28 @@ const App = () => {
       Math.max(0, Math.floor(t * VARIANTS.length)),
     );
     const next = VARIANTS[i].id;
-    if (next !== outerCtrl.selectedId) outerCtrl.select(next);
+    if (next === outerCtrl.selectedId) return;
+
+    // Rate-limit. Scroll position alone would let a flick through the runway
+    // swap every direction in a few frames, so nothing is ever actually seen.
+    // Each one holds for MIN_DIRECTION_MS; changes arriving inside that window
+    // are collapsed into one trailing update, so a fast scroll still ENDS on
+    // whichever direction the final scroll position names.
+    const now = performance.now();
+    const wait = MIN_DIRECTION_MS - (now - lastDirectionAt.current);
+    if (wait <= 0) {
+      lastDirectionAt.current = now;
+      outerCtrl.select(next);
+      return;
+    }
+    pendingDirection.current = next;
+    if (directionTimer.current === null) {
+      directionTimer.current = window.setTimeout(() => {
+        directionTimer.current = null;
+        lastDirectionAt.current = performance.now();
+        if (pendingDirection.current) outerCtrl.select(pendingDirection.current);
+      }, wait);
+    }
   });
 
   // The page's OWN nav slides back down as the sequence settles. The NavBar
@@ -659,13 +911,20 @@ const App = () => {
   // so without this there is simply no nav left once the card has landed.
   const pageNavOpacity = useTransform(
     heroScrollProgress,
-    [PHASE2_END - 0.08, PHASE2_END],
+    [PHASE2_END - 0.055, PHASE2_END],
     [0, 1],
     { clamp: true },
   );
+  // Constant #fafafa. It used to interpolate to the tan SITE_FILL once the
+  // pinned stage scrolled away, because the page's ground was tan back then.
+  // The ground is #fafafa everywhere past the hero now — tan is only ever a
+  // panel fill — so there is nothing to cross over to, and the crossover left
+  // a tan bar sitting on a #fafafa page.
+  const pageNavBg = useMotionValue(FOOTER_FILL);
+
   const pageNavY = useTransform(
     heroScrollProgress,
-    [PHASE2_END - 0.08, PHASE2_END],
+    [PHASE2_END - 0.055, PHASE2_END],
     [-72, 0],
     { clamp: true },
   );
@@ -792,16 +1051,26 @@ const App = () => {
     );
 
   // The prototype-driving terminal is clamped to the decorative panel it is
-  // clipped to, so it can never be dragged out of its own backdrop.
-  const startOuterChatDrag = (e: React.MouseEvent & React.PointerEvent) =>
+  // clipped to, so it can never be dragged out of its own backdrop. Only its
+  // TITLE BAR is a drag handle — the transcript underneath has to scroll and
+  // the composer has to take focus, and a drag that starts anywhere would
+  // preventDefault both away.
+  const OUTER_CHAT_TITLEBAR_PX = 36;
+  const startOuterChatDrag = (e: React.MouseEvent & React.PointerEvent) => {
+    const wrap = outerChatWrapRef.current;
+    if (!wrap) return;
+    if (e.clientY - wrap.getBoundingClientRect().top > OUTER_CHAT_TITLEBAR_PX) {
+      return;
+    }
     beginDrag(
       e,
-      outerChatWrapRef.current,
+      wrap,
       outerPanelRef.current,
       setOuterChatPos,
       setOuterChatDragging,
       outerChatDragCleanup,
     );
+  };
   // During the agent phase the editor isn't mounted yet; it takes over once the
   // agent has minimized out.
   const showMobileAgent = playHeroIntroMobile && mobilePhase !== 'editor';
@@ -825,7 +1094,7 @@ const App = () => {
     return (
       <div className="w-full">
         {/* Rebuilt to match Figma (node 796:721) directly: lockup, single
-            auto-wrapping headline, Watch Demo / Quick install now CTAs.
+            auto-wrapping headline, Watch Demo / Try Rivet for free CTAs.
             Deliberately not touching #hero-showcase below — same demo
             (BrowserFrame + VariantsShowcase / mobile AgentTerminal) as
             before. */}
@@ -877,10 +1146,17 @@ const App = () => {
               // direction gets a column-relative clamp instead, and drops the
               // hard <br/> so the headline wraps naturally to three lines the
               // way the reference does.
+              // Inside a preview the headline is set from the embed's own
+              // viewport, which is much narrower than the real page's — so the
+              // stock formula lands proportionally larger than the hero it is
+              // meant to be showing. A tighter clamp brings the preview back
+              // in line with the real thing.
               className={`hero-title-text font-main font-normal normal-case leading-[1.08] tracking-[-0.02em] text-black ${
                 HERO_TEXT_LEFT
                   ? 'text-[clamp(1.75rem,12cqw,4rem)]'
-                  : 'hero-title-size leading-[1.164]'
+                  : IS_EMBED
+                    ? 'text-[clamp(1.25rem,3.4vw,2.5rem)] leading-[1.164]'
+                    : 'hero-title-size leading-[1.164]'
               }`}
             >
               {HERO_TEXT_LEFT ? (
@@ -918,14 +1194,17 @@ const App = () => {
               </a>
               <a
                 href="#install-panel"
-                className="flex w-[199px] items-center justify-center gap-[10px] rounded-lg p-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px] text-white transition-opacity hover:opacity-90"
+                // Auto width with explicit side padding. The old fixed
+                // w-[199px] was sized for the previous, longer label, so the
+                // shorter copy sat in the middle of a box with a lot of air
+                // either side.
+                className="flex items-center justify-center gap-[10px] rounded-lg px-5 py-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px] text-white transition-opacity hover:opacity-90"
                 style={{
                   backgroundImage:
                     'linear-gradient(137.74deg, rgb(236, 68, 35) 41.128%, rgb(243, 138, 118) 121.74%)',
                 }}
               >
-                <Download className="h-4 w-4" strokeWidth={2} />
-                Quick install now
+                Try Rivet for free
               </a>
             </div>
           </div>
@@ -953,9 +1232,12 @@ const App = () => {
         {playHeroIntro && (
           <motion.div
             style={{ opacity: pageNavOpacity, y: pageNavY }}
+            // Full-bleed and flush to the top; frosted rather than filled, so
+            // it never has to be colour-matched to the ground behind it.
+            // page-gutter-x because NavBar's own bleed cancels exactly that.
             className="page-gutter-x fixed inset-x-0 top-0 z-[60]"
           >
-            <NavBar />
+            <NavBar featherBackground={pageNavBg} />
           </motion.div>
         )}
 
@@ -981,7 +1263,14 @@ const App = () => {
             className={
               playHeroIntro
                 ? 'sticky top-0 flex h-screen flex-col overflow-hidden'
-                : 'flex flex-col gap-8'
+                : // In an embed the page is JUST the hero, so the stage takes
+                  // the full viewport and the hero row (flex-1) grows into the
+                  // space under the nav — its items-center then centres the
+                  // columns vertically. Without a height here flex-1 has
+                  // nothing to grow into and everything stacks at the top.
+                  IS_EMBED
+                  ? 'flex min-h-screen flex-col gap-8'
+                  : 'flex flex-col gap-8'
             }
             ref={stageRef}
             // The neutral ground revealed around the card as the whole page
@@ -997,7 +1286,7 @@ const App = () => {
             {playHeroIntro && (
               <motion.div
                 style={{ opacity: outerOpacity, filter: outerFilter }}
-                className="absolute inset-0 z-0 flex items-center justify-center"
+                className="absolute inset-0 z-0 flex items-center justify-center pt-[var(--page-nav-h)]"
               >
                 {/* Same decorative shell the hero's own demo sits in — the
                     striped backdrop and the drifting brand shapes — so the
@@ -1014,18 +1303,55 @@ const App = () => {
                     sit inside the art. `z-0` so the backdrop's own `-z-10`
                     stays trapped in this stacking context instead of sliding
                     behind the stage's #fafafa. */}
-                <div className={`z-0 ${OUTER_PANEL_BOX}`}>
+                <div
+                  ref={outerPanelBoxRef}
+                  style={outerPanelStyle}
+                  className={`z-0 rounded-lg border-[0.5px] border-black/10 ${OUTER_PANEL_BOX}`}
+                >
                   {/* Backdrop + window scale up together as they fade in. */}
-                  <motion.div style={{ scale: outerFrameScale }} className="absolute inset-0">
-                    <HeroShowcaseBackground />
-                  </motion.div>
-                  {/* Blobs SLIDE in, each from its own nearest edge. */}
                   <motion.div
                     style={{ scale: outerFrameScale }}
-                    className="relative z-10 flex w-[89%] justify-center"
+                    className="absolute inset-0 overflow-hidden rounded-lg"
+                  >
+                    <HeroShowcaseBackground fill />
+                  </motion.div>
+                  {/* Blobs SLIDE in, each from its own nearest edge. */}
+                  {/* Centred by FLEX, not by a percentage translate.
+                      `translate(-50%,-50%)` resolves its percentages against
+                      the element's UNSCALED box — 720px here — while the
+                      visual half-width is only 720 x scale, so the window was
+                      pushed down and to the right by the difference. Flex
+                      centres the unscaled box and `scale` about its own centre
+                      keeps the visual centred with it; the overflow is
+                      symmetric, so nothing has to be corrected for. */}
+                  <motion.div
+                    style={{ scale: outerFrameScale }}
+                    className="absolute inset-0 z-10 flex items-center justify-center"
+                  >
+                  <div
+                    className="flex-none"
+                    style={{
+                      width: OUTER_DESIGN_W,
+                      transform: `scale(${outerChromeScale})`,
+                      transformOrigin: 'center',
+                    }}
                   >
                   <BrowserFrame url="localhost:4000" className="w-full">
-                  <div className="flex w-full">
+                  {/* The ROW carries the aspect, not the pane. The pane's own
+                      aspect-ratio was being overridden by the flex row's
+                      default `items-stretch`, which sizes children to the
+                      TALLEST item — the Directions panel. The pane then came
+                      out taller than the viewport model the card is scaled to,
+                      and its bg-white showed as bands above and below. Driving
+                      the row instead means the pane is exactly
+                      (row width x PANE_FRACTION) / stageAspect, and both
+                      children stretch to the same height. */}
+                  <div
+                    className="flex w-full"
+                    style={{
+                      aspectRatio: String(stageAspect / OUTER_PANE_FRACTION),
+                    }}
+                  >
                     <div className="relative w-[26%] shrink-0">
                       <DirectionsPanel ctrl={outerCtrl} desktop />
                     </div>
@@ -1037,7 +1363,6 @@ const App = () => {
                     <div
                       ref={setOuterPaneEl}
                       className="relative min-w-0 flex-1 overflow-hidden bg-white"
-                      style={{ aspectRatio: String(stageAspect) }}
                     >
                       {/* The live direction. `key` on src so switching
                           directions remounts rather than reusing the previous
@@ -1048,14 +1373,21 @@ const App = () => {
                         key={outerCtrl.selected.src}
                         src={outerCtrl.selected.src}
                         title={outerCtrl.selected.label}
-                        // Never let the preview trap the page's wheel scroll —
-                        // the whole sequence is scroll-driven.
+                        // No internal scroll on desktop: an embed renders the
+                        // hero and nothing else, and it is laid out at the
+                        // stage's own dimensions, so it already fits the frame
+                        // exactly. Letting it scroll only steals wheel events
+                        // from the pinned sequence. (Mobile keeps its own
+                        // scroll via VariantsShowcase's `scrollable`.) The
+                        // overscroll-behavior override in embed mode still
+                        // lets any residual scroll chain out to the page.
                         scrolling="no"
                         style={{
-                          opacity: previewOpacity,
+                          opacity: previewOpacityMixed,
+                          filter: directionBlur,
                           width: stageSize.w || '100%',
                           height: stageSize.h || '100%',
-                          transform: `scale(${landing.scale})`,
+                          transform: `scale(${landing.iframeScale})`,
                           transformOrigin: 'top left',
                         }}
                         className="absolute left-0 top-0 border-0"
@@ -1064,6 +1396,7 @@ const App = () => {
                     </div>
                   </div>
                 </BrowserFrame>
+                  </div>
                   </motion.div>
 
                 </div>
@@ -1079,10 +1412,10 @@ const App = () => {
                 overhang the panel's edges. */}
             {playHeroIntro && (
               <motion.div
-                style={{ opacity: outerOpacity, filter: outerFilter }}
-                className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center"
+                style={{ opacity: blobsOpacity, filter: outerFilter }}
+                className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center pt-[var(--page-nav-h)]"
               >
-                <div className={OUTER_PANEL_BOX}>
+                <div style={outerPanelStyle} className={OUTER_PANEL_BOX}>
                   <FloatingShapes offsetX={blobsX} />
                 </div>
               </motion.div>
@@ -1098,7 +1431,7 @@ const App = () => {
             {playHeroIntro && !outerChatClosed && (
               <motion.div
                 style={{ opacity: terminalOpacity, filter: outerFilter }}
-                className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center"
+                className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center pt-[var(--page-nav-h)]"
               >
                 <div ref={outerPanelRef} className={`${OUTER_PANEL_BOX} overflow-hidden`}>
                   {/* pointer-events-auto: the layer above is deliberately
@@ -1111,7 +1444,7 @@ const App = () => {
                     ref={outerChatWrapRef}
                     onPointerDown={startOuterChatDrag}
                     className={`pointer-events-auto absolute hidden h-[300px] w-[380px] touch-none select-none lg:block ${
-                      outerChatDragging ? 'cursor-grabbing' : 'cursor-grab'
+                      outerChatDragging ? 'cursor-grabbing' : ''
                     } ${outerChatPos ? '' : 'bottom-[6%] right-[5%]'}`}
                     style={
                       outerChatPos
@@ -1125,7 +1458,7 @@ const App = () => {
                       loop={false}
                       script={HERO_SESSION}
                       onClose={() => setOuterChatClosed(true)}
-                      className="pointer-events-none h-full w-full"
+                      className="h-full w-full"
                     />
                   </div>
                 </div>
@@ -1171,7 +1504,8 @@ const App = () => {
                       y: cardY,
                       scale: cardScale,
                       borderRadius: cardRadius,
-                      opacity: originalMix,
+                      opacity: cardOpacity,
+                      filter: directionBlur,
                       pointerEvents: cardPointerEvents,
                       ...surfaceBackground,
                     }
@@ -1199,7 +1533,10 @@ const App = () => {
             <div
               className={
                 HERO_TEXT_LEFT
-                  ? 'bleed-page-gutter-x relative flex flex-1 items-center gap-[10%] px-[var(--prototype-inset-x)]'
+                  ? // pb biases the vertical centring upward: items-center
+                    // centres within the content box, so bottom padding lifts
+                    // the whole row without un-centring it.
+                    'bleed-page-gutter-x relative flex flex-1 items-center gap-[10%] px-[var(--prototype-inset-x)] pb-[9vh]'
                   : 'contents'
               }
             >
@@ -1229,14 +1566,40 @@ const App = () => {
               className={
                 HERO_TEXT_LEFT
                   ? 'relative z-10 w-[60%] shrink-0 aspect-[821/559]'
-                  : 'relative z-10 flex w-full shrink-0 justify-center p-3 sm:p-4 lg:p-6'
+                  : playHeroIntro
+                    ? 'relative z-10 flex w-full shrink-0 justify-center p-3 sm:p-4 lg:p-6'
+                    : // Off the pinned path the showcase sat inside the page
+                      // gutter while the nav bleeds out of it and insets by
+                      // --prototype-inset-x, so the panel came up narrower than
+                      // the nav on both sides. Same treatment as the nav lines
+                      // the two up. No `w-full`: bleed works by negative
+                      // margins, which only widen an auto-width element.
+                      'bleed-page-gutter-x relative z-10 flex shrink-0 justify-center px-[var(--prototype-inset-x)] py-3 sm:py-4 lg:py-6'
               }
             >
-              {/* Decorative backdrop. It stays visible throughout — storyboard
-                  frame 2 shows the gradient art still inside the shrunken
-                  card, so it scales with the group rather than fading out.
-                  Plain (non-positioned) wrapper so the children's own
-                  `absolute inset-0` still resolves against #hero-showcase. */}
+              {/* Off the pinned path the window used to be sized independently
+                  of the backdrop (h-[58vh] against a `bg-contain` image at
+                  1409x713), so on a narrow or tall viewport it grew past the
+                  art and spilled out of its own container. This box locks to
+                  the artwork's ratio — art box == panel box — and the window
+                  is then a percentage of it, so it scales down with the panel
+                  and is always inside it. `contents` on the pinned path leaves
+                  that composition exactly as tuned. */}
+              <div
+                className={
+                  playHeroIntro || HERO_TEXT_LEFT
+                    ? 'contents'
+                    : // Portrait and much taller on mobile: a scaled-down
+                      // landscape panel leaves the demo unreadable on a phone.
+                      `relative flex w-full items-center justify-center ${
+                        isMobileViewport
+                          ? 'aspect-[4/5] rounded-lg border-[0.5px] border-black/10'
+                          : 'aspect-[1409/713]'
+                      }`
+                }
+              >
+              {/* Decorative backdrop. Plain (non-positioned) wrapper so the
+                  children's own `absolute inset-0` resolves against the panel. */}
               <div>
                 {/* Decorative backdrop — a static flattened export for now (see
                     HeroShowcaseBackground). */}
@@ -1246,10 +1609,11 @@ const App = () => {
                       ? '/images/hero-showcase-bg-left.png'
                       : undefined
                   }
+                  fill={isMobileViewport && !HERO_TEXT_LEFT}
                 />
 
                 {/* Loose brand shapes drifting around the showcase's edges. */}
-                {!HERO_TEXT_LEFT && <FloatingShapes />}
+                {!HERO_TEXT_LEFT && <FloatingShapes portrait={isMobileViewport} />}
               </div>
 
           {/* The whole live demo — chat typing, window open, directions
@@ -1295,7 +1659,7 @@ const App = () => {
               // outer container (above), not this one. Other paths (mobile,
               // reduced-motion) open it exactly as before.
               start={playHeroIntro || IS_EMBED ? false : showcaseRevealed}
-              className="w-full"
+              className={playHeroIntro ? 'w-full' : 'h-[86%] w-[89%]'}
             >
               <VariantsShowcase
                 // Smaller specifically on the desktop scroll-FLIP path: nav +
@@ -1306,10 +1670,10 @@ const App = () => {
                 // this smaller height on typical viewports. Unaffected
                 // elsewhere (reduced-motion desktop, mobile-portrait), which
                 // aren't inside the h-screen pinned stage at all.
+                // Fills the window, which is itself a share of the
+                // aspect-locked panel — so the whole demo scales together.
                 heightClassName={
-                  playHeroIntro
-                    ? 'h-[42vh] min-h-[360px]'
-                    : 'h-[58vh] min-h-[440px]'
+                  playHeroIntro ? 'h-[42vh] min-h-[360px]' : 'h-full'
                 }
                 // Mobile cycles through the options on its own (no directions
                 // panel) and renders each variant's portrait (mobile-first)
@@ -1319,11 +1683,23 @@ const App = () => {
                 autoPlay={isMobileViewport && motionOK}
                 showDirections={!isMobileViewport}
                 portrait={isMobileViewport}
+                // The directions centre their splash in their own viewport, so
+                // the preview's viewport has to match what's actually visible.
+                portraitFitHeight
+                // A real prototype, not a slideshow: it scrolls its own hero
+                // and then chains out to the page.
+                scrollable
                 autoAdvanceMs={2000}
                 // Inside an embed the self-referencing directions are
                 // filtered out and the wildcard becomes the default, so an
                 // embedded copy can never load this app inside itself.
-                variants={IS_EMBED ? EMBED_SAFE_VARIANTS : undefined}
+                variants={
+                  IS_EMBED
+                    ? EMBED_SAFE_VARIANTS
+                    : isMobileViewport
+                      ? MOBILE_VARIANTS
+                      : undefined
+                }
                 initialVariantId={IS_EMBED ? MACINTOSH_SYSTEM_ID : ORIGINAL_ID}
                 loadDelayMs={HERO_LOAD_DELAY_MS}
                 start={showcaseRevealed}
@@ -1344,10 +1720,18 @@ const App = () => {
             <div
               ref={chatWrapRef}
               onPointerDown={startChatDrag}
-              className={`absolute z-20 hidden touch-none select-none lg:block ${
+              // `hidden lg:block` meant the terminal disappeared inside a
+              // phone-width preview, where the embed's own viewport is below
+              // lg. Embeds show it at every width, sized as a share of the
+              // panel so it scales with the preview instead of staying 380px.
+              className={`absolute z-20 touch-none select-none ${
+                IS_EMBED ? 'block' : 'hidden lg:block'
+              } ${
                 HERO_TEXT_LEFT
                   ? 'h-[76%] w-[66%]'
-                  : 'h-[240px] w-[300px] lg:h-[300px] lg:w-[380px]'
+                  : IS_EMBED
+                    ? 'h-[46%] w-[74%]'
+                    : 'h-[240px] w-[300px] lg:h-[300px] lg:w-[380px]'
               } ${
                 chatDragging ? 'cursor-grabbing' : 'cursor-grab'
               } ${
@@ -1368,6 +1752,7 @@ const App = () => {
           {/* Replays the whole intro: typing chat → window open → directions.
               z-30 keeps it above the floating chat (z-20). */}
           <ReplayButton className="z-30" onClick={replayHero} />
+              </div>
         </div>
             </div>
             </motion.div>
@@ -1420,9 +1805,16 @@ const App = () => {
             band measures correctly. Desktop-only: on mobile each panel's copy
             stacks above its visual box, so that band isn't empty and doesn't
             read as narrow. */}
+        {/* A tan PANEL on the #fafafa page, not a tan background: same
+            --frame-inset-x margin as the nav and the footer frame, same 8px
+            radius. */}
         <div
-          className="bleed-page-gutter-x relative z-10 flex flex-col lg:-mt-8 lg:pt-16"
+          className="bleed-page-gutter-x relative z-10 px-[var(--frame-inset-x)] lg:-mt-8"
+        >
+        <div
+          className="flex flex-col overflow-hidden rounded-lg lg:pt-16"
           id="demo-panel"
+          style={{ backgroundColor: SITE_FILL }}
         >
           {/* <WorkflowPanels /> */}
           <CommentDemoSection />
@@ -1430,6 +1822,7 @@ const App = () => {
           {SHOW_VARIANTS_PANEL && <VariantsDemoSection />}
           <AgentTerminalSection />
           {SHOW_MANIFESTO_PANEL && <CodePanel />}
+        </div>
         </div>
         {/* <FeaturePanel /> */}
         {renderDownloadPanel()}

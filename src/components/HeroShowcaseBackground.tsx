@@ -9,9 +9,20 @@
 const HeroShowcaseBackground = ({
   /** Override the artwork — the left-aligned direction uses its own panel. */
   src = '/images/hero-showcase-bg.png',
-}: { src?: string } = {}) => (
+  /**
+   * `cover` instead of `contain`. The default contains the art so its baked-in
+   * border isn't clipped, but that letterboxes badly in a portrait box — which
+   * is the shape the mobile panel needs — so mobile fills and accepts the crop.
+   */
+  fill = false,
+}: { src?: string; fill?: boolean } = {}) => (
   <div
-    className="pointer-events-none absolute inset-0 -z-10 bg-contain bg-center bg-no-repeat"
+    // Rounded on its own rather than relying on a clipping parent: the mobile
+    // panel deliberately lets FloatingShapes overhang its edges, so it can't
+    // carry `overflow-hidden` to round this off.
+    className={`pointer-events-none absolute inset-0 -z-10 rounded-lg bg-center bg-no-repeat ${
+      fill ? 'bg-cover' : 'bg-contain'
+    }`}
     style={{ backgroundImage: `url('${src}')` }}
   />
 );
