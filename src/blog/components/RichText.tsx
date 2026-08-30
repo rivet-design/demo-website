@@ -36,6 +36,8 @@ export const Figure = ({ src, alt, caption }: FigureProps) => (
     <img
       src={src}
       alt={alt}
+      loading="lazy"
+      decoding="async"
       className="w-full rounded-2xl border border-black/10 object-cover"
     />
     {caption && (
@@ -44,6 +46,12 @@ export const Figure = ({ src, alt, caption }: FigureProps) => (
       </figcaption>
     )}
   </figure>
+);
+
+export const ImageGrid = ({ children }: { children: ReactNode }) => (
+  <div className="not-prose my-12 grid items-start gap-4 sm:grid-cols-2 [&>figure]:my-0">
+    {children}
+  </div>
 );
 
 export const PullQuote = ({ children }: { children: ReactNode }) => (

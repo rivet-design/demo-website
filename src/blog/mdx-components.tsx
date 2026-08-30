@@ -1,9 +1,16 @@
 import type { MDXComponents } from 'mdx/types';
-import { Callout, Figure, PullQuote, Steps } from './components/RichText';
+import {
+  Callout,
+  Figure,
+  ImageGrid,
+  PullQuote,
+  Steps,
+} from './components/RichText';
 
 export const mdxComponents: MDXComponents = {
   Callout,
   Figure,
+  ImageGrid,
   PullQuote,
   Steps,
   a: ({ href = '', ...props }) => {

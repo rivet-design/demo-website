@@ -33,6 +33,11 @@ available without imports:
   caption="An optional visible caption."
 />
 
+<ImageGrid>
+  <Figure src="/images/one.png" alt="Describe the first image" />
+  <Figure src="/images/two.png" alt="Describe the second image" />
+</ImageGrid>
+
 <PullQuote>A short statement worth emphasizing.</PullQuote>
 
 <Steps>
