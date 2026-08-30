@@ -21,7 +21,7 @@ export const Callout = ({ children, title, tone = 'note' }: CalloutProps) => (
         {title}
       </p>
     )}
-    <div className="text-base leading-relaxed text-black/75">{children}</div>
+    <div className="text-base leading-relaxed text-black">{children}</div>
   </aside>
 );
 
@@ -39,7 +39,7 @@ export const Figure = ({ src, alt, caption }: FigureProps) => (
       className="w-full rounded-2xl border border-black/10 object-cover"
     />
     {caption && (
-      <figcaption className="mt-3 font-main text-sm leading-relaxed text-black/55">
+      <figcaption className="mt-3 font-main text-sm leading-relaxed text-black">
         {caption}
       </figcaption>
     )}

@@ -29,12 +29,9 @@ const AboutPage = () => {
           <h1 className="font-main text-5xl font-normal leading-[1.04] tracking-[-0.04em] text-black sm:text-7xl">
             {meta.title}
           </h1>
-          <p className="mt-6 max-w-2xl font-main text-xl leading-relaxed text-black/60">
-            {meta.description}
-          </p>
         </header>
 
-        <div className="prose prose-lg prose-neutral mx-auto mt-12 max-w-3xl font-main prose-headings:scroll-mt-24 prose-headings:font-main prose-headings:font-normal prose-headings:tracking-[-0.025em] prose-p:leading-[1.75] prose-a:text-primary prose-a:decoration-primary/35 prose-a:underline-offset-4 hover:prose-a:decoration-primary prose-blockquote:border-primary prose-blockquote:font-normal prose-img:rounded-2xl sm:mt-16">
+        <div className="prose prose-lg prose-neutral mx-auto mt-12 max-w-3xl font-main text-black prose-headings:scroll-mt-24 prose-headings:font-main prose-headings:font-normal prose-headings:tracking-[-0.025em] prose-headings:text-black prose-p:leading-[1.75] prose-p:text-black prose-a:text-primary prose-a:decoration-primary/35 prose-a:underline-offset-4 hover:prose-a:decoration-primary prose-blockquote:border-primary prose-blockquote:font-normal prose-blockquote:text-black prose-figcaption:text-black prose-strong:text-black prose-code:text-black prose-li:text-black prose-th:text-black prose-td:text-black sm:mt-16">
           <MDXProvider components={mdxComponents}>
             <Content />
           </MDXProvider>
