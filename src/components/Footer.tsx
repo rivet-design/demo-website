@@ -107,6 +107,12 @@ const Footer = () => {
               <span className="type-label-lg font-aileron font-medium text-[#6273a1]">Rivet</span>
               <div className="flex flex-col gap-3">
                 <a
+                  href="/about"
+                  className="font-main text-lg font-normal text-black transition-colors hover:text-black/70"
+                >
+                  About
+                </a>
+                <a
                   href={RELEASES_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
