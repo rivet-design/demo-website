@@ -129,7 +129,7 @@ export const PullQuote = ({ children }: { children: ReactNode }) => (
     <span className="relative">{children}</span>
     <span
       aria-hidden="true"
-      className="pull-quote-mark pull-quote-mark-close pointer-events-none absolute bottom-0 right-0 select-none text-6xl font-semibold leading-none text-yellow-border"
+      className="pull-quote-mark pull-quote-mark-close pointer-events-none absolute bottom-0 right-0 select-none text-6xl font-semibold leading-none text-primary"
     >
       ”
     </span>
