@@ -21,35 +21,66 @@ export const Callout = ({ children, title, tone = 'note' }: CalloutProps) => (
         {title}
       </p>
     )}
-    <div className="text-base leading-relaxed text-black">{children}</div>
+    <div className="text-base leading-[1.45] text-black">{children}</div>
   </aside>
 );
 
-type FigureProps = {
+type ArticleImageProps = {
   src: string;
   alt: string;
   caption?: string;
 };
 
-export const Figure = ({ src, alt, caption }: FigureProps) => (
-  <figure className="not-prose my-12">
-    <img
-      src={src}
-      alt={alt}
-      loading="lazy"
-      decoding="async"
-      className="w-full rounded-2xl border border-black/10 object-cover"
-    />
+type ArticleImageFormat = 'rectangle' | 'square';
+
+const imageFrameClass: Record<ArticleImageFormat, string> = {
+  rectangle: 'max-w-[36rem]',
+  square: 'max-w-[26rem]',
+};
+
+const imageAspectClass: Record<ArticleImageFormat, string> = {
+  rectangle: 'aspect-[3/2]',
+  square: 'aspect-square',
+};
+
+const ArticleImage = ({
+  src,
+  alt,
+  caption,
+  format,
+}: ArticleImageProps & { format: ArticleImageFormat }) => (
+  <figure
+    className={`not-prose mx-auto my-10 w-full ${imageFrameClass[format]}`}
+  >
+    <div
+      className={`w-full overflow-hidden rounded-xl border border-black/10 ${imageAspectClass[format]}`}
+    >
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        className="h-full w-full object-cover"
+      />
+    </div>
     {caption && (
-      <figcaption className="mt-3 font-main text-sm leading-relaxed text-black">
+      <figcaption className="mt-3 font-main text-sm leading-[1.4] text-black">
         {caption}
       </figcaption>
     )}
   </figure>
 );
 
+export const RectangleImage = (props: ArticleImageProps) => (
+  <ArticleImage {...props} format="rectangle" />
+);
+
+export const SquareImage = (props: ArticleImageProps) => (
+  <ArticleImage {...props} format="square" />
+);
+
 export const ImageGrid = ({ children }: { children: ReactNode }) => (
-  <div className="not-prose my-12 grid items-start gap-4 sm:grid-cols-2 [&>figure]:my-0">
+  <div className="not-prose mx-auto my-10 grid max-w-[40rem] items-start gap-4 sm:grid-cols-2 [&>figure]:my-0">
     {children}
   </div>
 );

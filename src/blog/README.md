@@ -27,15 +27,15 @@ available without imports:
   Callout content can include **Markdown**.
 </Callout>
 
-<Figure
+<RectangleImage
   src="/images/example.png"
   alt="Describe the useful information in the image"
   caption="An optional visible caption."
 />
 
 <ImageGrid>
-  <Figure src="/images/one.png" alt="Describe the first image" />
-  <Figure src="/images/two.png" alt="Describe the second image" />
+  <SquareImage src="/images/one.png" alt="Describe the first image" />
+  <SquareImage src="/images/two.png" alt="Describe the second image" />
 </ImageGrid>
 
 <PullQuote>A short statement worth emphasizing.</PullQuote>
