@@ -104,7 +104,7 @@ export const SplitImageText = ({
   children,
   format = 'rectangle',
 }: SplitImageTextProps) => (
-  <section className="not-prose relative left-1/2 my-10 grid w-[min(54rem,calc(100vw-2rem))] -translate-x-1/2 gap-6 md:grid-cols-2 md:items-center md:gap-8">
+  <section className="not-prose mx-auto my-10 grid w-full gap-6 text-left md:grid-cols-2 md:items-center md:gap-8 xl:w-[54rem]">
     <ImageFrame src={src} alt={alt} format={format} />
     <div className="font-main text-lg leading-[1.45] text-black [&>p+p]:mt-4 [&>p]:m-0">
       {children}
