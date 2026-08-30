@@ -3,10 +3,12 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 
-// The "rivet" wordmark. Source asset lives at public/images/rivet-wordmark-orange.svg.
-// The same markup is inlined here so the right-click "Copy logo as SVG" action can
-// place it on the clipboard. Keep this string in sync with the public asset.
-const WORDMARK_SRC = '/images/rivet-wordmark-orange.svg';
+// The "rivet" wordmark — one of the two canonical marks (see lib/rivetLockup.ts),
+// matching the new nav bar in Figma (node 794:1120): text only, no icon glyph
+// beside it. WORDMARK_SVG below is the clipboard payload for "Copy logo as SVG"
+// and is intentionally the older combined icon+text export — still a valid
+// logo asset, just not pixel-identical to what's now on screen.
+const WORDMARK_SRC = '/images/rivet-wordmark-text.svg';
 const WORDMARK_SVG = `<svg width="1614" height="459" viewBox="0 0 1614 459" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M29.0335 458.267C12.9988 458.267 0 445.268 0 429.233V177.175C0 161.14 12.9988 148.141 29.0336 148.141H91.1248C95.8366 148.141 100.478 149.288 104.647 151.482L124.604 161.986C145.833 148.141 173.984 141.219 209.058 141.219C232.133 141.219 252.438 143.757 269.975 148.833C287.512 153.448 301.588 158.525 312.202 164.063C313.158 164.541 314.082 165.006 314.976 165.46C326.064 171.089 329.967 183.637 325.503 195.243L310.791 233.494C304.472 249.925 288.233 290.974 272.052 284.04C259.592 278.502 244.824 273.425 227.748 268.81C210.673 263.734 192.675 261.196 173.753 261.196H166.139C153.217 261.196 143.295 263.503 136.372 268.118C129.45 272.271 125.988 281.732 125.988 296.5V429.233C125.988 445.268 112.99 458.267 96.9549 458.267H29.0335Z" fill="#E14017"/>
 <path d="M404.885 118.374C358.274 118.374 334.969 98.5295 334.969 58.8408C334.969 36.689 340.737 21.4596 352.275 13.1527C364.274 4.38423 381.811 0 404.885 0C429.345 0 447.112 4.38423 458.188 13.1527C469.726 21.4596 475.494 36.689 475.494 58.8408C475.494 98.5295 451.958 118.374 404.885 118.374ZM370.232 458.266C354.198 458.266 341.199 445.267 341.199 429.232V177.174C341.199 161.139 354.198 148.14 370.233 148.14H438.154C454.189 148.14 467.187 161.139 467.187 177.174V429.232C467.187 445.267 454.189 458.266 438.154 458.266H370.232Z" fill="#E14017"/>
@@ -51,9 +53,13 @@ const Logo = () => {
 
   return (
     <>
+      {/* Sized to match the hero/splash lockup's wordmark exactly — same
+          h-[23px] / md:h-[26px] as the #hero-lockup text in App.tsx, so the
+          same mark reads at the same size wherever it appears. (Was a fixed
+          32px in a hard-coded 101x32 box; the box is gone too, so the wrapper
+          just hugs whatever the responsive height works out to.) */}
       <motion.div
         className="flex cursor-default items-center"
-        style={{ width: 88.4141, height: 65 }}
         onContextMenu={handleContextMenu}
       >
         <img
@@ -61,7 +67,7 @@ const Logo = () => {
           src={WORDMARK_SRC}
           alt="rivet"
           draggable={false}
-          style={{ width: 88, height: 'auto' }}
+          className="h-[23px] w-auto md:h-[26px]"
         />
       </motion.div>
 

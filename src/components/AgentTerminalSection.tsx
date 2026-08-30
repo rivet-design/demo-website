@@ -66,7 +66,6 @@ const AgentTerminalSection = () => {
               a sane height; `lg:max-h-none` releases it once the landscape ratio
               takes over. */}
           <div
-            data-guide-row
             className="relative aspect-panel-portrait max-h-[500px] w-full overflow-visible border border-black/10 bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 lg:aspect-panel lg:max-h-none lg:overflow-hidden lg:p-8"
             style={{ backgroundImage: "url('/images/bg2.webp')" }}
           >

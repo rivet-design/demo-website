@@ -17,7 +17,8 @@ export default {
         'panel-portrait': '3 / 4',
       },
       fontFamily: {
-        main: ['Satoshi', 'sans-serif'],
+        main: ['Aileron', 'sans-serif'],
+        aileron: ['Aileron', 'sans-serif'],
         cta: ['Goldman', 'sans-serif'],
         knewave: ['Knewave', 'cursive'],
         bia: ['Bia', 'cursive'],

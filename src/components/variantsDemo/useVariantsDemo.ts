@@ -41,6 +41,8 @@ export const useVariantsDemo = (
     autoPlay?: boolean;
     initialId?: string;
     startDelayMs?: number;
+    /** Gates the whole generation sequence — stays on skeletons until true. */
+    start?: boolean;
     /** Override when the first direction resolves (default 1000ms). */
     firstReadyMs?: number;
     /** Override when the remaining directions resolve (default 2800ms). */
@@ -56,6 +58,7 @@ export const useVariantsDemo = (
   },
 ): VariantsDemoController => {
   const SOURCE = options?.variants ?? VARIANTS;
+  const start = options?.start ?? true;
   const startDelayMs = Math.max(0, options?.startDelayMs ?? 0);
   const firstReadyMs = options?.firstReadyMs ?? FIRST_READY_MS;
   const allReadyMs = options?.allReadyMs ?? ALL_READY_MS;
@@ -76,6 +79,7 @@ export const useVariantsDemo = (
   // offsets the whole sequence so it can be timed after an intro (the hero's
   // agent chat) rather than firing immediately.
   useEffect(() => {
+    if (!start) return;
     const ids = SOURCE.map((v) => v.id);
     const firstId = initialId;
     const firstTimer = setTimeout(
@@ -90,7 +94,7 @@ export const useVariantsDemo = (
       clearTimeout(firstTimer);
       clearTimeout(restTimer);
     };
-  }, [SOURCE, initialId, startDelayMs, firstReadyMs, allReadyMs]);
+  }, [SOURCE, initialId, startDelayMs, firstReadyMs, allReadyMs, start]);
 
   const variants = useMemo(
     () =>

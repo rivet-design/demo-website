@@ -33,7 +33,7 @@ const Footer = () => {
               src="/images/rivet-logo.png"
               alt="Rivet"
               draggable={false}
-              className="inline-block h-11 sm:h-12 w-auto rounded-xl"
+              className="inline-block h-11 sm:h-12 w-auto"
             />
             <div className="flex flex-col items-start gap-2">
               <span className="font-main text-base font-medium text-black/70">

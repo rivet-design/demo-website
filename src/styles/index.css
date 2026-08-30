@@ -17,6 +17,27 @@
 }
 
 @font-face {
+  font-family: 'Aileron';
+  src: url('/fonts/Aileron-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Aileron';
+  src: url('/fonts/Aileron-SemiBold.otf') format('opentype');
+  font-weight: 500 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Aileron';
+  src: url('/fonts/Aileron-Bold.otf') format('opentype');
+  font-weight: 700 900;
+  font-style: normal;
+}
+
+@font-face {
   font-family: 'Bia';
   src: url('/fonts/bianzhidai_noBG-Ring.woff') format('woff');
   font-weight: 400;
@@ -39,7 +60,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 47 24% 93%; /* #F1EFE8 */
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
@@ -141,6 +162,26 @@
 
 /* Typography tokens — encode font-family, size, weight, line-height, and letter-spacing */
 @layer components {
+  /* Left/right edge of the live-prototype container, as a length.
+     The container is `h-[81.6%] aspect-[1409/713]` centred in an h-screen
+     stage, so its width is 0.816 * 1.97615 * 100vh = 161.254vh and its inset
+     from the viewport edge is (100vw - 161.254vh) / 2. The nav uses this so
+     it lines up with the container instead of its own margin; the 2rem floor
+     keeps it off the edge on short/wide viewports where the maths goes
+     negative. Keep in sync with OUTER_PANEL_BOX in App.tsx. */
+  :root {
+    /* Width of the live-prototype container, and therefore of the nav.
+       Height-derived (81.6% of an h-screen stage at aspect 1409/713 =
+       161.254vh) so it scales with the stage, but CAPPED at 90vw so a short,
+       wide viewport — fullscreen, most obviously — can't make it wider than
+       the screen. min() makes whichever limit binds first the one that wins. */
+    --prototype-w: min(90vw, 161.254vh);
+    /* Derived from the width above, with no independent floor: any floor here
+       would let the two disagree exactly when the cap is active, which is what
+       made the nav stop lining up in fullscreen. */
+    --prototype-inset-x: calc((100vw - var(--prototype-w)) / 2);
+  }
+
   .page-gutter-x {
     padding-left: var(--page-gutter-x);
     padding-right: var(--page-gutter-x);
@@ -248,7 +289,7 @@
   }
 
   [data-sonner-toast][data-styled='true'] {
-    font-family: 'Satoshi', sans-serif !important;
+    font-family: 'Aileron', sans-serif !important;
     font-size: clamp(
       0.9375rem,
       calc(var(--landing-body-text-size) * 0.9),
@@ -450,6 +491,29 @@
   100% {
     transform: scale(0.4) translateY(6%);
     opacity: 0;
+  }
+}
+
+/* Gentle drift for the loose decorative brand shapes floating around the hero
+   showcase — gives each one its own bob without needing a separate keyframe
+   per shape (duration/delay are set per-element via inline style). */
+@keyframes rivet-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-16px);
+  }
+}
+
+.rivet-float {
+  animation: rivet-float 8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rivet-float {
+    animation: none;
   }
 }
 

@@ -65,6 +65,7 @@ const VariantsShowcase = ({
   autoPlay = true,
   initialVariantId,
   loadDelayMs = 0,
+  start = true,
   showDirections = true,
   autoAdvanceMs,
   portrait = false,
@@ -78,6 +79,8 @@ const VariantsShowcase = ({
   initialVariantId?: string;
   /** Delay before the fake "generating" sequence starts (to sequence after an intro). */
   loadDelayMs?: number;
+  /** Gates the whole generating sequence — stays on skeletons until true. */
+  start?: boolean;
   /**
    * Render the right-hand Directions panel. Off for the mobile hero, where
    * there isn't room — the preview just cycles options on its own.
@@ -107,6 +110,7 @@ const VariantsShowcase = ({
     autoPlay,
     initialId: initialVariantId,
     startDelayMs: loadDelayMs,
+    start,
     autoAdvanceMs,
     variants,
   });
