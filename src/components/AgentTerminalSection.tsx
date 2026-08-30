@@ -36,7 +36,7 @@ const Vendor = ({
 );
 
 /**
- * Workflow panel: "Turn your coding agent into a design agent."
+ * Workflow panel: "Install Rivet for your agent"
  *
  * Mirrors the other workflow panels (References / Comment): a textured paper
  * section with the visual on one side and the copy on the other. Here the
@@ -83,14 +83,13 @@ const AgentTerminalSection = () => {
             references panel's copy keeps off the LEFT rule (its lg:pl-8). */}
         <div className="workflow-copy-block order-1 lg:order-2 lg:ml-auto lg:pr-8">
           <h2 className="workflow-title-size max-w-[18ch] font-main font-normal leading-[1.15] tracking-[-0.01em] text-black">
-            Start new directions from your agent.
+            Install Rivet for your agent
           </h2>
           <p className="landing-subtext mt-4 text-black/70">
             Use Rivet with your{' '}
             <Vendor src="/images/claude.svg" color="#D97757" name="Claude" />,{' '}
-            <Vendor src="/images/cursor.svg" color="#111111" name="Cursor" />,{' '}
-            <Vendor src="/images/codex.svg" color="#111111" name="Codex" />, and
-            more.
+            <Vendor src="/images/codex.svg" color="#111111" name="Codex" />, and{' '}
+            <Vendor src="/images/cursor.svg" color="#111111" name="Cursor" />
           </p>
         </div>
       </div>

@@ -7,7 +7,7 @@ import ReplayButton from './ReplayButton';
 const REQUEST_TEXT = 'Try simpler layouts';
 
 /**
- * Workflow panel: "Explore with precision."
+ * Workflow panel: "Explore more design directions"
  *
  * Mirrors the hero: inside the browser shell, a live gallery preview sits on the
  * LEFT and a Directions list on the RIGHT. A scripted drag leaves the comment
@@ -116,11 +116,10 @@ const CommentDemoSection = () => {
             references panel's copy keeps off the LEFT rule (its lg:pl-8). */}
         <div className="workflow-copy-block order-1 lg:order-2 lg:ml-auto lg:pr-8">
           <h2 className="workflow-title-size max-w-[18ch] font-main font-normal leading-[1.15] tracking-[-0.01em] text-black">
-            Explore more ideas with precision.
+            Explore more design directions
           </h2>
           <p className="landing-subtext mt-4 text-black/70">
-            Vary layout, color, motion, type and more, then compare the
-            changes in Rivet.
+            Rivet generates design directions that you can compare and refine
           </p>
         </div>
       </div>

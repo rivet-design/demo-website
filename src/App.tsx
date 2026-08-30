@@ -1817,10 +1817,10 @@ const App = () => {
           style={{ backgroundColor: SITE_FILL }}
         >
           {/* <WorkflowPanels /> */}
-          <CommentDemoSection />
-          <ReferencesDemoSection />
-          {SHOW_VARIANTS_PANEL && <VariantsDemoSection />}
           <AgentTerminalSection />
+          <CommentDemoSection />
+          {SHOW_VARIANTS_PANEL && <VariantsDemoSection />}
+          <ReferencesDemoSection />
           {SHOW_MANIFESTO_PANEL && <CodePanel />}
         </div>
         </div>
