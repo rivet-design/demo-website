@@ -7,6 +7,8 @@ import AuthSuccessPage from './components/AuthSuccessPage';
 import PrivacyPolicyPage from './components/PrivacyPolicyPage';
 import TermsPage from './components/TermsPage';
 import VariantsDemoPage from './components/VariantsDemoPage';
+import BlogIndexPage from './blog/BlogIndexPage';
+import BlogPostPage from './blog/BlogPostPage';
 import { initPostHog } from './lib/posthog';
 
 initPostHog();
@@ -23,6 +25,8 @@ const getComponent = () => {
   if (path === '/privacy') return PrivacyPolicyPage;
   if (path === '/terms') return TermsPage;
   if (path === '/variants') return VariantsDemoPage;
+  if (path === '/blog') return BlogIndexPage;
+  if (path.startsWith('/blog/')) return BlogPostPage;
   return App;
 };
 
