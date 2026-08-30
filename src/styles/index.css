@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+.pull-quote-mark {
+  transition: transform 200ms ease-in-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pull-quote:hover .pull-quote-mark-open {
+    transform: translate(-0.5rem, -0.25rem) rotate(-4deg);
+  }
+
+  .pull-quote:hover .pull-quote-mark-close {
+    transform: translate(0.5rem, 0.25rem) rotate(4deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pull-quote-mark {
+    transition: none;
+  }
+}
+
 @font-face {
   font-family: 'Satoshi';
   src: url('/fonts/Satoshi-Variable.woff2') format('woff2-variations');
