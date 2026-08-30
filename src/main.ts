@@ -7,8 +7,7 @@ import AuthSuccessPage from './components/AuthSuccessPage';
 import PrivacyPolicyPage from './components/PrivacyPolicyPage';
 import TermsPage from './components/TermsPage';
 import VariantsDemoPage from './components/VariantsDemoPage';
-import BlogIndexPage from './blog/BlogIndexPage';
-import BlogPostPage from './blog/BlogPostPage';
+import AboutPage from './blog/AboutPage';
 import { initPostHog } from './lib/posthog';
 
 initPostHog();
@@ -17,7 +16,12 @@ const container = document.getElementById('app')!;
 const root = createRoot(container);
 
 // Simple routing based on pathname
-const path = window.location.pathname;
+const requestedPath = window.location.pathname;
+const isLegacyBlogPath =
+  requestedPath === '/blog' || requestedPath.startsWith('/blog/');
+const path = isLegacyBlogPath ? '/about' : requestedPath;
+
+if (isLegacyBlogPath) window.history.replaceState(null, '', '/about');
 
 const getComponent = () => {
   if (path === '/download') return DownloadPage;
@@ -25,8 +29,7 @@ const getComponent = () => {
   if (path === '/privacy') return PrivacyPolicyPage;
   if (path === '/terms') return TermsPage;
   if (path === '/variants') return VariantsDemoPage;
-  if (path === '/blog') return BlogIndexPage;
-  if (path.startsWith('/blog/')) return BlogPostPage;
+  if (path === '/about') return AboutPage;
   return App;
 };
 

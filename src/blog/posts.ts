@@ -40,20 +40,5 @@ if (new Set(slugs).size !== slugs.length) {
   throw new Error('Blog post slugs must be unique.');
 }
 
-export const blogPosts = entries
-  .filter(({ meta }) => !meta.draft)
-  .sort(
-    (a, b) =>
-      new Date(b.meta.publishedAt).getTime() -
-      new Date(a.meta.publishedAt).getTime(),
-  );
-
 export const getBlogPost = (slug: string) =>
   entries.find(({ meta }) => meta.slug === slug && !meta.draft);
-
-export const formatPostDate = (publishedAt: BlogPostMeta['publishedAt']) =>
-  new Intl.DateTimeFormat('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(new Date(`${publishedAt}T12:00:00`));

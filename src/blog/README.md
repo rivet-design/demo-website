@@ -13,9 +13,10 @@ export const meta = {
 };
 ```
 
-The filename does not control the URL; `meta.slug` does. Missing metadata,
-invalid dates, and duplicate slugs fail the build. Set `draft: true` to keep a
-post out of the index and make its URL unavailable.
+The filename does not control the content slug; `meta.slug` does. Missing
+metadata, invalid dates, and duplicate slugs fail the build. Set `draft: true`
+to keep content unavailable. The current `story-of-rivet` post is rendered at
+`/about`; the old `/blog` URLs are normalized to that route.
 
 Regular Markdown supports headings, links, lists, blockquotes, tables,
 footnotes, task lists, and fenced code blocks. These richer components are
