@@ -62,7 +62,7 @@ const ImageFrame = ({
 );
 
 const ImageCaption = ({ children }: { children: ReactNode }) => (
-  <figcaption className="mt-3 font-main text-sm leading-[1.4] text-black">
+  <figcaption className="mt-3 font-main text-sm leading-[1.4] text-black/55">
     {children}
   </figcaption>
 );
