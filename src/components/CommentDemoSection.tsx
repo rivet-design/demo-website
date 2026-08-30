@@ -67,7 +67,6 @@ const CommentDemoSection = () => {
               taller (portrait) box leverages the vertical real estate to show
               more of the masonry grid. */}
           <div
-            data-guide-row
             className="relative block aspect-panel-portrait w-full overflow-visible bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 lg:hidden"
             style={{ backgroundImage: "url('/images/bg3.webp')" }}
           >
@@ -88,7 +87,6 @@ const CommentDemoSection = () => {
               panel. Same w-full + 16/11 box as the other workflow panels so all
               three match in size; the frame and shell fill it (h-full). */}
           <div
-            data-guide-row
             className="relative hidden w-full overflow-hidden bg-cover bg-center p-4 shadow-[0_10px_40px_rgba(0,0,0,0.08)] sm:p-6 lg:block lg:p-8"
             style={{
               backgroundImage: "url('/images/bg3.webp')",

@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rivet — System 1.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* The landing page's own layout, redrawn in 1984 Macintosh System.
+     The Macintosh identity is carried by CHROME and DITHER — pinstriped title
+     bars, hard 1px rules, offset black shadows, 1-bit halftones — while the
+     headline stays a clean grotesque, so it reads as designed rather than as
+     a pixel-font pastiche. */
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font:400 15px/1.45 'Helvetica Neue',Helvetica,Arial,sans-serif;
+    color:#000;background:#fff;
+    -webkit-font-smoothing:antialiased;
+  }
+  .pixel{font-family:'Silkscreen',monospace;}
+
+  /* ---- 1-bit fills ---------------------------------------------------- */
+  .d50{background-image:conic-gradient(#000 25%,#fff 0 50%,#000 0 75%,#fff 0);background-size:4px 4px;}
+  .d25{background-image:radial-gradient(#000 32%,transparent 34%);background-size:5px 5px;}
+  .d12{background-image:radial-gradient(#000 22%,transparent 24%);background-size:8px 8px;}
+  .rules{background-image:repeating-linear-gradient(90deg,#000 0 1px,transparent 1px 9px);}
+
+  .page{max-width:1180px;margin:0 auto;padding:0 44px 72px;}
+
+  /* ---- nav: full-bleed, rule runs the whole width of the screen -------- */
+  .navbar{border-bottom:1px solid #000;margin-bottom:64px;}
+  .nav{display:flex;align-items:center;justify-content:space-between;
+       padding:14px 44px;}
+  .lock{display:flex;align-items:center;gap:11px;}
+  /* Real Rivet wordmark, masked so each direction paints it in its own ink.
+     (SVG-as-image drops the artwork's foreignObject blur decorations, which is
+     exactly what a flat silhouette wants.) */
+  .wm{
+    display:block;height:20px;aspect-ratio:333/105;background:#000;
+    -webkit-mask:url('/images/rivet-wordmark-text.svg') center/contain no-repeat;
+    mask:url('/images/rivet-wordmark-text.svg') center/contain no-repeat;
+  }
+  .hero .wm{height:28px;}
+  /* The real Rivet mark, painted flat in the direction's own ink. A CSS mask
+     rather than an <img> so the artwork's fills don't fight the palette. */
+  .mark{
+    width:22px;height:22px;background:#000;
+    -webkit-mask:url('/images/rivet-icon-mark.svg') center/contain no-repeat;
+    mask:url('/images/rivet-icon-mark.svg') center/contain no-repeat;
+  }
+  .lock b{font-size:24px;letter-spacing:-.5px;}
+  .links{display:flex;align-items:center;gap:26px;font-size:14px;}
+  .links a:not(.btn){color:#000;text-decoration:none;}
+  .links a:not(.btn):hover{text-decoration:underline;}
+
+  /* classic System buttons: 6px radius, 1px rule; the "default" one is ringed */
+  .community{display:none;}
+  .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid #000;
+       background:#fff;color:#000;padding:7px 16px;font-size:14px;
+       text-decoration:none;border-radius:6px;}
+  .btn:hover{background:#000;color:#fff;}
+  .btn-def{background:#000;color:#fff;box-shadow:0 0 0 2px #fff,0 0 0 3px #000;}
+  .btn-def:hover{background:#fff;color:#000;}
+
+  /* ---- hero ----------------------------------------------------------- */
+  .hero{text-align:center;margin-bottom:60px;}
+  .hero .lock{justify-content:center;margin-bottom:24px;}
+  .hero .mark{width:30px;height:30px;}
+  .hero .lock b{font-size:32px;}
+  /* Viewport-relative so a narrow preview doesn't render a 56px headline. */
+  h1{font-size:clamp(24px,4vw,52px);line-height:1.12;letter-spacing:-1.6px;
+     font-weight:400;margin:0 auto 30px;max-width:min(30ch,100%);}
+  .cta{display:flex;gap:12px;justify-content:center;}
+
+  /* ---- showcase: bare art panel, no window chrome ---------------------- */
+  .stage{position:relative;}
+  .panel{position:relative;height:440px;border:1px solid #000;overflow:hidden;background:#fff;}
+  .panel .field{position:absolute;inset:0;}
+  .col{position:absolute;top:0;bottom:0;}
+  .blk{position:absolute;border:1px solid #000;}
+  .r{border-radius:22px;}
+
+  /* ---- the agent window: floats OVER the panel, overhanging its edge --- */
+  .agent{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:452px;
+    background:#fff;border:1px solid #000;box-shadow:6px 6px 0 #000;
+  }
+  .tbar{display:flex;align-items:center;gap:8px;border-bottom:1px solid #000;padding:5px 7px;}
+  .box{width:12px;height:12px;border:1px solid #000;flex:none;}
+  .pin{flex:1;height:9px;background:repeating-linear-gradient(#000 0 1px,#fff 1px 3px);}
+  .tt{font-size:12px;padding:0 7px;white-space:nowrap;}
+  .agent .body{padding:15px 16px;font-size:13px;line-height:1.65;}
+  .ln{display:flex;gap:9px;}
+  .ln + .ln{margin-top:9px;}
+  .ln i{font-style:normal;flex:none;}
+  .muted{color:#000;opacity:.55;}
+  .field-in{border-top:1px solid #000;padding:11px 16px;font-size:13px;color:#000;opacity:.55;}
+  .foot{border-top:1px solid #000;padding:6px 16px;display:flex;justify-content:space-between;font-size:11px;}
+
+
+  /* Narrow previews: stop the nav from wrapping and pull the type in. */
+  @media (max-width: 720px){
+    .page{padding:0 20px 40px;}
+    .nav{padding:10px 20px;}
+    .links{gap:14px;font-size:12px;}
+    .lock b{font-size:18px;}
+    .hero .lock b{font-size:24px;}
+    .mark{width:18px;height:18px;}
+    .hero .mark{width:24px;height:24px;}
+    .btn{padding:6px 11px;font-size:12px;}
+    .links a{white-space:nowrap;}
+    .panel{height:300px;}
+    .agent{width:min(92%,452px);}
+    /* Mobile nav mirrors the real site: the three desktop links collapse
+       to the single Community link rather than wrapping into a stack. */
+    .links .desk{display:none;}
+    .links .community{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;}
+  }
+</style>
+</head>
+<body>
+  <div class="navbar">
+    <div class="nav">
+      <div class="lock"><i class="mark"></i><i class="wm"></i></div>
+      <div class="links">
+        <a href="#" class="desk">Docs</a>
+        <a href="#" class="desk">Release notes</a>
+        <a href="#" class="btn btn-def desk">Install Rivet</a>
+        <a href="#" class="community"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg> Community</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="hero">
+      <div class="lock"><i class="mark"></i><i class="wm"></i></div>
+      <h1>Explore dozens of design<br>directions from your agent.</h1>
+      <div class="cta">
+        <a href="#" class="btn">Watch Demo</a>
+        <a href="#" class="btn btn-def">Try Rivet for free</a>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="panel">
+        <!-- the artwork, rebuilt as layered halftones instead of a gradient -->
+        <div class="field d12"></div>
+        <div class="field d25" style="clip-path:polygon(38% 0,100% 0,100% 100%,62% 100%)"></div>
+        <div class="field d50" style="clip-path:polygon(72% 0,100% 0,100% 78%,86% 78%,86% 100%,72% 100%)"></div>
+        <div class="col rules" style="left:4%;width:16%;opacity:.5"></div>
+        <div class="col rules" style="left:30%;width:22%;opacity:.35"></div>
+        <div class="col rules" style="left:74%;width:20%;opacity:.28"></div>
+        <div class="blk r" style="right:6%;top:-1px;width:26%;height:46%;background:#fff"></div>
+        <div class="blk r" style="left:8%;bottom:-1px;width:30%;height:34%;background:#fff"></div>
+        <div class="blk" style="right:19%;bottom:16%;width:5%;height:22%;background:#fff"></div>
+
+        <div class="agent">
+          <div class="tbar">
+            <i class="box"></i><i class="pin"></i>
+            <span class="tt">Rivet landing page</span>
+            <i class="pin"></i><span class="tt pixel" style="font-size:10px">rivet mcp</span>
+          </div>
+          <div class="body">
+            <div class="ln"><i>&#10003;</i><span>rivet_status<br><span class="muted">4/4 succeeded — Macintosh &middot; Skeuomorphic &middot; &hellip;</span></span></div>
+            <div class="ln"><i>&#10003;</i><span>4 directions ready — cycle them in the preview.</span></div>
+          </div>
+          <div class="field-in">Type / for commands</div>
+          <div class="foot"><span>Accept edits &#8997;&#8629;</span><span>Fable 5</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // This page is a Rivet DIRECTION — a prototype, not the live site. Links
+  // keep their href so hover, cursor and focus all behave normally, but
+  // navigation is swallowed in the capture phase so nothing has a destination.
+  document.addEventListener(
+    'click',
+    function (e) {
+      if (e.target.closest('a')) e.preventDefault();
+    },
+    true
+  );
+</script>
+</body>
+</html>

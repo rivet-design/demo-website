@@ -1,14 +1,18 @@
 import {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   CaretDown,
   Copy,
+  FolderOpen,
+  FolderSimple,
   MagnifyingGlass,
   PencilSimple,
   SidebarSimple,
@@ -17,7 +21,6 @@ import {
 import { cn } from './cn';
 import { springs } from './springs';
 import SparkleLoader from './SparkleLoader';
-import { runLabelStyle } from './runLabelColor';
 import {
   useProximityHover,
   useRegisterProximityItem,
@@ -124,10 +127,14 @@ const VariantRow = ({
   // li wrapper so the list doesn't reflow (or lose hover indices) on resolve.
   if (!ready) {
     return (
-      <li ref={rowRef} data-proximity-index={index} className="group relative z-10">
+      <li
+        ref={rowRef}
+        data-proximity-index={index}
+        className="group relative z-10"
+      >
         <div
           aria-hidden="true"
-          className="flex w-full items-start gap-2 rounded-md px-3 py-2"
+          className="flex w-full items-start gap-2 rounded-md py-2 pl-[33px] pr-3"
         >
           <SparkleLoader className="mt-0.5 shrink-0 text-sm text-content-muted" />
           <span className="min-w-0 flex-1 animate-pulse">
@@ -145,8 +152,12 @@ const VariantRow = ({
 
   if (isEditing) {
     return (
-      <li ref={rowRef} data-proximity-index={index} className="group relative z-10">
-        <div className="flex w-full items-start gap-2 rounded-md bg-[var(--main-input)] px-3 py-2">
+      <li
+        ref={rowRef}
+        data-proximity-index={index}
+        className="group relative z-10"
+      >
+        <div className="flex w-full items-start gap-2 rounded-md bg-[var(--main-input)] py-2 pl-[33px] pr-3">
           <span className="min-w-0 flex-1">
             <RenameInput
               initial={variant.label}
@@ -163,7 +174,11 @@ const VariantRow = ({
   }
 
   return (
-    <li ref={rowRef} data-proximity-index={index} className="group relative z-10">
+    <li
+      ref={rowRef}
+      data-proximity-index={index}
+      className="group relative z-10"
+    >
       <div
         role="button"
         tabIndex={0}
@@ -182,7 +197,7 @@ const VariantRow = ({
         }}
         aria-pressed={isSelected}
         className={cn(
-          'flex w-full cursor-pointer items-start gap-2 rounded-md px-3 py-2 text-left transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-content-muted/40',
+          'flex w-full cursor-pointer items-start gap-2 rounded-md py-2 pl-[33px] pr-3 text-left transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-content-muted/40',
           isSelected &&
             'bg-[var(--main-input)] ring-1 ring-inset ring-content-muted/40',
         )}
@@ -204,20 +219,10 @@ const VariantRow = ({
             {variant.brief}
           </span>
         </span>
-        {/* Right cell: run label, fades out on hover so the action cluster
-            can take its place. */}
-        <span className="relative ml-1 mt-0.5 flex h-5 shrink-0 items-center justify-end">
-          <span
-            className="max-w-[8rem] truncate rounded px-1.5 py-0.5 text-[10px] font-medium opacity-100 transition-opacity duration-150 group-hover:opacity-0 group-has-[:focus-visible]:opacity-0"
-            style={runLabelStyle(variant.tag)}
-          >
-            {variant.tag}
-          </span>
-        </span>
       </div>
 
       {/* Hover action cluster — siblings of the row so pointer events don't
-          trigger select; fades in as the run label fades out. */}
+          trigger selection. */}
       <div
         className={cn(
           'absolute right-2 top-1.5 flex items-center gap-0.5 transition-opacity duration-150',
@@ -312,8 +317,7 @@ const VariantTable = ({
       // the row itself.
       onClick={(e) => {
         if (activeIndex === null) return;
-        if ((e.target as HTMLElement).closest('[data-proximity-index]'))
-          return;
+        if ((e.target as HTMLElement).closest('[data-proximity-index]')) return;
         const v = variants[activeIndex];
         if (!v || !readyIds.has(v.id)) return;
         const selection = window.getSelection();
@@ -368,6 +372,105 @@ const VariantTable = ({
   );
 };
 
+const FOLDER_EASE = [0.33, 1, 0.68, 1] as const;
+const FOLDER_MOTION_DURATION = 0.22;
+
+/**
+ * Folder icon colours, assigned round-robin in source order so each group
+ * reads as distinct at a glance. Rivet's own orange (the Install CTA's
+ * gradient start) and the violet already in RUN_LABEL_COLORS, so the panel
+ * stays inside the palette it already uses.
+ */
+const FOLDER_COLORS = ['#63729d', '#9aa6c6'] as const;
+
+/**
+ * Current Rivet folder treatment: a borderless tinted surface, a coloured
+ * folder icon, sentence-case label, and indented direction rows.
+ */
+const DirectionFolder = ({
+  label,
+  directionCount,
+  color,
+  active,
+  children,
+}: {
+  label: string;
+  directionCount: number;
+  color: string;
+  /** True when the selected direction lives in this folder. */
+  active: boolean;
+  children: ReactNode;
+}) => {
+  // Exactly one folder is open at a time: the one holding the selected
+  // direction. Seeded from `active` too, so on arrival only the first folder
+  // is expanded and the later ones open as the selection reaches them, rather
+  // than every group being open at once.
+  const [collapsed, setCollapsed] = useState(!active);
+  useEffect(() => {
+    setCollapsed(!active);
+  }, [active]);
+  const reduceMotion = useReducedMotion();
+
+  return (
+    // No overflow-hidden here: this element is rounded, so it was clipping the
+    // selected row's ring at its own corner radius — visible as a shaved
+    // corner on whichever row sat flush against the folder's bottom edge. The
+    // height animation below has its own overflow-hidden, which is the only
+    // place it is actually needed.
+    <li className="rounded-lg bg-white/[0.012]">
+      <button
+        type="button"
+        onClick={() => setCollapsed((value) => !value)}
+        aria-expanded={!collapsed}
+        aria-label={`${collapsed ? 'Expand' : 'Collapse'} ${label} directions`}
+        className="flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-white/[0.03] focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-content-muted/40"
+      >
+        {collapsed ? (
+          <FolderSimple
+            size={13}
+            weight="fill"
+            className="shrink-0"
+            style={{ color }}
+          />
+        ) : (
+          <FolderOpen
+            size={13}
+            weight="fill"
+            className="shrink-0"
+            style={{ color }}
+          />
+        )}
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-content">
+          {label}
+        </span>
+        <span className="sr-only">{directionCount} directions</span>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {!collapsed && (
+          <motion.div
+            key="body"
+            initial={reduceMotion ? false : { height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={
+              reduceMotion
+                ? { duration: 0 }
+                : {
+                    duration: FOLDER_MOTION_DURATION,
+                    ease: FOLDER_EASE,
+                  }
+            }
+            className="overflow-hidden pb-1"
+          >
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </li>
+  );
+};
+
 // --- Panel ----------------------------------------------------------------
 type DirectionsPanelProps = {
   ctrl: VariantsDemoController;
@@ -403,9 +506,24 @@ const DirectionsPanel = ({
     return ctrl.variants.filter(
       (v) =>
         v.label.toLowerCase().includes(q) ||
-        v.brief.toLowerCase().includes(q),
+        v.brief.toLowerCase().includes(q) ||
+        (v.folder ?? v.tag).toLowerCase().includes(q),
     );
   }, [search, ctrl.variants]);
+
+  const folders = useMemo(() => {
+    const groups = new Map<string, DemoVariant[]>();
+    for (const variant of filtered) {
+      const label = variant.folder ?? variant.tag;
+      const group = groups.get(label);
+      if (group) group.push(variant);
+      else groups.set(label, [variant]);
+    }
+    return [...groups.entries()].map(([label, variants]) => ({
+      label,
+      variants,
+    }));
+  }, [filtered]);
 
   return (
     <aside
@@ -424,7 +542,10 @@ const DirectionsPanel = ({
     >
       {/* Header — port of core's GitHome bar: title + close chip. */}
       <div className="z-10 flex shrink-0 items-center justify-between gap-2 border-b border-[var(--main-border)] bg-[var(--main-light)] px-2.5 py-2.5">
-        <span className="min-w-0 truncate text-sm font-medium text-content" title="Directions">
+        <span
+          className="min-w-0 truncate text-sm font-medium text-content"
+          title="Directions"
+        >
           Directions
         </span>
         {onClose && (
@@ -460,20 +581,32 @@ const DirectionsPanel = ({
 
       {/* Variant table — scrolls without rendering a scrollbar, matching the
           core shell's scrollbar-hide. */}
-      <div className="scrollbar-hide flex-1 overflow-y-auto overscroll-contain px-3 py-2">
-        {filtered.length > 0 ? (
-          <VariantTable
-            variants={filtered}
-            selectedId={ctrl.selectedId}
-            editingId={ctrl.editingId}
-            readyIds={ctrl.readyIds}
-            onSelect={ctrl.select}
-            onStartRename={ctrl.startRename}
-            onCommitRename={ctrl.commitRename}
-            onCancelRename={ctrl.cancelRename}
-            onCopyDescription={ctrl.copyDescription}
-            onRemove={ctrl.remove}
-          />
+      <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-2 scrollbar-hide">
+        {folders.length > 0 ? (
+          <ul className="flex flex-col gap-2">
+            {folders.map((folder, folderIndex) => (
+              <DirectionFolder
+                key={folder.label}
+                label={folder.label}
+                directionCount={folder.variants.length}
+                color={FOLDER_COLORS[folderIndex % FOLDER_COLORS.length]}
+                active={folder.variants.some((v) => v.id === ctrl.selectedId)}
+              >
+                <VariantTable
+                  variants={folder.variants}
+                  selectedId={ctrl.selectedId}
+                  editingId={ctrl.editingId}
+                  readyIds={ctrl.readyIds}
+                  onSelect={ctrl.select}
+                  onStartRename={ctrl.startRename}
+                  onCommitRename={ctrl.commitRename}
+                  onCancelRename={ctrl.cancelRename}
+                  onCopyDescription={ctrl.copyDescription}
+                  onRemove={ctrl.remove}
+                />
+              </DirectionFolder>
+            ))}
+          </ul>
         ) : (
           <p className="px-3 py-6 text-center text-xs text-content-muted">
             No variants match “{search}”.

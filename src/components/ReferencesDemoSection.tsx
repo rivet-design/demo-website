@@ -196,7 +196,6 @@ const ReferencesDemoSection = () => {
             six cards show in full; from sm up the wall hits its max-w and grows to
             fill the shared 16/11 landscape box like the other workflow panels. */}
         <div
-          data-guide-row
           className="relative aspect-[7/6] w-full overflow-hidden bg-white lg:aspect-[16/11]"
         >
           {/* The masonry wall. In the two-column layout (lg+, text left / wall

@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rivet — Blueprint Draft</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  /* The landing page's own layout, redrawn as a drafting sheet: cyanotype
+     ground, hairline construction grid, dimension lines and setout marks, with
+     every label set in mono as though it were an annotation. The composition
+     is unchanged — nav, lockup, headline, CTA pair, showcase panel with the
+     agent window over it — only the drawing convention differs. */
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  :root{
+    --ink:#0a2a4a;        /* sheet */
+    --line:#5d8fc4;       /* construction line */
+    --paper:#cfe3f7;      /* drawn white */
+    --accent:#7fd4ff;     /* highlight */
+  }
+  body{
+    font-family:'IBM Plex Sans','Helvetica Neue',Arial,sans-serif;
+    font-weight:300;
+    color:var(--paper);
+    background:var(--ink);
+    min-height:100%;
+    position:relative;
+  }
+  /* construction grid + a heavier 5-unit rule */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;
+    background-image:
+      linear-gradient(rgba(125,170,215,.13) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(125,170,215,.13) 1px,transparent 1px),
+      linear-gradient(rgba(125,170,215,.22) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(125,170,215,.22) 1px,transparent 1px);
+    background-size:24px 24px,24px 24px,120px 120px,120px 120px;
+  }
+  .mono{font-family:'IBM Plex Mono',ui-monospace,monospace;}
+  .page{position:relative;max-width:1180px;margin:0 auto;padding:0 44px 72px;}
+
+  /* ---- nav: a title block rule across the sheet ---------------------- */
+  .navbar{position:relative;border-bottom:1px solid var(--line);margin-bottom:0;}
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:16px 44px;}
+  .lock{display:flex;align-items:center;gap:11px;}
+  /* Real Rivet wordmark, masked so each direction paints it in its own ink.
+     (SVG-as-image drops the artwork's foreignObject blur decorations, which is
+     exactly what a flat silhouette wants.) */
+  .wm{
+    display:block;height:20px;aspect-ratio:333/105;background:var(--accent);
+    -webkit-mask:url('/images/rivet-wordmark-text.svg') center/contain no-repeat;
+    mask:url('/images/rivet-wordmark-text.svg') center/contain no-repeat;
+  }
+  .hero .wm{height:28px;}
+  /* The real Rivet mark, painted flat in the direction's own ink. A CSS mask
+     rather than an <img> so the artwork's fills don't fight the palette. */
+  .mark{
+    width:22px;height:22px;background:var(--accent);
+    -webkit-mask:url('/images/rivet-icon-mark.svg') center/contain no-repeat;
+    mask:url('/images/rivet-icon-mark.svg') center/contain no-repeat;
+  }
+  .lock b{font-size:22px;font-weight:400;letter-spacing:.02em;}
+  .links{display:flex;align-items:center;gap:26px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;}
+  /* :not(.btn) — see the note in the editorial direction: a bare `.links a`
+     rule outscores `.btn-def` and washes the solid button out. */
+  .links a:not(.btn){color:var(--paper);text-decoration:none;opacity:.75;}
+  .links a:not(.btn):hover{opacity:1;}
+  .community{display:none;}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;border:1px solid var(--accent);
+    color:var(--accent);padding:8px 16px;font-size:12px;letter-spacing:.14em;
+    text-transform:uppercase;text-decoration:none;background:transparent;
+  }
+  .btn:hover{background:rgba(127,212,255,.12);}
+  .btn-def{background:var(--accent);color:var(--ink);}
+  .btn-def:hover{background:#a6e2ff;}
+
+  /* ---- hero ---------------------------------------------------------- */
+  .hero{position:relative;text-align:center;padding:64px 0 56px;}
+  .hero .lock{justify-content:center;margin-bottom:26px;}
+  .hero .mark{width:30px;height:30px;}
+  .hero .lock b{font-size:30px;}
+  h1{
+    font-size:clamp(24px,4vw,52px);line-height:1.14;font-weight:300;
+    letter-spacing:-.01em;margin:0 auto 30px;max-width:min(30ch,100%);
+  }
+  .cta{display:flex;gap:14px;justify-content:center;}
+
+  /* setout marks either side of the headline block */
+  .tick{position:absolute;top:0;bottom:0;width:1px;background:var(--line);opacity:.6;}
+  .tick.l{left:6%;} .tick.r{right:6%;}
+  .tick::before,.tick::after{
+    content:"";position:absolute;left:-5px;width:11px;height:1px;background:var(--line);
+  }
+  .tick::before{top:0;} .tick::after{bottom:0;}
+
+  /* dimension line under the CTAs */
+  .dim{
+    display:flex;align-items:center;gap:10px;justify-content:center;
+    margin-top:34px;font-size:10px;letter-spacing:.18em;opacity:.65;
+  }
+  .dim i{display:block;height:1px;width:90px;background:var(--line);}
+
+  /* ---- showcase ------------------------------------------------------ */
+  .panel{
+    position:relative;height:430px;border:1px solid var(--line);
+    background:
+      repeating-linear-gradient(90deg,rgba(125,170,215,.16) 0 1px,transparent 1px 14px),
+      linear-gradient(180deg,rgba(127,212,255,.10),transparent 70%);
+    overflow:hidden;
+  }
+  .plate{position:absolute;border:1px solid var(--line);}
+  .p1{right:5%;top:8%;width:26%;height:44%;}
+  .p2{left:7%;bottom:9%;width:30%;height:34%;}
+  .p3{right:20%;bottom:14%;width:6%;height:22%;background:rgba(127,212,255,.10);}
+  .label{
+    position:absolute;font-size:9px;letter-spacing:.18em;opacity:.7;
+  }
+
+  /* the agent window, drawn rather than chromed */
+  .agent{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:452px;background:rgba(10,42,74,.94);border:1px solid var(--accent);
+  }
+  .tbar{
+    display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--line);
+    padding:8px 12px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  }
+  .dot{width:7px;height:7px;border:1px solid var(--accent);border-radius:50%;}
+  .agent .body{padding:15px 16px;font-size:13px;line-height:1.7;}
+  .ln{display:flex;gap:9px;}
+  .ln + .ln{margin-top:9px;}
+  .ln i{font-style:normal;color:var(--accent);}
+  .muted{opacity:.6;}
+  .composer{border-top:1px solid var(--line);padding:11px 16px;font-size:12px;opacity:.6;}
+  .foot{
+    border-top:1px solid var(--line);padding:7px 16px;display:flex;
+    justify-content:space-between;font-size:10px;letter-spacing:.14em;opacity:.7;
+  }
+
+  /* Narrow previews (the mobile hero cycles these at ~412px): pull the sheet
+     in, collapse the nav, and stop the agent window — authored at a fixed
+     452px — from bursting out of the panel on both sides. */
+  @media (max-width:720px){
+    .page{padding:0 20px 44px;}
+    .nav{padding:12px 20px;}
+    .lock b{font-size:18px;} .mark{width:18px;height:18px;}
+    .hero{padding:40px 0 40px;}
+    .hero .lock b{font-size:24px;} .hero .mark{width:24px;height:24px;}
+    .cta{flex-wrap:wrap;}
+    .btn{padding:7px 12px;font-size:11px;letter-spacing:.1em;}
+    .tick.l{left:3%;} .tick.r{right:3%;}
+    .dim i{width:46px;}
+    .panel{height:340px;}
+    .agent{width:min(92%,452px);}
+    .agent .body{padding:12px 13px;font-size:12px;line-height:1.6;}
+    .tbar{padding:7px 10px;font-size:9px;letter-spacing:.1em;}
+    .composer,.foot{padding:9px 12px;}
+    /* Mobile nav mirrors the real site: the three desktop links collapse
+       to the single Community link rather than wrapping into a stack. */
+    .links .desk{display:none;}
+    .links .community{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;}
+  }
+</style>
+</head>
+<body>
+  <div class="navbar">
+    <div class="nav">
+      <div class="lock"><i class="mark"></i><i class="wm"></i></div>
+      <div class="links">
+        <a href="#" class="desk">Docs</a>
+        <a href="#" class="desk">Release notes</a>
+        <a href="#" class="btn btn-def desk">Install Rivet</a>
+        <a href="#" class="community"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg> Community</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="hero">
+      <i class="tick l"></i><i class="tick r"></i>
+      <div class="lock"><i class="mark"></i><i class="wm"></i></div>
+      <h1>Explore dozens of design<br>directions from your agent.</h1>
+      <div class="cta">
+        <a href="#" class="btn">Watch Demo</a>
+        <a href="#" class="btn btn-def">Try Rivet for free</a>
+      </div>
+      <div class="dim mono"><i></i><span>HERO / 01</span><i></i></div>
+    </div>
+
+    <div class="panel">
+      <div class="plate p1"></div>
+      <div class="plate p2"></div>
+      <div class="plate p3"></div>
+      <span class="label mono" style="left:7%;top:6%">FIG. 1 — PREVIEW</span>
+      <span class="label mono" style="right:5%;bottom:5%">SCALE 1:1</span>
+
+      <div class="agent">
+        <div class="tbar mono">
+          <i class="dot"></i><span>Rivet landing page</span>
+          <span style="margin-left:auto;opacity:.7">rivet mcp</span>
+        </div>
+        <div class="body">
+          <div class="ln"><i>&#10003;</i><span>rivet_status<br><span class="muted mono" style="font-size:12px">4/4 succeeded — Macintosh &middot; Blueprint &middot; &hellip;</span></span></div>
+          <div class="ln"><i>&#10003;</i><span>4 directions ready — cycle them in the preview.</span></div>
+        </div>
+        <div class="composer mono">Type / for commands</div>
+        <div class="foot mono"><span>Accept edits &#8997;&#8629;</span><span>Fable 5</span></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // A direction is a prototype, not the live site: links keep hover and focus,
+  // but navigation is swallowed.
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('a')) e.preventDefault();
+  }, true);
+</script>
+</body>
+</html>

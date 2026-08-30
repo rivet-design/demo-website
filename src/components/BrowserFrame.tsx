@@ -5,7 +5,9 @@ import {
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
+  type Ref,
 } from 'react';
+import { motion, useMotionValue, useTransform, type MotionValue } from 'motion/react';
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
@@ -27,7 +29,10 @@ const BrowserFrame = ({
   draggable = false,
   animateOpen = false,
   openDelayMs = 32,
+  start = true,
   className = '',
+  contentRef,
+  openProgress,
 }: {
   children: ReactNode;
   /** Optional address-bar URL shown in the center omnibox (Chrome-style). */
@@ -45,7 +50,30 @@ const BrowserFrame = ({
    * hero's agent chat typing first).
    */
   openDelayMs?: number;
+  /**
+   * Gates when the open sequence is allowed to fire — the window stays
+   * minimized/hidden for as long as this is false, however long that takes
+   * (e.g. waiting on a scroll trigger), then the openDelayMs clock starts
+   * counting from the moment it flips true. Defaults to true (fires on mount).
+   */
+  start?: boolean;
   className?: string;
+  /**
+   * Ref to the content-pane div (below the title bar) — lets a parent measure
+   * it as an animation target, e.g. the hero's scroll-scrubbed shrink-into-
+   * frame FLIP needs this rect as its landing destination.
+   */
+  contentRef?: Ref<HTMLDivElement>;
+  /**
+   * When provided, the frame's opacity is driven directly by this 0→1 motion
+   * value instead of the animateOpen/start timer state machine, and the
+   * scale "un-minimize" pop is skipped entirely (transform stays owned by
+   * `draggable` only). Used when a separate animation — a scroll-scrubbed
+   * hero FLIP — already carries the "arriving" motion for this same moment;
+   * a second independent scale here would fight it and make the FLIP's
+   * landing target a moving one.
+   */
+  openProgress?: MotionValue<number>;
 }) => {
   const frameRef = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -54,27 +82,35 @@ const BrowserFrame = ({
   const [entered, setEntered] = useState(false);
   const [settled, setSettled] = useState(false);
 
+  // A stable fallback so useTransform always has a MotionValue to read, even
+  // when this instance doesn't use the openProgress path (its output is
+  // simply unused in that case).
+  const fallbackOpenProgress = useMotionValue(1);
+  const openOpacity = useTransform(openProgress ?? fallbackOpenProgress, [0, 1], [0, 1]);
+
   useEffect(() => {
-    if (!animateOpen) return;
+    // openProgress owns the reveal when provided — the timer state machine
+    // below is exclusively for the legacy animateOpen path.
+    if (!animateOpen || !start || openProgress) return;
     // Respect reduced-motion: land fully open with no movement.
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       setEntered(true);
       setSettled(true);
       return;
     }
-    // Start expanding the moment the page paints — just one frame's delay so the
-    // small/transparent start state lands before we flip to the open state (else
-    // the browser has nothing to transition from). The second timer fires after
-    // the transform settles so we can shed the transition.
+    // Start expanding the moment `start` flips true — just one frame's delay so
+    // the small/transparent start state lands before we flip to the open state
+    // (else the browser has nothing to transition from). The second timer fires
+    // after the transform settles so we can shed the transition.
     const OPEN_DELAY = Math.max(0, openDelayMs);
     const OPEN_DURATION = 600;
-    const start = setTimeout(() => setEntered(true), OPEN_DELAY);
+    const openTimer = setTimeout(() => setEntered(true), OPEN_DELAY);
     const done = setTimeout(() => setSettled(true), OPEN_DELAY + OPEN_DURATION + 40);
     return () => {
-      clearTimeout(start);
+      clearTimeout(openTimer);
       clearTimeout(done);
     };
-  }, [animateOpen, openDelayMs]);
+  }, [animateOpen, openDelayMs, start, openProgress]);
   // Geometry captured at drag start so move math is cheap and clamp-correct.
   const drag = useRef<{
     pointerX: number;
@@ -129,21 +165,26 @@ const BrowserFrame = ({
     }
   };
 
-  // Drag offset and the open animation both live on the root transform.
+  // Drag offset lives on the root transform always; the scale "un-minimize"
+  // pop only applies on the legacy (non-openProgress) open path.
   const dragTransform = draggable
     ? `translate3d(${offset.x}px, ${offset.y}px, 0)`
     : '';
   // Start small and a touch low (as if rising from the dock), settle at 1:1.
-  const openTransform = animateOpen
-    ? entered
-      ? 'scale(1)'
-      : 'scale(0.35) translateY(14%)'
-    : '';
+  const openTransform =
+    animateOpen && !openProgress
+      ? entered
+        ? 'scale(1)'
+        : 'scale(0.35) translateY(14%)'
+      : '';
   const transform = `${dragTransform} ${openTransform}`.trim();
 
   const rootStyle: CSSProperties = {};
   if (transform) rootStyle.transform = transform;
-  if (animateOpen) {
+  if (openProgress) {
+    // Opacity is applied below via the motion value directly; no CSS
+    // transition needed since the source value is already scroll-scrubbed.
+  } else if (animateOpen) {
     rootStyle.opacity = entered ? 1 : 0;
     // Grow from near the bottom-center, the macOS un-minimize direction.
     rootStyle.transformOrigin = '50% 92%';
@@ -155,9 +196,9 @@ const BrowserFrame = ({
   }
 
   return (
-    <div
+    <motion.div
       ref={frameRef}
-      style={rootStyle}
+      style={openProgress ? { ...rootStyle, opacity: openOpacity } : rootStyle}
       className={`flex flex-col overflow-hidden rounded-lg border border-black/10 bg-white shadow-[0_18px_40px_-12px_rgba(0,0,0,0.25)] ${className}`}
     >
       {/* Title bar — doubles as the window drag handle when draggable. */}
@@ -235,8 +276,10 @@ const BrowserFrame = ({
 
       {/* Content — fills the remaining height when the frame has a fixed height
           (e.g. an aspect-ratio panel); sizes to its children otherwise. */}
-      <div className="min-h-0 flex-1 bg-white">{children}</div>
-    </div>
+      <div ref={contentRef} className="min-h-0 flex-1 bg-white">
+        {children}
+      </div>
+    </motion.div>
   );
 };
 
