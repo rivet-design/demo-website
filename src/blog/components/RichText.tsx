@@ -61,6 +61,12 @@ const ImageFrame = ({
   </div>
 );
 
+const ImageCaption = ({ children }: { children: ReactNode }) => (
+  <figcaption className="mt-3 font-main text-sm leading-[1.4] text-black">
+    {children}
+  </figcaption>
+);
+
 const ArticleImage = ({
   src,
   alt,
@@ -71,11 +77,7 @@ const ArticleImage = ({
     className={`not-prose mx-auto my-10 w-full ${imageFrameClass[format]}`}
   >
     <ImageFrame src={src} alt={alt} format={format} />
-    {caption && (
-      <figcaption className="mt-3 font-main text-sm leading-[1.4] text-black">
-        {caption}
-      </figcaption>
-    )}
+    {caption && <ImageCaption>{caption}</ImageCaption>}
   </figure>
 );
 
@@ -93,7 +95,7 @@ export const ImageGrid = ({ children }: { children: ReactNode }) => (
   </div>
 );
 
-type SplitImageTextProps = Omit<ArticleImageProps, 'caption'> & {
+type SplitImageTextProps = ArticleImageProps & {
   children: ReactNode;
   format?: ArticleImageFormat;
 };
@@ -101,11 +103,15 @@ type SplitImageTextProps = Omit<ArticleImageProps, 'caption'> & {
 export const SplitImageText = ({
   src,
   alt,
+  caption,
   children,
   format = 'rectangle',
 }: SplitImageTextProps) => (
   <section className="not-prose mx-auto my-10 grid w-full gap-6 text-left md:grid-cols-2 md:items-center md:gap-8 xl:w-[54rem]">
-    <ImageFrame src={src} alt={alt} format={format} />
+    <figure className="m-0">
+      <ImageFrame src={src} alt={alt} format={format} />
+      {caption && <ImageCaption>{caption}</ImageCaption>}
+    </figure>
     <div className="font-main text-lg leading-[1.45] text-black [&>p+p]:mt-4 [&>p]:m-0">
       {children}
     </div>

@@ -41,6 +41,7 @@ available without imports:
 <SplitImageText
   src="/images/example.png"
   alt="Describe the image"
+  caption="An optional visible caption."
   format="square"
 >
   Text in this block appears to the right of the image on larger screens.
