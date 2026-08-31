@@ -30,6 +30,9 @@ import InstallAccordion from './components/InstallAccordion';
 import BrowserFrame from './components/BrowserFrame';
 import HeroShowcaseBackground from './components/HeroShowcaseBackground';
 import FloatingShapes from './components/FloatingShapes';
+import GravityField from './components/GravityField';
+import ScrollReveal from './components/ScrollReveal';
+import { useInView } from './hooks/use-in-view';
 import VariantsShowcase from './components/variantsDemo/VariantsShowcase';
 import DirectionsPanel from './components/variantsDemo/DirectionsPanel';
 import { useVariantsDemo } from './components/variantsDemo/useVariantsDemo';
@@ -45,7 +48,6 @@ import AgentTerminal from './components/sandbox/AgentTerminal';
 import ReplayButton from './components/ReplayButton';
 import { HERO_SESSION } from './components/sandbox/terminalScript';
 import {
-  FOOTER_FILL,
   SITE_FILL,
   pageBackground,
   surfaceBackground,
@@ -915,13 +917,6 @@ const App = () => {
     [0, 1],
     { clamp: true },
   );
-  // Constant #fafafa. It used to interpolate to the tan SITE_FILL once the
-  // pinned stage scrolled away, because the page's ground was tan back then.
-  // The ground is #fafafa everywhere past the hero now — tan is only ever a
-  // panel fill — so there is nothing to cross over to, and the crossover left
-  // a tan bar sitting on a #fafafa page.
-  const pageNavBg = useMotionValue(FOOTER_FILL);
-
   const pageNavY = useTransform(
     heroScrollProgress,
     [PHASE2_END - 0.055, PHASE2_END],
@@ -1075,16 +1070,90 @@ const App = () => {
   // agent has minimized out.
   const showMobileAgent = playHeroIntroMobile && mobilePhase !== 'editor';
 
+  // The install section arrives the way the hero copy does — blur, fade and a
+  // short rise — and goes back out the same way as you scroll past it.
+  //
+  // Deliberately asymmetric. The bottom inset is small, so the copy blurs in
+  // as soon as it clears the fold; the TOP inset is large, so it counts as
+  // gone once it rises past the upper 42% of the viewport — which is roughly
+  // when the footer starts filling the lower half. A symmetric band left it
+  // sharp until it was almost entirely off-screen, so the blur-out was never
+  // actually seen.
+  const installReveal = useInView<HTMLDivElement>({
+    rootMargin: '-42% 0px -10% 0px',
+  });
+  // Arriving and leaving are different gestures. On the way IN the copy fades
+  // up out of nothing — blur, opacity and a rise. On the way OUT it only goes
+  // soft: it stays fully opaque and in place and just blurs, so scrolling past
+  // defocuses it rather than deleting it. Tracked with `installSeen`, since the
+  // observer alone can't tell "not yet arrived" from "already passed".
+  const [installSeen, setInstallSeen] = useState(false);
+  useEffect(() => {
+    if (installReveal.inView) setInstallSeen(true);
+  }, [installReveal.inView]);
+  const installRise = (delayMs: number) => {
+    const sharp = installReveal.inView;
+    const left = !sharp && installSeen;
+    return {
+      opacity: sharp || left ? 1 : 0,
+      transform: sharp || left ? 'translateY(0)' : 'translateY(22px)',
+      filter: sharp ? 'blur(0px)' : 'blur(10px)',
+      transition: `opacity 700ms cubic-bezier(0.16,1,0.3,1) ${delayMs}ms, transform 700ms cubic-bezier(0.16,1,0.3,1) ${delayMs}ms, filter 700ms cubic-bezier(0.16,1,0.3,1) ${delayMs}ms`,
+    };
+  };
+
   const renderDownloadPanel = () => {
     return (
-      <div id="install-panel" className="relative z-10 hidden flex-col items-center py-16 lg:flex">
-        <div className="flex flex-col gap-6">
-          <h2 className="hero-title-size text-center font-main font-normal leading-[1.12]">
-            Built for designers on the frontier
-            <br /> of code and design.
+      <div
+        id="install-panel"
+        className="bleed-page-gutter-x page-gutter-x relative z-10 hidden flex-col items-center overflow-hidden py-40 lg:flex"
+      >
+        {/* The gravity field, edge to edge behind this section. Masked so it
+            reads only down the two sides: it fades out well before the
+            headline and CTA. Horizontal mask only — the field runs the full
+            height of the section, edge to edge, with no vertical fade; the
+            second gradient that used to inset it top and bottom is gone. It
+            still cannot escape its box. That box is inset by the shared
+            --frame-inset-x, so the field carries the same left/right margin as
+            the demo panel and the footer frame instead of running to the
+            viewport edge — and can't overflow the page. */}
+        <div className="pointer-events-none absolute inset-y-0 left-[var(--frame-inset-x)] right-[var(--frame-inset-x)] overflow-hidden rounded-lg">
+        <GravityField
+          cell={16}
+          scale={0.044}
+          style={{
+            // A long ramp inward from each side, so the field thins out
+            // gradually across the middle rather than stopping at a line.
+            opacity: 0.55,
+            WebkitMaskImage:
+              'linear-gradient(to right, #000 0%, #000 6%, transparent 40%, transparent 60%, #000 94%, #000 100%)',
+            maskImage:
+              'linear-gradient(to right, #000 0%, #000 6%, transparent 40%, transparent 60%, #000 94%, #000 100%)',
+          }}
+        />
+        </div>
+        {/* The trigger is this CONTENT column, not the section. The section is
+            160px of padding plus the field, so it counts as intersecting long
+            before the copy is anywhere near the viewport — the reveal would
+            finish off-screen and you'd never see it. */}
+        <div ref={installReveal.ref} className="relative z-10 flex flex-col gap-6">
+          <h2
+            style={installRise(0)}
+            className="hero-title-size text-center font-main font-normal leading-[1.12]"
+          >
+            Built for designers on the
+            <br />frontier of code and design.
           </h2>
-          <PromptInstallButton size="lg" fullWidth />
-          <InstallAccordion />
+          {/* Sized like the hero's CTA rather than a full-width block: the
+              default `md` is px-4/py-2 at text-sm, and self-center stops the
+              flex column from stretching it edge to edge. Same agent icons as
+              the nav — they come from the component itself. */}
+          <div className="flex justify-center" style={installRise(110)}>
+            <PromptInstallButton />
+          </div>
+          <div style={installRise(200)}>
+            <InstallAccordion />
+          </div>
         </div>
       </div>
     );
@@ -1237,7 +1306,7 @@ const App = () => {
             // page-gutter-x because NavBar's own bleed cancels exactly that.
             className="page-gutter-x fixed inset-x-0 top-0 z-[60]"
           >
-            <NavBar featherBackground={pageNavBg} />
+            <NavBar frosted />
           </motion.div>
         )}
 
@@ -1269,13 +1338,31 @@ const App = () => {
                   // columns vertically. Without a height here flex-1 has
                   // nothing to grow into and everything stacks at the top.
                   IS_EMBED
-                  ? 'flex min-h-screen flex-col gap-8'
-                  : 'flex flex-col gap-8'
+                  ? 'bleed-page-gutter-x page-gutter-x flex min-h-screen flex-col gap-8 pb-20'
+                  : 'bleed-page-gutter-x page-gutter-x flex flex-col gap-8 pb-20'
             }
             ref={stageRef}
-            // The neutral ground revealed around the card as the whole page
-            // scales down (storyboard frame 2).
-            style={playHeroIntro ? { backgroundColor: '#fafafa' } : undefined}
+            // Pinned path: the neutral #fafafa ground revealed around the card
+            // as the whole page scales down (storyboard frame 2).
+            // Everywhere else (mobile, reduced motion, embeds) there IS no
+            // card — the hero sits directly on the stage — so it carries the
+            // tan surface itself. Since the page ground went #fafafa, without
+            // this the mobile hero lost its warm background entirely. Bled out
+            // and re-padded so the fill reaches the viewport edges while the
+            // children keep their gutter.
+            style={
+              playHeroIntro
+                ? { backgroundColor: '#fafafa' }
+                : {
+                    // A gradient, not a flat fill: the tan dissolves into the
+                    // page's #fafafa ground instead of ending on a hard line
+                    // where the hero stops. The last stop is the same colour
+                    // at zero alpha, not `transparent` — that keyword
+                    // interpolates through transparent BLACK in some engines
+                    // and greys the fade out.
+                    backgroundImage: `linear-gradient(to bottom, ${SITE_FILL} 0%, ${SITE_FILL} 74%, rgba(241, 239, 232, 0) 100%)`,
+                  }
+            }
           >
             {/* THE NEW LIVE-PROTOTYPE CONTAINER — a dupe of the hero's own
                 demo shell (window chrome + Directions panel), sitting behind
@@ -1817,10 +1904,20 @@ const App = () => {
           style={{ backgroundColor: SITE_FILL }}
         >
           {/* <WorkflowPanels /> */}
-          <AgentTerminalSection />
-          <CommentDemoSection />
+          {/* Each section sharpens as it arrives and goes soft as you scroll
+              past it — wrapped individually rather than as one block so they
+              hand off to each other instead of moving together. Order is
+              upstream's (agent terminal first); the wrappers are ours. */}
+          <ScrollReveal>
+            <AgentTerminalSection />
+          </ScrollReveal>
+          <ScrollReveal>
+            <CommentDemoSection />
+          </ScrollReveal>
           {SHOW_VARIANTS_PANEL && <VariantsDemoSection />}
-          <ReferencesDemoSection />
+          <ScrollReveal>
+            <ReferencesDemoSection />
+          </ScrollReveal>
           {SHOW_MANIFESTO_PANEL && <CodePanel />}
         </div>
         </div>

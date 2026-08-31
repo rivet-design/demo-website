@@ -11,7 +11,7 @@ const NavBar = ({
   motionScale,
   motionRadius,
   rootRef,
-  featherBackground,
+  frosted = false,
 }: {
   /**
    * Optional scroll-driven motion values — used by the hero's shrink
@@ -33,12 +33,11 @@ const NavBar = ({
    * the hero card uses). */
   rootRef?: (el: HTMLElement | null) => void;
   /**
-   * Paints the bar as a fill in this colour that FEATHERS OUT below the bar
-   * rather than ending on a hard edge. Used by the page nav, which travels
-   * over grounds of different colours: the caller drives the colour to match
-   * the current ground, and the feather hides the transition.
+   * Frosted glass: the page behind the bar is blurred through a translucent
+   * fill. A plain rectangle — the blur covers the bar's own height and stops
+   * at its edge, with no feathered lip and no mask.
    */
-  featherBackground?: MotionValue<string>;
+  frosted?: boolean;
 } = {}) => {
   // Experiment: keep the nav white throughout (isDark stays false).
   const [isDark] = useState(false);
@@ -66,7 +65,7 @@ const NavBar = ({
         // `transparent` hands the fill to the caller — used by the page-level
         // nav during the pinned sequence, where the surface behind it is the
         // stage's #fafafa rather than the site fill.
-        ...(isDark || featherBackground ? undefined : surfaceBackground),
+        ...(isDark || frosted ? undefined : surfaceBackground),
         ...(motionOpacity ? { opacity: motionOpacity } : undefined),
         ...(motionX ? { x: motionX } : undefined),
         ...(motionY ? { y: motionY } : undefined),
@@ -85,21 +84,14 @@ const NavBar = ({
         'shadow-none',
       ].join(' ')}
     >
-      {featherBackground && (
-        <motion.div
+      {/* Sits behind the row (which is z-10) and exactly covers the bar. The
+          tint has to be translucent or there is nothing for the backdrop
+          filter to show through. */}
+      {frosted && (
+        <div
           aria-hidden
-          // A short overhang (-bottom-3) with the fill holding solid across the
-          // bar itself and softening only over the last stretch. The long
-          // 96px ramp this replaced read as a gradient panel in its own right
-          // rather than as an edge that simply stops being visible.
-          className="pointer-events-none absolute inset-x-0 -bottom-3 top-0 z-0"
-          style={{
-            backgroundColor: featherBackground,
-            WebkitMaskImage:
-              'linear-gradient(to bottom, #000 78%, rgba(0,0,0,0.6) 90%, transparent)',
-            maskImage:
-              'linear-gradient(to bottom, #000 78%, rgba(0,0,0,0.6) 90%, transparent)',
-          }}
+          className="pointer-events-none absolute inset-0 z-0 backdrop-blur-lg backdrop-saturate-150"
+          style={{ backgroundColor: 'rgba(250, 250, 250, 0.62)' }}
         />
       )}
       <div

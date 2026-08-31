@@ -122,6 +122,15 @@ const PromptInstallButton = ({
   const t = TONES[tone];
 
   const mainSize = size === 'lg' ? 'px-6 py-4 text-lg' : 'px-[16px] py-[8px] text-sm';
+  // Orange gets the hero CTA's gradient rather than a flat fill, so the two
+  // primary buttons on the page read as the same object. As a CLASS, not a
+  // style prop: the trigger is a PopoverTrigger, which forwards className but
+  // has no `style` in its props. Other tones stay flat — a gradient on the
+  // dark/light variants would just muddy them.
+  const gradient =
+    tone === 'orange'
+      ? 'bg-[linear-gradient(137.74deg,rgb(236,68,35)_41.128%,rgb(243,138,118)_121.74%)]'
+      : '';
   const iconBox = size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
 
   const activate = (item: AgentItem) => {
@@ -171,9 +180,9 @@ const PromptInstallButton = ({
           fade (via t.bg's hover variant) — no lift/fan animation. */}
       <PopoverTrigger
         onKeyDown={handleMenuKeyDown}
-        className={`group type-label-lg font-normal flex items-center gap-2.5 rounded-lg border ${t.border} ${t.bg} ${t.text} ${mainSize} ${
+        className={`group type-label-lg font-normal flex items-center gap-2.5 rounded-lg border ${t.border} ${t.bg} ${gradient} ${t.text} ${mainSize} ${
           fullWidth ? 'w-full justify-center' : 'w-fit'
-        } transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
+        } transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
       >
         <span className="flex shrink-0 items-center gap-1" aria-hidden>
           {(['claude', 'cursor', 'codex'] as AgentLogo[]).map((logo) => (

@@ -63,9 +63,17 @@ const Footer = () => {
           ~144px and its inner box is pointer-events-auto (the heart's
           click-to-spin), so at a lower stacking level it covered the links and
           ate every hover and click. Content sits above the artwork. */}
-      <div ref={revealRef} className="relative z-20 pt-10 pb-[30vw] md:pt-20 md:pb-8">
+      {/* pointer-events-none on the BLOCK, auto on the row that holds the
+          actual content. The block is z-20 (so the mark can't cover the links)
+          and its pb-[30vw] on mobile reaches down over the heart — as a solid
+          hit target that swallowed every tap meant for it. Only the columns
+          need to catch events; the padding must not. */}
+      <div
+        ref={revealRef}
+        className="pointer-events-none relative z-20 pt-10 pb-[30vw] md:pt-20 md:pb-8"
+      >
        <div className="page-gutter-x">
-        <div className="flex w-full flex-wrap items-start gap-x-20 gap-y-8">
+        <div className="pointer-events-auto flex w-full flex-wrap items-start gap-x-20 gap-y-8">
           {/* Rivet logo on the left, with the copyright + a small Terms/Privacy
               row directly beneath it */}
           <div className="flex flex-col items-start gap-4" style={rise(0)}>
@@ -185,11 +193,13 @@ const Footer = () => {
           heart's percentage placement is measured against.
 
           On mobile the block is pulled up ~80% of its own rendered height
-          (height ≈ 90vw × 757/1585 ≈ 43vw, so -mt-[34vw]). The content block
-          above reserves pb-[37vw] so this pull lands just below the links
-          rather than overlapping them; reset to 0 from md up. */}
+          On mobile the pull must stay BELOW the content block's own
+          pb-[30vw], or the mark rides up through the link columns — at
+          -mt-[58vw] it overlapped them by 28vw. -mt-[26vw] keeps it just clear.
+          Desktop is unaffected: there the reserved padding and the pull are
+          both set in px and already match. */}
       <div
-        className="page-gutter-x pointer-events-none relative -mt-[58vw] -mb-[3vw] md:-mt-28 md:-mb-8 lg:-mt-36 lg:-mb-12"
+        className="page-gutter-x pointer-events-none relative -mt-[26vw] -mb-[3vw] md:-mt-28 md:-mb-8 lg:-mt-36 lg:-mb-12"
         style={rise(240)}
       >
         {/* The comb texture, edge to edge behind the mark. Absolute against
@@ -239,7 +249,7 @@ const Footer = () => {
           mirror as class transforms, and an inline transform from rise() would
           overwrite both — the blob would snap to the edge, unmirrored. */}
       <div
-        className="pointer-events-none absolute bottom-[10%] left-0 z-30 w-[7%] -translate-x-[6%] -scale-x-100"
+        className="pointer-events-none absolute bottom-[10%] left-0 z-30 w-[10%] -translate-x-[6%] -scale-x-100"
         style={fade(360)}
       >
         <img
@@ -252,7 +262,7 @@ const Footer = () => {
         />
       </div>
       <div
-        className="pointer-events-none absolute right-0 top-[34%] z-30 w-[13%] translate-x-[4%]"
+        className="pointer-events-none absolute right-0 top-[36%] z-30 w-[17%] translate-x-[4%]"
         style={fade(440)}
       >
         <img

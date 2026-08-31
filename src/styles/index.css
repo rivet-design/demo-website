@@ -189,6 +189,13 @@
     --prototype-inset-x: calc((100vw - var(--prototype-w)) / 2);
   }
 
+  /* Aileron runs a touch loose by default; -2% is the tracking the brand
+     sets it at. Applied to the family utility so every use picks it up
+     rather than each call site repeating a tracking class. */
+  .font-aileron {
+    letter-spacing: -0.02em;
+  }
+
   .page-gutter-x {
     padding-left: var(--page-gutter-x);
     padding-right: var(--page-gutter-x);
@@ -218,13 +225,12 @@
   @media (max-width: 1023px) {
     .hero-title-text {
       margin-inline: -1.5rem;
-      /* Divisor raised from 8.25 and the cap lowered from 3.5rem: /8.25 was
-         the tightest size that still fit the longest line ("Explore dozens
-         of", ~7.75em), which left the title filling most of a phone screen
-         and spilling to four lines. /10 leaves real slack inside the same
-         available width (100vw − gutters − the bled px-12), so it sets at a
-         comfortable three lines. */
-      font-size: clamp(1.5rem, calc((86.8vw - 3rem) / 10), 2.5rem);
+      /* Sized for TWO lines. The markup carries a hard <br/> after "design",
+         so the constraint is the longer of the two lines — "directions from
+         your agent.", ~13.5em — fitting the available width (100vw − gutters
+         − the bled px-12 = 86.8vw − 3rem). The divisor is that measure; /10
+         was sized for three lines and let the second one wrap again. */
+      font-size: clamp(1.25rem, calc((86.8vw - 3rem) / 13.5), 2.25rem);
       text-wrap: balance;
     }
   }
