@@ -581,7 +581,10 @@ const DirectionsPanel = ({
 
       {/* Variant table — scrolls without rendering a scrollbar, matching the
           core shell's scrollbar-hide. */}
-      <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-2 scrollbar-hide">
+      {/* overflow-hidden, not auto: the list always fits, so a scroll container
+          here only ever swallowed the page's wheel events. With no scrollable
+          box the wheel passes straight through to the page. */}
+      <div className="flex-1 overflow-hidden px-3 py-2">
         {folders.length > 0 ? (
           <ul className="flex flex-col gap-2">
             {folders.map((folder, folderIndex) => (

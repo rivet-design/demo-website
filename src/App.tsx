@@ -21,9 +21,7 @@ import SplashScreen from './components/SplashScreen';
 import Footer from './components/Footer';
 import FadeInText from './components/FadeInText';
 // import WorkflowPanels from './components/WorkflowPanels';
-import CommentDemoSection from './components/CommentDemoSection';
 import VariantsDemoSection from './components/VariantsDemoSection';
-import ReferencesDemoSection from './components/ReferencesDemoSection';
 import PaperSheet from './components/PaperSheet';
 import PromptInstallButton from './components/PromptInstallButton';
 import InstallAccordion from './components/InstallAccordion';
@@ -31,7 +29,10 @@ import BrowserFrame from './components/BrowserFrame';
 import HeroShowcaseBackground from './components/HeroShowcaseBackground';
 import FloatingShapes from './components/FloatingShapes';
 import GravityField from './components/GravityField';
-import ScrollReveal from './components/ScrollReveal';
+import {
+  scrollRevealLeaveStyle,
+  useScrollReveal,
+} from './hooks/use-scroll-reveal';
 import { useInView } from './hooks/use-in-view';
 import VariantsShowcase from './components/variantsDemo/VariantsShowcase';
 import DirectionsPanel from './components/variantsDemo/DirectionsPanel';
@@ -973,6 +974,27 @@ const App = () => {
   // class-based centering no longer applies. Replay resets it to null so the
   // chat returns to centre.
   const heroShowcaseRef = useRef<HTMLDivElement>(null);
+
+  // The hero defocuses as you scroll past it, the same gesture every section
+  // below uses. Two targets, because the hero has two shapes:
+  //   off the pinned path  the showcase element itself
+  //   on it                the whole pinned STAGE — by then the showcase is
+  //                        inside the shrinking card, so blurring it would
+  //                        blur the demo *inside* the prototype rather than
+  //                        the prototype itself. The page's own nav sits
+  //                        outside the stage, so it stays sharp.
+  // Both are entrance:false — the splash hands the hero in via heroRise, so
+  // these only ever add the leaving half.
+  const showcaseLeave = useScrollReveal<HTMLDivElement>({
+    ref: heroShowcaseRef,
+    entrance: false,
+    disabled: playHeroIntro,
+  });
+  const stageLeave = useScrollReveal<HTMLDivElement>({
+    ref: stageRef,
+    entrance: false,
+    disabled: !playHeroIntro,
+  });
   const chatWrapRef = useRef<HTMLDivElement>(null);
 
   const [chatPos, setChatPos] = useState<{ x: number; y: number } | null>(
@@ -1352,7 +1374,12 @@ const App = () => {
             // children keep their gutter.
             style={
               playHeroIntro
-                ? { backgroundColor: '#fafafa' }
+                ? {
+                    backgroundColor: '#fafafa',
+                    // The leaving blur, so the finished prototype goes soft on
+                    // its way out instead of sliding away perfectly sharp.
+                    ...(stageLeave.isPast ? scrollRevealLeaveStyle : null),
+                  }
                 : {
                     // A gradient, not a flat fill: the tan dissolves into the
                     // page's #fafafa ground instead of ending on a hard line
@@ -1648,8 +1675,13 @@ const App = () => {
             <div
               id="hero-showcase"
               ref={heroShowcaseRef}
-              // Last in the entrance wave, after the headline and the CTAs.
-              style={heroRise(220)}
+              // Last in the entrance wave, after the headline and the CTAs —
+              // then soft again once it's scrolled past (see showcasePast).
+              style={
+                showcaseLeave.isPast
+                  ? { ...heroRise(220), ...scrollRevealLeaveStyle }
+                  : heroRise(220)
+              }
               className={
                 HERO_TEXT_LEFT
                   ? 'relative z-10 w-[60%] shrink-0 aspect-[821/559]'
@@ -1904,20 +1936,13 @@ const App = () => {
           style={{ backgroundColor: SITE_FILL }}
         >
           {/* <WorkflowPanels /> */}
-          {/* Each section sharpens as it arrives and goes soft as you scroll
-              past it — wrapped individually rather than as one block so they
-              hand off to each other instead of moving together. Order is
-              upstream's (agent terminal first); the wrappers are ours. */}
-          <ScrollReveal>
-            <AgentTerminalSection />
-          </ScrollReveal>
-          <ScrollReveal>
-            <CommentDemoSection />
-          </ScrollReveal>
+          {/* Reveals from the inside: the header and each card sharpen and go
+              soft on their own. Wrapping the whole section instead only worked
+              at lg — stacked on mobile it never left the viewport, so nothing
+              ever blurred. The comment and references panels that used to
+              follow it are gone; the three cards carry this part of the page. */}
+          <AgentTerminalSection />
           {SHOW_VARIANTS_PANEL && <VariantsDemoSection />}
-          <ScrollReveal>
-            <ReferencesDemoSection />
-          </ScrollReveal>
           {SHOW_MANIFESTO_PANEL && <CodePanel />}
         </div>
         </div>

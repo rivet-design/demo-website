@@ -410,6 +410,23 @@
   a[target='_blank']:not(.no-external-icon):focus-visible::after {
     opacity: 1;
   }
+
+  /* In the nav the arrow must not RESERVE inline space. It is invisible at
+     rest but still 0.75em + 0.2em wide, so Docs and Release notes each carried
+     ~15px of dead width that About (an internal link, no arrow) did not — the
+     Docs -> Release notes gap measured 59px against About -> Docs at 44px.
+     Positioned in the link's own right padding instead, the arrow still
+     appears on hover and every gap in the row is identical. */
+  nav a[target='_blank']:not(.no-external-icon) {
+    position: relative;
+  }
+  nav a[target='_blank']:not(.no-external-icon)::after {
+    position: absolute;
+    right: 0.25rem;
+    top: 50%;
+    margin-left: 0;
+    transform: translateY(-50%);
+  }
 }
 
 /*

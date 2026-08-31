@@ -109,14 +109,18 @@ const NavBar = ({
         className="relative z-10 flex w-full items-center justify-between py-5"
       >
         <Logo />
-        <div className="flex items-center gap-2 lg:gap-3">
+        <div className="flex items-center gap-2 lg:gap-6">
           <a
             href="/about"
             className={[
-              'type-label hidden cursor-pointer rounded-lg px-3 py-1.5 transition-colors lg:inline-block lg:px-4 lg:py-2 lg:text-sm',
+              // Identical to Docs and Release notes — same type, same padding,
+              // same colour. It was `type-label`/text-sm in black, which made
+              // it read as a different kind of item and, because the padding
+              // differed, sat at an uneven distance from its neighbours.
+              'hidden cursor-pointer rounded-lg px-3 py-1.5 font-aileron text-base leading-[1.164] tracking-[-0.16px] transition-colors lg:inline-block lg:px-4 lg:py-2',
               isDark
                 ? 'text-white hover:text-white/60'
-                : 'text-black hover:text-black/60',
+                : 'text-[#642e39] hover:text-[#642e39]/60',
             ].join(' ')}
           >
             About

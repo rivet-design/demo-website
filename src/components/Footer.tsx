@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useInView } from '../hooks/use-in-view';
 import { SITE_FILL, footerBackground } from '../lib/background';
 
@@ -8,6 +9,9 @@ const RELEASES_LINK = 'https://docs.rivet.design/releases';
 const MCP_LINK = 'https://docs.rivet.design/mcp-guide';
 const EMAIL = 'sam@tryrivet.design';
 
+/** Smallest space allowed between the two footer link columns, in px. */
+const MIN_COLUMN_GUTTER = 8;
+
 const Footer = () => {
   // Fade-and-rise as the footer arrives, rather than being fully formed the
   // moment it scrolls into frame. `rootMargin: '-80px'` holds it back until
@@ -17,14 +21,86 @@ const Footer = () => {
   const { ref: revealRef, inView } = useInView<HTMLDivElement>({
     rootMargin: '-80px',
   });
+  // --- link columns on the nav's grid ------------------------------------
+  // "Rivet" sits under the nav's "About" and "Community" under "Release notes".
+  // Neither position is expressible in CSS: the nav is a right-aligned row, so
+  // its items land wherever their own copy puts them, and the footer row is
+  // inset by an extra --page-gutter-x on top of the nav's --frame-inset-x. So
+  // the two nav links are measured and the columns are given explicit widths
+  // that drop their left edges onto exactly those x's. Falls back to the
+  // natural flow layout whenever the nav links aren't on screen (below lg the
+  // nav collapses to a single Community link) or the pitch is too tight.
+  const columnsRef = useRef<HTMLDivElement>(null);
+  const firstColRef = useRef<HTMLDivElement>(null);
+  const [cols, setCols] = useState<{ first: number; second: number } | null>(
+    null,
+  );
+
+  const measure = useCallback(() => {
+    const host = columnsRef.current;
+    const firstCol = firstColRef.current;
+    if (!host || !firstCol) return;
+    const textLeft = (el: Element) =>
+      el.getBoundingClientRect().left +
+      parseFloat(getComputedStyle(el).paddingLeft);
+    const about = document.querySelector('nav a[href="/about"]');
+    const releases = document.querySelector(
+      'nav a[href="https://docs.rivet.design/releases"]',
+    );
+    // offsetParent is null while an element is display:none — that is how the
+    // nav links read below lg, where there is no grid to follow.
+    if (!about || !releases || !(about as HTMLElement).offsetParent) {
+      setCols(null);
+      return;
+    }
+    const first = textLeft(about);
+    const second = textLeft(releases);
+    const right = host.getBoundingClientRect().right;
+    const pitch = second - first;
+    // The column's real content width is its widest PAINTED line — its own
+    // scrollWidth reads ~18px wider than that (the links are stretched block
+    // children), which is enough to reject a pitch that actually fits. Bail
+    // only if the nav's items genuinely sit closer together than the copy
+    // needs, so the columns can never collide.
+    const widest = Math.max(
+      ...[...firstCol.querySelectorAll('a, span')].map((el) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        return range.getBoundingClientRect().width;
+      }),
+    );
+    if (pitch < widest + MIN_COLUMN_GUTTER || right <= second) {
+      setCols(null);
+      return;
+    }
+    setCols({ first: pitch, second: right - second });
+  }, []);
+
+  useEffect(() => {
+    measure();
+    window.addEventListener('resize', measure);
+    // Web fonts change every one of these widths, so re-measure once they land.
+    void document.fonts?.ready.then(measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [measure]);
+
   const fade = (delayMs: number) => ({
     opacity: inView ? 1 : 0,
     transition: `opacity 760ms cubic-bezier(0.16,1,0.3,1) ${delayMs}ms`,
   });
+  // Same arriving gesture as every other block on the page (see
+  // use-scroll-reveal): blur + fade + a short rise, on the shared 700ms curve.
+  // It keeps its own -80px trigger rather than the shared band — the footer is
+  // the last thing on the page, so there is no "scrolled past" half to match,
+  // and the tighter margin is what holds it back until it is properly in view.
   const rise = (delayMs: number) => ({
     opacity: inView ? 1 : 0,
-    transform: inView ? 'translateY(0)' : 'translateY(18px)',
-    transition: `opacity 620ms cubic-bezier(0.16,1,0.3,1) ${delayMs}ms, transform 620ms cubic-bezier(0.16,1,0.3,1) ${delayMs}ms`,
+    transform: inView ? 'translateY(0)' : 'translateY(22px)',
+    filter: inView ? 'blur(0px)' : 'blur(10px)',
+    transition:
+      `opacity 700ms cubic-bezier(0.16,1,0.3,1) ${delayMs}ms,` +
+      `transform 700ms cubic-bezier(0.16,1,0.3,1) ${delayMs}ms,` +
+      `filter 700ms cubic-bezier(0.16,1,0.3,1) ${delayMs}ms`,
   });
 
   return (
@@ -109,14 +185,26 @@ const Footer = () => {
           {/* Spacer to push columns to the right */}
           <div className="flex-1" />
 
-          {/* Link columns - right aligned, each left-aligned internally */}
-          <div className="flex flex-wrap gap-x-20 gap-y-8">
-            <div className="flex flex-col items-start gap-4" style={rise(90)}>
+          {/* Link columns - right aligned, each left-aligned internally.
+              When the nav grid is available the two columns are given explicit
+              widths (see `measure` above) and the flow gap is folded into them,
+              so "Rivet" lands on the nav's "About" and "Community" on its
+              "Release notes". */}
+          <div
+            ref={columnsRef}
+            className="flex flex-wrap gap-x-20 gap-y-8"
+            style={cols ? { columnGap: 0 } : undefined}
+          >
+            <div
+              ref={firstColRef}
+              className="flex flex-col items-start gap-4"
+              style={cols ? { ...rise(90), width: cols.first } : rise(90)}
+            >
               <span className="type-label-lg font-aileron font-medium text-[#6273a1]">Rivet</span>
               <div className="flex flex-col gap-3">
                 <a
                   href="/about"
-                  className="font-main text-lg font-normal text-black transition-colors hover:text-black/70"
+                  className="font-main whitespace-nowrap text-lg font-normal text-black transition-colors hover:text-black/70"
                 >
                   About
                 </a>
@@ -124,7 +212,7 @@ const Footer = () => {
                   href={RELEASES_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-aileron text-lg font-normal text-black transition-colors hover:text-black/70"
+                  className="font-aileron whitespace-nowrap text-lg font-normal text-black transition-colors hover:text-black/70"
                 >
                   Releases
                 </a>
@@ -132,27 +220,30 @@ const Footer = () => {
                   href={MCP_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-aileron text-lg font-normal text-black transition-colors hover:text-black/70"
+                  className="font-aileron whitespace-nowrap text-lg font-normal text-black transition-colors hover:text-black/70"
                 >
                   MCP
                 </a>
                 <a
                   href={`mailto:${EMAIL}`}
-                  className="font-aileron text-lg font-normal text-black transition-colors hover:text-black/70"
+                  className="font-aileron whitespace-nowrap text-lg font-normal text-black transition-colors hover:text-black/70"
                 >
                   Contact
                 </a>
               </div>
             </div>
 
-            <div className="flex flex-col items-start gap-4" style={rise(170)}>
+            <div
+              className="flex flex-col items-start gap-4"
+              style={cols ? { ...rise(170), width: cols.second } : rise(170)}
+            >
               <span className="type-label-lg font-aileron font-medium text-[#6273a1]">Community</span>
               <div className="flex flex-col gap-3">
                 <a
                   href={X_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-aileron text-lg font-normal text-black transition-colors hover:text-black/70"
+                  className="font-aileron whitespace-nowrap text-lg font-normal text-black transition-colors hover:text-black/70"
                 >
                   Twitter
                 </a>
@@ -160,7 +251,7 @@ const Footer = () => {
                   href={LINKEDIN_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-aileron text-lg font-normal text-black transition-colors hover:text-black/70"
+                  className="font-aileron whitespace-nowrap text-lg font-normal text-black transition-colors hover:text-black/70"
                 >
                   LinkedIn
                 </a>
@@ -168,7 +259,7 @@ const Footer = () => {
                   href={INSTAGRAM_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-aileron text-lg font-normal text-black transition-colors hover:text-black/70"
+                  className="font-aileron whitespace-nowrap text-lg font-normal text-black transition-colors hover:text-black/70"
                 >
                   Instagram
                 </a>

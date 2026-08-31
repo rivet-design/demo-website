@@ -58,8 +58,24 @@ const Logo = () => {
           same mark reads at the same size wherever it appears. (Was a fixed
           32px in a hard-coded 101x32 box; the box is gone too, so the wrapper
           just hugs whatever the responsive height works out to.) */}
-      <motion.div
-        className="flex cursor-default items-center"
+      {/* The mark is the way back to the top of the page. On a sub-route that
+          is a plain navigation home; on the landing page itself a reload would
+          throw away the scroll-driven hero, so it rewinds to the top instead.
+          Right-click still opens "Copy logo as SVG". */}
+      <motion.a
+        href="/"
+        className="flex cursor-pointer items-center"
+        onClick={(e) => {
+          if (window.location.pathname !== '/') return;
+          e.preventDefault();
+          window.scrollTo({
+            top: 0,
+            behavior: window.matchMedia('(prefers-reduced-motion: reduce)')
+              .matches
+              ? 'auto'
+              : 'smooth',
+          });
+        }}
         onContextMenu={handleContextMenu}
       >
         <img
@@ -69,7 +85,7 @@ const Logo = () => {
           draggable={false}
           className="h-[23px] w-auto md:h-[26px]"
         />
-      </motion.div>
+      </motion.a>
 
       {createPortal(
         <AnimatePresence>
