@@ -8,6 +8,9 @@
   :root { --cream: #E4E3DB; --ink: #2A1C17; }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: transparent; }
+  /* Drag-to-spin: without this a fast drag selects the stacked slices instead
+     of rotating them. */
+  html, body { -webkit-user-select: none; user-select: none; }
   [hidden] { display: none !important; }
   body {
     background: transparent;

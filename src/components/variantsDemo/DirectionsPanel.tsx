@@ -1,6 +1,5 @@
 import {
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -391,24 +390,18 @@ const DirectionFolder = ({
   label,
   directionCount,
   color,
-  active,
   children,
 }: {
   label: string;
   directionCount: number;
   color: string;
-  /** True when the selected direction lives in this folder. */
-  active: boolean;
   children: ReactNode;
 }) => {
-  // Exactly one folder is open at a time: the one holding the selected
-  // direction. Seeded from `active` too, so on arrival only the first folder
-  // is expanded and the later ones open as the selection reaches them, rather
-  // than every group being open at once.
-  const [collapsed, setCollapsed] = useState(!active);
-  useEffect(() => {
-    setCollapsed(!active);
-  }, [active]);
+  // Every folder starts open and stays where the reader put it. Driving this
+  // from the selection meant a folder swung shut and another swung open on
+  // every scroll step, so the list under the pointer kept moving — the whole
+  // panel animated when only the preview was supposed to change.
+  const [collapsed, setCollapsed] = useState(false);
   const reduceMotion = useReducedMotion();
 
   return (
@@ -593,7 +586,6 @@ const DirectionsPanel = ({
                 label={folder.label}
                 directionCount={folder.variants.length}
                 color={FOLDER_COLORS[folderIndex % FOLDER_COLORS.length]}
-                active={folder.variants.some((v) => v.id === ctrl.selectedId)}
               >
                 <VariantTable
                   variants={folder.variants}

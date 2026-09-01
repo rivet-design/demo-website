@@ -1,6 +1,6 @@
 import {
   memo,
-  useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -24,9 +24,9 @@ import { useScrollReveal } from '../hooks/use-scroll-reveal';
  * a crop of something larger rather than a picture placed in a box.
  *
  * Hovering a card widens it and washes its gradient out to the bare panel, so
- * whatever the card is really about can step forward. The width lives on the
- * GRID (a template-columns transition), not on the card, because a card that
- * grew on its own would overlap its neighbours instead of pushing them.
+ * whatever the card is really about can step forward. Only that card changes
+ * size — its neighbours keep their resting width and are pushed aside, with
+ * the row sliding to keep the hovered card in frame.
  */
 const CARDS = [
   {
@@ -57,8 +57,6 @@ const CARDS = [
 const CARD_GRADIENT =
   'linear-gradient(to bottom, #fafafa 0%, #fbf3ef 30%, #f6cfc2 55%, #f0a08b 76%, #e8552f 100%)';
 
-// Header only — the cards row is flex (see below).
-const GRID = 'grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6';
 // One curve for every transition in the section, so the widening, the wash-out
 // and the reveal all move as one gesture rather than three.
 const EASE = 'cubic-bezier(0.16, 1, 0.3, 1)';
@@ -70,9 +68,29 @@ const EXPAND_MS = 620;
 // than revealing. Instead the LEAVING layers are quick, so they are gone
 // almost immediately and the two states barely coexist even though both start
 // on the same frame.
-const WASH_MS = 200;
 const SLIDE_MS = 360;
 const ARRIVE_MS = 280;
+// How much wider the open card is than a closed one. Also sets all three
+// widths, since open + closed + closed has to add back up to the row: at 1.9
+// the open card took nearly half of it and the two closed ones were left far
+// narrower than the 39:52 they are drawn at. At 1.3 the closed pair sits just
+// about at that ratio and the open card is a little over a third of the row.
+const OPEN_SCALE = 1.3;
+// Must match the row's `lg:gap-6` and Tailwind's `lg` breakpoint — the widths
+// are computed here, so the arithmetic has to know the gap it is subtracting.
+const GAP_PX = 24;
+const LG_PX = 1024;
+// The headline, as its two hard-broken lines. Line one is also what gets
+// measured to size the type, so it lives here rather than inline in the JSX.
+const TITLE_LINES = [
+  'Rivet helps designers explore more',
+  'ideas for the software they craft.',
+];
+// Font-size the hidden probe is rendered at. Big enough that rounding in the
+// measured width is noise.
+const PROBE_PX = 100;
+// Fallback until the probe has been read, in multiples of font-size.
+const TITLE_RATIO = 21;
 
 const AgentTerminalSection = () => {
   const [hovered, setHovered] = useState<number | null>(null);
@@ -80,34 +98,89 @@ const AgentTerminalSection = () => {
   // sharp long after the heading has crossed the blur-out band.
   const header = useScrollReveal<HTMLDivElement>({ leave: false });
 
-  // The cards' height is LOCKED to what the aspect ratio gives them at rest.
-  // Without this, widening a card also grows it vertically — aspect-ratio
-  // derives height from width — and since the three share a grid row, all
-  // three grew. Measured from the first card's resting width, so it still
-  // tracks the viewport.
+  // ONE card is always open. Without a default the row had no fixed total
+  // width — opening a card overflowed the container and the whole stack had to
+  // slide to compensate. With one always open the three widths add up to the
+  // row on every frame, so hovering only ever hands the open state from one
+  // card to another and nothing shifts.
+  //
+  // Which also sets the widths: open + collapsed + collapsed must equal the
+  // row, so the collapsed width is the row divided by OPEN_SCALE + 2 rather
+  // than by 3.
+  //
+  // Measured off the ROW, not off a card: a card's width is an output of this,
+  // so measuring one would feed back into itself.
   const gridRef = useRef<HTMLDivElement>(null);
-  const [rowH, setRowH] = useState<number | null>(null);
-  const hoveredRef = useRef<number | null>(null);
-  hoveredRef.current = hovered;
+  const [rowW, setRowW] = useState<number | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const grid = gridRef.current;
     if (!grid) return;
+    const desktop = window.matchMedia(`(min-width: ${LG_PX}px)`);
     const measure = () => {
-      // Never measure mid-hover: the first card may be the expanded one.
-      if (hoveredRef.current !== null) return;
-      const card = grid.firstElementChild as HTMLElement | null;
-      if (!card) return;
-      const w = card.getBoundingClientRect().width;
-      if (w > 0) setRowH((w * 52) / 39);
+      // Below lg the row is a COLUMN: the cards are full-width, nothing
+      // expands, and aspect-[39/52] gives them their height on its own.
+      if (!desktop.matches) {
+        setRowW(null);
+        return;
+      }
+      const w = grid.getBoundingClientRect().width;
+      if (w > 0) setRowW(w - GAP_PX * (CARDS.length - 1));
     };
     measure();
-    // Observes the GRID, so it fires on viewport changes — a card widening on
-    // hover doesn't resize the grid, so it can't feed back into this.
+    // The row's own width never changes on hover — the widths always sum back
+    // to it — so this can't feed back into itself.
     const ro = new ResizeObserver(measure);
     ro.observe(grid);
-    return () => ro.disconnect();
+    desktop.addEventListener('change', measure);
+    return () => {
+      ro.disconnect();
+      desktop.removeEventListener('change', measure);
+    };
   }, []);
+
+  const restW = rowW === null ? null : rowW / (OPEN_SCALE + 2);
+  // Height comes from an EQUAL third, not from the collapsed width, so the
+  // cards keep the proportions they were drawn at instead of getting shorter
+  // to match a narrower resting card.
+  const rowH = rowW === null ? null : (rowW / CARDS.length) * (52 / 39);
+  // Only on desktop, where the widths make it necessary. On mobile there is no
+  // hover, so a default would just leave the first card permanently washed out.
+  const openIndex = rowW === null ? hovered : (hovered ?? 0);
+
+  // The headline starts at the SECOND card's left edge. That used to fall out
+  // of a shared three-column grid, but the cards are no longer equal columns —
+  // the open one is 1.9x the others — so the grid put the headline a full card
+  // short of where card two now begins. Measured from the same numbers the
+  // cards are sized with, and pinned to the RESTING layout so the headline
+  // doesn't slide every time the open card changes.
+  const openW = rowW === null ? 0 : (rowW / (OPEN_SCALE + 2)) * OPEN_SCALE;
+  const headX = rowW === null ? null : openW + GAP_PX;
+  const headW = rowW === null ? null : rowW + GAP_PX - openW;
+  // Half the row's width instead of two thirds means the headline no longer
+  // holds two lines at 52px, so the size follows the column: it is the largest
+  // size at which line one still fits, capped at the original 52.
+  //
+  // The ratio is MEASURED, not a constant — a hidden copy of that line, set
+  // nowrap at a known size, gives its width in multiples of font-size for
+  // whatever face actually rendered. A hardcoded number silently wraps to
+  // three lines the first time the copy or the typeface changes.
+  const probeRef = useRef<HTMLSpanElement>(null);
+  const [titleRatio, setTitleRatio] = useState(TITLE_RATIO);
+  useLayoutEffect(() => {
+    const probe = probeRef.current;
+    if (!probe) return;
+    const measure = () => {
+      const w = probe.getBoundingClientRect().width;
+      if (w > 0) setTitleRatio(w / PROBE_PX);
+    };
+    measure();
+    // Aileron may still be swapping in, and the fallback face is a different
+    // width — re-read once it has actually landed.
+    document.fonts?.ready.then(measure).catch(() => {});
+  }, []);
+  const titlePx =
+    headW === null ? null : Math.max(26, Math.min(52, headW / titleRatio));
 
   return (
     <div className="page-gutter-x relative w-full overflow-hidden pb-24 pt-8 lg:pb-40 lg:pt-16">
@@ -118,20 +191,42 @@ const AgentTerminalSection = () => {
             well before they do. */}
         <div
           ref={header.ref}
-          className={`${GRID} mb-10 lg:mb-14`}
+          // min-h matches the mark's own height: it is absolute at lg, so
+          // without this a shorter headline would let the mark hang out of the
+          // header and eat into the gap above the cards.
+          className="relative mb-12 lg:mb-24 lg:min-h-[132px]"
           style={header.style}
         >
-          <div className="flex items-start">
+          {/* Absolute at lg so the headline's own offset places it, rather
+              than a column track — stacked below that, it sits in flow above
+              the copy as before. */}
+          <div className="flex items-start lg:absolute lg:left-0 lg:top-0">
             <RivetMark className="h-auto w-[104px] lg:w-[132px]" />
           </div>
           {/* font-aileron carries the -2% tracking from its own utility, so it
               isn't repeated here. Hard break after "more" — the measure alone
               wouldn't reliably land "ideas" at the head of line two. */}
-          <h2 className="font-aileron text-[30px] font-normal leading-[1.14] text-black lg:col-span-2 lg:text-[52px]">
-            Rivet helps designers explore more
+          <h2
+            className="mt-6 font-aileron text-[30px] font-normal leading-[1.14] text-black lg:mt-0"
+            style={
+              headX === null
+                ? undefined
+                : { marginLeft: headX, width: headW ?? undefined, fontSize: titlePx ?? undefined }
+            }
+          >
+            {TITLE_LINES[0]}
             <br />
-            ideas for the software they craft.
+            {TITLE_LINES[1]}
           </h2>
+          {/* Measurement probe. Absolute and hidden, so it costs no layout. */}
+          <span
+            ref={probeRef}
+            aria-hidden
+            className="pointer-events-none invisible absolute left-0 top-0 whitespace-nowrap font-aileron font-normal"
+            style={{ fontSize: PROBE_PX }}
+          >
+            {TITLE_LINES[0]}
+          </span>
         </div>
 
         {/* Flex, not grid. A transitioned grid-template-columns proved
@@ -145,7 +240,8 @@ const AgentTerminalSection = () => {
               key={card.art}
               card={card}
               index={i}
-              hovered={hovered}
+              hovered={openIndex}
+              restW={restW}
               rowH={rowH}
               onHover={setHovered}
             />
@@ -167,12 +263,14 @@ const Card = ({
   card,
   index,
   hovered,
+  restW,
   rowH,
   onHover,
 }: {
   card: (typeof CARDS)[number];
   index: number;
   hovered: number | null;
+  restW: number | null;
   rowH: number | null;
   onHover: (i: number | null) => void;
 }) => {
@@ -191,25 +289,32 @@ const Card = ({
                 // overflow-hidden is what lets the art bleed: each layer is
                 // wider than it needs to be and gets clipped to that shape, so
                 // the corners stay clean even where the art runs past them.
-                // The grow/basis pair is scoped to lg through a variable
-                // because an inline style can't carry a breakpoint. It has to
-                // be: below lg the row is a COLUMN, where flex-basis:0 governs
-                // the main axis — height — so it beat the explicit height and
-                // collapsed all three cards to 2px hairlines.
-                className="relative aspect-[39/52] shrink-0 overflow-hidden rounded-[30px] rounded-br-none border-[0.5px] border-[#63729d] bg-[#f1efe8] lg:aspect-auto lg:shrink lg:[flex-basis:0] lg:[flex-grow:var(--card-grow)]"
-                // flex-basis 0 with grow doing the work, so the three widths
-                // are pure ratios of the free space. Explicit height wins over
-                // aspect-ratio, which is what keeps the expansion horizontal;
-                // until measured, aspect-ratio still shapes the first paint.
+                // The grow/basis pair is only the pre-measurement default,
+                // and it is scoped to lg because below that the row is a
+                // COLUMN, where flex-basis:0 governs the main axis — height —
+                // and collapsed all three cards to 2px hairlines.
+                className="relative aspect-[39/52] shrink-0 overflow-hidden rounded-[30px] rounded-br-none border-[0.5px] border-[#63729d] bg-[#fafafa] lg:aspect-auto lg:shrink lg:[flex-basis:0] lg:[flex-grow:1]"
+                // Explicit height wins over aspect-ratio, which is what keeps
+                // the expansion horizontal.
                 style={
                   {
                     ...reveal.style,
-                    '--card-grow': hovered === null ? 1 : isOpen ? 1.9 : 1,
+                    // `flex: none` so the inline width actually governs — the
+                    // flex-basis/grow pair in the class list is only the
+                    // pre-measurement default, and flex-basis would otherwise
+                    // win over width outright. Absent below lg, where the
+                    // class list's column layout is what's wanted.
+                    ...(restW
+                      ? {
+                          flex: 'none',
+                          width: restW * (isOpen ? OPEN_SCALE : 1),
+                        }
+                      : null),
                     ...(rowH ? { height: rowH } : null),
                     // One declaration or the other wins outright, so the
                     // widening and the reveal share a single transition list.
                     transition: [
-                      `flex-grow ${EXPAND_MS}ms ${EASE}`,
+                      `width ${EXPAND_MS}ms ${EASE}`,
                       reveal.style.transition,
                     ]
                       .filter(Boolean)
@@ -217,16 +322,16 @@ const Card = ({
                   } as CSSProperties
                 }
               >
-                {/* Gradient, texture and art each fade on their own layer.
-                    They can't live on the article as a background, because a
-                    background-image has nothing to transition to — washing out
-                    means fading a layer, not changing a paint. */}
+                {/* The card's ground: gradient, then texture. Neither
+                    changes on hover — every card carries the same background
+                    open or closed, so the row reads as one set. Only the
+                    shape art moves and the detail copy arrives. Separate
+                    layers rather than backgrounds on the article because the
+                    art above them has to slide independently. */}
                 <div
                   className="absolute inset-0"
                   style={{
                     backgroundImage: CARD_GRADIENT,
-                    opacity: isOpen ? 0 : 1,
-                    transition: `opacity ${WASH_MS}ms ${EASE}`,
                   }}
                 />
                 <img
@@ -235,8 +340,7 @@ const Card = ({
                   draggable={false}
                   className="pointer-events-none absolute inset-x-0 bottom-0 block w-full"
                   style={{
-                    opacity: isOpen ? 0.35 : 1,
-                    transition: `opacity ${WASH_MS}ms ${EASE}`,
+                    opacity: 1,
                   }}
                 />
                 {/* Slides out the bottom rather than fading — the shapes read

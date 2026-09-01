@@ -10,7 +10,11 @@ export type DemoVariant = {
   id: string;
   /** Display label (manifest `label`). */
   label: string;
-  /** One-line direction description (manifest `brief`). */
+  /**
+   * One-line direction description (manifest `brief`). Kept to roughly 30
+   * characters — the Directions panel is a narrow column, and anything longer
+   * wrapped to three lines and pushed the folders below it off-screen.
+   */
   brief: string;
   /** URL of the hosted static page for this variant. */
   src: string;
@@ -58,7 +62,7 @@ export const VARIANTS: DemoVariant[] = [
   {
     id: ORIGINAL_ID,
     label: 'Original',
-    brief: 'The hero exactly as it ships today.',
+    brief: 'Exactly as it ships today.',
     src: '/?embed=1&variant=original',
     tag: 'Baseline',
     folder: 'Layout changes',
@@ -66,7 +70,7 @@ export const VARIANTS: DemoVariant[] = [
   {
     id: WITH_SPLASH_ID,
     label: 'With splash',
-    brief: 'Plays the splash screen first, then lands on the hero.',
+    brief: 'Splash screen, then the hero.',
     src: '/?embed=1&variant=with-splash',
     tag: 'Baseline',
     folder: 'Layout changes',
@@ -74,7 +78,7 @@ export const VARIANTS: DemoVariant[] = [
   {
     id: LEFT_ALIGNED_ID,
     label: 'Left aligned',
-    brief: 'Lockup, headline and CTAs set flush left instead of centred.',
+    brief: 'Lockup and copy set flush left.',
     src: '/?embed=1&variant=left-aligned',
     tag: 'Baseline',
     folder: 'Layout changes',
@@ -82,7 +86,7 @@ export const VARIANTS: DemoVariant[] = [
   {
     id: MACINTOSH_SYSTEM_ID,
     label: 'Macintosh System',
-    brief: '1984 black-and-white Macintosh chrome and bitmap type.',
+    brief: '1984 Mac chrome and bitmap type.',
     src: '/demos/landing/macintosh-system.html',
     tag: 'Random direction',
     folder: 'Rough explorations',
@@ -90,7 +94,7 @@ export const VARIANTS: DemoVariant[] = [
   {
     id: BLUEPRINT_DRAFT_ID,
     label: 'Blueprint Draft',
-    brief: 'Cyanotype sheet with construction grid and drafting annotations.',
+    brief: 'Cyanotype sheet, drafting marks.',
     src: '/demos/landing/blueprint-draft.html',
     tag: 'Random direction',
     folder: 'Rough explorations',

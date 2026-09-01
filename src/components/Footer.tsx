@@ -290,7 +290,11 @@ const Footer = () => {
           Desktop is unaffected: there the reserved padding and the pull are
           both set in px and already match. */}
       <div
-        className="page-gutter-x pointer-events-none relative -mt-[26vw] -mb-[3vw] md:-mt-28 md:-mb-8 lg:-mt-36 lg:-mb-12"
+        // select-none: the heart is click-to-spin, so it gets clicked fast and
+        // repeatedly. A double-click there selects the iframe ELEMENT in this
+        // document and paints a blue box over the whole mark — there is no
+        // text here to select, so nothing is lost by refusing it.
+        className="page-gutter-x pointer-events-none relative -mt-[26vw] -mb-[3vw] select-none md:-mt-28 md:-mb-8 lg:-mt-36 lg:-mb-12"
         style={rise(240)}
       >
         {/* The comb texture, edge to edge behind the mark. Absolute against

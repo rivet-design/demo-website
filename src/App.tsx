@@ -1,5 +1,6 @@
 import {
   useState,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -15,6 +16,7 @@ import {
   useVelocity,
   useTransform,
 } from 'motion/react';
+import { X } from '@phosphor-icons/react';
 import { Toaster } from 'sonner';
 import NavBar from './components/NavBar';
 import SplashScreen from './components/SplashScreen';
@@ -729,10 +731,35 @@ const App = () => {
   }, [reversing, reverseAmount]);
   const reverseBlur = useTransform(reverseAmount, (v) => v * 10);
   const outerFilter = useMotionTemplate`blur(${reverseBlur}px)`;
+
+  // The pin spacer, so the skip button knows where the sequence ENDS. Its
+  // bottom edge is exactly the scroll position at which the stage unpins and
+  // the next section takes the viewport.
+  const pinSpacerRef = useRef<HTMLDivElement>(null);
+  const skipHeroSequence = useCallback(() => {
+    const spacer = pinSpacerRef.current;
+    if (!spacer) return;
+    // Rect-relative, not offsetTop: the spacer sits inside positioned
+    // wrappers, so offsetTop measures from the nearest offsetParent rather
+    // than from the document.
+    const end = spacer.getBoundingClientRect().bottom + window.scrollY;
+    window.scrollTo({
+      top: end,
+      // Programmatic scrolling is deliberately exempt from the wheel damping
+      // above, so this lands in one go rather than being slowed to a crawl
+      // through six viewports of runway.
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'auto'
+        : 'smooth',
+    });
+  }, []);
   const reverseFade = useTransform(reverseAmount, (v) => 1 - v * 0.6);
   const outerOpacity = useTransform(
     [outerFrameOpacity, reverseFade],
     (v: number[]) => v[0] * v[1],
+  );
+  const outerInteractive = useTransform(outerOpacity, (v) =>
+    v > 0.6 ? 'auto' : 'none',
   );
   // The blobs fade in ACROSS THEIR OWN SLIDE rather than being already-visible
   // when it starts: they inherit the container's opacity ramp, which finishes
@@ -1345,6 +1372,7 @@ const App = () => {
           // frame 2 fills the viewport, and the card needs the full width so
           // NavBar's own `bleed-page-gutter-x` and FloatingShapes' overflow
           // have somewhere to go that isn't outside the card's clip box.
+          ref={pinSpacerRef}
           className={playHeroIntro ? 'bleed-page-gutter-x' : undefined}
           style={
             playHeroIntro ? { height: `calc(100vh + ${runwayPx}px)` } : undefined
@@ -1422,6 +1450,21 @@ const App = () => {
                   style={outerPanelStyle}
                   className={`z-0 rounded-lg border-[0.5px] border-black/10 ${OUTER_PANEL_BOX}`}
                 >
+                  {/* Skip. Sits on the panel itself rather than inside the
+                      scaled window wrappers, so it keeps a constant size at
+                      the corner while everything under it grows. pointerEvents
+                      tracks the container's own fade — an opacity-0 layer
+                      still hit-tests, so without it this would be clickable
+                      through the hero before the prototype ever appears. */}
+                  <motion.button
+                    type="button"
+                    onClick={skipHeroSequence}
+                    aria-label="Skip to the next section"
+                    style={{ pointerEvents: outerInteractive }}
+                    className="absolute right-3 top-3 z-30 flex h-7 w-7 items-center justify-center rounded-md bg-white/80 text-[#e8552f] shadow-sm backdrop-blur-sm transition-colors hover:bg-white focus:outline-none focus-visible:ring-1 focus-visible:ring-[#e8552f]"
+                  >
+                    <X size={13} weight="bold" />
+                  </motion.button>
                   {/* Backdrop + window scale up together as they fade in. */}
                   <motion.div
                     style={{ scale: outerFrameScale }}
