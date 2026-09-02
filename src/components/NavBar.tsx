@@ -1,8 +1,13 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { motion, type MotionValue } from 'motion/react';
 import Logo from './Logo';
 import PromptInstallButton from './PromptInstallButton';
-import { surfaceBackground } from '../lib/background';
+import { surfaceBackground, withAlpha } from '../lib/background';
+
+// How much of the ground shows through the frosted bar.
+const FROSTED_ALPHA = 0.62;
+// Only reached when `fill` carries an image instead of a colour.
+const FALLBACK_FILL = '#fafafa';
 
 const NavBar = ({
   motionOpacity,
@@ -12,6 +17,7 @@ const NavBar = ({
   motionRadius,
   rootRef,
   frosted = false,
+  fill = surfaceBackground,
 }: {
   /**
    * Optional scroll-driven motion values — used by the hero's shrink
@@ -38,6 +44,12 @@ const NavBar = ({
    * at its edge, with no feathered lip and no mask.
    */
   frosted?: boolean;
+  /**
+   * The ground this nav sits on. Defaults to the tan site fill — the hero.
+   * Pages whose ground is something else pass it, or the bar comes out a
+   * different colour from the page directly under it.
+   */
+  fill?: CSSProperties;
 } = {}) => {
   // Experiment: keep the nav white throughout (isDark stays false).
   const [isDark] = useState(false);
@@ -54,18 +66,25 @@ const NavBar = ({
   // experiment so the nav stays light; restore it to bring the dark switch
   // back.
 
+  // The frosted tint needs the colour on its own; `fill` may also carry a
+  // background-image (the paper-texture flag), which can't be made
+  // translucent this way.
+  const fillColor =
+    typeof fill.backgroundColor === 'string' ? fill.backgroundColor : FALLBACK_FILL;
+
   return (
     <motion.nav
       ref={rootRef}
       style={{
-        // Filled with the SITE background itself (surfaceBackground and
-        // pageBackground both resolve to #F1EFE8), so the bar is opaque —
+        // Filled with the ground the bar actually SITS ON, so it is opaque —
         // nothing scrolls through a fixed nav — while still reading as the
-        // same surface as the page rather than a separate strip laid over it.
+        // same surface as the page rather than a strip laid over it. Which
+        // ground that is depends on the page: the tan hero card here, the
+        // #fafafa page ground on the blog pages, so the caller passes it.
         // `transparent` hands the fill to the caller — used by the page-level
         // nav during the pinned sequence, where the surface behind it is the
         // stage's #fafafa rather than the site fill.
-        ...(isDark || frosted ? undefined : surfaceBackground),
+        ...(isDark || frosted ? undefined : fill),
         ...(motionOpacity ? { opacity: motionOpacity } : undefined),
         ...(motionX ? { x: motionX } : undefined),
         ...(motionY ? { y: motionY } : undefined),
@@ -91,7 +110,10 @@ const NavBar = ({
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 z-0 backdrop-blur-lg backdrop-saturate-150"
-          style={{ backgroundColor: 'rgba(250, 250, 250, 0.62)' }}
+          // Same colour as the ground, just translucent — the tint follows
+          // `fill` rather than being its own hardcoded near-white, so a
+          // frosted bar over a tan surface is tinted tan.
+          style={{ backgroundColor: withAlpha(fillColor, FROSTED_ALPHA) }}
         />
       )}
       <div

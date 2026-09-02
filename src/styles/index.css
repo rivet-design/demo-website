@@ -227,9 +227,12 @@
       margin-inline: -1.5rem;
       /* Sized for TWO lines. The markup carries a hard <br/> after "design",
          so the constraint is the longer of the two lines — "directions from
-         your agent.", ~13.5em — fitting the available width (100vw − gutters
-         − the bled px-12 = 86.8vw − 3rem). The divisor is that measure; /10
-         was sized for three lines and let the second one wrap again. */
+         your agent." — fitting the available width (100vw − gutters − the
+         bled px-12 = 86.8vw − 3rem). The divisor is that measure; /10 was
+         sized for three lines and let the second one wrap again.
+         In Aileron Regular at the title's -3% tracking that line measures
+         11.19em, so /13.5 leaves ~17% headroom. Re-measure before changing
+         the weight: Bold is ~6% wider, which would still fit here. */
       font-size: clamp(1.25rem, calc((86.8vw - 3rem) / 13.5), 2.25rem);
       text-wrap: balance;
     }
@@ -251,10 +254,13 @@
        subtraction is the hero copy block's px-24 (6rem per side — 3x the
        content panels' lg:p-8). text-wrap: balance keeps the two lines close
        to equal instead of a long first line + short orphan. */
-    /* The two-line split is an explicit <br> after "directions" (lg+ only —
-       below lg the title wraps naturally), so no balance/max-width here: the
-       divisor keeps the longer top line (~17em) comfortably inside the padded
-       content width (~21em). */
+    /* The two-line split is an explicit <br> (lg+ only — below lg the title
+       wraps naturally), so no balance/max-width here: the divisor keeps the
+       longer line comfortably inside the padded content width. In Aileron
+       Regular at the title's -3% tracking that line is 11.19em against a
+       divisor of 18, so it fills ~62% of the width — the em figures in the
+       block above are from Satoshi, before the face changed, and no longer
+       describe this. */
     .hero-title-text {
       font-size: clamp(
         1.5rem,

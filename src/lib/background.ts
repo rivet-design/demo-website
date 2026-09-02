@@ -21,6 +21,27 @@ export const SITE_FILL = '#F1EFE8';
  *  longer a background — it is the fill of the inset panels that sit on this. */
 export const FOOTER_FILL = '#fafafa';
 
+/**
+ * A hex colour as rgba() at the given alpha. Used by the frosted nav, whose
+ * tint has to be the SAME colour as the ground it sits on — just translucent,
+ * so the backdrop filter has something to blur through.
+ */
+export const withAlpha = (hex: string, alpha: number): string => {
+  const h = hex.replace('#', '');
+  const full =
+    h.length === 3
+      ? h
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : h;
+  const n = Number.parseInt(full, 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 export const pageBackground: { className: string; style: CSSProperties } =
   USE_PAPER_TEXTURE
     ? {
@@ -30,8 +51,8 @@ export const pageBackground: { className: string; style: CSSProperties } =
     : { className: '', style: { backgroundColor: FOOTER_FILL } };
 
 /**
- * Background for an opaque surface that must hide content scrolling beneath it
- * (the sticky nav). Covers; flat site fill when the flag is off.
+ * The tan surface: the hero card during the pinned sequence (the page itself
+ * shrinking on the #fafafa stage), and the nav that sits on it.
  */
 export const surfaceBackground: CSSProperties = USE_PAPER_TEXTURE
   ? {

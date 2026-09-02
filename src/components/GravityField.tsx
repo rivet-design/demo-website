@@ -24,6 +24,9 @@ const PATH_C =
 const CX = 168;
 const CY = 168.5;
 
+// Granularity of the canvas's height. See `build()`.
+const BUCKET_PX = 240;
+
 type GravityFieldProps = {
   /** Fill for the marks. */
   color?: string;
@@ -74,8 +77,23 @@ const GravityField = ({
 
     const build = () => {
       const rect = host.getBoundingClientRect();
-      w = Math.max(1, Math.round(rect.width));
-      h = Math.max(1, Math.round(rect.height));
+      const nextW = Math.max(1, Math.round(rect.width));
+      // Height is rounded UP to a bucket instead of tracked exactly. When a
+      // section grows — the install accordion opening — the ResizeObserver
+      // fires every frame of the transition, and each rebuild reallocates the
+      // backing store at DPR 2 and clears it. That per-frame reallocation is
+      // what made the field stutter while everything else moved smoothly.
+      // Bucketing turns ~20 reallocations into one or two; in between, the
+      // canvas is simply taller than it needs to be and the section's own
+      // overflow-hidden crops it. The grid lays out from the top-left, so the
+      // marks already on screen do not shift when the bucket changes.
+      const nextH = Math.max(
+        BUCKET_PX,
+        Math.ceil(rect.height / BUCKET_PX) * BUCKET_PX,
+      );
+      if (nextW === w && nextH === h) return;
+      w = nextW;
+      h = nextH;
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       canvas.style.width = `${w}px`;
@@ -108,7 +126,9 @@ const GravityField = ({
 
     let raf = 0;
     const tick = (now: number) => {
-      // Idle: a slow orbit, so the field is never completely still.
+      // Idle: a slow orbit, so the field is never completely still. Centred on
+      // the BUCKETED box rather than the visible one, which puts it slightly
+      // low — invisible at this scale, and not worth a second measurement.
       let tx: number;
       let ty: number;
       if (pointer.active) {

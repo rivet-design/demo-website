@@ -65,6 +65,37 @@ export const HERO_SESSION: Turn[] = [
   },
 ];
 
+// The reference-gathering half of the story, for the "Connect your design
+// references" card: the user DROPS a handful of images onto the composer and
+// points at an Are.na channel, and Rivet reads visual direction out of both.
+// Deliberately short — it plays inside a card, not a full window, so it has to
+// land its point in about four rows.
+export const REFERENCES_SESSION: Turn[] = [
+  {
+    command: 'Match this look — 4 images attached + are.na/warm-interfaces',
+    response: [
+      { kind: 'thinking', text: 'Looking at your references…' },
+      {
+        kind: 'tool',
+        tool: 'rivet_design_context',
+        arg: 'files: 4 images (dropped)',
+        result: 'clay + cream palette · tight 12-col grid',
+      },
+      {
+        kind: 'tool',
+        tool: 'rivet_design_context',
+        arg: 'url: "are.na/warm-interfaces"',
+        result: '26 blocks · high-contrast display type',
+      },
+      {
+        kind: 'text',
+        text: 'Common thread: warm neutrals, oversized type, dense grids.',
+      },
+      { kind: 'result', text: 'Reference set saved — ready to explore.' },
+    ],
+  },
+];
+
 // Turn 1 EXPLORES directions grounded in the user's Pinterest board; turn 2
 // REFINES the chosen one and commits it. Every tool row is a real Rivet MCP
 // call with arguments/results shaped like the live ones.

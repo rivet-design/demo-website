@@ -16,7 +16,7 @@ import {
   useVelocity,
   useTransform,
 } from 'motion/react';
-import { X } from '@phosphor-icons/react';
+import { ArrowCounterClockwise, X } from '@phosphor-icons/react';
 import { Toaster } from 'sonner';
 import NavBar from './components/NavBar';
 import SplashScreen from './components/SplashScreen';
@@ -51,6 +51,7 @@ import AgentTerminal from './components/sandbox/AgentTerminal';
 import ReplayButton from './components/ReplayButton';
 import { HERO_SESSION } from './components/sandbox/terminalScript';
 import {
+  FOOTER_FILL,
   SITE_FILL,
   pageBackground,
   surfaceBackground,
@@ -753,6 +754,41 @@ const App = () => {
         : 'smooth',
     });
   }, []);
+
+  // Where the demo actually BEGINS: the beat at which the agent window has
+  // finished arriving and starts typing its command. Both "See how it works"
+  // and the replay button land here, so the two agree on where the start is.
+  const TERMINAL_BEAT = SHRINK_END + 0.17;
+  const scrollToLiveDemo = useCallback(() => {
+    const spacer = pinSpacerRef.current;
+    if (!spacer) return false;
+    const top =
+      spacer.getBoundingClientRect().top + window.scrollY + runwayPx * TERMINAL_BEAT;
+    const instant = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top, behavior: instant ? 'auto' : 'smooth' });
+
+    // Restart the typing only once the scroll has SETTLED. The stage is
+    // pinned, so the terminal is technically on screen for the whole trip and
+    // its in-view gate wouldn't pause it — replaying up front would burn
+    // through the script on the way down and land on a finished session.
+    if (instant) {
+      replayHeroRef.current();
+      return true;
+    }
+    let done = false;
+    const run = () => {
+      if (done) return;
+      done = true;
+      window.removeEventListener('scrollend', run);
+      replayHeroRef.current();
+    };
+    window.addEventListener('scrollend', run, { once: true });
+    // scrollend is not everywhere yet, and a scroll that has nowhere to go
+    // never fires it at all.
+    window.setTimeout(run, 1200);
+    return true;
+  }, [runwayPx, TERMINAL_BEAT]);
+
   const reverseFade = useTransform(reverseAmount, (v) => 1 - v * 0.6);
   const outerOpacity = useTransform(
     [outerFrameOpacity, reverseFade],
@@ -984,6 +1020,9 @@ const App = () => {
   // window + variant iframes are intentionally NOT keyed/remounted — tearing
   // them down respawns every demo iframe (reads as new windows popping in);
   // only the typing animation restarts.
+  // Held in a ref so `scrollToLiveDemo` (declared earlier) can call it without
+  // depending on where in the component this ends up.
+  const replayHeroRef = useRef<() => void>(() => {});
   const replayHero = () => {
     mobileTimers.current.forEach(clearTimeout);
     mobileTimers.current = [];
@@ -994,6 +1033,7 @@ const App = () => {
     setMobilePhase(playHeroIntroMobile ? 'agent' : 'editor');
     setHeroRun((n) => n + 1);
   };
+  replayHeroRef.current = replayHero;
 
   // --- Draggable chat ------------------------------------------------------
   // Once the user grabs the chat, `chatPos` pins it at explicit pixel
@@ -1155,7 +1195,9 @@ const App = () => {
     return (
       <div
         id="install-panel"
-        className="bleed-page-gutter-x page-gutter-x relative z-10 hidden flex-col items-center overflow-hidden py-40 lg:flex"
+        // scroll-mt: the nav is fixed, so a raw anchor jump parks the section's
+        // top UNDER it. This offsets the landing by the nav's own height.
+        className="bleed-page-gutter-x page-gutter-x relative z-10 hidden scroll-mt-[var(--page-nav-h)] flex-col items-center overflow-hidden py-40 lg:flex"
       >
         {/* The gravity field, edge to edge behind this section. Masked so it
             reads only down the two sides: it fades out well before the
@@ -1269,7 +1311,7 @@ const App = () => {
               // stock formula lands proportionally larger than the hero it is
               // meant to be showing. A tighter clamp brings the preview back
               // in line with the real thing.
-              className={`hero-title-text font-main font-normal normal-case leading-[1.08] tracking-[-0.02em] text-black ${
+              className={`hero-title-text font-main font-normal normal-case leading-[1.08] tracking-[-0.03em] text-black ${
                 HERO_TEXT_LEFT
                   ? 'text-[clamp(1.75rem,12cqw,4rem)]'
                   : IS_EMBED
@@ -1302,16 +1344,47 @@ const App = () => {
             >
               <a
                 href="#hero-showcase"
-                // Jumping to an anchor that's already in view may not move
-                // scrollY past the reveal threshold, so force the showcase
-                // open directly rather than relying on the scroll listener.
-                onClick={() => setShowcaseScrolled(true)}
+                // On the pinned path there is no anchor to jump to — the live
+                // demo is a scroll POSITION inside the runway, not an element
+                // in the flow — so drive the scroll directly. Everywhere else
+                // (mobile, reduced motion, embeds) the showcase really is an
+                // element below, and jumping to an anchor already in view may
+                // not move scrollY past the reveal threshold, so force it open
+                // rather than relying on the scroll listener.
+                onClick={(e) => {
+                  if (playHeroIntro && scrollToLiveDemo()) {
+                    e.preventDefault();
+                    return;
+                  }
+                  setShowcaseScrolled(true);
+                }}
                 className="flex w-[142px] items-center justify-center rounded-lg border-[0.5px] border-[#642e39] bg-[#f1efe8] p-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px] text-[#642e39] transition-colors hover:bg-[#642e39]/5"
               >
-                Watch Demo
+                See how it works
               </a>
               <a
                 href="#install-panel"
+                // A native hash jump resolves the target's position at click
+                // time. From up here that is six viewports of pinned runway
+                // away, and anything that settles on the way down (the stage
+                // unpinning, images) leaves the landing short. Measuring on
+                // the next frame and scrolling ourselves lands on the section
+                // itself.
+                onClick={(e) => {
+                  const target = document.getElementById('install-panel');
+                  if (!target) return;
+                  e.preventDefault();
+                  requestAnimationFrame(() =>
+                    target.scrollIntoView({
+                      behavior: window.matchMedia(
+                        '(prefers-reduced-motion: reduce)',
+                      ).matches
+                        ? 'auto'
+                        : 'smooth',
+                      block: 'start',
+                    }),
+                  );
+                }}
                 // Auto width with explicit side padding. The old fixed
                 // w-[199px] was sized for the previous, longer label, so the
                 // shorter copy sat in the middle of a box with a lot of air
@@ -1355,7 +1428,10 @@ const App = () => {
             // page-gutter-x because NavBar's own bleed cancels exactly that.
             className="page-gutter-x fixed inset-x-0 top-0 z-[60]"
           >
-            <NavBar frosted />
+            {/* Frosted over the stage's own #fafafa ground, not the tan
+                hero card — the card has already shrunk away underneath by the
+                time this bar is visible. */}
+            <NavBar frosted fill={{ backgroundColor: FOOTER_FILL }} />
           </motion.div>
         )}
 
@@ -1456,6 +1532,19 @@ const App = () => {
                       tracks the container's own fade — an opacity-0 layer
                       still hit-tests, so without it this would be clickable
                       through the hero before the prototype ever appears. */}
+                  {/* Replay. Sits beside the skip button and lands on the
+                      same beat "See how it works" does, so there is one
+                      definition of where the demo starts. */}
+                  <motion.button
+                    type="button"
+                    onClick={scrollToLiveDemo}
+                    aria-label="Replay the demo from the start"
+                    title="Replay"
+                    style={{ pointerEvents: outerInteractive }}
+                    className="absolute right-12 top-3 z-30 flex h-7 w-7 items-center justify-center rounded-md bg-white/80 text-[#e8552f] shadow-sm backdrop-blur-sm transition-colors hover:bg-white focus:outline-none focus-visible:ring-1 focus-visible:ring-[#e8552f]"
+                  >
+                    <ArrowCounterClockwise size={13} weight="bold" />
+                  </motion.button>
                   <motion.button
                     type="button"
                     onClick={skipHeroSequence}
