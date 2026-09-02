@@ -1,5 +1,6 @@
 import {
   memo,
+  useCallback,
   useLayoutEffect,
   useRef,
   useState,
@@ -67,23 +68,26 @@ const CARDS = [
   {
     title: ['One-click install', 'from your agent'],
     art: '/images/cards/oneclick.png',
+    artScale: 1,
     glow: CARD_CORNER_GLOW,
     texture: '/images/cards/texture-stepped.png',
     detail: ['Use Rivet with your Claude, Codex, and Cursor'],
     // Drifts on the left, behind the terminal window, rather than sitting
     // centred — the terminal is the subject here and the icons are set dressing.
-    hoverArt: '/images/cards/agents-float.png',
-    hoverArtClass: 'left-[7%] top-[58%] w-[31%] max-w-[172px]',
+    // Spread around the centred window rather than clustered beside it — the
+    // artwork's three marks are already placed for that composition.
+    hoverArt: '/images/cards/agents-group.png',
+    hoverArtClass: 'left-[3%] top-[70%] w-[98%]',
+    connect: false,
     // The live hero agent window, cropped by the card's right edge.
     session: HERO_SESSION,
-    // Anchored right and running off the card's edge, so it reads as a crop
-    // of a larger screen.
-    sessionClass: 'left-[30%] top-[33%] h-[52%] w-[85%]',
+    sessionClass: 'left-[53%] top-[29%] h-[54%] w-[78%] -translate-x-1/2',
     directions: false,
   },
   {
     title: ['Connect your', 'design references'],
     art: '/images/cards/connectref.png',
+    artScale: 1,
     glow: CARD_BOTTOM_GLOW,
     texture: '/images/cards/bgtexutre2.png',
     detail: [
@@ -92,7 +96,9 @@ const CARDS = [
     ],
     hoverArt: null,
     hoverArtClass: null,
-    // Reading dropped images and an Are.na channel.
+    // Connect the providers first, then ask — the session only makes sense
+    // once the references it reads have somewhere to come from.
+    connect: true,
     session: REFERENCES_SESSION,
     // Centred and fully inside the card: here the window IS the subject, and
     // the references have to be seen landing on its composer.
@@ -102,6 +108,15 @@ const CARDS = [
   {
     title: ['Explore dozens', 'of different ideas'],
     art: '/images/cards/exploreee.png',
+    // Overscanned on purpose. The ASSET is cropped: its artwork runs from x=0
+    // to x=907 of a 908px canvas, so the outer shapes are cut in the file
+    // itself and no amount of positioning un-cuts them. What positioning CAN
+    // do is put those cut edges outside the card, so the frame meets the
+    // middle of a shape — a bleed — instead of a sliced-off end.
+    //
+    // It has to clear the OPEN card too, which is OPEN_SCALE (1.3) times the
+    // width this is measured against, hence a value comfortably above that.
+    artScale: 1.62,
     glow: CARD_LEFT_GLOW,
     texture: '/images/cards/bgtexture3.png',
     // Broken by hand after "that": the copy column is fixed to the closed
@@ -110,6 +125,7 @@ const CARDS = [
     detail: ['Rivet generates design directions', 'that you can compare and refine'],
     hoverArt: null,
     hoverArtClass: null,
+    connect: false,
     session: null,
     sessionClass: null,
     // The Directions panel mid-run, generating into a window cropped by the
@@ -143,6 +159,76 @@ const ART_FADE_EASE = 'cubic-bezier(0.33, 0, 0.67, 1)';
 // Feathers the art's right edge while a card is opening — see the art layer.
 const ART_EDGE_FADE = 'linear-gradient(to right, #000 88%, transparent 100%)';
 const ARRIVE_MS = 340;
+
+// The connect beat, as a script. The pointer travels to each panel's Connect
+// button, the panel flips to its connected state, and once both are done the
+// session takes over. Times are ms from the beat starting.
+const CONNECT_STEPS = [
+  { at: 320, step: 1 }, // pointer reaches Pinterest's button
+  { at: 700, step: 2 }, // …clicks it
+  { at: 900, step: 3 }, // pointer travels to Are.na's
+  { at: 1260, step: 4 }, // …clicks it
+  { at: 1580, step: 5 }, // both connected — hand off
+] as const;
+// The pointer's travel. Short enough to keep up with the script above — a
+// move that outlasts its own step arrives after the click it was making.
+const CURSOR_MS = 300;
+
+// Overlapping rather than side by side: Are.na sits down-right of Pinterest
+// and on top of it, so the pair reads as a stack of floating windows.
+//
+// `box` is in percentages of the CARD; the height is not stated, because the
+// artwork's own ratio gives it. `button` is where that panel's Connect button
+// centres WITHIN the panel — measured off the same artwork, so the pointer's
+// target and the thing it is aiming at cannot drift apart.
+const CONNECT_PANELS = [
+  {
+    name: 'Pinterest',
+    idle: '/images/cards/connect-pinterest.png',
+    done: '/images/cards/connect-pinterest-done.png',
+    box: { left: 13, top: 30, width: 41 },
+    button: { x: 0.4975, y: 0.820 },
+  },
+  {
+    name: 'Are.na',
+    idle: '/images/cards/connect-arena.png',
+    done: '/images/cards/connect-arena-done.png',
+    box: { left: 48, top: 43, width: 41 },
+    button: { x: 0.4975, y: 0.820 },
+  },
+] as const;
+
+// The panel artwork is 405x461. Together with the card's own aspect ratio this
+// turns a panel's width (a share of the card's WIDTH) into a height expressed
+// as a share of the card's HEIGHT, which is what the pointer's y needs.
+//
+// This AND `button` below must both be re-measured whenever the panel artwork
+// is re-exported — they are read off the pixels, not chosen. Successive
+// exports have run 507x627 (0.809), 383x439 (0.872) and now 0.878, and the
+// button's own y has moved 0.877 → 0.8635 → 0.820 as the padding beneath it
+// changed. Left stale, the pointer lands visibly off the button.
+const PANEL_RATIO = 405 / 461;
+// NOT 39/52 — that is the ratio the cards are DRAWN at, and an OPEN card is
+// not that shape: its width is its share of the row while its height comes
+// from an equal third, so the two are derived separately and have to be
+// recombined here. Using 39/52 put the pointer a full 6% of the card above
+// the button it was aiming at.
+//
+// A function, not a constant: OPEN_SCALE is declared further down, and this
+// only needs to resolve when something renders.
+const openCardRatio = () =>
+  OPEN_SCALE / (OPEN_SCALE + 2) / ((1 / CARDS.length) * (52 / 39));
+
+/** A panel's Connect button, in card percentages. */
+const buttonAt = (panel: (typeof CONNECT_PANELS)[number]) => ({
+  x: panel.box.left + panel.button.x * panel.box.width,
+  y:
+    panel.box.top +
+    panel.button.y * ((panel.box.width / PANEL_RATIO) * openCardRatio()),
+});
+
+/** Off-frame, bottom-right: where the pointer comes from and goes back to. */
+const CURSOR_OFF = { x: 106, y: 114 };
 
 // How much wider the open card is than a closed one. Also sets all three
 // widths, since open + closed + closed has to add back up to the row: at 1.9
@@ -181,9 +267,10 @@ const TITLE_RATIO = 21;
  * hovered it would show none of that. Closing resets it, so it replays.
  */
 // The window renders at 1/SCALE of its box and is then scaled back down, so
-// its contents are laid out in MORE css pixels than the box has. Sizing the
-// box down instead would just crop the list; this fits more of it in.
-const DIRECTIONS_SCALE = 0.66;
+// its contents are laid out in MORE css pixels than the box has. Lower values
+// fit more of the list in at smaller type; higher values read larger. Sizing
+// the BOX instead would only crop the list rather than rescale it.
+const DIRECTIONS_SCALE = 0.78;
 
 const DirectionsWindow = ({ open }: { open: boolean }) => {
   const ctrl = useVariantsDemo({ start: open, autoPlay: true });
@@ -211,8 +298,119 @@ const DirectionsWindow = ({ open }: { open: boolean }) => {
   );
 };
 
-/** `transition` for something that arrives when a card opens: a plain fade. */
-const arrive = () => `opacity ${ARRIVE_MS}ms ${EASE}`;
+/** macOS-style arrow, drawn rather than imported — it is one path. */
+const Cursor = () => (
+  <svg
+    viewBox="0 0 12 19"
+    className="h-full w-full drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]"
+  >
+    <path
+      d="M1 1.2 10.6 10.4 6.2 10.9 8.9 16.4 6.9 17.4 4.2 11.9 1 15Z"
+      fill="#fff"
+      stroke="#1c1c1e"
+      strokeWidth="1.1"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+/**
+ * The connect beat: both provider panels floating, a pointer arriving to
+ * connect each one, then the hand-off to the session.
+ *
+ * Mounted only while its card is open, and re-keyed on every enter, so the
+ * script restarts purely by remounting — the timers are created on mount and
+ * torn down with it, and there is no separate reset to keep in sync.
+ */
+const ConnectPanels = ({ onDone }: { onDone: () => void }) => {
+  const [step, setStep] = useState(0);
+  useLayoutEffect(() => {
+    const timers = CONNECT_STEPS.map((entry) =>
+      window.setTimeout(() => {
+        setStep(entry.step);
+        if (entry.step === 5) onDone();
+      }, entry.at),
+    );
+    return () => timers.forEach(window.clearTimeout);
+  }, [onDone]);
+
+  // Steps 1-2 are Pinterest's button, 3-4 are Are.na's; 0 and 5 are off-frame.
+  const target =
+    step === 1 || step === 2
+      ? buttonAt(CONNECT_PANELS[0])
+      : step === 3 || step === 4
+        ? buttonAt(CONNECT_PANELS[1])
+        : CURSOR_OFF;
+
+  return (
+    <div className="absolute inset-0">
+      {CONNECT_PANELS.map((panel, i) => {
+        // Panel 0 is connected from step 2, panel 1 from step 4.
+        const done = step >= (i + 1) * 2;
+        return (
+          <div
+            key={panel.name}
+            className="absolute"
+            style={{
+              left: `${panel.box.left}%`,
+              top: `${panel.box.top}%`,
+              width: `${panel.box.width}%`,
+              zIndex: i + 1,
+            }}
+          >
+            {/* Both states stacked and cross-faded rather than swapped: they
+                differ only in the button and the check, so a swap reads as a
+                flicker where a fade reads as the state changing. */}
+            <img
+              src={panel.idle}
+              alt=""
+              draggable={false}
+              className="block w-full"
+              style={{ opacity: done ? 0 : 1, transition: `opacity 170ms ${EASE}` }}
+            />
+            <img
+              src={panel.done}
+              alt=""
+              draggable={false}
+              className="absolute left-0 top-0 block w-full"
+              style={{ opacity: done ? 1 : 0, transition: `opacity 170ms ${EASE}` }}
+            />
+          </div>
+        );
+      })}
+
+      {/* The pointer, above both panels. It travels on left/top so the click
+          squash can own `transform` without the two fighting over it, and its
+          origin is top-left because that is where the arrow's TIP is — these
+          coordinates put the tip on the button, not the arrow's centre. */}
+      <div
+        className="pointer-events-none absolute z-10 h-[4.5%]"
+        style={{
+          left: `${target.x}%`,
+          top: `${target.y}%`,
+          aspectRatio: '12 / 19',
+          transform: `scale(${step === 2 || step === 4 ? 0.8 : 1})`,
+          transformOrigin: 'top left',
+          opacity: step === 0 || step === 5 ? 0 : 1,
+          transition: [
+            `left ${CURSOR_MS}ms ${EASE}`,
+            `top ${CURSOR_MS}ms ${EASE}`,
+            `transform 90ms ${EASE}`,
+            `opacity 160ms ${EASE}`,
+          ].join(', '),
+        }}
+      >
+        <Cursor />
+      </div>
+    </div>
+  );
+};
+
+// Arriving content rises as it fades in — a short travel, no stagger, so it
+// still reads as one movement rather than a sequence.
+const ARRIVE_RISE = '14px';
+const arrive = () =>
+  `opacity ${ARRIVE_MS}ms ${EASE}, transform ${ARRIVE_MS}ms ${EASE}`;
 
 const AgentTerminalSection = () => {
   const [hovered, setHovered] = useState<number | null>(null);
@@ -402,6 +600,25 @@ const Card = ({
   onHover: (i: number) => void;
 }) => {
   const isOpen = hovered === index;
+  // The connect beat replays on every ENTER, not just when the card goes from
+  // closed to open. The last-hovered card stays open, so returning to the card
+  // you were already on never flips `isOpen` — keying off that alone left it
+  // sitting on the looping terminal for good. `run` bumps on each enter and
+  // remounts the panels, which is what restarts their timers.
+  const [connected, setConnected] = useState(false);
+  const [run, setRun] = useState(0);
+  useLayoutEffect(() => {
+    if (!isOpen) setConnected(false);
+  }, [isOpen]);
+  const handleConnected = useCallback(() => setConnected(true), []);
+  const enter = () => {
+    onHover(index);
+    if (!card.connect) return;
+    setConnected(false);
+    setRun((n) => n + 1);
+  };
+  // Cards without a connect beat show their session as soon as they open.
+  const showSession = isOpen && (!card.connect || connected);
   // Stacked on mobile, so the stagger plays out card by card; at lg they share
   // a row and it reads as one gesture.
   const reveal = useScrollReveal<HTMLElement>({ delay: index * 80 });
@@ -409,7 +626,7 @@ const Card = ({
   return (
               <article
                 ref={reveal.ref}
-                onMouseEnter={() => onHover(index)}
+                onMouseEnter={enter}
                 // 30px on three corners with the bottom-right left square — the
                 // brand's own silhouette, the same asymmetry the app icon has.
                 // overflow-hidden is what lets the art bleed: each layer is
@@ -495,7 +712,10 @@ const Card = ({
                   draggable={false}
                   className="pointer-events-none absolute bottom-0 left-0 block max-w-none"
                   style={{
-                    width: restW ?? '100%',
+                    width: restW ? restW * card.artScale : '100%',
+                    // Centred, so an oversized art bleeds equally either side
+                    // rather than only off the right.
+                    left: restW ? (restW * (1 - card.artScale)) / 2 : 0,
                     // Only while OPENING. The art is fixed to the closed
                     // card's width, so a widening card exposes its right edge
                     // for as long as it is still fading, and feathering means
@@ -532,12 +752,24 @@ const Card = ({
                       transition: arrive(),
                     }}
                   >
-                    <img
-                      src={card.hoverArt}
-                      alt=""
-                      draggable={false}
-                      className="rivet-float block w-full"
-                    />
+                    {/* Three nested elements, one transform each: the wrapper
+                        centres (a class transform), this one rises, the image
+                        drifts. A running CSS animation beats a transition on
+                        the same element, and an inline transform beats a class
+                        one — so none of them can share. */}
+                    <div
+                      style={{
+                        transform: `translateY(${isOpen ? '0px' : ARRIVE_RISE})`,
+                        transition: `transform ${ARRIVE_MS}ms ${EASE}`,
+                      }}
+                    >
+                      <img
+                        src={card.hoverArt}
+                        alt=""
+                        draggable={false}
+                        className="rivet-float block w-full"
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -548,7 +780,7 @@ const Card = ({
                     page's wheel events whenever the cursor crossed it. */}
                 {card.directions && (
                   <div
-                    className="pointer-events-none absolute left-[28%] top-[36%] h-[64%] w-full"
+                    className="pointer-events-none absolute left-[20%] top-[29%] h-[76%] w-[116%]"
                     style={{
                       opacity: isOpen ? 1 : 0,
                       transition: arrive(),
@@ -568,23 +800,48 @@ const Card = ({
                     filter from its scroll reveal, and a filtered ancestor is
                     enough to leave a descendant's own rounded clip ragged at
                     the corners. Clipping again here fixes it. */}
+                {card.connect && isOpen && (
+                  <div
+                    className="pointer-events-none absolute inset-0 z-10"
+                    style={{
+                      opacity: connected ? 0 : 1,
+                      transition: `opacity ${ARRIVE_MS}ms ${EASE}`,
+                    }}
+                  >
+                    <ConnectPanels key={run} onDone={handleConnected} />
+                  </div>
+                )}
+
                 {card.session && (
                   <div
                     className={`absolute overflow-hidden rounded-2xl ${card.sessionClass}`}
                     style={{
-                      opacity: isOpen ? 1 : 0,
-                      // Only live while the card is open: an opacity-0 layer
-                      // still hit-tests, so a closed card would have an
-                      // invisible terminal swallowing clicks over most of it.
-                      pointerEvents: isOpen ? 'auto' : 'none',
+                      opacity: showSession ? 1 : 0,
+                      // Only live while it is actually showing: an opacity-0
+                      // layer still hit-tests, so otherwise a closed card
+                      // would have an invisible terminal swallowing clicks
+                      // over most of it.
+                      pointerEvents: showSession ? 'auto' : 'none',
                       transition: arrive(),
                     }}
                   >
+                    {/* The rise lives on its own element. Put inline on the
+                        wrapper it replaced that wrapper's own class
+                        transform — the -translate-x-1/2 doing the centring —
+                        and shoved the window off to the right. */}
+                    <div
+                      className="h-full w-full"
+                      style={{
+                        transform: `translateY(${showSession ? '0px' : ARRIVE_RISE})`,
+                        transition: `transform ${ARRIVE_MS}ms ${EASE}`,
+                      }}
+                    >
                     <AgentTerminal
                       compact
                       script={card.session}
                       className="h-full w-full"
                     />
+                    </div>
                   </div>
                 )}
 
