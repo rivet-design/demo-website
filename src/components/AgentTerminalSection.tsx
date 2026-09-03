@@ -69,6 +69,9 @@ const CARDS = [
     title: ['One-click install', 'from your agent'],
     art: '/images/cards/oneclick.png',
     artScale: 1,
+    artOpacity: 1,
+    artShiftX: 0,
+    artShiftY: 0,
     glow: CARD_CORNER_GLOW,
     texture: '/images/cards/texture-stepped.png',
     detail: ['Use Rivet with your Claude, Codex, and Cursor'],
@@ -81,13 +84,16 @@ const CARDS = [
     connect: false,
     // The live hero agent window, cropped by the card's right edge.
     session: HERO_SESSION,
-    sessionClass: 'left-[53%] top-[29%] h-[54%] w-[78%] -translate-x-1/2',
+    sessionClass: 'left-[53%] top-[33%] h-[54%] w-[78%] -translate-x-1/2',
     directions: false,
   },
   {
     title: ['Connect your', 'design references'],
     art: '/images/cards/connectref.png',
     artScale: 1,
+    artOpacity: 1,
+    artShiftX: 0,
+    artShiftY: 0,
     glow: CARD_BOTTOM_GLOW,
     texture: '/images/cards/bgtexutre2.png',
     detail: [
@@ -107,16 +113,29 @@ const CARDS = [
   },
   {
     title: ['Explore dozens', 'of different ideas'],
-    art: '/images/cards/exploreee.png',
-    // Overscanned on purpose. The ASSET is cropped: its artwork runs from x=0
-    // to x=907 of a 908px canvas, so the outer shapes are cut in the file
-    // itself and no amount of positioning un-cuts them. What positioning CAN
-    // do is put those cut edges outside the card, so the frame meets the
-    // middle of a shape — a bleed — instead of a sliced-off end.
+    // The uncropped chevron export. The previous asset (exploreee.png, 908x660)
+    // had its artwork running clear to x=907 — the shapes were cut in the file
+    // itself, which is the only reason an overscan ever existed here: pushing
+    // the sliced edges outside the card was the sole way to hide them, and it
+    // cost a badly oversized composition to do it.
     //
-    // It has to clear the OPEN card too, which is OPEN_SCALE (1.3) times the
-    // width this is measured against, hence a value comfortably above that.
-    artScale: 1.62,
+    // This export has real margins around the shapes, so the overscan here is
+    // a composition choice rather than damage control: at 1.15 the chevrons
+    // fill the card a little more and bleed into their own margins, with no
+    // sliced edge to hide. Nothing like the 1.62 the old asset forced.
+    art: '/images/cards/explore-chevrons-blush.png',
+    artScale: 1.6,
+    // This export carries its own blush tint and sits at ~79% alpha, close to
+    // the 86-89% the other two cards' art measures — so it no longer needs the
+    // CSS knock-down the flat-white version was given.
+    artOpacity: 1,
+    // Fraction of the closed card's width to slide the art left of centre.
+    // The default placement centres an oversized art so it bleeds equally
+    // either side; this pulls the chevrons toward the left edge instead.
+    artShiftX: 0.05,
+    // Positive drops the art below the card's bottom edge, so the chevrons
+    // bleed further off the bottom instead of sitting flush with it.
+    artShiftY: 0.04,
     glow: CARD_LEFT_GLOW,
     texture: '/images/cards/bgtexture3.png',
     // Broken by hand after "that": the copy column is fixed to the closed
@@ -272,8 +291,72 @@ const TITLE_RATIO = 21;
 // the BOX instead would only crop the list rather than rescale it.
 const DIRECTIONS_SCALE = 0.78;
 
+// The logical viewport each direction page is rendered at before being scaled
+// into the pane — the same pair VariantsShowcase uses, so a page laid out for
+// the big preview looks the same in this small one.
+const PREVIEW_DESIGN_W = 1280;
+const PREVIEW_DESIGN_H = 820;
+
 const DirectionsWindow = ({ open }: { open: boolean }) => {
   const ctrl = useVariantsDemo({ start: open, autoPlay: true });
+
+  // The pane is measured rather than assumed: the window's own box is a
+  // percentage of the card, so how many CSS pixels this strip ends up being is
+  // only known at runtime. clientWidth, not getBoundingClientRect — the whole
+  // window sits under a scale() transform, and we want the LAYOUT width the
+  // iframe is laid out against, not the visually scaled one.
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [pane, setPane] = useState({ w: 0, h: 0 });
+  useLayoutEffect(() => {
+    const el = previewRef.current;
+    if (!el) return;
+    const read = () => setPane({ w: el.clientWidth, h: el.clientHeight });
+    read();
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // COVER, not contain. The pane is a narrow slice of the window, so fitting
+  // the page to its width leaves the 820-tall page ending a third of the way
+  // down with white beneath it. Taking the larger of the two ratios fills the
+  // pane and crops the page instead, which is what a real browser pane showing
+  // the left edge of a page looks like.
+  const previewScale = Math.max(
+    pane.w / PREVIEW_DESIGN_W,
+    pane.h / PREVIEW_DESIGN_H,
+  );
+
+  // The preview shows the SAME direction the panel has highlighted. Showing
+  // anything else — holding one page while the list moved on — read as the
+  // demo inventing directions it wasn't actually previewing.
+  //
+  // A page mounts the first time it is selected and stays mounted, so cycling
+  // crossfades between already-loaded iframes rather than reloading one.
+  //
+  // The self-referencing directions (`/?embed=1&…`) are safe to load here:
+  // this whole section sits behind `!IS_EMBED` in App, so an embedded copy
+  // renders just the hero and never reaches this card. The recursion the
+  // EMBED_SAFE_VARIANTS filter guards against stops at depth one.
+  const [visited, setVisited] = useState<string[]>([]);
+  const [loaded, setLoaded] = useState<string[]>([]);
+
+  // Nothing loads until the panel has finished its generate animation. Three
+  // of the five directions are this app itself, so mounting them boots a whole
+  // second React app in an iframe — doing that while the skeletons are still
+  // streaming in stalled the animation badly enough to read as a glitch.
+  const generationDone = ctrl.readyIds.size >= ctrl.variants.length;
+
+  // Recording only AFTER generation is done matters: were `visited` filled
+  // during the animation, everything selected along the way would mount the
+  // instant the gate opened — trading a stalled animation for a burst of
+  // simultaneous iframe loads. Starting from the current direction means one
+  // page loads, and the rest arrive one at a time as the list cycles.
+  useLayoutEffect(() => {
+    if (!generationDone) return;
+    const src = ctrl.selected.src;
+    setVisited((seen) => (seen.includes(src) ? seen : [...seen, src]));
+  }, [generationDone, ctrl.selected.src]);
 
   return (
     <div
@@ -291,7 +374,47 @@ const DirectionsWindow = ({ open }: { open: boolean }) => {
           <div className="relative h-full w-[64%] shrink-0">
             <DirectionsPanel ctrl={ctrl} desktop />
           </div>
-          <div className="h-full flex-1 bg-white" />
+          {/* The strip of preview the card's right edge leaves visible. White
+              underneath, so a page that has not painted yet reads as a blank
+              browser pane rather than a hole. */}
+          <div ref={previewRef} className="relative h-full flex-1 overflow-hidden bg-white">
+            {open &&
+              generationDone &&
+              previewScale > 0 &&
+              ctrl.variants
+                .filter((v) => visited.includes(v.src))
+                .map((v) => (
+                <iframe
+                  key={v.src}
+                  src={v.src}
+                  title={v.label}
+                  scrolling="no"
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  onLoad={() =>
+                    setLoaded((seen) =>
+                      seen.includes(v.src) ? seen : [...seen, v.src],
+                    )
+                  }
+                  className="pointer-events-none absolute left-0 top-0 border-0 transition-opacity duration-300 ease-in-out"
+                  style={{
+                    width: PREVIEW_DESIGN_W,
+                    height: PREVIEW_DESIGN_H,
+                    transform: `scale(${previewScale})`,
+                    transformOrigin: 'top left',
+                    // Only reveal once the page has actually loaded. Showing
+                    // it on mount meant the first hover flashed an empty
+                    // iframe and then snapped to content; waiting for onLoad
+                    // turns that into the fade the transition already
+                    // describes.
+                    opacity:
+                      v.src === ctrl.selected.src && loaded.includes(v.src)
+                        ? 1
+                        : 0,
+                  }}
+                />
+              ))}
+          </div>
         </div>
       </BrowserFrame>
     </div>
@@ -714,8 +837,15 @@ const Card = ({
                   style={{
                     width: restW ? restW * card.artScale : '100%',
                     // Centred, so an oversized art bleeds equally either side
-                    // rather than only off the right.
-                    left: restW ? (restW * (1 - card.artScale)) / 2 : 0,
+                    // rather than only off the right, then shifted by the
+                    // card's own artShiftX (a fraction of the closed width).
+                    left: restW
+                      ? (restW * (1 - card.artScale)) / 2 +
+                        restW * card.artShiftX
+                      : 0,
+                    // Overrides the class's bottom-0. Negative pushes the art
+                    // down past the card's bottom edge.
+                    bottom: restW ? -(restW * card.artShiftY) : 0,
                     // Only while OPENING. The art is fixed to the closed
                     // card's width, so a widening card exposes its right edge
                     // for as long as it is still fading, and feathering means
@@ -725,7 +855,7 @@ const Card = ({
                     // early. Switching it with the fade hides the switch.
                     WebkitMaskImage: isOpen ? ART_EDGE_FADE : undefined,
                     maskImage: isOpen ? ART_EDGE_FADE : undefined,
-                    opacity: isOpen ? 0 : 1,
+                    opacity: isOpen ? 0 : card.artOpacity,
                     transition: isOpen
                       ? `opacity ${ART_FADE_MS}ms ${ART_FADE_EASE}`
                       : `opacity ${ART_RETURN_MS}ms ${EASE}`,
@@ -780,7 +910,12 @@ const Card = ({
                     page's wheel events whenever the cursor crossed it. */}
                 {card.directions && (
                   <div
-                    className="pointer-events-none absolute left-[20%] top-[29%] h-[76%] w-[116%]"
+                    // top + height comes to 108%, so the card's bottom edge
+                    // crops the panel's Share bar rather than letting the
+                    // window finish inside the frame — the same bleed the
+                    // card art uses, chosen over a whole Share bar because at
+                    // a height that fits (67%) the window read too small.
+                    className="pointer-events-none absolute left-[20%] top-[32%] h-[76%] w-[116%]"
                     style={{
                       opacity: isOpen ? 1 : 0,
                       transition: arrive(),
