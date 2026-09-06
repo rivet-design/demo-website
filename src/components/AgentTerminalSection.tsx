@@ -562,7 +562,9 @@ const arrive = () =>
 
 const AgentTerminalSection = () => {
   const [hovered, setHovered] = useState<number | null>(null);
-  const header = useScrollReveal<HTMLDivElement>();
+  // leave:false — the headline belongs to the cards below it, which are still
+  // on screen long after the heading has crossed the leave band.
+  const header = useScrollReveal<HTMLDivElement>({ leave: false });
 
   // ONE card is always open. Without a default the row had no fixed total
   // width — opening a card overflowed the container and the whole stack had to
@@ -808,7 +810,12 @@ const Card = ({
                 // the expansion horizontal.
                 style={
                   {
-                    ...reveal.style,
+                    // The reveal fades the whole card only at lg, where the
+                    // three share a row and cross the fold together. Stacked
+                    // (restW null) the shells stay put and only the copy
+                    // fades — a whole panel blinking in and out reads as the
+                    // page loading, not as a scroll gesture.
+                    ...(restW ? reveal.style : null),
                     // `flex: none` so the inline width actually governs — the
                     // flex-basis/grow pair in the class list is only the
                     // pre-measurement default, and flex-basis would otherwise
@@ -818,17 +825,17 @@ const Card = ({
                       ? {
                           flex: 'none',
                           width: restW * (isOpen ? OPEN_SCALE : 1),
+                          // One declaration or the other wins outright, so the
+                          // widening and the reveal share one transition list.
+                          transition: [
+                            `width ${EXPAND_MS}ms ${EASE}`,
+                            reveal.style.transition,
+                          ]
+                            .filter(Boolean)
+                            .join(', '),
                         }
                       : null),
                     ...(rowH ? { height: rowH } : null),
-                    // One declaration or the other wins outright, so the
-                    // widening and the reveal share a single transition list.
-                    transition: [
-                      `width ${EXPAND_MS}ms ${EASE}`,
-                      reveal.style.transition,
-                    ]
-                      .filter(Boolean)
-                      .join(', '),
                   } as CSSProperties
                 }
               >
@@ -1044,7 +1051,9 @@ const Card = ({
                 <div
                   ref={copyRef}
                   className="relative z-10 p-6 lg:p-7"
-                  style={restW ? { width: restW } : undefined}
+                  // Stacked, the reveal lives HERE instead of on the article:
+                  // the shell stays planted and only the copy rides the scroll.
+                  style={restW ? { width: restW } : reveal.style}
                 >
                   {/* Weight is FAKED, not switched. Aileron ships as separate
                       files rather than a variable font, so font-weight has

@@ -2,9 +2,12 @@ import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 
 
 /**
  * The page's one scroll gesture: a block fades in with a short rise as it
- * arrives, and stays crisp on the way out. The scroll blur was cut for being
- * too distracting — everywhere except the hero, which keeps its leaving blur
- * via `scrollRevealLeaveStyle` below.
+ * arrives, and fades back out — shifted the OTHER way, upward — once it's
+ * scrolled past. The two halves mirror each other so scrolling back up plays
+ * the same arrival the way down does; without the leaving half, content
+ * re-entering from above just sat there fully rendered. (An earlier design
+ * blurred instead of fading on the way out; the hero still does, via
+ * `scrollRevealLeaveStyle` below.)
  *
  * Every section on the page runs through this, so the timings live here rather
  * than being re-typed per component.
@@ -48,6 +51,13 @@ export type ScrollRevealOptions<T extends HTMLElement> = {
    * only ever pick up the LEAVING half.
    */
   entrance?: boolean;
+  /**
+   * Whether this block fades back out once scrolled past (so it can fade in
+   * again on the way back up). Off for a block that shares a section with
+   * something still visible below it — a heading vanishing while its own cards
+   * are still on screen reads as a bug, not as a gesture.
+   */
+  leave?: boolean;
   /** Skip observing entirely; `style` comes back empty and phase stays 'in'. */
   disabled?: boolean;
 };
@@ -56,6 +66,7 @@ export const useScrollReveal = <T extends HTMLElement>({
   delay = 0,
   ref: externalRef,
   entrance = true,
+  leave = true,
   disabled = false,
 }: ScrollRevealOptions<T> = {}) => {
   const ownRef = useRef<T>(null);
@@ -93,15 +104,25 @@ export const useScrollReveal = <T extends HTMLElement>({
   // A block without its own entrance never renders the 'before' state — it is
   // already on screen when something else hands it in.
   const waiting = entrance && phase === 'before' && !disabled;
+  const leaving = leave && phase === 'past' && !disabled;
+  // The rise mirrors the travel direction: arriving content comes up from
+  // below (+RISE), content that went past comes back down from above (-RISE).
+  // No delay on the way out — a stagger there reads as lag, while the same
+  // stagger on the way (back) in reads as the entrance it is.
+  const delayMs = leaving ? 0 : delay;
 
   const style: CSSProperties = disabled
     ? {}
     : {
-        opacity: waiting ? 0 : 1,
-        transform: waiting ? `translateY(${RISE})` : 'translateY(0)',
+        opacity: waiting || leaving ? 0 : 1,
+        transform: waiting
+          ? `translateY(${RISE})`
+          : leaving
+            ? `translateY(-${RISE})`
+            : 'translateY(0)',
         transition:
-          `opacity ${DURATION_MS}ms ${EASE} ${delay}ms,` +
-          `transform ${DURATION_MS}ms ${EASE} ${delay}ms`,
+          `opacity ${DURATION_MS}ms ${EASE} ${delayMs}ms,` +
+          `transform ${DURATION_MS}ms ${EASE} ${delayMs}ms`,
       };
 
   return { ref, phase, style, isPast: phase === 'past' };
