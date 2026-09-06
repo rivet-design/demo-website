@@ -1159,35 +1159,28 @@ const App = () => {
   // agent has minimized out.
   const showMobileAgent = playHeroIntroMobile && mobilePhase !== 'editor';
 
-  // The install section arrives the way the hero copy does — blur, fade and a
-  // short rise — and goes back out the same way as you scroll past it.
+  // The install section arrives the way the hero copy does — fade and a short
+  // rise — and stays sharp and in place once you scroll past it.
   //
-  // Deliberately asymmetric. The bottom inset is small, so the copy blurs in
+  // Deliberately asymmetric. The bottom inset is small, so the copy fades in
   // as soon as it clears the fold; the TOP inset is large, so it counts as
   // gone once it rises past the upper 42% of the viewport — which is roughly
-  // when the footer starts filling the lower half. A symmetric band left it
-  // sharp until it was almost entirely off-screen, so the blur-out was never
-  // actually seen.
+  // when the footer starts filling the lower half.
   const installReveal = useInView<HTMLDivElement>({
     rootMargin: '-42% 0px -10% 0px',
   });
-  // Arriving and leaving are different gestures. On the way IN the copy fades
-  // up out of nothing — blur, opacity and a rise. On the way OUT it only goes
-  // soft: it stays fully opaque and in place and just blurs, so scrolling past
-  // defocuses it rather than deleting it. Tracked with `installSeen`, since the
-  // observer alone can't tell "not yet arrived" from "already passed".
+  // Once the copy has arrived it never hides again — the observer alone can't
+  // tell "not yet arrived" from "already passed", so `installSeen` latches it.
   const [installSeen, setInstallSeen] = useState(false);
   useEffect(() => {
     if (installReveal.inView) setInstallSeen(true);
   }, [installReveal.inView]);
   const installRise = (delayMs: number) => {
-    const sharp = installReveal.inView;
-    const left = !sharp && installSeen;
+    const shown = installReveal.inView || installSeen;
     return {
-      opacity: sharp || left ? 1 : 0,
-      transform: sharp || left ? 'translateY(0)' : 'translateY(22px)',
-      filter: sharp ? 'blur(0px)' : 'blur(10px)',
-      transition: `opacity 700ms cubic-bezier(0.16,1,0.3,1) ${delayMs}ms, transform 700ms cubic-bezier(0.16,1,0.3,1) ${delayMs}ms, filter 700ms cubic-bezier(0.16,1,0.3,1) ${delayMs}ms`,
+      opacity: shown ? 1 : 0,
+      transform: shown ? 'translateY(0)' : 'translateY(22px)',
+      transition: `opacity 700ms cubic-bezier(0.16,1,0.3,1) ${delayMs}ms, transform 700ms cubic-bezier(0.16,1,0.3,1) ${delayMs}ms`,
     };
   };
 

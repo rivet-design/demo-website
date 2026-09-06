@@ -17,8 +17,6 @@ const SHAPES: {
   top: number;
   w: number;
   h: number;
-  duration: number;
-  delay: number;
 }[] = [
   {
     src: '/images/floating/pill-row.svg',
@@ -26,8 +24,6 @@ const SHAPES: {
     top: 30,
     w: 147.19,
     h: 65.43,
-    duration: 9,
-    delay: 1.2,
   },
   {
     src: '/images/floating/circle-arc.svg',
@@ -35,8 +31,6 @@ const SHAPES: {
     top: 547.1,
     w: 257.59,
     h: 149.12,
-    duration: 8.5,
-    delay: 0.6,
   },
   {
     src: '/images/floating/union-big.svg',
@@ -44,8 +38,6 @@ const SHAPES: {
     top: 99,
     w: 287,
     h: 246,
-    duration: 10,
-    delay: 2,
   },
 ];
 
@@ -63,8 +55,6 @@ const PORTRAIT_SHAPES: {
   right?: number;
   top?: number;
   bottom?: number;
-  duration: number;
-  delay: number;
 }[] = [
   {
     src: '/images/floating/pill-row.svg',
@@ -72,8 +62,6 @@ const PORTRAIT_SHAPES: {
     ratio: 65.43 / 147.19,
     right: -0.15,
     top: 0.03,
-    duration: 9,
-    delay: 1.2,
   },
   {
     src: '/images/floating/circle-arc.svg',
@@ -81,8 +69,6 @@ const PORTRAIT_SHAPES: {
     ratio: 149.12 / 257.59,
     right: -0.24,
     bottom: 0.06,
-    duration: 8.5,
-    delay: 0.6,
   },
   {
     src: '/images/floating/union-big.svg',
@@ -90,8 +76,6 @@ const PORTRAIT_SHAPES: {
     ratio: 246 / 287,
     left: -0.2,
     top: 0.32,
-    duration: 10,
-    delay: 2,
   },
 ];
 
@@ -172,11 +156,7 @@ const FloatingShapes = ({
               <img
                 src={shape.src}
                 alt=""
-                className="rivet-float absolute inset-0 h-full w-full"
-                style={{
-                  animationDuration: `${shape.duration}s`,
-                  animationDelay: `${shape.delay}s`,
-                }}
+                className="absolute inset-0 h-full w-full"
               />
             </motion.div>
           );
@@ -215,10 +195,8 @@ const FloatingShapes = ({
             }
           }
           return (
-            // The entry offset lives on a WRAPPER, not on the <img>: the
-            // `rivet-float` drift is a CSS animation on `transform`, and a CSS
-            // animation beats an inline transform — putting `x` on the image
-            // would simply be ignored while the drift is running.
+            // The entry offset lives on a WRAPPER, not on the <img>, so the
+            // image is free to carry other transforms without fighting it.
             <motion.div
               key={shape.src}
               className="absolute"
@@ -233,11 +211,7 @@ const FloatingShapes = ({
               <img
                 src={shape.src}
                 alt=""
-                className="rivet-float absolute inset-0 h-full w-full"
-                style={{
-                  animationDuration: `${shape.duration}s`,
-                  animationDelay: `${shape.delay}s`,
-                }}
+                className="absolute inset-0 h-full w-full"
               />
             </motion.div>
           );
