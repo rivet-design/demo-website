@@ -273,6 +273,13 @@ const CURSOR_OFF = { x: 106, y: 114 };
 // narrower than the 39:52 they are drawn at. At 1.3 the closed pair sits just
 // about at that ratio and the open card is a little over a third of the row.
 const OPEN_SCALE = 1.3;
+// The copy block's horizontal padding at lg (p-7) — the detail paragraph is
+// sized against the open card and has to subtract it on both sides.
+const CARD_PAD = 28;
+// The longest hand-broken detail line measures ~237px at 15px Aileron —
+// ~15.8px of line per px of font size. Dividing the available width by this
+// gives the largest font size at which every line still fits unwrapped.
+const DETAIL_CH = 15.8;
 // Must match the row's `lg:gap-6` and Tailwind's `lg` breakpoint — the widths
 // are computed here, so the arithmetic has to know the gap it is subtracting.
 const GAP_PX = 24;
@@ -1063,13 +1070,24 @@ const Card = ({
                     // Always in the DOM and always taking its space, so
                     // revealing it never reflows the heading above.
                     <p
-                      // No max-width: 34ch resolved to ~280px here while the
-                      // line itself measures 297px at 15px, so the cap alone
-                      // was breaking "Cursor" onto a second line. The card's
-                      // own padding is the only constraint it needs — the
-                      // line fits inside an open card with room to spare.
+                      // Sized to the OPEN card, not the closed one the copy
+                      // column is fixed to: the detail is only ever visible on
+                      // an open card, and the closed width re-wrapped its two
+                      // hand-broken lines into four at narrower lg viewports.
+                      // The font shrinks a touch when even the open width is
+                      // tight (DETAIL_CH is the longest line's width per px of
+                      // font size), so each hand break is always one line.
                       className="mt-3 font-aileron text-[15px] leading-[1.45] text-[#642e39]/80"
                       style={{
+                        ...(restW
+                          ? {
+                              width: restW * OPEN_SCALE - 2 * CARD_PAD,
+                              fontSize: Math.min(
+                                15,
+                                (restW * OPEN_SCALE - 2 * CARD_PAD) / DETAIL_CH,
+                              ),
+                            }
+                          : null),
                         opacity: isOpen ? 1 : 0,
                         transition: arrive(),
                       }}
