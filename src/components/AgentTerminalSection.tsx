@@ -74,7 +74,10 @@ const CARDS = [
     artShiftY: 0,
     glow: CARD_CORNER_GLOW,
     texture: '/images/cards/texture-stepped.png',
-    detail: ['Use Rivet with your Claude, Codex, and Cursor'],
+    // Hand-broken into two balanced lines: the copy column is fixed to the
+    // closed card's width, and left to auto-wrap the break point drifted with
+    // the viewport — at ~1300px it orphaned "and Cursor" on its own line.
+    detail: ['Use Rivet with your Claude Code,', 'Codex, and Cursor coding agents.'],
     // Drifts on the left, behind the terminal window, rather than sitting
     // centred — the terminal is the subject here and the icons are set dressing.
     // Spread around the centred window rather than clustered beside it — the
@@ -84,7 +87,12 @@ const CARDS = [
     connect: false,
     // The live hero agent window, cropped by the card's right edge.
     session: HERO_SESSION,
-    sessionClass: 'left-[53%] top-[33%] h-[54%] w-[78%] -translate-x-1/2',
+    sessionClass: 'left-[53%] w-[78%] -translate-x-1/2',
+    // Percent edges, not top+height: the top is a *preference* that gives way
+    // to the copy block when the card is short (see windowEdges), and anchoring
+    // the bottom keeps the window's foot planted while the top clamps.
+    sessionTop: 33,
+    sessionBottom: 13,
     directions: false,
   },
   {
@@ -98,7 +106,7 @@ const CARDS = [
     texture: '/images/cards/bgtexutre2.png',
     detail: [
       'Pull in inspiration from Pinterest,',
-      'Are.na, and your Local Files.',
+      'Are.na, and your own Local Files.',
     ],
     hoverArt: null,
     hoverArtClass: null,
@@ -108,7 +116,9 @@ const CARDS = [
     session: REFERENCES_SESSION,
     // Centred and fully inside the card: here the window IS the subject, and
     // the references have to be seen landing on its composer.
-    sessionClass: 'left-1/2 top-[34%] h-[54%] w-[76%] -translate-x-1/2',
+    sessionClass: 'left-1/2 w-[76%] -translate-x-1/2',
+    sessionTop: 34,
+    sessionBottom: 12,
     directions: false,
   },
   {
@@ -141,12 +151,14 @@ const CARDS = [
     // Broken by hand after "that": the copy column is fixed to the closed
     // card's width, so where it wraps is predictable — and left to itself it
     // put "you can" on line one and orphaned the rest.
-    detail: ['Rivet generates design directions', 'that you can compare and refine'],
+    detail: ['Rivet generates dozens of design', 'directions to compare and refine.'],
     hoverArt: null,
     hoverArtClass: null,
     connect: false,
     session: null,
     sessionClass: null,
+    sessionTop: null,
+    sessionBottom: null,
     // The Directions panel mid-run, generating into a window cropped by the
     // card's right edge — the same crop the agent window uses on card one.
     directions: true,
@@ -238,6 +250,12 @@ const PANEL_RATIO = 405 / 461;
 const openCardRatio = () =>
   OPEN_SCALE / (OPEN_SCALE + 2) / ((1 / CARDS.length) * (52 / 39));
 
+// The highest panel's top edge, as the share of the card the connect scene
+// expects above it. When the copy block runs deeper than this (short cards),
+// the whole scene shifts down by the difference — see the translateY on the
+// ConnectPanels wrapper.
+const CONNECT_TOP_PCT = Math.min(...CONNECT_PANELS.map((p) => p.box.top));
+
 /** A panel's Connect button, in card percentages. */
 const buttonAt = (panel: (typeof CONNECT_PANELS)[number]) => ({
   x: panel.box.left + panel.button.x * panel.box.width,
@@ -255,6 +273,13 @@ const CURSOR_OFF = { x: 106, y: 114 };
 // narrower than the 39:52 they are drawn at. At 1.3 the closed pair sits just
 // about at that ratio and the open card is a little over a third of the row.
 const OPEN_SCALE = 1.3;
+// The copy block's horizontal padding at lg (p-7) — the detail paragraph is
+// sized against the open card and has to subtract it on both sides.
+const CARD_PAD = 28;
+// The longest hand-broken detail line measures ~237px at 15px Aileron —
+// ~15.8px of line per px of font size. Dividing the available width by this
+// gives the largest font size at which every line still fits unwrapped.
+const DETAIL_CH = 15.8;
 // Must match the row's `lg:gap-6` and Tailwind's `lg` breakpoint — the widths
 // are computed here, so the arithmetic has to know the gap it is subtracting.
 const GAP_PX = 24;
@@ -538,7 +563,7 @@ const arrive = () =>
 const AgentTerminalSection = () => {
   const [hovered, setHovered] = useState<number | null>(null);
   // leave:false — the headline belongs to the cards below it, which are still
-  // sharp long after the heading has crossed the blur-out band.
+  // on screen long after the heading has crossed the leave band.
   const header = useScrollReveal<HTMLDivElement>({ leave: false });
 
   // ONE card is always open. Without a default the row had no fixed total
@@ -742,6 +767,27 @@ const Card = ({
   };
   // Cards without a connect beat show their session as soon as they open.
   const showSession = isOpen && (!card.connect || connected);
+  // The copy flows from the card's top while the windows are pinned at a
+  // percentage of its height — at short-card widths (~1300px viewport) that
+  // percentage lands inside the text. The copy block's measured height (its
+  // own bottom padding is the gap) is a floor the window's top can't rise
+  // above, and the bottom stays anchored so the window compresses instead of
+  // sliding off the card.
+  const copyRef = useRef<HTMLDivElement>(null);
+  const [copyH, setCopyH] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const el = copyRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const measure = () => setCopyH(el.offsetHeight);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const windowEdges = (top: number, bottom: number): CSSProperties => ({
+    top: copyH != null ? `max(${top}%, ${copyH}px)` : `${top}%`,
+    bottom: `${bottom}%`,
+  });
   // Stacked on mobile, so the stagger plays out card by card; at lg they share
   // a row and it reads as one gesture.
   const reveal = useScrollReveal<HTMLElement>({ delay: index * 80 });
@@ -764,7 +810,12 @@ const Card = ({
                 // the expansion horizontal.
                 style={
                   {
-                    ...reveal.style,
+                    // The reveal fades the whole card only at lg, where the
+                    // three share a row and cross the fold together. Stacked
+                    // (restW null) the shells stay put and only the copy
+                    // fades — a whole panel blinking in and out reads as the
+                    // page loading, not as a scroll gesture.
+                    ...(restW ? reveal.style : null),
                     // `flex: none` so the inline width actually governs — the
                     // flex-basis/grow pair in the class list is only the
                     // pre-measurement default, and flex-basis would otherwise
@@ -774,17 +825,17 @@ const Card = ({
                       ? {
                           flex: 'none',
                           width: restW * (isOpen ? OPEN_SCALE : 1),
+                          // One declaration or the other wins outright, so the
+                          // widening and the reveal share one transition list.
+                          transition: [
+                            `width ${EXPAND_MS}ms ${EASE}`,
+                            reveal.style.transition,
+                          ]
+                            .filter(Boolean)
+                            .join(', '),
                         }
                       : null),
                     ...(rowH ? { height: rowH } : null),
-                    // One declaration or the other wins outright, so the
-                    // widening and the reveal share a single transition list.
-                    transition: [
-                      `width ${EXPAND_MS}ms ${EASE}`,
-                      reveal.style.transition,
-                    ]
-                      .filter(Boolean)
-                      .join(', '),
                   } as CSSProperties
                 }
               >
@@ -915,8 +966,12 @@ const Card = ({
                     // window finish inside the frame — the same bleed the
                     // card art uses, chosen over a whole Share bar because at
                     // a height that fits (67%) the window read too small.
-                    className="pointer-events-none absolute left-[20%] top-[32%] h-[76%] w-[116%]"
+                    className="pointer-events-none absolute left-[20%] w-[116%]"
                     style={{
+                      // top 32% + height 76% used to come to 108%; the same
+                      // -8% bottom keeps the Share-bar crop while the top
+                      // clamps below the copy.
+                      ...windowEdges(32, -8),
                       opacity: isOpen ? 1 : 0,
                       transition: arrive(),
                     }}
@@ -939,6 +994,14 @@ const Card = ({
                   <div
                     className="pointer-events-none absolute inset-0 z-10"
                     style={{
+                      // The scene's internal cursor math is all in card
+                      // percentages, so when the copy runs below the highest
+                      // panel's top the whole scene slides down as one rather
+                      // than each coordinate being re-derived.
+                      transform:
+                        copyH != null && rowH
+                          ? `translateY(${Math.max(0, copyH - (rowH * CONNECT_TOP_PCT) / 100)}px)`
+                          : undefined,
                       opacity: connected ? 0 : 1,
                       transition: `opacity ${ARRIVE_MS}ms ${EASE}`,
                     }}
@@ -951,6 +1014,7 @@ const Card = ({
                   <div
                     className={`absolute overflow-hidden rounded-2xl ${card.sessionClass}`}
                     style={{
+                      ...windowEdges(card.sessionTop, card.sessionBottom),
                       opacity: showSession ? 1 : 0,
                       // Only live while it is actually showing: an opacity-0
                       // layer still hit-tests, so otherwise a closed card
@@ -985,8 +1049,11 @@ const Card = ({
                     card, every line reflowed mid-transition — the text was
                     animating along with the box. */}
                 <div
+                  ref={copyRef}
                   className="relative z-10 p-6 lg:p-7"
-                  style={restW ? { width: restW } : undefined}
+                  // Stacked, the reveal lives HERE instead of on the article:
+                  // the shell stays planted and only the copy rides the scroll.
+                  style={restW ? { width: restW } : reveal.style}
                 >
                   {/* Weight is FAKED, not switched. Aileron ships as separate
                       files rather than a variable font, so font-weight has
@@ -1012,13 +1079,24 @@ const Card = ({
                     // Always in the DOM and always taking its space, so
                     // revealing it never reflows the heading above.
                     <p
-                      // No max-width: 34ch resolved to ~280px here while the
-                      // line itself measures 297px at 15px, so the cap alone
-                      // was breaking "Cursor" onto a second line. The card's
-                      // own padding is the only constraint it needs — the
-                      // line fits inside an open card with room to spare.
+                      // Sized to the OPEN card, not the closed one the copy
+                      // column is fixed to: the detail is only ever visible on
+                      // an open card, and the closed width re-wrapped its two
+                      // hand-broken lines into four at narrower lg viewports.
+                      // The font shrinks a touch when even the open width is
+                      // tight (DETAIL_CH is the longest line's width per px of
+                      // font size), so each hand break is always one line.
                       className="mt-3 font-aileron text-[15px] leading-[1.45] text-[#642e39]/80"
                       style={{
+                        ...(restW
+                          ? {
+                              width: restW * OPEN_SCALE - 2 * CARD_PAD,
+                              fontSize: Math.min(
+                                15,
+                                (restW * OPEN_SCALE - 2 * CARD_PAD) / DETAIL_CH,
+                              ),
+                            }
+                          : null),
                         opacity: isOpen ? 1 : 0,
                         transition: arrive(),
                       }}

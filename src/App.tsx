@@ -35,7 +35,6 @@ import {
   scrollRevealLeaveStyle,
   useScrollReveal,
 } from './hooks/use-scroll-reveal';
-import { useInView } from './hooks/use-in-view';
 import VariantsShowcase from './components/variantsDemo/VariantsShowcase';
 import DirectionsPanel from './components/variantsDemo/DirectionsPanel';
 import { useVariantsDemo } from './components/variantsDemo/useVariantsDemo';
@@ -1159,37 +1158,15 @@ const App = () => {
   // agent has minimized out.
   const showMobileAgent = playHeroIntroMobile && mobilePhase !== 'editor';
 
-  // The install section arrives the way the hero copy does — blur, fade and a
-  // short rise — and goes back out the same way as you scroll past it.
-  //
-  // Deliberately asymmetric. The bottom inset is small, so the copy blurs in
-  // as soon as it clears the fold; the TOP inset is large, so it counts as
-  // gone once it rises past the upper 42% of the viewport — which is roughly
-  // when the footer starts filling the lower half. A symmetric band left it
-  // sharp until it was almost entirely off-screen, so the blur-out was never
-  // actually seen.
-  const installReveal = useInView<HTMLDivElement>({
-    rootMargin: '-42% 0px -10% 0px',
-  });
-  // Arriving and leaving are different gestures. On the way IN the copy fades
-  // up out of nothing — blur, opacity and a rise. On the way OUT it only goes
-  // soft: it stays fully opaque and in place and just blurs, so scrolling past
-  // defocuses it rather than deleting it. Tracked with `installSeen`, since the
-  // observer alone can't tell "not yet arrived" from "already passed".
-  const [installSeen, setInstallSeen] = useState(false);
-  useEffect(() => {
-    if (installReveal.inView) setInstallSeen(true);
-  }, [installReveal.inView]);
-  const installRise = (delayMs: number) => {
-    const sharp = installReveal.inView;
-    const left = !sharp && installSeen;
-    return {
-      opacity: sharp || left ? 1 : 0,
-      transform: sharp || left ? 'translateY(0)' : 'translateY(22px)',
-      filter: sharp ? 'blur(0px)' : 'blur(10px)',
-      transition: `opacity 700ms cubic-bezier(0.16,1,0.3,1) ${delayMs}ms, transform 700ms cubic-bezier(0.16,1,0.3,1) ${delayMs}ms, filter 700ms cubic-bezier(0.16,1,0.3,1) ${delayMs}ms`,
-    };
-  };
+  // The install section runs on the page's shared scroll gesture: fade and a
+  // short rise on arrival, the mirrored fade-out once it's scrolled past — so
+  // coming back up from the footer plays the same entrance the way down does.
+  // Three staggered hooks rather than one on the wrapper: the section is
+  // mostly padding and the gravity field, so a single observer on it would
+  // fire long before the copy is anywhere near the viewport.
+  const installHeadline = useScrollReveal<HTMLHeadingElement>();
+  const installButton = useScrollReveal<HTMLDivElement>({ delay: 110 });
+  const installAccordion = useScrollReveal<HTMLDivElement>({ delay: 200 });
 
   const renderDownloadPanel = () => {
     return (
@@ -1223,13 +1200,10 @@ const App = () => {
           }}
         />
         </div>
-        {/* The trigger is this CONTENT column, not the section. The section is
-            160px of padding plus the field, so it counts as intersecting long
-            before the copy is anywhere near the viewport — the reveal would
-            finish off-screen and you'd never see it. */}
-        <div ref={installReveal.ref} className="relative z-10 flex flex-col gap-6">
+        <div className="relative z-10 flex flex-col gap-6">
           <h2
-            style={installRise(0)}
+            ref={installHeadline.ref}
+            style={installHeadline.style}
             className="hero-title-size text-center font-main font-normal leading-[1.12]"
           >
             Built for designers on the
@@ -1239,10 +1213,14 @@ const App = () => {
               default `md` is px-4/py-2 at text-sm, and self-center stops the
               flex column from stretching it edge to edge. Same agent icons as
               the nav — they come from the component itself. */}
-          <div className="flex justify-center" style={installRise(110)}>
+          <div
+            ref={installButton.ref}
+            className="flex justify-center"
+            style={installButton.style}
+          >
             <PromptInstallButton />
           </div>
-          <div style={installRise(200)}>
+          <div ref={installAccordion.ref} style={installAccordion.style}>
             <InstallAccordion />
           </div>
         </div>

@@ -336,10 +336,6 @@ const Footer = () => {
 
       {/* Outside the panel's clip and above it, so they hang over its edges —
           the one thing that is NOT contained. */}
-      {/* The placement transforms (and the mirror) live on the WRAPPER; the
-          drift lives on the image. `rivet-float` animates `transform`, and a
-          running CSS animation beats a class transform — put both on one
-          element and the blob would snap to the viewport edge, unmirrored. */}
       {/* Opacity only, no translate: these wrappers carry their placement and
           mirror as class transforms, and an inline transform from rise() would
           overwrite both — the blob would snap to the edge, unmirrored. */}
@@ -351,9 +347,7 @@ const Footer = () => {
           src="/images/footer-blob-left.svg"
           alt=""
           draggable={false}
-          className="rivet-float block w-full"
-          // Offset from the right-hand cluster so the two never drift in step.
-          style={{ animationDuration: '9s', animationDelay: '0.6s' }}
+          className="block w-full"
         />
       </div>
       <div
@@ -364,8 +358,7 @@ const Footer = () => {
           src="/images/footer-blob-right.svg"
           alt=""
           draggable={false}
-          className="rivet-float block w-full"
-          style={{ animationDuration: '7.5s', animationDelay: '1.4s' }}
+          className="block w-full"
         />
       </div>
       </div>

@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 
 /**
- * The page's one scroll gesture: a block sharpens as it arrives and goes soft
- * again once you've scrolled past it.
- *
- *   arriving  blur + fade + a short rise, out of nothing
- *   leaving   blur ONLY — it stays opaque and in place, so scrolling past
- *             defocuses the block rather than deleting it
+ * The page's one scroll gesture: a block fades in with a short rise as it
+ * arrives, and fades back out — shifted the OTHER way, upward — once it's
+ * scrolled past. The two halves mirror each other so scrolling back up plays
+ * the same arrival the way down does; without the leaving half, content
+ * re-entering from above just sat there fully rendered. (An earlier design
+ * blurred instead of fading on the way out; the hero still does, via
+ * `scrollRevealLeaveStyle` below.)
  *
  * Every section on the page runs through this, so the timings live here rather
- * than being re-typed per component — that drift is what left the hero demo
- * sliding away perfectly sharp while everything under it went soft.
+ * than being re-typed per component.
  *
- * Which half applies is decided by WHERE the block is, not by a seen-latch: a
+ * Whether a block has arrived is decided by WHERE it is, not by a seen-latch: a
  * block sitting above the observed band has gone past, anything else hasn't
  * arrived yet. A latch can't tell those apart for a block that starts on
  * screen — which the hero does.
@@ -28,11 +28,10 @@ const EASE = 'cubic-bezier(0.16, 1, 0.3, 1)';
 const BLUR = '10px';
 const RISE = '22px';
 
-// Asymmetric on purpose. The small bottom inset lets a block sharpen as soon as
-// it clears the fold; the large top inset means it counts as gone once it
+// Asymmetric on purpose. The small bottom inset lets a block reveal as soon as
+// it clears the fold; the large top inset means it counts as 'past' once it
 // passes the upper 42% of the viewport — roughly when the next section takes
-// over. A symmetric band leaves it sharp until it is almost entirely
-// off-screen, so the blur-out is never actually seen.
+// over. `isPast` consumers key off that boundary.
 const ROOT_MARGIN = '-42% 0px -10% 0px';
 
 export type ScrollRevealPhase = 'before' | 'in' | 'past';
@@ -53,9 +52,10 @@ export type ScrollRevealOptions<T extends HTMLElement> = {
    */
   entrance?: boolean;
   /**
-   * Whether this block goes soft again on the way out. Off for a block that
-   * shares a section with something still sharp below it — a heading defocusing
-   * while its own cards are crisp reads as a bug, not as depth.
+   * Whether this block fades back out once scrolled past (so it can fade in
+   * again on the way back up). Off for a block that shares a section with
+   * something still visible below it — a heading vanishing while its own cards
+   * are still on screen reads as a bug, not as a gesture.
    */
   leave?: boolean;
   /** Skip observing entirely; `style` comes back empty and phase stays 'in'. */
@@ -104,27 +104,35 @@ export const useScrollReveal = <T extends HTMLElement>({
   // A block without its own entrance never renders the 'before' state — it is
   // already on screen when something else hands it in.
   const waiting = entrance && phase === 'before' && !disabled;
-  const soft = waiting || (leave && phase === 'past');
+  const leaving = leave && phase === 'past' && !disabled;
+  // The rise mirrors the travel direction: arriving content comes up from
+  // below (+RISE), content that went past comes back down from above (-RISE).
+  // No delay on the way out — a stagger there reads as lag, while the same
+  // stagger on the way (back) in reads as the entrance it is.
+  const delayMs = leaving ? 0 : delay;
 
   const style: CSSProperties = disabled
     ? {}
     : {
-        opacity: waiting ? 0 : 1,
-        transform: waiting ? `translateY(${RISE})` : 'translateY(0)',
-        filter: soft ? `blur(${BLUR})` : 'blur(0px)',
+        opacity: waiting || leaving ? 0 : 1,
+        transform: waiting
+          ? `translateY(${RISE})`
+          : leaving
+            ? `translateY(-${RISE})`
+            : 'translateY(0)',
         transition:
-          `opacity ${DURATION_MS}ms ${EASE} ${delay}ms,` +
-          `transform ${DURATION_MS}ms ${EASE} ${delay}ms,` +
-          `filter ${DURATION_MS}ms ${EASE} ${delay}ms`,
+          `opacity ${DURATION_MS}ms ${EASE} ${delayMs}ms,` +
+          `transform ${DURATION_MS}ms ${EASE} ${delayMs}ms`,
       };
 
   return { ref, phase, style, isPast: phase === 'past' };
 };
 
 /**
- * The leaving half on its own, for a block whose entrance is driven by someone
- * else's style object — merge this after theirs. No delay: a stagger on the way
- * out reads as lag.
+ * The leaving blur on its own — the hero is the only block that still
+ * defocuses on the way out, and its entrance is driven by someone else's style
+ * object, so merge this after theirs. No delay: a stagger on the way out reads
+ * as lag.
  */
 export const scrollRevealLeaveStyle: CSSProperties = {
   filter: `blur(${BLUR})`,
