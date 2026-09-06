@@ -41,6 +41,8 @@ export const useVariantsDemo = (
     autoPlay?: boolean;
     initialId?: string;
     startDelayMs?: number;
+    /** Gates the whole generation sequence — stays on skeletons until true. */
+    start?: boolean;
     /** Override when the first direction resolves (default 1000ms). */
     firstReadyMs?: number;
     /** Override when the remaining directions resolve (default 2800ms). */
@@ -56,6 +58,7 @@ export const useVariantsDemo = (
   },
 ): VariantsDemoController => {
   const SOURCE = options?.variants ?? VARIANTS;
+  const start = options?.start ?? true;
   const startDelayMs = Math.max(0, options?.startDelayMs ?? 0);
   const firstReadyMs = options?.firstReadyMs ?? FIRST_READY_MS;
   const allReadyMs = options?.allReadyMs ?? ALL_READY_MS;
@@ -68,7 +71,8 @@ export const useVariantsDemo = (
   const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [selectedId, setSelectedId] = useState(initialId);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [autoPlay, setAutoPlay] = useState(options?.autoPlay ?? true);
+  const wantAutoPlay = options?.autoPlay ?? true;
+  const [autoPlay, setAutoPlay] = useState(wantAutoPlay);
   const [readyIds, setReadyIds] = useState<Set<string>>(() => new Set());
 
   // Fake the Rivet generation flow once on mount: skeletons first, then the
@@ -76,6 +80,7 @@ export const useVariantsDemo = (
   // offsets the whole sequence so it can be timed after an intro (the hero's
   // agent chat) rather than firing immediately.
   useEffect(() => {
+    if (!start) return;
     const ids = SOURCE.map((v) => v.id);
     const firstId = initialId;
     const firstTimer = setTimeout(
@@ -90,7 +95,19 @@ export const useVariantsDemo = (
       clearTimeout(firstTimer);
       clearTimeout(restTimer);
     };
-  }, [SOURCE, initialId, startDelayMs, firstReadyMs, allReadyMs]);
+  }, [SOURCE, initialId, startDelayMs, firstReadyMs, allReadyMs, start]);
+
+  // `autoPlay` can flip AFTER mount: the hero only wants the loop in its
+  // mobile layout, and that flag is reactive to viewport width. Seeding state
+  // once left a desktop -> mobile resize pinned on the first direction
+  // forever. Re-sync on an actual prop change only — not on every render — so
+  // a user take-over (which clears the flag) still sticks.
+  const prevWantAutoPlayRef = useRef(wantAutoPlay);
+  useEffect(() => {
+    if (prevWantAutoPlayRef.current === wantAutoPlay) return;
+    prevWantAutoPlayRef.current = wantAutoPlay;
+    setAutoPlay(wantAutoPlay);
+  }, [wantAutoPlay]);
 
   const variants = useMemo(
     () =>

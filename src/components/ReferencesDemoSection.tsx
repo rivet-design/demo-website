@@ -1,4 +1,4 @@
-// Workflow panel: "Bring your design references."
+// Workflow panel: "Create interfaces from your references"
 //
 // Copy on the left, a loose masonry of reference cards on the right. Each card
 // echoes one of the hero bento's right-hand panels — a peach panel with the
@@ -158,7 +158,7 @@ const ReferencesDemoSection = () => {
             page's left guide rule by the same inset the cards keep off the right. */}
         <div className="workflow-copy-block lg:max-w-none lg:pl-8">
           <h2 className="workflow-title-size font-main font-normal leading-[1.12] tracking-[-0.01em] text-black">
-            Create interfaces based on your design references.
+            Create interfaces from your references
           </h2>
           <p className="landing-subtext mt-4 text-black/70">
             Pull in inspiration from{' '}
@@ -196,7 +196,6 @@ const ReferencesDemoSection = () => {
             six cards show in full; from sm up the wall hits its max-w and grows to
             fill the shared 16/11 landscape box like the other workflow panels. */}
         <div
-          data-guide-row
           className="relative aspect-[7/6] w-full overflow-hidden bg-white lg:aspect-[16/11]"
         >
           {/* The masonry wall. In the two-column layout (lg+, text left / wall

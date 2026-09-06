@@ -17,6 +17,27 @@
 }
 
 @font-face {
+  font-family: 'Aileron';
+  src: url('/fonts/Aileron-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Aileron';
+  src: url('/fonts/Aileron-SemiBold.otf') format('opentype');
+  font-weight: 500 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Aileron';
+  src: url('/fonts/Aileron-Bold.otf') format('opentype');
+  font-weight: 700 900;
+  font-style: normal;
+}
+
+@font-face {
   font-family: 'Bia';
   src: url('/fonts/bianzhidai_noBG-Ring.woff') format('woff');
   font-weight: 400;
@@ -39,7 +60,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 47 24% 93%; /* #F1EFE8 */
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
@@ -141,6 +162,40 @@
 
 /* Typography tokens — encode font-family, size, weight, line-height, and letter-spacing */
 @layer components {
+  /* Left/right edge of the live-prototype container, as a length.
+     The container is `h-[81.6%] aspect-[1409/713]` centred in an h-screen
+     stage, so its width is 0.816 * 1.97615 * 100vh = 161.254vh and its inset
+     from the viewport edge is (100vw - 161.254vh) / 2. The nav uses this so
+     it lines up with the container instead of its own margin; the 2rem floor
+     keeps it off the edge on short/wide viewports where the maths goes
+     negative. Keep in sync with OUTER_PANEL_BOX in App.tsx. */
+  :root {
+    /* Width of the live-prototype container, and therefore of the nav.
+       Height-derived (81.6% of an h-screen stage at aspect 1409/713 =
+       161.254vh) so it scales with the stage, but CAPPED at 90vw so a short,
+       wide viewport — fullscreen, most obviously — can't make it wider than
+       the screen. min() makes whichever limit binds first the one that wins. */
+    /* Height of the fixed page nav. The pinned layers pad by it so the
+       prototype container sits below the nav instead of under it. */
+    /* The white margin the footer panel sits inside, and the nav's own
+       horizontal inset — one value so the nav's wordmark lines up with the
+       panel's edge instead of the two being set independently. */
+    --frame-inset-x: clamp(13px, 1.3vw, 24px);
+    --page-nav-h: 76px;
+    --prototype-w: min(90vw, 161.254vh);
+    /* Derived from the width above, with no independent floor: any floor here
+       would let the two disagree exactly when the cap is active, which is what
+       made the nav stop lining up in fullscreen. */
+    --prototype-inset-x: calc((100vw - var(--prototype-w)) / 2);
+  }
+
+  /* Aileron runs a touch loose by default; -2% is the tracking the brand
+     sets it at. Applied to the family utility so every use picks it up
+     rather than each call site repeating a tracking class. */
+  .font-aileron {
+    letter-spacing: -0.02em;
+  }
+
   .page-gutter-x {
     padding-left: var(--page-gutter-x);
     padding-right: var(--page-gutter-x);
@@ -170,7 +225,15 @@
   @media (max-width: 1023px) {
     .hero-title-text {
       margin-inline: -1.5rem;
-      font-size: clamp(1.75rem, calc((86.8vw - 3rem) / 8.25), 3.5rem);
+      /* Sized for TWO lines. The markup carries a hard <br/> after "design",
+         so the constraint is the longer of the two lines — "directions from
+         your agent." — fitting the available width (100vw − gutters − the
+         bled px-12 = 86.8vw − 3rem). The divisor is that measure; /10 was
+         sized for three lines and let the second one wrap again.
+         In Aileron Regular at the title's -3% tracking that line measures
+         11.19em, so /13.5 leaves ~17% headroom. Re-measure before changing
+         the weight: Bold is ~6% wider, which would still fit here. */
+      font-size: clamp(1.25rem, calc((86.8vw - 3rem) / 13.5), 2.25rem);
       text-wrap: balance;
     }
   }
@@ -191,10 +254,13 @@
        subtraction is the hero copy block's px-24 (6rem per side — 3x the
        content panels' lg:p-8). text-wrap: balance keeps the two lines close
        to equal instead of a long first line + short orphan. */
-    /* The two-line split is an explicit <br> after "directions" (lg+ only —
-       below lg the title wraps naturally), so no balance/max-width here: the
-       divisor keeps the longer top line (~17em) comfortably inside the padded
-       content width (~21em). */
+    /* The two-line split is an explicit <br> (lg+ only — below lg the title
+       wraps naturally), so no balance/max-width here: the divisor keeps the
+       longer line comfortably inside the padded content width. In Aileron
+       Regular at the title's -3% tracking that line is 11.19em against a
+       divisor of 18, so it fills ~62% of the width — the em figures in the
+       block above are from Satoshi, before the face changed, and no longer
+       describe this. */
     .hero-title-text {
       font-size: clamp(
         1.5rem,
@@ -248,7 +314,7 @@
   }
 
   [data-sonner-toast][data-styled='true'] {
-    font-family: 'Satoshi', sans-serif !important;
+    font-family: 'Aileron', sans-serif !important;
     font-size: clamp(
       0.9375rem,
       calc(var(--landing-body-text-size) * 0.9),
@@ -350,6 +416,23 @@
   a[target='_blank']:not(.no-external-icon):focus-visible::after {
     opacity: 1;
   }
+
+  /* In the nav the arrow must not RESERVE inline space. It is invisible at
+     rest but still 0.75em + 0.2em wide, so Docs and Release notes each carried
+     ~15px of dead width that About (an internal link, no arrow) did not — the
+     Docs -> Release notes gap measured 59px against About -> Docs at 44px.
+     Positioned in the link's own right padding instead, the arrow still
+     appears on hover and every gap in the row is identical. */
+  nav a[target='_blank']:not(.no-external-icon) {
+    position: relative;
+  }
+  nav a[target='_blank']:not(.no-external-icon)::after {
+    position: absolute;
+    right: 0.25rem;
+    top: 50%;
+    margin-left: 0;
+    transform: translateY(-50%);
+  }
 }
 
 /*
@@ -450,6 +533,59 @@
   100% {
     transform: scale(0.4) translateY(6%);
     opacity: 0;
+  }
+}
+
+/* Gentle drift for the loose decorative brand shapes floating around the hero
+   showcase — gives each one its own bob without needing a separate keyframe
+   per shape (duration/delay are set per-element via inline style). */
+/* Footer mark heartbeat — a CSS rendering of the spring-driven HEARTBEAT in
+   rivet-brand/animations/logo-motion.html: a strong first beat (lub) at ~60ms,
+   a quieter, quicker second (dub) at ~215ms, then ~570ms of diastole fully at
+   rest before repeating. Never a metronomic pulse. 850ms ≈ 70bpm. The small
+   upward lift rides along with each beat, as it does there. */
+@keyframes rivet-heartbeat {
+  0%   { transform: scale(1)     translateY(0); }
+  7%   { transform: scale(1)     translateY(0); }
+  11%  { transform: scale(1.075) translateY(-1.2%); }
+  17%  { transform: scale(0.995) translateY(0); }
+  25%  { transform: scale(1)     translateY(0); }
+  29%  { transform: scale(1.04)  translateY(-0.6%); }
+  36%  { transform: scale(0.998) translateY(0); }
+  42%  { transform: scale(1)     translateY(0); }
+  100% { transform: scale(1)     translateY(0); }
+}
+.footer-heart {
+  transform-origin: 50% 60%;
+  will-change: transform;
+}
+/* Hover the HEART, not its container. `.footer-mark:hover` covered the whole
+   footer graphic — a full-width box — so the pulse fired whenever the cursor
+   was anywhere near the bottom of the page. */
+.footer-heart:hover {
+  animation: rivet-heartbeat 850ms ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .footer-heart:hover { animation: none; }
+}
+
+@keyframes rivet-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-16px);
+  }
+}
+
+.rivet-float {
+  animation: rivet-float 8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rivet-float {
+    animation: none;
   }
 }
 

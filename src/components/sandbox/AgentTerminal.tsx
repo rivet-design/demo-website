@@ -314,6 +314,7 @@ const AgentTerminal = ({
   typeMs,
   className,
   onComplete,
+  onClose,
 }: {
   script?: Turn[];
   loop?: boolean;
@@ -322,6 +323,8 @@ const AgentTerminal = ({
   /** Per-character typing speed (ms) for commands; omit for the default. */
   typeMs?: number;
   className?: string;
+  /** When provided, the red traffic light becomes a working close button. */
+  onClose?: () => void;
   /** Fires once when the whole script has finished (all blocks revealed). */
   onComplete?: () => void;
 } = {}) => {
@@ -379,7 +382,21 @@ const AgentTerminal = ({
         )}
       >
         <span className="flex items-center gap-1.5">
+          {onClose ? (
+          <button
+            type="button"
+            aria-label="Close"
+            // stopPropagation so closing can't also begin a window drag.
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={onClose}
+            className={cn(
+              'pointer-events-auto cursor-pointer rounded-full bg-[#ff5f57] transition-opacity hover:opacity-70',
+              compact ? 'h-2 w-2' : 'h-3 w-3',
+            )}
+          />
+        ) : (
           <span className={cn('rounded-full bg-[#ff5f57]', compact ? 'h-2 w-2' : 'h-3 w-3')} />
+        )}
           <span className={cn('rounded-full bg-[#febc2e]', compact ? 'h-2 w-2' : 'h-3 w-3')} />
           <span className={cn('rounded-full bg-[#28c840]', compact ? 'h-2 w-2' : 'h-3 w-3')} />
         </span>
@@ -391,7 +408,7 @@ const AgentTerminal = ({
               compact ? 'text-[11px]' : 'text-[13px]',
             )}
           >
-            Jersey customizer textures
+            Rivet landing page
           </span>
         </span>
         <span className="ml-auto flex items-center gap-1.5 text-muted-foreground">

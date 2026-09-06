@@ -32,14 +32,16 @@ export type Turn = {
   response: ResponseBlock[];
 };
 
-// Single-turn session for the hero interaction: the user asks for new textures,
-// and the agent drives the real Rivet MCP tools to explore directions — captures
-// the current app's design, starts a set of variants, and reports them ready.
+// Single-turn session for the hero interaction: the user asks Rivet to
+// reimagine its OWN landing page, and the agent drives the real Rivet MCP
+// tools to explore directions — captures the current page's design, starts a
+// set of variants, and reports them ready. Recursive/self-referential by
+// design: the tool is shown working on itself.
 export const HERO_SESSION: Turn[] = [
   {
-    command: '/rivet try some new textures for my world cup jersey app',
+    command: '/rivet explore some new visual directions for this landing page',
     response: [
-      { kind: 'thinking', text: 'Exploring new texture directions for your kit studio…' },
+      { kind: 'thinking', text: 'Exploring new visual directions for your landing page…' },
       {
         kind: 'tool',
         tool: 'rivet_design_context',
@@ -49,16 +51,47 @@ export const HERO_SESSION: Turn[] = [
       {
         kind: 'tool',
         tool: 'rivet_variants',
-        arg: 'action: "start", runLabel: "Jersey textures", briefs × 4',
+        arg: 'action: "start", runLabel: "Landing directions", briefs × 4',
         result: '4 directions queued · editor → :4000',
       },
       {
         kind: 'tool',
         tool: 'rivet_status',
-        arg: 'project: "jersey-app"',
+        arg: 'project: "rivet-landing"',
         result: '4/4 succeeded — Macintosh · Skeuomorphic · …',
       },
-      { kind: 'result', text: '4 texture directions ready — cycle them in the preview.' },
+      { kind: 'result', text: '4 directions ready — cycle them in the preview.' },
+    ],
+  },
+];
+
+// The reference-gathering half of the story, for the "Connect your design
+// references" card: the user DROPS a handful of images onto the composer and
+// points at an Are.na channel, and Rivet reads visual direction out of both.
+// Deliberately short — it plays inside a card, not a full window, so it has to
+// land its point in about four rows.
+export const REFERENCES_SESSION: Turn[] = [
+  {
+    command: 'Match this look — 4 images attached + are.na/warm-interfaces',
+    response: [
+      { kind: 'thinking', text: 'Looking at your references…' },
+      {
+        kind: 'tool',
+        tool: 'rivet_design_context',
+        arg: 'files: 4 images (dropped)',
+        result: 'clay + cream palette · tight 12-col grid',
+      },
+      {
+        kind: 'tool',
+        tool: 'rivet_design_context',
+        arg: 'url: "are.na/warm-interfaces"',
+        result: '26 blocks · high-contrast display type',
+      },
+      {
+        kind: 'text',
+        text: 'Common thread: warm neutrals, oversized type, dense grids.',
+      },
+      { kind: 'result', text: 'Reference set saved — ready to explore.' },
     ],
   },
 ];
