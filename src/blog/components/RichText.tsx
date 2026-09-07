@@ -79,7 +79,6 @@ export const Masthead = ({ src, alt, children }: ImageProps & { children: ReactN
         col-span-* emits the `grid-column` shorthand, which resets the start
         line col-start-* had just set. */}
     <div className="masthead__intro">
-      <p className="article-label mb-10">Intro</p>
       <div className="article-body">{children}</div>
     </div>
   </div>
