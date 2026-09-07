@@ -1,6 +1,7 @@
 import {
   memo,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -280,6 +281,12 @@ const CARD_PAD = 28;
 // ~15.8px of line per px of font size. Dividing the available width by this
 // gives the largest font size at which every line still fits unwrapped.
 const DETAIL_CH = 15.8;
+// How far up the viewport a stacked card's centre must come before the card
+// opens and its beats start playing. A plain 0 inset fires while the centre is
+// still on the very bottom edge, which is early enough that the connect beat
+// is half over by the time the card is actually being read.
+const STACKED_OPEN_INSET = '0px 0px -25% 0px';
+
 // Must match the row's `lg:gap-6` and Tailwind's `lg` breakpoint — the widths
 // are computed here, so the arithmetic has to know the gap it is subtracting.
 const GAP_PX = 24;
@@ -778,8 +785,36 @@ const Card = ({
   // At lg the row keeps its one-open-on-hover behaviour.
   const stacked = restW == null;
   const [opened, setOpened] = useState(false);
-  useLayoutEffect(() => {
-    if (stacked && reveal.phase === 'in') setOpened(true);
+  // Stacked, opening is gated on the card's MIDDLE being on screen, not on the
+  // scroll reveal's leading edge. The reveal band starts at 90% of the
+  // viewport, so a card this tall (aspect 39/52 — taller than it is wide) has
+  // its whole interior still below the fold when `phase` turns 'in': the
+  // Pinterest/Are.na connect beat played out unwatched in the ~1.3s before the
+  // card was scrolled to, and since both `opened` and `connected` latch, by
+  // the time you looked at it the card had already settled on its terminal.
+  //
+  // A sentinel pinned to the card's vertical centre rather than a threshold on
+  // the card itself: a card taller than the viewport can never reach a 0.5
+  // ratio, and on a short or landscape phone it would then never open at all.
+  // The bottom inset holds the beat until the centre is properly in frame
+  // instead of firing the moment it clips the very bottom edge.
+  const midRef = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const el = midRef.current;
+    if (!stacked || !el || typeof IntersectionObserver === 'undefined') {
+      // No observer to be had — fall back to the reveal, which at least shows
+      // the beat rather than never opening the card.
+      if (stacked && reveal.phase === 'in') setOpened(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setOpened(true);
+      },
+      { rootMargin: STACKED_OPEN_INSET },
+    );
+    io.observe(el);
+    return () => io.disconnect();
   }, [stacked, reveal.phase]);
   const isOpen = stacked ? opened : hovered === index;
   // The connect beat replays on every ENTER, not just when the card goes from
@@ -869,6 +904,15 @@ const Card = ({
                   } as CSSProperties
                 }
               >
+                {/* Sentinel at the card's vertical centre — what the stacked
+                    open gate observes (see `opened` above). Zero-size and
+                    aria-hidden, so it costs nothing but its position. */}
+                <span
+                  ref={midRef}
+                  aria-hidden
+                  className="pointer-events-none absolute left-0 top-1/2 block h-px w-px"
+                />
+
                 {/* The card's ground: gradient, then texture. Separate layers
                     rather than backgrounds on the article, because the
                     gradient has to fade on its own — a background-image has
