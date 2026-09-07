@@ -309,6 +309,24 @@ const VariantTable = ({
   // pointer is already on that row, so the selected fill takes over anyway.
   useEffect(() => {
     setActiveIndex(null);
+    // Roving focus, same reason: a row clicked earlier still HOLDS focus, and
+    // the first keypress afterwards flips it to :focus-visible — a faint ring
+    // on a row that is no longer selected. When selection moves off a focused
+    // row, focus rides along to the new one — or is dropped entirely when the
+    // new row lives in a DIFFERENT group (each group is its own VariantTable,
+    // so the new row isn't in this container to hand focus to).
+    const active = document.activeElement as HTMLElement | null;
+    if (
+      active?.dataset.variantId &&
+      active.dataset.variantId !== selectedId &&
+      containerRef.current?.contains(active)
+    ) {
+      const next = containerRef.current?.querySelector<HTMLElement>(
+        `[data-variant-id="${CSS.escape(selectedId)}"]`,
+      );
+      if (next) next.focus({ preventScroll: true });
+      else active.blur();
+    }
   }, [selectedId, setActiveIndex]);
 
   return (
