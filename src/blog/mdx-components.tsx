@@ -1,22 +1,24 @@
 import type { MDXComponents } from 'mdx/types';
 import {
-  Callout,
-  ImageGrid,
+  Accent,
+  Chapter,
+  Closing,
+  Mark,
+  Masthead,
   PullQuote,
-  RectangleImage,
-  SplitImageText,
-  SquareImage,
-  Steps,
+  ToolRow,
+  WideFigure,
 } from './components/RichText';
 
 export const mdxComponents: MDXComponents = {
-  Callout,
-  ImageGrid,
+  Accent,
+  Chapter,
+  Closing,
+  Mark,
+  Masthead,
   PullQuote,
-  RectangleImage,
-  SplitImageText,
-  SquareImage,
-  Steps,
+  ToolRow,
+  WideFigure,
   a: ({ href = '', ...props }) => {
     const external = /^https?:\/\//.test(href);
     return (

@@ -82,10 +82,37 @@ const embedParams =
     : new URLSearchParams(window.location.search);
 const IS_EMBED = embedParams?.get('embed') === '1';
 const EMBED_VARIANT = embedParams?.get('variant') ?? null;
+/**
+ * The splash is an arrival beat, so it plays on arrival and not on the way
+ * back: coming to the home page from /about — a full page load, since routing
+ * is by pathname — should drop straight into the hero rather than replay it.
+ *
+ * Decided from how this document was ENTERED, not from a stored flag. A flag
+ * in sessionStorage also swallowed the beat on reload, which is the one case
+ * where the visitor has explicitly asked for the page again:
+ *
+ *   reload / back-forward   the page was asked for again — play it
+ *   navigate                play it, unless we arrived from this same site,
+ *                           which is the in-site hop the gate is actually for
+ */
+const arrivedFromThisSite = (() => {
+  try {
+    const [entry] = performance.getEntriesByType(
+      'navigation',
+    ) as PerformanceNavigationTiming[];
+    if (entry && entry.type !== 'navigate') return false;
+    if (!document.referrer) return false;
+    return new URL(document.referrer).origin === window.location.origin;
+  } catch {
+    return false;
+  }
+})();
+
 // Inside an embed the splash plays for exactly one direction — "With splash",
 // whose whole point is that beat. Every other direction (Original included)
-// drops straight into the hero. Outside an embed the real page always plays it.
-const SHOW_SPLASH = !IS_EMBED || EMBED_VARIANT === 'with-splash';
+// drops straight into the hero.
+const SHOW_SPLASH =
+  (!IS_EMBED || EMBED_VARIANT === 'with-splash') && !arrivedFromThisSite;
 const HERO_TEXT_LEFT = IS_EMBED && EMBED_VARIANT === 'left-aligned';
 
 // Geometry of the live-prototype's decorative panel. The aspect ratio is the
@@ -285,6 +312,7 @@ const App = () => {
   }, []);
 
   const [heroRevealed, setHeroRevealed] = useState(!SHOW_SPLASH);
+
   useEffect(() => {
     const onSplashLanding = () => setHeroRevealed(true);
     window.addEventListener('rivet:splash-landing', onSplashLanding);
@@ -1975,7 +2003,7 @@ const App = () => {
                 HERO_TEXT_LEFT
                   ? 'h-[76%] w-[66%]'
                   : IS_EMBED
-                    ? 'h-[46%] w-[74%]'
+                    ? 'h-[54%] w-[42%]'
                     : 'h-[240px] w-[300px] lg:h-[300px] lg:w-[380px]'
               } ${
                 chatDragging ? 'cursor-grabbing' : 'cursor-grab'
@@ -2029,7 +2057,11 @@ const App = () => {
                   THIS box at lg while both text blocks stay left-set and
                   left-aligned to each other. */}
               <div className="flex max-w-[52ch] flex-col items-start gap-6">
-                <span className="max-w-[32ch] font-main text-2xl font-normal leading-[1.25] tracking-[-0.01em] text-black md:text-3xl">
+                {/* The hero's own size formula, so the two headlines on the
+                    page are one size rather than two that nearly match. Its
+                    rag is balanced: at this measure the greedy breaker left
+                    "explore more" alone on a line. */}
+                <span className="hero-statement-size max-w-[32ch] font-main font-normal leading-[1.15] tracking-[-0.02em] text-black [text-wrap:balance]">
                   Rivet helps designers explore more ideas for the software they
                   craft.
                 </span>
