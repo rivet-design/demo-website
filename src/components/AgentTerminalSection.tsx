@@ -106,7 +106,7 @@ const CARDS = [
     texture: '/images/cards/bgtexutre2.png',
     detail: [
       'Pull in inspiration from Pinterest,',
-      'Are.na, and your own Local Files.',
+      'Are.na, and your own local files.',
     ],
     hoverArt: null,
     hoverArtClass: null,

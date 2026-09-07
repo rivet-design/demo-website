@@ -1,5 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import { motion, type MotionValue } from 'motion/react';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
 import Logo from './Logo';
 import PromptInstallButton from './PromptInstallButton';
 import { surfaceBackground, withAlpha } from '../lib/background';
@@ -53,6 +54,11 @@ const NavBar = ({
 } = {}) => {
   // Experiment: keep the nav white throughout (isDark stays false).
   const [isDark] = useState(false);
+
+  // Mobile overflow menu (the page links, behind the top-right icon button).
+  // Controlled only so the menu rows can close it on click — the outside-click
+  // and positioning plumbing lives in the shared Popover, not here.
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // The nav previously shrank its width on scroll. That behavior is removed —
   // the nav now stays a constant full-width pill, simply sticky at the top.
@@ -131,7 +137,7 @@ const NavBar = ({
         className="relative z-10 flex w-full items-center justify-between py-5"
       >
         <Logo />
-        <div className="flex items-center gap-2 lg:gap-6">
+        <div className="flex items-center gap-1 sm:gap-2 lg:gap-6">
           <a
             href="/about"
             className={[
@@ -139,7 +145,7 @@ const NavBar = ({
               // same colour. It was `type-label`/text-sm in black, which made
               // it read as a different kind of item and, because the padding
               // differed, sat at an uneven distance from its neighbours.
-              'hidden cursor-pointer rounded-lg px-3 py-1.5 font-aileron text-base leading-[1.164] tracking-[-0.16px] transition-colors lg:inline-block lg:px-4 lg:py-2',
+              'hidden cursor-pointer whitespace-nowrap rounded-lg px-3 py-1.5 font-aileron text-base leading-[1.164] tracking-[-0.16px] transition-colors md:inline-block lg:px-4 lg:py-2',
               isDark
                 ? 'text-white hover:text-white/60'
                 : 'text-[#642e39] hover:text-[#642e39]/60',
@@ -152,7 +158,7 @@ const NavBar = ({
             target="_blank"
             rel="noopener noreferrer"
             className={[
-              'hidden cursor-pointer rounded-lg px-3 py-1.5 font-aileron text-base leading-[1.164] tracking-[-0.16px] transition-colors lg:inline-block lg:px-4 lg:py-2',
+              'hidden cursor-pointer whitespace-nowrap rounded-lg px-3 py-1.5 font-aileron text-base leading-[1.164] tracking-[-0.16px] transition-colors md:inline-block lg:px-4 lg:py-2',
               isDark
                 ? 'text-white hover:text-white/60'
                 : 'text-[#642e39] hover:text-[#642e39]/60',
@@ -165,7 +171,7 @@ const NavBar = ({
             target="_blank"
             rel="noopener noreferrer"
             className={[
-              'hidden cursor-pointer rounded-lg px-3 py-1.5 font-aileron text-base leading-[1.164] tracking-[-0.16px] transition-colors lg:inline-block lg:px-4 lg:py-2',
+              'hidden cursor-pointer whitespace-nowrap rounded-lg px-3 py-1.5 font-aileron text-base leading-[1.164] tracking-[-0.16px] transition-colors md:inline-block lg:px-4 lg:py-2',
               isDark
                 ? 'text-white hover:text-white/60'
                 : 'text-[#642e39] hover:text-[#642e39]/60',
@@ -173,17 +179,20 @@ const NavBar = ({
           >
             Release notes
           </a>
+          {/* On phones the nav's action slot belongs to the community, not the
+              install flow — same pill treatment as the Install CTA it replaces
+              so the swap reads as the same object changing jobs. The three page
+              links tuck into the overflow menu beside it. md is the ONLY swap
+              point for all of it. */}
           <a
             href="https://x.com/designrivet"
             target="_blank"
             rel="noopener noreferrer"
             className={[
-              // Plain coloured link, matching the desktop nav's treatment —
-              // no background pill.
-              'no-external-icon type-label flex cursor-pointer items-center gap-2 px-2 py-1.5 transition-colors lg:hidden',
+              'no-external-icon type-label-lg flex shrink-0 cursor-pointer items-center gap-2 rounded-lg border px-[16px] py-[8px] text-sm font-normal transition-colors md:hidden',
               isDark
-                ? 'text-white hover:text-white/60'
-                : 'text-[#ec4423] hover:text-[#ec4423]/60',
+                ? 'border-white bg-white text-[#1c1c1e] hover:bg-white/90'
+                : 'border-[#ec4423] bg-[linear-gradient(137.74deg,rgb(236,68,35)_41.128%,rgb(243,138,118)_121.74%)] text-white hover:brightness-105',
             ].join(' ')}
           >
             <svg
@@ -197,7 +206,64 @@ const NavBar = ({
             </svg>
             Community
           </a>
-          <div className="hidden lg:block">
+          {/* Overflow menu: the page links, behind an icon button at the far
+              right. A dropdown rather than a drawer — three items don't earn a
+              full-screen takeover. The shared Popover owns dismissal and
+              positioning; this component only decides what's inside. */}
+          <Popover className="md:hidden" open={menuOpen} onOpenChange={setMenuOpen}>
+            <PopoverTrigger
+              className={[
+                'flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded-lg transition-colors',
+                isDark
+                  ? 'text-white hover:bg-white/10'
+                  : 'text-[#642e39] hover:bg-[#642e39]/10',
+              ].join(' ')}
+            >
+              <span className="sr-only">Menu</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden
+              >
+                <line x1="4" y1="7" x2="20" y2="7" />
+                <line x1="4" y1="12" x2="20" y2="12" />
+                <line x1="4" y1="17" x2="20" y2="17" />
+              </svg>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              sideOffset={8}
+              className="min-w-[180px] rounded-xl border border-black/10 bg-white p-1 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.25)]"
+            >
+              {[
+                { label: 'About', href: '/about' },
+                { label: 'Docs', href: 'https://docs.rivet.design/' },
+                {
+                  label: 'Release notes',
+                  href: 'https://docs.rivet.design/releases',
+                },
+              ].map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  {...(item.href.startsWith('http')
+                    ? { target: '_blank', rel: 'noopener noreferrer' }
+                    : null)}
+                  onClick={() => setMenuOpen(false)}
+                  className="block rounded-lg px-3 py-2.5 font-aileron text-base leading-[1.164] tracking-[-0.16px] text-[#642e39] transition-colors hover:bg-[#642e39]/5"
+                >
+                  {item.label}
+                </a>
+              ))}
+            </PopoverContent>
+          </Popover>
+          <div className="hidden md:block">
             <PromptInstallButton
               tone={isDark ? 'light' : 'orange'}
               label="Install Rivet"

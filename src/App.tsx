@@ -16,7 +16,7 @@ import {
   useVelocity,
   useTransform,
 } from 'motion/react';
-import { ArrowCounterClockwise, X } from '@phosphor-icons/react';
+import { ArrowCounterClockwise } from '@phosphor-icons/react';
 import { Toaster } from 'sonner';
 import NavBar from './components/NavBar';
 import SplashScreen from './components/SplashScreen';
@@ -732,27 +732,9 @@ const App = () => {
   const reverseBlur = useTransform(reverseAmount, (v) => v * 10);
   const outerFilter = useMotionTemplate`blur(${reverseBlur}px)`;
 
-  // The pin spacer, so the skip button knows where the sequence ENDS. Its
-  // bottom edge is exactly the scroll position at which the stage unpins and
-  // the next section takes the viewport.
+  // The pin spacer: its bottom edge is exactly the scroll position at which
+  // the stage unpins and the next section takes the viewport.
   const pinSpacerRef = useRef<HTMLDivElement>(null);
-  const skipHeroSequence = useCallback(() => {
-    const spacer = pinSpacerRef.current;
-    if (!spacer) return;
-    // Rect-relative, not offsetTop: the spacer sits inside positioned
-    // wrappers, so offsetTop measures from the nearest offsetParent rather
-    // than from the document.
-    const end = spacer.getBoundingClientRect().bottom + window.scrollY;
-    window.scrollTo({
-      top: end,
-      // Programmatic scrolling is deliberately exempt from the wheel damping
-      // above, so this lands in one go rather than being slowed to a crawl
-      // through six viewports of runway.
-      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        ? 'auto'
-        : 'smooth',
-    });
-  }, []);
 
   // Where the demo actually BEGINS: the beat at which the agent window has
   // finished arriving and starts typing its command. Both "See how it works"
@@ -1159,14 +1141,22 @@ const App = () => {
   const showMobileAgent = playHeroIntroMobile && mobilePhase !== 'editor';
 
   // The install section runs on the page's shared scroll gesture: fade and a
-  // short rise on arrival, the mirrored fade-out once it's scrolled past — so
-  // coming back up from the footer plays the same entrance the way down does.
+  // short rise on arrival.
   // Three staggered hooks rather than one on the wrapper: the section is
   // mostly padding and the gravity field, so a single observer on it would
   // fire long before the copy is anywhere near the viewport.
-  const installHeadline = useScrollReveal<HTMLHeadingElement>();
-  const installButton = useScrollReveal<HTMLDivElement>({ delay: 110 });
-  const installAccordion = useScrollReveal<HTMLDivElement>({ delay: 200 });
+  // leave:false — the section arrives on the shared gesture but never fades
+  // back out: it's the page's closing statement, and scrolling into the footer
+  // shouldn't dissolve it.
+  const installHeadline = useScrollReveal<HTMLHeadingElement>({ leave: false });
+  const installButton = useScrollReveal<HTMLDivElement>({
+    delay: 110,
+    leave: false,
+  });
+  const installAccordion = useScrollReveal<HTMLDivElement>({
+    delay: 200,
+    leave: false,
+  });
 
   const renderDownloadPanel = () => {
     return (
@@ -1254,11 +1244,16 @@ const App = () => {
             className="flex items-center gap-1"
             style={{ opacity: heroLockupVisible ? 1 : 0 }}
           >
+            {/* Icon and wordmark at the SAME height — the icon used to sit at
+                the canonical 128:105 ratio (28/32px vs 23/26px) and read as
+                oversized next to the text. Keep RIVET_TEXT_TO_ICON_HEIGHT in
+                sync: the splash's FLIP lands its own lockup on this one, so
+                the two must share proportions or the handoff ghosts. */}
             <img
               src="/images/rivet-icon-mark.svg"
               alt=""
               draggable={false}
-              className="h-7 w-7 md:h-8 md:w-8"
+              className="h-[23px] w-[23px] md:h-[26px] md:w-[26px]"
             />
             <img
               src="/images/rivet-wordmark-text.svg"
@@ -1504,33 +1499,23 @@ const App = () => {
                   style={outerPanelStyle}
                   className={`z-0 rounded-lg border-[0.5px] border-black/10 ${OUTER_PANEL_BOX}`}
                 >
-                  {/* Skip. Sits on the panel itself rather than inside the
+                  {/* Replay. Sits on the panel itself rather than inside the
                       scaled window wrappers, so it keeps a constant size at
                       the corner while everything under it grows. pointerEvents
                       tracks the container's own fade — an opacity-0 layer
                       still hit-tests, so without it this would be clickable
-                      through the hero before the prototype ever appears. */}
-                  {/* Replay. Sits beside the skip button and lands on the
-                      same beat "See how it works" does, so there is one
-                      definition of where the demo starts. */}
+                      through the hero before the prototype ever appears.
+                      Lands on the same beat "See how it works" does, so there
+                      is one definition of where the demo starts. */}
                   <motion.button
                     type="button"
                     onClick={scrollToLiveDemo}
                     aria-label="Replay the demo from the start"
                     title="Replay"
                     style={{ pointerEvents: outerInteractive }}
-                    className="absolute right-12 top-3 z-30 flex h-7 w-7 items-center justify-center rounded-md bg-white/80 text-[#e8552f] shadow-sm backdrop-blur-sm transition-colors hover:bg-white focus:outline-none focus-visible:ring-1 focus-visible:ring-[#e8552f]"
-                  >
-                    <ArrowCounterClockwise size={13} weight="bold" />
-                  </motion.button>
-                  <motion.button
-                    type="button"
-                    onClick={skipHeroSequence}
-                    aria-label="Skip to the next section"
-                    style={{ pointerEvents: outerInteractive }}
                     className="absolute right-3 top-3 z-30 flex h-7 w-7 items-center justify-center rounded-md bg-white/80 text-[#e8552f] shadow-sm backdrop-blur-sm transition-colors hover:bg-white focus:outline-none focus-visible:ring-1 focus-visible:ring-[#e8552f]"
                   >
-                    <X size={13} weight="bold" />
+                    <ArrowCounterClockwise size={13} weight="bold" />
                   </motion.button>
                   {/* Backdrop + window scale up together as they fade in. */}
                   <motion.div

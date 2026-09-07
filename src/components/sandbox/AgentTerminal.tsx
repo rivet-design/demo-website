@@ -496,7 +496,7 @@ const AgentTerminal = ({
           <span>Accept edits ⌥⏎</span>
           <span className="flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-foreground/40" />
-            Fable 5
+            Fable 5.1
           </span>
         </div>
       </div>

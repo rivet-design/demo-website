@@ -18,12 +18,15 @@ import type { DemoVariant } from './data';
 const DESIGN_W = 1280;
 const DESIGN_H = 820;
 
-// Portrait (mobile hero): render each page at a mobile-layout width so its OWN
-// responsive layout kicks in (the demo pages stack below ~720px). On tablet-ish
-// widths, use the available pane width instead of zooming a 412px phone viewport;
-// cap below the desktop breakpoint so the sample app stays in its mobile layout.
+// Portrait (mobile hero): render each page at a width matching the pane so its
+// OWN responsive layout kicks in. On tablet-ish widths, use the available pane
+// width instead of zooming a 412px phone viewport. The cap sits ABOVE the
+// nav's md breakpoint (768) on purpose: a 700px cap forced the embedded sample
+// into its mobile header (Community pill, no Install CTA) even on tablets whose
+// real page was already showing the full header — the preview and the page it
+// previews disagreed.
 const PORTRAIT_MIN_W = 412;
-const PORTRAIT_MAX_W = 700;
+const PORTRAIT_MAX_W = 800;
 const PORTRAIT_H_TO_W = 920 / 412;
 
 // On narrower desktops the width-driven shell height collapses (the preview pane

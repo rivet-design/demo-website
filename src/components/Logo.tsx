@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
+import { RIVET_ICON_SRC } from '../lib/rivetLockup';
 
 // The "rivet" wordmark — one of the two canonical marks (see lib/rivetLockup.ts),
 // matching the new nav bar in Figma (node 794:1120): text only, no icon glyph
@@ -30,11 +31,27 @@ const Logo = () => {
     }
   };
 
-  const handleCopy = async () => {
+  // The icon mark isn't inlined like WORDMARK_SVG — the shipped asset IS the
+  // payload, so it's fetched as text at copy time rather than duplicated here.
+  const handleCopyLogo = async () => {
+    setMenuPos(null);
+    try {
+      const svg = await fetch(RIVET_ICON_SRC).then((r) => {
+        if (!r.ok) throw new Error(String(r.status));
+        return r.text();
+      });
+      await navigator.clipboard.writeText(svg);
+      toast.success('Copied logo SVG');
+    } catch {
+      toast.error('Failed to copy');
+    }
+  };
+
+  const handleCopyWordmark = async () => {
     setMenuPos(null);
     try {
       await navigator.clipboard.writeText(WORDMARK_SVG);
-      toast.success('Copied logo SVG');
+      toast.success('Copied wordmark SVG');
     } catch {
       toast.error('Failed to copy');
     }
@@ -64,7 +81,7 @@ const Logo = () => {
           Right-click still opens "Copy logo as SVG". */}
       <motion.a
         href="/"
-        className="flex cursor-pointer items-center"
+        className="flex shrink-0 cursor-pointer items-center"
         onClick={(e) => {
           if (window.location.pathname !== '/') return;
           e.preventDefault();
@@ -100,11 +117,18 @@ const Logo = () => {
               className="min-w-[200px] overflow-hidden rounded-xl border border-white/10 bg-neutral-900 p-1 shadow-2xl"
             >
               <button
-                onClick={handleCopy}
+                onClick={handleCopyLogo}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-white/90 transition-colors hover:bg-white/10"
+              >
+                <img src={RIVET_ICON_SRC} alt="" aria-hidden="true" className="h-2.5 w-auto opacity-80" />
+                <span>Copy logo as SVG</span>
+              </button>
+              <button
+                onClick={handleCopyWordmark}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-white/90 transition-colors hover:bg-white/10"
               >
                 <img src={WORDMARK_SRC} alt="" aria-hidden="true" className="h-2.5 w-auto opacity-80" />
-                <span>Copy logo as SVG</span>
+                <span>Copy wordmark as SVG</span>
               </button>
             </motion.div>
           )}
