@@ -37,6 +37,14 @@ type Props = {
   defaultColumns?: number;
 };
 
+/**
+ * Internal only. This is a tool for checking the layout against its own grid
+ * while the page is being drawn, not part of the page — so it is gated here,
+ * at the component, rather than at the call site: a second `<GridOverlay />`
+ * added later inherits the gate instead of quietly shipping the button.
+ * Vite folds `import.meta.env.DEV` to `false` in a build, so the whole
+ * component tree-shakes out of production rather than merely rendering null.
+ */
 const GridOverlay = ({ defaultColumns = 12 }: Props) => {
   const [columns, setColumns] = useState(defaultColumns);
   // `on` is the intent; `mounted` and `entered` are the two steps the exit
@@ -162,4 +170,4 @@ const GridOverlay = ({ defaultColumns = 12 }: Props) => {
   );
 };
 
-export default GridOverlay;
+export default import.meta.env.DEV ? GridOverlay : () => null;

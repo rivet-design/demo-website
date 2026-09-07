@@ -88,7 +88,7 @@ const AboutPage = () => {
             sizes, and prose's 65ch cap is a measure rather than a grid
             position — it would leave every column's right edge short of the
             line it should land on. */}
-        <div className="article-flow col-span-12 mt-4 text-left font-main sm:mt-6 text-black prose-headings:scroll-mt-24 prose-headings:font-main prose-headings:font-normal prose-headings:leading-tight prose-headings:tracking-[-0.025em] prose-headings:text-black prose-p:leading-[1.45] prose-p:text-black prose-a:text-primary prose-a:decoration-primary/35 prose-a:underline-offset-4 hover:prose-a:decoration-primary prose-blockquote:border-primary prose-blockquote:font-normal prose-blockquote:text-black prose-figcaption:text-black/55 prose-strong:text-black prose-code:text-black prose-li:leading-[1.45] prose-li:text-black prose-th:text-black prose-td:text-black sm:mt-12">
+        <div className="article-flow col-span-12 mt-4 text-left font-main sm:mt-6 text-black prose-headings:scroll-mt-24 prose-headings:font-main prose-headings:font-normal prose-headings:leading-tight prose-headings:tracking-[-0.025em] prose-headings:text-black prose-p:leading-[1.45] prose-p:text-black prose-a:text-primary prose-a:decoration-primary/35 prose-a:underline-offset-4 hover:prose-a:decoration-primary prose-blockquote:border-primary prose-blockquote:font-normal prose-blockquote:text-black prose-figcaption:text-black/55 prose-strong:text-black prose-code:text-black prose-li:leading-[1.45] prose-li:text-black prose-th:text-black prose-td:text-black">
           <MDXProvider components={mdxComponents}>
             <Content />
           </MDXProvider>

@@ -1066,9 +1066,11 @@ img[src$='blob-cluster.svg'] {
   object-fit: cover;
 }
 .masthead {
-  /* With the flow's own top margin this comes to ~48px under the title —
-     the gap the drawing has. */
-  margin-top: 1.5rem;
+  /* Adds to the flow's own 24px top margin. The title is set at 0.9 leading,
+     so its box already carries very little air under the last line's
+     descenders — 48px between the boxes read as a good deal more than 48px of
+     white, and the picture drifted away from the line it belongs to. */
+  margin-top: 0.5rem;
 }
 /* Column 9, its LAST line sitting on the picture's bottom edge. Bottom-set
    rather than pushed down from the top: a top offset only lines the two up at
