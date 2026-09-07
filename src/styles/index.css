@@ -1344,7 +1344,11 @@ img[src$='blob-cluster.svg'] {
    the two are one type object used twice. */
 .closing-row > h2 {
   position: relative;
-  grid-column: 6 / span 4;
+  /* Set on one line now, so it takes the copy's span — at four columns the
+     display size had room for one word per line, not two. Centred on the
+     grid: three columns of air each side, not five-and-one. */
+  grid-column: 4 / span 6;
+  white-space: nowrap;
   margin: 0 0 2rem;
   font-size: clamp(2.25rem, 7.36vw, 8.5rem);
   font-weight: 400;
@@ -1354,7 +1358,11 @@ img[src$='blob-cluster.svg'] {
 }
 .closing-row > p {
   position: relative;
-  grid-column: 6 / span 2;
+  /* Wider than the heading: at two columns this copy set in a sliver, six or
+     seven short lines against a display heading four columns wide. Centred
+     with it — same three columns of air on each side. */
+  grid-column: 4 / span 6;
+  max-width: 68ch;
 }
 .closing-row > p:nth-of-type(1) {
   grid-row: 2;
