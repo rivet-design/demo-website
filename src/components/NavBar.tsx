@@ -15,6 +15,12 @@ const FROST_FADE_MS = 320;
 // Only reached when `fill` carries an image instead of a colour.
 const FALLBACK_FILL = '#fafafa';
 
+// Temporarily off while the About page is rebuilt (see the about-page-rebuild
+// branch); flip back on when it merges. Hides the link in the desktop nav, the
+// mobile overflow menu, and the footer's Rivet column — the /about route
+// itself keeps working.
+export const SHOW_ABOUT_LINK = false;
+
 const NavBar = ({
   motionOpacity,
   motionX,
@@ -160,21 +166,23 @@ const NavBar = ({
       >
         <Logo />
         <div className="flex items-center gap-1 sm:gap-2 lg:gap-6">
-          <a
-            href="/about"
-            className={[
-              // Identical to Docs and Release notes — same type, same padding,
-              // same colour. It was `type-label`/text-sm in black, which made
-              // it read as a different kind of item and, because the padding
-              // differed, sat at an uneven distance from its neighbours.
-              'hidden cursor-pointer whitespace-nowrap rounded-lg px-3 py-1.5 font-aileron text-base leading-[1.164] tracking-[-0.16px] transition-colors md:inline-block lg:px-4 lg:py-2',
-              isDark
-                ? 'text-white hover:text-white/60'
-                : 'text-[#642e39] hover:text-[#642e39]/60',
-            ].join(' ')}
-          >
-            About
-          </a>
+          {SHOW_ABOUT_LINK && (
+            <a
+              href="/about"
+              className={[
+                // Identical to Docs and Release notes — same type, same padding,
+                // same colour. It was `type-label`/text-sm in black, which made
+                // it read as a different kind of item and, because the padding
+                // differed, sat at an uneven distance from its neighbours.
+                'hidden cursor-pointer whitespace-nowrap rounded-lg px-3 py-1.5 font-aileron text-base leading-[1.164] tracking-[-0.16px] transition-colors md:inline-block lg:px-4 lg:py-2',
+                isDark
+                  ? 'text-white hover:text-white/60'
+                  : 'text-[#642e39] hover:text-[#642e39]/60',
+              ].join(' ')}
+            >
+              About
+            </a>
+          )}
           <a
             href="https://docs.rivet.design/"
             target="_blank"
@@ -265,7 +273,7 @@ const NavBar = ({
               className="min-w-[180px] rounded-xl border border-black/10 bg-white p-1 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.25)]"
             >
               {[
-                { label: 'About', href: '/about' },
+                ...(SHOW_ABOUT_LINK ? [{ label: 'About', href: '/about' }] : []),
                 { label: 'Docs', href: 'https://docs.rivet.design/' },
                 {
                   label: 'Release notes',

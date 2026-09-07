@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useInView } from '../hooks/use-in-view';
 import { SITE_FILL, footerBackground } from '../lib/background';
+import { SHOW_ABOUT_LINK } from './NavBar';
 
 const X_LINK = 'https://x.com/designrivet';
 const LINKEDIN_LINK = 'https://www.linkedin.com/company/rivetdesign';
@@ -43,17 +44,22 @@ const Footer = () => {
     const textLeft = (el: Element) =>
       el.getBoundingClientRect().left +
       parseFloat(getComputedStyle(el).paddingLeft);
-    const about = document.querySelector('nav a[href="/about"]');
+    // Anchored to the nav's FIRST page link. That was "About"; while the About
+    // link is hidden (see SHOW_ABOUT_LINK in NavBar) it is "Docs", so the
+    // columns keep following the nav row instead of falling back to flow.
+    const firstNavLink =
+      document.querySelector('nav a[href="/about"]') ??
+      document.querySelector('nav a[href="https://docs.rivet.design/"]');
     const releases = document.querySelector(
       'nav a[href="https://docs.rivet.design/releases"]',
     );
     // offsetParent is null while an element is display:none — that is how the
     // nav links read below lg, where there is no grid to follow.
-    if (!about || !releases || !(about as HTMLElement).offsetParent) {
+    if (!firstNavLink || !releases || !(firstNavLink as HTMLElement).offsetParent) {
       setCols(null);
       return;
     }
-    const first = textLeft(about);
+    const first = textLeft(firstNavLink);
     const second = textLeft(releases);
     const right = host.getBoundingClientRect().right;
     const pitch = second - first;
@@ -202,12 +208,14 @@ const Footer = () => {
             >
               <span className="type-label-lg font-aileron font-medium text-[#6273a1]">Rivet</span>
               <div className="flex flex-col gap-3">
-                <a
-                  href="/about"
-                  className="font-main whitespace-nowrap text-lg font-normal text-black transition-colors hover:text-black/70"
-                >
-                  About
-                </a>
+                {SHOW_ABOUT_LINK && (
+                  <a
+                    href="/about"
+                    className="font-main whitespace-nowrap text-lg font-normal text-black transition-colors hover:text-black/70"
+                  >
+                    About
+                  </a>
+                )}
                 <a
                   href={RELEASES_LINK}
                   target="_blank"
