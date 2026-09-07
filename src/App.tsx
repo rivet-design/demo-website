@@ -737,7 +737,7 @@ const App = () => {
   const pinSpacerRef = useRef<HTMLDivElement>(null);
 
   // Where the demo actually BEGINS: the beat at which the agent window has
-  // finished arriving and starts typing its command. Both "See how it works"
+  // finished arriving and starts typing its command. Both "Watch demo"
   // and the replay button land here, so the two agree on where the start is.
   const TERMINAL_BEAT = SHRINK_END + 0.17;
   const scrollToLiveDemo = useCallback(() => {
@@ -1222,7 +1222,7 @@ const App = () => {
     return (
       <div className="w-full">
         {/* Rebuilt to match Figma (node 796:721) directly: lockup, single
-            auto-wrapping headline, Watch Demo / Try Rivet for free CTAs.
+            auto-wrapping headline, Watch demo / Try Rivet free CTAs.
             Deliberately not touching #hero-showcase below — same demo
             (BrowserFrame + VariantsShowcase / mobile AgentTerminal) as
             before. */}
@@ -1331,9 +1331,12 @@ const App = () => {
                   }
                   setShowcaseScrolled(true);
                 }}
-                className="flex w-[142px] items-center justify-center rounded-lg border-[0.5px] border-[#642e39] bg-[#f1efe8] p-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px] text-[#642e39] transition-colors hover:bg-[#642e39]/5"
+                // Auto width + nowrap: the old fixed w-[142px] broke the label
+                // onto two lines at phone widths. The copy is short enough to
+                // hold one line everywhere.
+                className="flex items-center justify-center whitespace-nowrap rounded-lg border-[0.5px] border-[#642e39] bg-[#f1efe8] px-5 py-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px] text-[#642e39] transition-colors hover:bg-[#642e39]/5"
               >
-                See how it works
+                Watch demo
               </a>
               <a
                 href="#install-panel"
@@ -1362,13 +1365,13 @@ const App = () => {
                 // w-[199px] was sized for the previous, longer label, so the
                 // shorter copy sat in the middle of a box with a lot of air
                 // either side.
-                className="flex items-center justify-center gap-[10px] rounded-lg px-5 py-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px] text-white transition-opacity hover:opacity-90"
+                className="flex items-center justify-center gap-[10px] whitespace-nowrap rounded-lg px-5 py-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px] text-white transition-opacity hover:opacity-90"
                 style={{
                   backgroundImage:
                     'linear-gradient(137.74deg, rgb(236, 68, 35) 41.128%, rgb(243, 138, 118) 121.74%)',
                 }}
               >
-                Try Rivet for free
+                Try Rivet free
               </a>
             </div>
           </div>
@@ -1505,7 +1508,7 @@ const App = () => {
                       tracks the container's own fade — an opacity-0 layer
                       still hit-tests, so without it this would be clickable
                       through the hero before the prototype ever appears.
-                      Lands on the same beat "See how it works" does, so there
+                      Lands on the same beat "Watch demo" does, so there
                       is one definition of where the demo starts. */}
                   <motion.button
                     type="button"

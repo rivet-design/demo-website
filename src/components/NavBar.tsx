@@ -180,19 +180,20 @@ const NavBar = ({
             Release notes
           </a>
           {/* On phones the nav's action slot belongs to the community, not the
-              install flow — same pill treatment as the Install CTA it replaces
-              so the swap reads as the same object changing jobs. The three page
-              links tuck into the overflow menu beside it. md is the ONLY swap
-              point for all of it. */}
+              install flow. SECONDARY treatment (the hero's "Watch demo"
+              outline), not the orange primary — an orange pill up here fought
+              the hero's own primary CTA right below it. The three page links
+              tuck into the overflow menu beside it. md is the ONLY swap point
+              for all of it. */}
           <a
             href="https://x.com/designrivet"
             target="_blank"
             rel="noopener noreferrer"
             className={[
-              'no-external-icon type-label-lg flex shrink-0 cursor-pointer items-center gap-2 rounded-lg border px-[16px] py-[8px] text-sm font-normal transition-colors md:hidden',
+              'no-external-icon type-label-lg flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-lg border-[0.5px] px-[16px] py-[8px] text-sm font-normal transition-colors md:hidden',
               isDark
-                ? 'border-white bg-white text-[#1c1c1e] hover:bg-white/90'
-                : 'border-[#ec4423] bg-[linear-gradient(137.74deg,rgb(236,68,35)_41.128%,rgb(243,138,118)_121.74%)] text-white hover:brightness-105',
+                ? 'border-white/70 text-white hover:bg-white/10'
+                : 'border-[#642e39] text-[#642e39] hover:bg-[#642e39]/5',
             ].join(' ')}
           >
             <svg

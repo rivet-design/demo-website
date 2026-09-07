@@ -747,7 +747,16 @@ const Card = ({
   rowH: number | null;
   onHover: (i: number) => void;
 }) => {
-  const isOpen = hovered === index;
+  // Stacked on mobile, so the stagger plays out card by card; at lg they share
+  // a row and it reads as one gesture.
+  const reveal = useScrollReveal<HTMLElement>({ delay: index * 80 });
+  // Stacked (below lg, restW null) there is no hover to open a card, so the
+  // sessions/connect/directions beats never played — a touch was the only way
+  // in. There, a card opens itself the moment its scroll reveal brings it into
+  // the band, and closes (resetting the beat) once scrolled away. At lg the
+  // row keeps its one-open-on-hover behaviour.
+  const stacked = restW == null;
+  const isOpen = stacked ? reveal.phase === 'in' : hovered === index;
   // The connect beat replays on every ENTER, not just when the card goes from
   // closed to open. The last-hovered card stays open, so returning to the card
   // you were already on never flips `isOpen` — keying off that alone left it
@@ -788,10 +797,6 @@ const Card = ({
     top: copyH != null ? `max(${top}%, ${copyH}px)` : `${top}%`,
     bottom: `${bottom}%`,
   });
-  // Stacked on mobile, so the stagger plays out card by card; at lg they share
-  // a row and it reads as one gesture.
-  const reveal = useScrollReveal<HTMLElement>({ delay: index * 80 });
-
   return (
               <article
                 ref={reveal.ref}
