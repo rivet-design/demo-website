@@ -1388,9 +1388,15 @@ img[src$='blob-cluster.svg'] {
   position: relative;
   /* Same track as the heading, so the two start on one line. The measure is
      what keeps this from sizing the track itself: without it the track would
-     take this copy's max-content — the whole paragraph on one line. */
+     take this copy's max-content — the whole paragraph on one line.
+
+     27ch sets it at about the width of "Rivet" on the line above, which is
+     what makes the two read as one object: a display pair with its copy held
+     to the same column rather than a heading sitting on a paragraph twice its
+     width. ch is the "0" advance, wider than this copy's average letter, so
+     27ch lands around 32 characters to the line. */
   grid-column: 2;
-  max-width: 46ch;
+  max-width: 27ch;
 }
 .closing-row > p:nth-of-type(1) {
   grid-row: 2;
