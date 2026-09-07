@@ -1,7 +1,7 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import Footer from '../components/Footer';
 import NavBar from '../components/NavBar';
-import { blogBackground } from '../lib/background';
+import { blogBackground, FOOTER_FILL } from '../lib/background';
 
 type BlogShellProps = {
   children: ReactNode;
@@ -13,28 +13,44 @@ type BlogShellProps = {
   background?: CSSProperties;
 };
 
-const BlogShell = ({ children, background }: BlogShellProps) => (
-  <div
-    className="page-gutter-x relative flex min-h-screen flex-col"
-    style={background ?? blogBackground}
-  >
-    {/* The line raster that opens the page, edge to edge behind everything —
-        the nav included, which is why it lives here rather than in the article.
-        Its own alpha carries the pattern and thins out downward, so it needs no
-        mask. */}
-    <div aria-hidden className="page-texture">
-      <img src="/images/about/top-raster.webp" alt="" draggable={false} />
+const BlogShell = ({ children, background }: BlogShellProps) => {
+  // Frost the bar once the page has scrolled — the landing page's treatment,
+  // so content scrolling under the nav reads the same on both pages. At the
+  // very top it stays transparent instead: the raster behind it is a fine
+  // line pattern, and both halves of the frosted treatment wreck it — the
+  // blur smears the lines and the tint washes them out.
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  return (
+    <div
+      className="page-gutter-x relative flex min-h-screen flex-col"
+      style={background ?? blogBackground}
+    >
+      {/* The line raster that opens the page, edge to edge behind everything —
+          the nav included, which is why it lives here rather than in the article.
+          Its own alpha carries the pattern and thins out downward, so it needs no
+          mask. */}
+      <div aria-hidden className="page-texture">
+        <img src="/images/about/top-raster.webp" alt="" draggable={false} />
+      </div>
+      {/* Same fill the landing page's nav frosts over (#fafafa), so the bar
+          is the one object across the site rather than two lookalikes. */}
+      <NavBar
+        frosted={scrolled}
+        fill={{ backgroundColor: scrolled ? FOOTER_FILL : 'transparent' }}
+      />
+      {/* Positioned, so it stacks above the texture: an unpositioned <main>
+          would paint under an absolutely positioned sibling at z-index 0. */}
+      <main className="relative z-10 flex-1">{children}</main>
+      <Footer />
     </div>
-    {/* Transparent, not frosted: the raster behind it is a fine line pattern,
-        and both halves of the frosted treatment wreck it — the blur smears the
-        lines and the tint washes them out. With no layer of its own the bar
-        lets the pattern run through unbroken. */}
-    <NavBar frosted={false} fill={{ backgroundColor: 'transparent' }} />
-    {/* Positioned, so it stacks above the texture: an unpositioned <main>
-        would paint under an absolutely positioned sibling at z-index 0. */}
-    <main className="relative z-10 flex-1">{children}</main>
-    <Footer />
-  </div>
-);
+  );
+};
 
 export default BlogShell;
