@@ -126,6 +126,14 @@
        page edges. */
     overscroll-behavior: none;
   }
+  html {
+    /* Reserve the scrollbar's gutter even while the splash holds
+       overflow:hidden — on classic (space-taking) scrollbars the viewport
+       otherwise widens during the intro and everything re-centers with a
+       visible jump when the scrollbar returns. Overlay scrollbars (macOS
+       default) take no width, so this is a no-op there. */
+    scrollbar-gutter: stable;
+  }
   body {
     @apply bg-background text-foreground;
   }
