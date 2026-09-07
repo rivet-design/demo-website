@@ -1367,7 +1367,18 @@ img[src$='blob-cluster.svg'] {
      grid: three columns of air each side, not five-and-one. */
   grid-column: 4 / span 6;
   white-space: nowrap;
-  margin: 0 0 2rem;
+  /* The span is centred, but a nowrap display line does not fill it — left in
+     the box it sat flush to the box's left edge, which put the visible words
+     well left of the page's centre with a column of void to their right, and
+     reading as neither centred nor on the grid.
+     Shrink each block to its own content and centre THAT — the same fix the
+     one-column rules below already make, for the same reason, and it keeps
+     their rule: the BLOCKS centre, the type inside them stays left-aligned,
+     since centred type would give this copy a ragged left edge nothing else
+     on the page has. */
+  width: max-content;
+  max-width: 100%;
+  margin: 0 auto 2rem;
   font-size: clamp(2.25rem, 7.36vw, 8.5rem);
   font-weight: 400;
   line-height: 0.88;
@@ -1381,6 +1392,9 @@ img[src$='blob-cluster.svg'] {
      with it — same three columns of air on each side. */
   grid-column: 4 / span 6;
   max-width: 68ch;
+  /* Centred on its measure inside that span, so it shares a centre line with
+     the heading above rather than both hanging off the span's left edge. */
+  margin-inline: auto;
 }
 .closing-row > p:nth-of-type(1) {
   grid-row: 2;
@@ -1491,13 +1505,12 @@ img[src$='blob-cluster.svg'] {
      the text left-aligned as everywhere else. Centred type would give this
      copy a ragged left edge that nothing else on the page has. */
   .closing-row > h2 {
-    width: max-content;
-    max-width: 100%;
-    margin: 0 auto 2.5rem;
+    /* The centring itself is in the base rule now; this is the scale step and
+       the wider gap under it. */
+    margin-bottom: 2.5rem;
     font-size: clamp(3rem, 11vw, 7rem);
   }
   .closing-row > p {
-    margin-inline: auto;
     text-wrap: balance;
   }
   /* The pictures bleed; the table does not. .chapter__rows carries the row
