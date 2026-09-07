@@ -7,6 +7,11 @@ import { surfaceBackground, withAlpha } from '../lib/background';
 
 // How much of the ground shows through the frosted bar.
 const FROSTED_ALPHA = 0.62;
+// How long the frost takes to arrive. The bar frosts within the first few
+// pixels of scroll, so mounting the layer outright put the whole treatment —
+// blur, tint and all — on screen in one frame, which reads as a flash rather
+// than as the bar picking up the page behind it.
+const FROST_FADE_MS = 320;
 // Only reached when `fill` carries an image instead of a colour.
 const FALLBACK_FILL = '#fafafa';
 
@@ -75,8 +80,16 @@ const NavBar = ({
   // The frosted tint needs the colour on its own; `fill` may also carry a
   // background-image (the paper-texture flag), which can't be made
   // translucent this way.
+  //
+  // `transparent` falls back too, and has to: it is a caller saying "no fill
+  // of your own", not a colour to tint with — and withAlpha() reads it as
+  // rgba(0,0,0,0), so the frost would come up BLACK at 62%. Harmless while
+  // the layer was mounted only when frosted (the About bar is transparent
+  // exactly when it isn't), but the layer is always mounted now.
   const fillColor =
-    typeof fill.backgroundColor === 'string' ? fill.backgroundColor : FALLBACK_FILL;
+    typeof fill.backgroundColor === 'string' && fill.backgroundColor !== 'transparent'
+      ? fill.backgroundColor
+      : FALLBACK_FILL;
 
   return (
     <motion.nav
@@ -111,17 +124,26 @@ const NavBar = ({
     >
       {/* Sits behind the row (which is z-10) and exactly covers the bar. The
           tint has to be translucent or there is nothing for the backdrop
-          filter to show through. */}
-      {frosted && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-0 backdrop-blur-lg backdrop-saturate-150"
+          filter to show through.
+
+          Always mounted, faded rather than added and removed: a conditional
+          mount has no state to transition FROM, so the frost snapped on at
+          full strength. Opacity carries the blur with it — a backdrop-filter
+          is composited through the element's own alpha — so the tint and the
+          blur arrive together instead of the tint fading over a blur that is
+          already there. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-0 backdrop-blur-lg backdrop-saturate-150"
+        style={{
           // Same colour as the ground, just translucent — the tint follows
           // `fill` rather than being its own hardcoded near-white, so a
           // frosted bar over a tan surface is tinted tan.
-          style={{ backgroundColor: withAlpha(fillColor, FROSTED_ALPHA) }}
-        />
-      )}
+          backgroundColor: withAlpha(fillColor, FROSTED_ALPHA),
+          opacity: frosted ? 1 : 0,
+          transition: `opacity ${FROST_FADE_MS}ms ease-out`,
+        }}
+      />
       <div
         // Generous, symmetric breathing room on all four sides: the bar's own
         // height carries the vertical margin (there's no fixed height any
