@@ -22,7 +22,6 @@ class Telemetry {
       posthog.capture(event, properties);
     } catch (err) {
       // Swallow — telemetry must never break the UI.
-      // eslint-disable-next-line no-console
       console.warn(`telemetry: failed to send "${event}"`, err);
     }
   }
