@@ -1590,6 +1590,20 @@ img[src$='blob-cluster.svg'] {
   }
 }
 
+/* On a PHONE the closing block sets flush left with the rest of the page —
+   the centring above is for the tablet-to-small-desktop range, where the
+   block still has width to sit in the middle of. 640 rather than the 1100
+   the one-column rules use: a half-screen desktop window should keep the
+   centred coda; a phone shouldn't. */
+@media (max-width: 639px) {
+  .closing-row > h2 {
+    margin-inline: 0;
+  }
+  .closing-row > p {
+    margin-inline: 0;
+  }
+}
+
 /* ---------- the blobs flanking the About title ----------
    Paired with src/components/TitleShapes.tsx. Hidden below 820 with the rest
    of the grid furniture: at that width the margin they hang in is barely
