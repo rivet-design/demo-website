@@ -1530,7 +1530,11 @@ img[src$='blob-cluster.svg'] {
        stuck out past both edges of the paragraph it belongs to. */
     width: max-content;
     max-width: 100%;
-    margin: 0 auto 2.5rem;
+    /* Flush left with its copy, not centred: the auto margins came off with
+       the stacked pair — a left-aligned one-liner reads as the section's
+       heading, where a centred one floated apart from everything else on the
+       page, which is all set left. */
+    margin: 0 0 2.5rem;
     font-size: clamp(3rem, 11vw, 5.06rem);
   }
   /* One line here, not the stacked pair: at one column the heading centres
@@ -1541,7 +1545,6 @@ img[src$='blob-cluster.svg'] {
     display: none;
   }
   .closing-row > p {
-    margin-inline: auto;
     text-wrap: balance;
   }
   /* The pictures bleed; the table does not. .chapter__rows carries the row
