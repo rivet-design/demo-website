@@ -38,7 +38,7 @@ const CORNER_STEP_MS = 55;
 const CONTENT = 'h1, h2, h3, p, figure, .about-hero, .article-label, .closing-row__field';
 
 type Corner = 'tl' | 'tr' | 'bl' | 'br';
-type Mark = { x: number; y: number; corner: Corner; opacity: number; delay: number };
+type Mark = { x: number; y: number; corner: Corner; opacity: number; delay: number; box: number };
 type Box = { top: number; left: number; right: number; bottom: number };
 
 const rand = (seed: number) => {
@@ -139,6 +139,10 @@ const SquareField = () => {
     const { lines } = grid;
     const placed: Box[] = [];
     const next: Mark[] = [];
+    // Which box each mark belongs to. A box arrives as ONE object (see the
+    // reveal observer below), so its corners have to be able to find each
+    // other after they've been flattened into a single list of marks.
+    let boxId = 0;
 
     for (let r = 0; r < rows.length - 1 && placed.length < MAX_BOXES; r += 1) {
       for (let c = 0; c < lines.length - 1; c += 1) {
@@ -174,8 +178,9 @@ const SquareField = () => {
             [box.left, box.bottom, 'bl'],
             [box.right, box.bottom, 'br'],
           ];
+        const id = boxId++;
         corners.forEach(([x, y, corner], i) => {
-          next.push({ x, y, corner, opacity, delay: delay + i * CORNER_STEP_MS });
+          next.push({ x, y, corner, opacity, delay: delay + i * CORNER_STEP_MS, box: id });
         });
       }
     }
@@ -242,8 +247,9 @@ const SquareField = () => {
             [box.left, box.bottom, 'bl'],
             [box.right, box.bottom, 'br'],
           ];
+          const id = boxId++;
           corners.forEach(([x, y, corner], n) => {
-            next.push({ x, y, corner, opacity, delay: delay + n * CORNER_STEP_MS });
+            next.push({ x, y, corner, opacity, delay: delay + n * CORNER_STEP_MS, box: id });
           });
         });
       }
@@ -271,15 +277,38 @@ const SquareField = () => {
   useEffect(() => {
     const el = ref.current;
     if (!el || marks.length === 0) return;
+    // A box is one object, so it lights as one: whichever corner crosses the
+    // line first brings the other three with it, still on their own stagger.
+    // Observed per MARK but revealed per BOX — watching only one corner would
+    // mean a box entered from below never arrived, since the corner that
+    // crosses first depends on which way you are scrolling. Lighting each
+    // corner on its own intersection is what this replaces: a box taller than
+    // the gap between the marks and the fold showed its top pair for as long
+    // as it took to scroll to its bottom pair, which read as a half-drawn box
+    // rather than as a bracket around the space.
+    const byBox = new Map<number, number[]>();
+    marks.forEach((mark, i) => {
+      const group = byBox.get(mark.box);
+      if (group) group.push(i);
+      else byBox.set(mark.box, [i]);
+    });
     const io = new IntersectionObserver(
       (entries) => {
         const arrived: number[] = [];
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
-          arrived.push(Number((entry.target as HTMLElement).dataset.i));
-          io.unobserve(entry.target);
+          const i = Number((entry.target as HTMLElement).dataset.i);
+          arrived.push(...(byBox.get(marks[i].box) ?? [i]));
         }
-        if (arrived.length > 0) setShown((prev) => new Set([...prev, ...arrived]));
+        if (arrived.length === 0) return;
+        // Unobserve every corner of a box that has arrived, not just the one
+        // that tripped — the other three are already lit, so their own
+        // callbacks would be pure noise.
+        const lit = new Set(arrived);
+        el.querySelectorAll<HTMLElement>('[data-i]').forEach((node) => {
+          if (lit.has(Number(node.dataset.i))) io.unobserve(node);
+        });
+        setShown((prev) => new Set([...prev, ...arrived]));
       },
       { rootMargin: '0px 0px -8% 0px' },
     );
