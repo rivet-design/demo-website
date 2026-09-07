@@ -820,6 +820,32 @@ const App = () => {
     initialId: ORIGINAL_ID,
     autoPlay: false,
   });
+  // Up/Down cycle the hero's directions too, mirroring VariantsShowcase's
+  // arrow handling: scoped to the pointer being over the pinned STAGE (the
+  // demo panel's overlays — the landed card — aren't descendants of the panel
+  // box, so hovering the preview never reaches a listener on the box itself)
+  // and to the prototype having actually landed, so the keys don't capture
+  // page scroll anywhere else. Skipped while a form field has focus.
+  const [outerPanelHovered, setOuterPanelHovered] = useState(false);
+  useEffect(() => {
+    if (!outerPanelHovered || !containerReached) return;
+    const onKey = (e: KeyboardEvent) => {
+      const el = document.activeElement as HTMLElement | null;
+      const tag = el?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || el?.isContentEditable)
+        return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        outerCtrl.cycle(1);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        outerCtrl.cycle(-1);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [outerPanelHovered, containerReached, outerCtrl]);
+
   // "Original" IS this hero — so for that direction the landed card simply
   // stays as the preview's content. Nothing swaps in, nothing crossfades,
   // nothing can drift out of sync: it can't differ from the hero because it
@@ -1444,6 +1470,8 @@ const App = () => {
                   : 'bleed-page-gutter-x page-gutter-x flex flex-col gap-8 pb-20'
             }
             ref={stageRef}
+            onMouseEnter={() => setOuterPanelHovered(true)}
+            onMouseLeave={() => setOuterPanelHovered(false)}
             // Pinned path: the neutral #fafafa ground revealed around the card
             // as the whole page scales down (storyboard frame 2).
             // Everywhere else (mobile, reduced motion, embeds) there IS no
