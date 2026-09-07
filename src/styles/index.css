@@ -1348,6 +1348,17 @@ img[src$='blob-cluster.svg'] {
   position: relative;
   margin: 14rem 0 0;
   padding: 5rem 0;
+  /* Three tracks of its own rather than the page's twelve. The middle one
+     sizes to the widest block in it — the heading — and the 1fr tracks either
+     side centre that on the page, with both blocks starting on its left line.
+     Sharing a left line AND sitting on the page's centre is not something a
+     12-column span can do: any span wide enough to hold the heading is wider
+     than the heading, so centring the span leaves the type inside it sitting
+     left of the page's centre, which is what made this block read as
+     off-kilter however the span was placed. The copy's own max-width caps
+     what it contributes, so the track settles on a measure rather than on
+     the paragraph's whole length set on one line. */
+  grid-template-columns: 1fr max-content 1fr;
 }
 /* The field box carries the shared --frame-inset-x, the same margin the
    landing section gives it, so the texture can't run to the viewport edge. */
@@ -1362,14 +1373,10 @@ img[src$='blob-cluster.svg'] {
    the two are one type object used twice. */
 .closing-row > h2 {
   position: relative;
-  /* Heading and copy share column 6 and the same four-column span, so they
-     start on one line and hold one measure — the page is a left-aligned grid
-     composition throughout and its last block reads as part of it rather than
-     as a centred coda. Four columns is what the one-line setting needs: at
-     1100px, the narrowest width these grid rules run at, the line measures
-     320px against a 357px span. */
-  grid-column: 6 / span 4;
-  white-space: nowrap;
+  /* The centre track, which the copy's measure sizes. Two lines, broken by
+     hand in the MDX: at this scale the block is a stacked pair of words, not
+     a line of running text. */
+  grid-column: 2;
   margin: 0 0 2rem;
   font-size: clamp(2.25rem, 7.36vw, 8.5rem);
   font-weight: 400;
@@ -1379,11 +1386,10 @@ img[src$='blob-cluster.svg'] {
 }
 .closing-row > p {
   position: relative;
-  /* The heading's span exactly, so the two share a left line and a right one.
-     The measure caps it on top of that: past ~1500px four columns runs wider
-     than body copy should set, and the cap holds the line length where the
-     rest of the page's copy holds it. */
-  grid-column: 6 / span 4;
+  /* Same track as the heading, so the two start on one line. The measure is
+     what keeps this from sizing the track itself: without it the track would
+     take this copy's max-content — the whole paragraph on one line. */
+  grid-column: 2;
   max-width: 46ch;
 }
 .closing-row > p:nth-of-type(1) {
@@ -1463,6 +1469,9 @@ img[src$='blob-cluster.svg'] {
   }
   .closing-row {
     padding: 2rem 0;
+    /* One track: every child here spans 1 / -1 anyway, and a max-content track
+       under a spanning item can size past the container and overflow. */
+    grid-template-columns: minmax(0, 1fr);
   }
   /* And a measure: at one column the copy would otherwise set the full width
      of a tablet, which is far past what any of it was written for. */
