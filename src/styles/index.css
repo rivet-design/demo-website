@@ -1362,23 +1362,15 @@ img[src$='blob-cluster.svg'] {
    the two are one type object used twice. */
 .closing-row > h2 {
   position: relative;
-  /* Set on one line now, so it takes the copy's span — at four columns the
-     display size had room for one word per line, not two. Centred on the
-     grid: three columns of air each side, not five-and-one. */
-  grid-column: 4 / span 6;
+  /* Heading and copy share column 6 and the same four-column span, so they
+     start on one line and hold one measure — the page is a left-aligned grid
+     composition throughout and its last block reads as part of it rather than
+     as a centred coda. Four columns is what the one-line setting needs: at
+     1100px, the narrowest width these grid rules run at, the line measures
+     320px against a 357px span. */
+  grid-column: 6 / span 4;
   white-space: nowrap;
-  /* The span is centred, but a nowrap display line does not fill it — left in
-     the box it sat flush to the box's left edge, which put the visible words
-     well left of the page's centre with a column of void to their right, and
-     reading as neither centred nor on the grid.
-     Shrink each block to its own content and centre THAT — the same fix the
-     one-column rules below already make, for the same reason, and it keeps
-     their rule: the BLOCKS centre, the type inside them stays left-aligned,
-     since centred type would give this copy a ragged left edge nothing else
-     on the page has. */
-  width: max-content;
-  max-width: 100%;
-  margin: 0 auto 2rem;
+  margin: 0 0 2rem;
   font-size: clamp(2.25rem, 7.36vw, 8.5rem);
   font-weight: 400;
   line-height: 0.88;
@@ -1387,14 +1379,12 @@ img[src$='blob-cluster.svg'] {
 }
 .closing-row > p {
   position: relative;
-  /* Wider than the heading: at two columns this copy set in a sliver, six or
-     seven short lines against a display heading four columns wide. Centred
-     with it — same three columns of air on each side. */
-  grid-column: 4 / span 6;
-  max-width: 68ch;
-  /* Centred on its measure inside that span, so it shares a centre line with
-     the heading above rather than both hanging off the span's left edge. */
-  margin-inline: auto;
+  /* The heading's span exactly, so the two share a left line and a right one.
+     The measure caps it on top of that: past ~1500px four columns runs wider
+     than body copy should set, and the cap holds the line length where the
+     rest of the page's copy holds it. */
+  grid-column: 6 / span 4;
+  max-width: 46ch;
 }
 .closing-row > p:nth-of-type(1) {
   grid-row: 2;
@@ -1505,8 +1495,13 @@ img[src$='blob-cluster.svg'] {
      the text left-aligned as everywhere else. Centred type would give this
      copy a ragged left edge that nothing else on the page has. */
   .closing-row > h2 {
-    /* The centring itself is in the base rule now; this is the scale step and
-       the wider gap under it.
+    /* At one column this block is the last thing on the page with nothing
+       beside it, so it centres — the BLOCKS centre, not the type inside them,
+       which stays left-aligned as everywhere else.
+
+       Own rule again, not inherited: the grid rules above set this block
+       flush left on column 6, which is where it belongs while there are
+       columns to sit on.
 
        The cap is 5.06rem because that is EXACTLY what the grid rule's own
        7.36vw comes to at 1100px, where this query hands over. At the old 7rem
@@ -1518,10 +1513,13 @@ img[src$='blob-cluster.svg'] {
        It also stopped the heading overhanging its own copy: 112px set the
        line 443px wide against a 46ch measure of 400, so the display line
        stuck out past both edges of the paragraph it belongs to. */
-    margin-bottom: 2.5rem;
+    width: max-content;
+    max-width: 100%;
+    margin: 0 auto 2.5rem;
     font-size: clamp(3rem, 11vw, 5.06rem);
   }
   .closing-row > p {
+    margin-inline: auto;
     text-wrap: balance;
   }
   /* The pictures bleed; the table does not. .chapter__rows carries the row
