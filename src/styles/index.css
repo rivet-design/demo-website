@@ -223,6 +223,14 @@
   .hero-statement-size {
     font-size: clamp(1.5rem, 7.5vw, 2.5rem);
   }
+  /* Any headline that must read at exactly the hero title's rank. Takes the
+     hero's OWN size straight from the variable — the two are meant to move
+     together at every width, and a second copy of the formula is how they
+     silently drift apart. --hero-title-font-size is set per breakpoint in the
+     media blocks below, beside .hero-title-text itself. */
+  .hero-title-matched-size {
+    font-size: var(--hero-title-font-size);
+  }
   /* Main hero title only, below lg: step up from the shared hero-title-size,
      capped at THREE lines. The title alone bleeds 1.5rem into the hero copy
      block's gutters (same idea as .bleed-page-gutter-x) — without the bleed
@@ -237,17 +245,21 @@
      Above ~615px the 3.5rem cap binds and fits comfortably up to lg.
      balance evens the three lines. */
   @media (max-width: 1023px) {
+    /* Sized for TWO lines. The markup carries a hard <br/> after "design",
+       so the constraint is the longer of the two lines — "directions from
+       your agent." — fitting the available width (100vw − gutters − the
+       bled px-12 = 86.8vw − 3rem). The divisor is that measure; /10 was
+       sized for three lines and let the second one wrap again.
+       In Aileron Regular at the title's -3% tracking that line measures
+       11.19em, so /13.5 leaves ~17% headroom. Re-measure before changing
+       the weight: Bold is ~6% wider, which would still fit here. */
+    :root {
+      --hero-title-font-size: clamp(1.25rem, calc((86.8vw - 3rem) / 13.5), 2.25rem);
+    }
+
     .hero-title-text {
       margin-inline: -1.5rem;
-      /* Sized for TWO lines. The markup carries a hard <br/> after "design",
-         so the constraint is the longer of the two lines — "directions from
-         your agent." — fitting the available width (100vw − gutters − the
-         bled px-12 = 86.8vw − 3rem). The divisor is that measure; /10 was
-         sized for three lines and let the second one wrap again.
-         In Aileron Regular at the title's -3% tracking that line measures
-         11.19em, so /13.5 leaves ~17% headroom. Re-measure before changing
-         the weight: Bold is ~6% wider, which would still fit here. */
-      font-size: clamp(1.25rem, calc((86.8vw - 3rem) / 13.5), 2.25rem);
+      font-size: var(--hero-title-font-size);
       text-wrap: balance;
     }
   }
@@ -275,12 +287,16 @@
        divisor of 18, so it fills ~62% of the width — the em figures in the
        block above are from Satoshi, before the face changed, and no longer
        describe this. */
-    .hero-title-text {
-      font-size: clamp(
+    :root {
+      --hero-title-font-size: clamp(
         1.5rem,
         calc((100vw - (var(--page-gutter-x) * 2) - 12rem) / 18),
         5rem
       );
+    }
+
+    .hero-title-text {
+      font-size: var(--hero-title-font-size);
     }
   }
 

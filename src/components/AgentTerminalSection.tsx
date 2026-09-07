@@ -284,8 +284,9 @@ const DETAIL_CH = 15.8;
 // are computed here, so the arithmetic has to know the gap it is subtracting.
 const GAP_PX = 24;
 const LG_PX = 1024;
-// The headline, as its two hard-broken lines. Line one is also what gets
-// measured to size the type, so it lives here rather than inline in the JSX.
+// The headline, as its two lines — hard-broken at lg, wrapped naturally below
+// it (see the <br> in the JSX). Line one is also what gets measured to size
+// the type, so it lives here rather than inline in the JSX.
 const TITLE_LINES = [
   'Rivet helps designers explore more',
   'ideas for the software they craft.',
@@ -651,7 +652,7 @@ const AgentTerminalSection = () => {
     headW === null ? null : Math.max(26, Math.min(52, headW / titleRatio));
 
   return (
-    <div className="page-gutter-x relative w-full overflow-hidden pb-24 pt-8 lg:pb-40 lg:pt-16">
+    <div className="page-gutter-x relative w-full overflow-hidden pb-24 pt-16 lg:pb-40 lg:pt-16">
       <div className="relative z-10">
         {/* Header. Same columns as the cards below, so the copy starts exactly
             where the "Connect your design references" card does. Reveals on its
@@ -672,18 +673,37 @@ const AgentTerminalSection = () => {
             <RivetMark className="h-auto w-[104px] lg:w-[132px]" />
           </div>
           {/* font-aileron carries the -2% tracking from its own utility, so it
-              isn't repeated here. Hard break after "more" — the measure alone
-              wouldn't reliably land "ideas" at the head of line two. */}
+              isn't repeated here.
+
+              Size: this headline reads at the same rank as the hero title, so
+              it takes the hero's own size rather than a fixed 30px that only
+              matched it at one width. Below lg that is all of it. At lg the
+              column is ~60% of the row, which the hero's fill-the-page size
+              overflows, so the measured largest-that-fits stands as a CAP —
+              min() of the two, never bigger than the column can hold.
+
+              Break: the hard break after "more" only holds at lg, where the
+              type is sized so line one fits. Below lg the hero-matched size is
+              wider than the stacked column, so line one wraps and the forced
+              break stranded "more" alone on a line with a gap beside it — the
+              two lines wrap naturally instead, balanced. */}
           <h2
-            className={`mt-6 ${TITLE_FONT} text-[30px] leading-[1.14] text-black lg:mt-0`}
+            className={`mt-6 ${TITLE_FONT} hero-title-matched-size leading-[1.14] text-black [text-wrap:balance] lg:mt-0 lg:[text-wrap:initial]`}
             style={
               headX === null
                 ? undefined
-                : { marginLeft: headX, width: headW ?? undefined, fontSize: titlePx ?? undefined }
+                : {
+                    marginLeft: headX,
+                    width: headW ?? undefined,
+                    fontSize:
+                      titlePx === null
+                        ? undefined
+                        : `min(var(--hero-title-font-size), ${titlePx}px)`,
+                  }
             }
           >
-            {TITLE_LINES[0]}
-            <br />
+            {TITLE_LINES[0]}{' '}
+            <br className="hidden lg:inline" />
             {TITLE_LINES[1]}
           </h2>
           {/* Measurement probe. Absolute and hidden, so it costs no layout. */}
