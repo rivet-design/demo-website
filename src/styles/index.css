@@ -1506,9 +1506,20 @@ img[src$='blob-cluster.svg'] {
      copy a ragged left edge that nothing else on the page has. */
   .closing-row > h2 {
     /* The centring itself is in the base rule now; this is the scale step and
-       the wider gap under it. */
+       the wider gap under it.
+
+       The cap is 5.06rem because that is EXACTLY what the grid rule's own
+       7.36vw comes to at 1100px, where this query hands over. At the old 7rem
+       the two formulas disagreed across that one pixel — 112px on this side,
+       81px on the other — so the heading lost a third of its size the moment
+       the window grew past the breakpoint, which is a jump you cannot miss on
+       a resize. Recompute this if 7.36vw changes.
+
+       It also stopped the heading overhanging its own copy: 112px set the
+       line 443px wide against a 46ch measure of 400, so the display line
+       stuck out past both edges of the paragraph it belongs to. */
     margin-bottom: 2.5rem;
-    font-size: clamp(3rem, 11vw, 7rem);
+    font-size: clamp(3rem, 11vw, 5.06rem);
   }
   .closing-row > p {
     text-wrap: balance;
