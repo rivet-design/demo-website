@@ -45,7 +45,7 @@ type ImageProps = { src: string; alt: string };
  * the page, so there is no column line there for the others.
  */
 export const Masthead = ({ src, alt, children }: ImageProps & { children: ReactNode }) => {
-  const reveal = useScrollReveal<HTMLDivElement>();
+  const reveal = useScrollReveal<HTMLDivElement>({ once: true });
   return (
   <div ref={reveal.ref} style={reveal.style} className="not-prose article-row masthead">
     <div className="about-hero">
@@ -94,7 +94,7 @@ export const Chapter = ({ title, children }: { title: string; children: ReactNod
   // The heading arrives on its own and does NOT go soft on the way out: the
   // rows beside it stay sharp long after it has left the band, and a heading
   // defocusing next to crisp content reads as a bug rather than as depth.
-  const reveal = useScrollReveal<HTMLHeadingElement>({ leave: false });
+  const reveal = useScrollReveal<HTMLHeadingElement>({ once: true, leave: false });
   return (
     <section className="not-prose article-row chapter">
       {/* One span per drawn line, rather than a newline the CSS cannot reach:
@@ -120,7 +120,7 @@ type ToolRowProps = ImageProps & { label: string; heading: string; children: Rea
  * the component takes no index.
  */
 export const ToolRow = ({ label, heading, src, alt, children }: ToolRowProps) => {
-  const reveal = useScrollReveal<HTMLDivElement>();
+  const reveal = useScrollReveal<HTMLDivElement>({ once: true });
   return (
   <div ref={reveal.ref} style={reveal.style} className="tool-row">
     <div className="tool-row__marker">
@@ -139,7 +139,7 @@ export const ToolRow = ({ label, heading, src, alt, children }: ToolRowProps) =>
 
 /** The largest type on the page, with a paragraph set away from it. */
 export const PullQuote = ({ children, aside }: { children: ReactNode; aside?: ReactNode }) => {
-  const reveal = useScrollReveal<HTMLQuoteElement>();
+  const reveal = useScrollReveal<HTMLQuoteElement>({ once: true });
   return (
     <blockquote ref={reveal.ref} style={reveal.style} className="not-prose article-row pull-quote">
       <div className="pull-quote__body">{children}</div>
@@ -166,7 +166,7 @@ export const WideFigure = ({
   signoffTitle?: string;
   signoff?: ReactNode;
 }) => {
-  const reveal = useScrollReveal<HTMLElement>();
+  const reveal = useScrollReveal<HTMLElement>({ once: true });
   return (
   <section ref={reveal.ref} style={reveal.style} className="not-prose article-row wide-figure">
     <div className="wide-figure__text">
@@ -202,7 +202,7 @@ export const WideFigure = ({
  * texture panel bleeding off each edge behind them.
  */
 export const Closing = ({ children }: { children: ReactNode }) => {
-  const reveal = useScrollReveal<HTMLDivElement>();
+  const reveal = useScrollReveal<HTMLDivElement>({ once: true });
   return (
   <div ref={reveal.ref} style={reveal.style} className="not-prose article-row closing-row">
     {/* The same field the landing page's install section runs, on the same

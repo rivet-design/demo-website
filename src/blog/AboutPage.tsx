@@ -32,7 +32,7 @@ const AboutPage = () => {
   // The masthead title is the page's first block, so it carries the entrance
   // but not the leaving blur — the picture under it is still sharp long after
   // the title has left the band.
-  const titleReveal = useScrollReveal<HTMLElement>({ leave: false });
+  const titleReveal = useScrollReveal<HTMLElement>({ once: true, leave: false });
 
   useEffect(() => {
     document.title = 'About — Rivet';

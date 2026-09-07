@@ -60,6 +60,12 @@ export type ScrollRevealOptions<T extends HTMLElement> = {
   leave?: boolean;
   /** Skip observing entirely; `style` comes back empty and phase stays 'in'. */
   disabled?: boolean;
+  /**
+   * Latch on first arrival: once the block has faded in it stays rendered for
+   * good — no leaving fade going down, no re-hide scrolling back up. The About
+   * page reads this way; the landing page keeps the mirrored gesture.
+   */
+  once?: boolean;
 };
 
 export const useScrollReveal = <T extends HTMLElement>({
@@ -68,6 +74,7 @@ export const useScrollReveal = <T extends HTMLElement>({
   entrance = true,
   leave = true,
   disabled = false,
+  once = false,
 }: ScrollRevealOptions<T> = {}) => {
   const ownRef = useRef<T>(null);
   const ref = externalRef ?? ownRef;
@@ -87,6 +94,8 @@ export const useScrollReveal = <T extends HTMLElement>({
       ([entry]) => {
         if (entry.isIntersecting) {
           setPhase('in');
+          // Arrived once = rendered for good: nothing left to observe.
+          if (once) io.disconnect();
           return;
         }
         const band = entry.rootBounds;
