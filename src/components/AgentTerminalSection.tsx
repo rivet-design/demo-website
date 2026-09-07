@@ -753,10 +753,15 @@ const Card = ({
   // Stacked (below lg, restW null) there is no hover to open a card, so the
   // sessions/connect/directions beats never played — a touch was the only way
   // in. There, a card opens itself the moment its scroll reveal brings it into
-  // the band, and closes (resetting the beat) once scrolled away. At lg the
-  // row keeps its one-open-on-hover behaviour.
+  // the band — and LATCHES: once its content has rendered it stays rendered,
+  // rather than fading out and replaying every time the card crosses the band.
+  // At lg the row keeps its one-open-on-hover behaviour.
   const stacked = restW == null;
-  const isOpen = stacked ? reveal.phase === 'in' : hovered === index;
+  const [opened, setOpened] = useState(false);
+  useLayoutEffect(() => {
+    if (stacked && reveal.phase === 'in') setOpened(true);
+  }, [stacked, reveal.phase]);
+  const isOpen = stacked ? opened : hovered === index;
   // The connect beat replays on every ENTER, not just when the card goes from
   // closed to open. The last-hovered card stays open, so returning to the card
   // you were already on never flips `isOpen` — keying off that alone left it
@@ -1058,7 +1063,11 @@ const Card = ({
                   className="relative z-10 p-6 lg:p-7"
                   // Stacked, the reveal lives HERE instead of on the article:
                   // the shell stays planted and only the copy rides the scroll.
-                  style={restW ? { width: restW } : reveal.style}
+                  // Once the card has latched open the reveal style comes off
+                  // entirely — rendered content stays put in both directions.
+                  style={
+                    restW ? { width: restW } : opened ? undefined : reveal.style
+                  }
                 >
                   {/* Weight is FAKED, not switched. Aileron ships as separate
                       files rather than a variable font, so font-weight has
