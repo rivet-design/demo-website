@@ -15,11 +15,10 @@ const FROST_FADE_MS = 320;
 // Only reached when `fill` carries an image instead of a colour.
 const FALLBACK_FILL = '#fafafa';
 
-// Temporarily off while the About page is rebuilt (see the about-page-rebuild
-// branch); flip back on when it merges. Hides the link in the desktop nav, the
-// mobile overflow menu, and the footer's Rivet column — the /about route
-// itself keeps working.
-export const SHOW_ABOUT_LINK = false;
+// Gates the About link in the desktop nav, the mobile overflow menu, and the
+// footer's Rivet column. It was off on main while the About page was rebuilt;
+// this branch ships the rebuilt page, so the links come back on with it.
+export const SHOW_ABOUT_LINK = true;
 
 const NavBar = ({
   motionOpacity,
