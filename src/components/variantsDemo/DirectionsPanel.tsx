@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -296,9 +297,19 @@ const VariantTable = ({
   onRemove,
 }: VariantTableProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { activeIndex, itemRects, sessionRef, handlers, registerItem } =
+  const { activeIndex, setActiveIndex, itemRects, sessionRef, handlers, registerItem } =
     useProximityHover<HTMLDivElement>(containerRef);
   const activeRect = activeIndex !== null ? itemRects[activeIndex] : null;
+
+  // Selection can move WITHOUT the pointer — arrow keys and the auto-cycle.
+  // A parked mouse then kept its hover overlay on the old row, which reads as
+  // a stale second selection (the two fills are near-identical). Standard
+  // listbox behaviour: a selection change dismisses the hover highlight, and
+  // the next real mousemove re-arms it. Click-selection isn't hurt — the
+  // pointer is already on that row, so the selected fill takes over anyway.
+  useEffect(() => {
+    setActiveIndex(null);
+  }, [selectedId, setActiveIndex]);
 
   return (
     <div
