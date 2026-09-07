@@ -18,12 +18,15 @@ import type { DemoVariant } from './data';
 const DESIGN_W = 1280;
 const DESIGN_H = 820;
 
-// Portrait (mobile hero): render each page at a mobile-layout width so its OWN
-// responsive layout kicks in (the demo pages stack below ~720px). On tablet-ish
-// widths, use the available pane width instead of zooming a 412px phone viewport;
-// cap below the desktop breakpoint so the sample app stays in its mobile layout.
+// Portrait (mobile hero): render each page at a width matching the pane so its
+// OWN responsive layout kicks in. On tablet-ish widths, use the available pane
+// width instead of zooming a 412px phone viewport. The cap sits ABOVE the
+// nav's md breakpoint (768) on purpose: a 700px cap forced the embedded sample
+// into its mobile header (Community pill, no Install CTA) even on tablets whose
+// real page was already showing the full header — the preview and the page it
+// previews disagreed.
 const PORTRAIT_MIN_W = 412;
-const PORTRAIT_MAX_W = 700;
+const PORTRAIT_MAX_W = 800;
 const PORTRAIT_H_TO_W = 920 / 412;
 
 // On narrower desktops the width-driven shell height collapses (the preview pane
@@ -65,11 +68,14 @@ const VariantsShowcase = ({
   autoPlay = true,
   initialVariantId,
   loadDelayMs = 0,
+  start = true,
   showDirections = true,
   autoAdvanceMs,
   portrait = false,
   variants,
   preview = 'iframe',
+  portraitFitHeight = false,
+  scrollable = false,
 }: {
   heightClassName?: string;
   /** When false, the showcase stays pinned to the initial variant (no loop). */
@@ -78,6 +84,8 @@ const VariantsShowcase = ({
   initialVariantId?: string;
   /** Delay before the fake "generating" sequence starts (to sequence after an intro). */
   loadDelayMs?: number;
+  /** Gates the whole generating sequence — stays on skeletons until true. */
+  start?: boolean;
   /**
    * Render the right-hand Directions panel. Off for the mobile hero, where
    * there isn't room — the preview just cycles options on its own.
@@ -102,11 +110,21 @@ const VariantsShowcase = ({
    * selected variant's `gallery` config — same pipes as the comments demo.
    */
   preview?: 'iframe' | 'gallery';
+  /** Portrait previews render a viewport exactly as tall as the pane. */
+  portraitFitHeight?: boolean;
+  /**
+   * Lets the previewed page scroll inside the frame. Off by default: for the
+   * slideshow-style demos a swipe must fall through to the landing page. On
+   * the hero the preview is a real prototype, so it scrolls its own content
+   * and then chains out to the page once it reaches the end.
+   */
+  scrollable?: boolean;
 }) => {
   const ctrl = useVariantsDemo({
     autoPlay,
     initialId: initialVariantId,
     startDelayMs: loadDelayMs,
+    start,
     autoAdvanceMs,
     variants,
   });
@@ -248,7 +266,15 @@ const VariantsShowcase = ({
     portrait && measured
       ? Math.min(Math.max(paneSize.w, PORTRAIT_MIN_W), PORTRAIT_MAX_W)
       : PORTRAIT_MIN_W;
-  const portraitViewportH = Math.round(portraitViewportW * PORTRAIT_H_TO_W);
+  // Default: a tall phone viewport, top-anchored, so the page's top is shown
+  // and the rest clips. `portraitFitHeight` instead makes the embedded
+  // viewport exactly as tall as the visible pane — needed when the page
+  // centres something in its own viewport (the splash screen does), because
+  // against a 2.23:1 viewport that centre lands well below the visible area.
+  const portraitViewportH =
+    portraitFitHeight && measured && paneSize.w > 0
+      ? Math.round((paneSize.h * portraitViewportW) / paneSize.w)
+      : Math.round(portraitViewportW * PORTRAIT_H_TO_W);
 
   // Desktop: the shell height is driven by the variant — scale to fit WIDTH so
   // there's no letterbox, and collapse the shell (and the RHS panel) to exactly
@@ -329,7 +355,7 @@ const VariantsShowcase = ({
                 key={v.src}
                 src={v.src}
                 title={v.label}
-                scrolling="no"
+                {...(scrollable ? {} : { scrolling: 'no' as const })}
                 onLoad={() => setLoaded((s) => new Set(s).add(v.src))}
                 style={{
                   width: portrait ? portraitViewportW : DESIGN_W,
@@ -345,11 +371,14 @@ const VariantsShowcase = ({
                   zIndex: isActive ? 20 : isPrev ? 10 : 0,
                 }}
                 className={`border-0 transition-opacity duration-300 ease-in-out ${
-                  // Portrait (mobile hero): the demo is a non-interactive
-                  // slideshow — touches must fall through to the page so a
-                  // swipe scrolls the LANDING page, never the variant inside
-                  // the iframe (iOS ignores scrolling="no" for touch).
-                  isActive && !portrait ? '' : 'pointer-events-none'
+                  // Portrait slideshows stay non-interactive so a swipe
+                  // scrolls the LANDING page rather than the variant inside
+                  // the iframe (iOS ignores scrolling="no" for touch). When
+                  // `scrollable` is set the preview is a real prototype and
+                  // takes the touch itself.
+                  isActive && (scrollable || !portrait)
+                    ? ''
+                    : 'pointer-events-none'
                 }`}
               />
             );

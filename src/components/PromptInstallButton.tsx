@@ -121,7 +121,16 @@ const PromptInstallButton = ({
 
   const t = TONES[tone];
 
-  const mainSize = size === 'lg' ? 'px-6 py-4 text-lg' : 'px-4 py-3 text-sm';
+  const mainSize = size === 'lg' ? 'px-6 py-4 text-lg' : 'px-[16px] py-[8px] text-sm';
+  // Orange gets the hero CTA's gradient rather than a flat fill, so the two
+  // primary buttons on the page read as the same object. As a CLASS, not a
+  // style prop: the trigger is a PopoverTrigger, which forwards className but
+  // has no `style` in its props. Other tones stay flat — a gradient on the
+  // dark/light variants would just muddy them.
+  const gradient =
+    tone === 'orange'
+      ? 'bg-[linear-gradient(137.74deg,rgb(236,68,35)_41.128%,rgb(243,138,118)_121.74%)]'
+      : '';
   const iconBox = size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
 
   const activate = (item: AgentItem) => {
@@ -167,26 +176,19 @@ const PromptInstallButton = ({
         setOpen(next);
       }}
     >
-      {/* The trigger keeps the original look: label + fanned agent icons that
-          lift on hover. Clicking opens the menu rather than copying. */}
+      {/* The trigger: label + agent icon row. Hover is a plain background
+          fade (via t.bg's hover variant) — no lift/fan animation. */}
       <PopoverTrigger
         onKeyDown={handleMenuKeyDown}
-        className={`group type-label-lg font-normal flex items-center gap-2.5 rounded-lg border ${t.border} ${t.bg} ${t.text} ${mainSize} ${
+        className={`group type-label-lg font-normal flex items-center gap-2.5 rounded-lg border ${t.border} ${t.bg} ${gradient} ${t.text} ${mainSize} ${
           fullWidth ? 'w-full justify-center' : 'w-fit'
-        } transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
+        } transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
       >
-        {/* Already-fanned icon row, leading the label. At rest each icon is
-            fully visible with a clear gap. On hover/focus the gap widens and
-            each icon lifts up with a soft drop shadow. `motion-reduce` keeps
-            the icons static. */}
-        <span
-          className="flex shrink-0 items-center gap-1 transition-[gap] duration-200 ease-out group-hover:gap-1.5 group-focus-within:gap-1.5 motion-reduce:!gap-1 motion-reduce:transition-none"
-          aria-hidden
-        >
+        <span className="flex shrink-0 items-center gap-1" aria-hidden>
           {(['claude', 'cursor', 'codex'] as AgentLogo[]).map((logo) => (
             <span
               key={logo}
-              className={`relative flex ${iconBox} items-center justify-center rounded-full ${t.bg} ring-2 ${t.ring} transition-[transform,box-shadow] duration-200 ease-out will-change-transform group-hover:-translate-y-0.5 group-hover:shadow-md group-focus-within:-translate-y-0.5 group-focus-within:shadow-md motion-reduce:!translate-y-0 motion-reduce:!shadow-none motion-reduce:transition-none`}
+              className={`relative flex ${iconBox} items-center justify-center rounded-full ${t.bg} ring-2 ${t.ring}`}
             >
               <ToolLogo id={logo} label={logo} invert={t.invertLogo} />
             </span>

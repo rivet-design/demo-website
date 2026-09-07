@@ -4,7 +4,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ['class'],
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx,md,mdx}'],
   theme: {
     extend: {
       // Sizing primitives for the landing-page workflow panels / containers.
@@ -17,7 +17,8 @@ export default {
         'panel-portrait': '3 / 4',
       },
       fontFamily: {
-        main: ['Satoshi', 'sans-serif'],
+        main: ['Aileron', 'sans-serif'],
+        aileron: ['Aileron', 'sans-serif'],
         cta: ['Goldman', 'sans-serif'],
         knewave: ['Knewave', 'cursive'],
         bia: ['Bia', 'cursive'],
@@ -130,6 +131,7 @@ export default {
         },
       });
     },
+    require('@tailwindcss/typography'),
     require('tailwindcss-animate'),
   ],
 };

@@ -1,21 +1,27 @@
 // Rivet variant metadata for the self-contained variants demo.
 //
-// Mirrors the manifests under
-//   rivet-direct/demos/jersey-app-texture/.rivet/variants/e2c57d4f-…
-// (the "Teletext Designs" run). Each variant's static page is hosted under
-// public/demos/jersey/<slug>.html and rendered in an <iframe>.
+// Recursive/self-referential: each variant reimagines THIS landing page's
+// own hero in a different visual direction (the "Landing Directions" run) —
+// Rivet, used on itself. Each variant's static page is hosted under
+// public/demos/landing/<slug>.html and rendered in an <iframe>.
 
 export type DemoVariant = {
   /** The Rivet variantId from the manifest. */
   id: string;
   /** Display label (manifest `label`). */
   label: string;
-  /** One-line direction description (manifest `brief`). */
+  /**
+   * One-line direction description (manifest `brief`). Kept to roughly 30
+   * characters — the Directions panel is a narrow column, and anything longer
+   * wrapped to three lines and pushed the folders below it off-screen.
+   */
   brief: string;
   /** URL of the hosted static page for this variant. */
   src: string;
-  /** Run tag shown as the chip on the direction row. */
+  /** Run label retained as a fallback folder name for older demo data. */
   tag: string;
+  /** Folder label used by the current Rivet directions-panel grouping. */
+  folder?: string;
   /**
    * Optional in-app gallery restyle config. Unused by the hero (which renders
    * `src` in an iframe) and ignored by DirectionsPanel; the comments demo uses
@@ -29,48 +35,90 @@ export type DemoVariant = {
 };
 
 /** Shared run label (manifest `runLabel`) shown as the chip on each direction. */
-export const RUN_LABEL = 'Teletext Designs';
+export const RUN_LABEL = 'Landing Directions';
 
-/** The tactile Skeuomorphic Deck. */
-export const SKEUOMORPHIC_DECK_ID = 'ee859344-5023-425f-8db3-7aa596346e09';
-
-/** The 1984 Macintosh System — used as the pinned default for the hero. */
+/** The 1984 Macintosh System — the one genuinely off-the-wall direction. */
 export const MACINTOSH_SYSTEM_ID = '00368aee-9194-4bdd-be73-00f40704dbf2';
+
+/** Cyanotype drafting sheet: same composition, drawn instead of designed. */
+export const BLUEPRINT_DRAFT_ID = '5b1c0f7e-92a4-4c31-9f66-2c8ad4e10b73';
+
+/**
+ * The three directions that are THIS app, re-rendered with a different
+ * treatment. They load the real site in the preview iframe rather than a
+ * static export, so what you see is genuinely the running page — `embed=1`
+ * tells that copy to skip the pinned hero sequence, which is what stops it
+ * recursing into another prototype container inside itself.
+ */
+export const ORIGINAL_ID = 'original';
+export const WITH_SPLASH_ID = 'with-splash';
+export const LEFT_ALIGNED_ID = 'left-aligned';
 
 /** The prompt that produced the run (manifest `sessionPrompt`). */
 export const SESSION_PROMPT =
-  'Render every teletext design in the jersey kit studio as a Rivet variant.';
+  "Reimagine this landing page's hero across every visual direction as a Rivet variant.";
 
-// Curated order — leads with the Macintosh System (the hero's pinned
-// default, listed as the most recent direction), then the most visually
-// distinct directions.
 export const VARIANTS: DemoVariant[] = [
   {
-    id: '00368aee-9194-4bdd-be73-00f40704dbf2',
+    id: ORIGINAL_ID,
+    label: 'Original',
+    brief: 'Exactly as it ships today.',
+    src: '/?embed=1&variant=original',
+    tag: 'Baseline',
+    folder: 'Layout changes',
+  },
+  {
+    id: WITH_SPLASH_ID,
+    label: 'With splash',
+    brief: 'Splash screen, then the hero.',
+    src: '/?embed=1&variant=with-splash',
+    tag: 'Baseline',
+    folder: 'Layout changes',
+  },
+  {
+    id: LEFT_ALIGNED_ID,
+    label: 'Left aligned',
+    brief: 'Lockup and copy set flush left.',
+    src: '/?embed=1&variant=left-aligned',
+    tag: 'Baseline',
+    folder: 'Layout changes',
+  },
+  {
+    id: MACINTOSH_SYSTEM_ID,
     label: 'Macintosh System',
-    brief: 'Faithful 1984 black-and-white Macintosh, bitmap type.',
-    src: '/demos/jersey/macintosh-system.html',
-    tag: 'Legacy Apple',
+    brief: '1984 Mac chrome and bitmap type.',
+    src: '/demos/landing/macintosh-system.html',
+    tag: 'Random direction',
+    folder: 'Rough explorations',
   },
   {
-    id: 'ee859344-5023-425f-8db3-7aa596346e09',
-    label: 'Skeuomorphic Deck',
-    brief: 'Tactile brushed-metal deck with glowing LEDs.',
-    src: '/demos/jersey/skeuomorphic-deck.html',
-    tag: 'Legacy Apple',
-  },
-  {
-    id: '9ad7cb99-cf44-41d4-be97-db768e91ad4d',
-    label: 'Liquid Glass',
-    brief: 'Frosted glass islands over a live pitch.',
-    src: '/demos/jersey/liquid-glass.html',
-    tag: 'Legacy Apple',
-  },
-  {
-    id: 'c4318c43-f680-4200-a141-4ad08aa11318',
-    label: 'Frutiger Aero',
-    brief: 'Glossy mid-2000s Aqua pods and shine.',
-    src: '/demos/jersey/frutiger-aero.html',
-    tag: 'Retro flair',
+    id: BLUEPRINT_DRAFT_ID,
+    label: 'Blueprint Draft',
+    brief: 'Cyanotype sheet, drafting marks.',
+    src: '/demos/landing/blueprint-draft.html',
+    tag: 'Random direction',
+    folder: 'Rough explorations',
   },
 ];
+
+/**
+ * The subset that is safe to render INSIDE an embed. Three of the directions
+ * are this app itself (`/?embed=1&...`), so showing the full list inside an
+ * embedded copy would load the app inside the app inside the app — the `start`
+ * flag can't prevent it, because the showcase renders an iframe for any src
+ * that has been selected, including the initial one. Filtering the
+ * self-referencing srcs out makes the recursion structurally impossible rather
+ * than merely deferred. Module-level so the reference stays stable.
+ */
+export const EMBED_SAFE_VARIANTS: DemoVariant[] = VARIANTS.filter(
+  (v) => !v.src.startsWith('/?'),
+);
+
+/**
+ * Mobile drops the left-aligned direction from the auto-shuffle: it is a
+ * two-column layout, and a 32/57 split inside a portrait panel is unreadable.
+ * Module-level so the reference stays stable (see useVariantsDemo's `variants`).
+ */
+export const MOBILE_VARIANTS: DemoVariant[] = VARIANTS.filter(
+  (v) => v.id !== LEFT_ALIGNED_ID,
+);
