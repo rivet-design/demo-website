@@ -1533,6 +1533,13 @@ img[src$='blob-cluster.svg'] {
     margin: 0 auto 2.5rem;
     font-size: clamp(3rem, 11vw, 5.06rem);
   }
+  /* One line here, not the stacked pair: at one column the heading centres
+     over its copy, and the stack left a lone word floating over each line.
+     The markup keeps a space after the <br> so the two words don't fuse
+     when the break is dropped. */
+  .closing-row > h2 br {
+    display: none;
+  }
   .closing-row > p {
     margin-inline: auto;
     text-wrap: balance;
@@ -1554,6 +1561,13 @@ img[src$='blob-cluster.svg'] {
   .wide-figure__media {
     order: -1;
     margin-bottom: 3rem;
+  }
+  /* Same centring the closing block gets: the copy kept its 46ch measure but
+     sat flush left, leaving everything right of it empty — the BLOCK centres
+     under the full-bleed picture while the type inside stays left-aligned. */
+  .wide-figure__text {
+    max-width: 46ch;
+    margin-inline: auto;
   }
   .tool-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
