@@ -49,6 +49,8 @@ export default defineConfig({
       'tryrivet.design',
       'rivet.design',
       'www.rivet.design',
+      // Render PR preview environments (rivet-frontend-pr-<n>.onrender.com).
+      '.onrender.com',
     ],
   },
 });
