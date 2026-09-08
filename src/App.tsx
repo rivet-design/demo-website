@@ -1391,7 +1391,7 @@ const App = () => {
               {/* The nav's primary CTA, moved under the title — the nav copy
                   of this button drops to secondary styling so the page keeps
                   a single primary. `hero` size matches the pill beside it. */}
-              <PromptInstallButton tone="orange" size="hero" label="Copy prompt to install" />
+              <PromptInstallButton tone="orange" size="hero" label="Install Rivet" />
             </div>
           </div>
         </div>
