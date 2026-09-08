@@ -72,7 +72,7 @@ const AGENT_ITEMS: AgentItem[] = [
   },
 ];
 
-type Tone = 'orange' | 'dark' | 'light';
+type Tone = 'orange' | 'dark' | 'light' | 'secondary';
 
 const TONES: Record<
   Tone,
@@ -100,11 +100,22 @@ const TONES: Record<
     invertLogo: false,
     ring: 'ring-white',
   },
+  // The nav links' outline treatment (the Community pill, the old Watch
+  // demo): transparent over whatever ground the bar sits on. The icon chips
+  // drop their fill and ring with it — filled chips are the primary's dress.
+  secondary: {
+    bg: 'bg-transparent hover:bg-[#642e39]/5',
+    border: 'border-[#642e39]',
+    text: 'text-[#642e39]',
+    invertLogo: false,
+    ring: 'ring-transparent',
+  },
 };
 
 type PromptInstallButtonProps = {
   tone?: Tone;
-  size?: 'md' | 'lg';
+  /** `hero` matches the hero CTA pills (px-5 py-[10px] text-base). */
+  size?: 'md' | 'lg' | 'hero';
   fullWidth?: boolean;
   label?: string;
 };
@@ -121,7 +132,12 @@ const PromptInstallButton = ({
 
   const t = TONES[tone];
 
-  const mainSize = size === 'lg' ? 'px-6 py-4 text-lg' : 'px-[16px] py-[8px] text-sm';
+  const mainSize =
+    size === 'lg'
+      ? 'px-6 py-4 text-lg'
+      : size === 'hero'
+        ? 'px-5 py-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px]'
+        : 'px-[16px] py-[8px] text-sm';
   // Orange gets the hero CTA's gradient rather than a flat fill, so the two
   // primary buttons on the page read as the same object. As a CLASS, not a
   // style prop: the trigger is a PopoverTrigger, which forwards className but

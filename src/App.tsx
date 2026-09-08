@@ -1380,29 +1380,6 @@ const App = () => {
               }`}
             >
               <a
-                href="#hero-showcase"
-                // On the pinned path there is no anchor to jump to — the live
-                // demo is a scroll POSITION inside the runway, not an element
-                // in the flow — so drive the scroll directly. Everywhere else
-                // (mobile, reduced motion, embeds) the showcase really is an
-                // element below, and jumping to an anchor already in view may
-                // not move scrollY past the reveal threshold, so force it open
-                // rather than relying on the scroll listener.
-                onClick={(e) => {
-                  if (playHeroIntro && scrollToLiveDemo()) {
-                    e.preventDefault();
-                    return;
-                  }
-                  setShowcaseScrolled(true);
-                }}
-                // Auto width + nowrap: the old fixed w-[142px] broke the label
-                // onto two lines at phone widths. The copy is short enough to
-                // hold one line everywhere.
-                className="flex items-center justify-center whitespace-nowrap rounded-lg border-[0.5px] border-[#642e39] bg-[#f1efe8] px-5 py-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px] text-[#642e39] transition-colors hover:bg-[#642e39]/5"
-              >
-                Watch demo
-              </a>
-              <a
                 href="#install-panel"
                 // A native hash jump resolves the target's position at click
                 // time. From up here that is six viewports of pinned runway
@@ -1425,18 +1402,18 @@ const App = () => {
                     }),
                   );
                 }}
-                // Auto width with explicit side padding. The old fixed
-                // w-[199px] was sized for the previous, longer label, so the
-                // shorter copy sat in the middle of a box with a lot of air
-                // either side.
-                className="flex items-center justify-center gap-[10px] whitespace-nowrap rounded-lg px-5 py-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px] text-white transition-opacity hover:opacity-90"
-                style={{
-                  backgroundImage:
-                    'linear-gradient(137.74deg, rgb(236, 68, 35) 41.128%, rgb(243, 138, 118) 121.74%)',
-                }}
+                // Secondary now (the outline Watch demo wore): the install
+                // button beside it took over as the row's one primary when it
+                // moved down from the nav, and two gradient pills side by side
+                // read as the same button twice.
+                className="flex items-center justify-center whitespace-nowrap rounded-lg border-[0.5px] border-[#642e39] bg-[#f1efe8] px-5 py-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px] text-[#642e39] transition-colors hover:bg-[#642e39]/5"
               >
                 Try Rivet free
               </a>
+              {/* The nav's primary CTA, moved under the title — the nav copy
+                  of this button drops to secondary styling so the page keeps
+                  a single primary. `hero` size matches the pill beside it. */}
+              <PromptInstallButton tone="orange" size="hero" label="Install Rivet" />
             </div>
           </div>
         </div>

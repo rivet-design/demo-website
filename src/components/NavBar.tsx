@@ -294,8 +294,11 @@ const NavBar = ({
             </PopoverContent>
           </Popover>
           <div className="hidden md:block">
+            {/* Secondary here: the primary orange copy of this button lives
+                under the hero title now, and two primaries on one screen
+                fight each other. */}
             <PromptInstallButton
-              tone={isDark ? 'light' : 'orange'}
+              tone={isDark ? 'light' : 'secondary'}
               label="Install Rivet"
             />
           </div>
