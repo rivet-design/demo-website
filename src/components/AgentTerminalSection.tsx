@@ -570,6 +570,31 @@ const arrive = () =>
 
 const AgentTerminalSection = () => {
   const [hovered, setHovered] = useState<number | null>(null);
+  // A hover must mean the POINTER travelled onto a card, not that a card
+  // scrolled under a parked cursor: scrolling the row into view fires a
+  // synthetic mouseenter on whichever card lands beneath the pointer — mid
+  // screen, so usually the MIDDLE one — and that silently replaced the
+  // "first card open" default before the section was even looked at. Real
+  // movement is the tell: scroll-synthesized mouse events reuse the parked
+  // cursor's coordinates, so only a pointermove whose position actually
+  // changed refreshes the window a hover is accepted in.
+  const lastRealMoveAt = useRef(0);
+  const lastPointerPos = useRef<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      const prev = lastPointerPos.current;
+      if (!prev || prev.x !== e.clientX || prev.y !== e.clientY) {
+        lastRealMoveAt.current = performance.now();
+      }
+      lastPointerPos.current = { x: e.clientX, y: e.clientY };
+    };
+    window.addEventListener('pointermove', onMove, { passive: true });
+    return () => window.removeEventListener('pointermove', onMove);
+  }, []);
+  const hoverCard = useCallback((i: number) => {
+    if (performance.now() - lastRealMoveAt.current > 200) return;
+    setHovered(i);
+  }, []);
   // leave:false — the headline belongs to the cards below it, which are still
   // on screen long after the heading has crossed the leave band.
   const header = useScrollReveal<HTMLDivElement>({ leave: false });
@@ -743,7 +768,7 @@ const AgentTerminalSection = () => {
               hovered={openIndex}
               restW={restW}
               rowH={rowH}
-              onHover={setHovered}
+              onHover={hoverCard}
             />
           ))}
         </div>
