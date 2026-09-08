@@ -584,6 +584,9 @@ const App = () => {
     bottom: 0,
     left: 0,
   });
+  // The live measure function, reachable from outside the effect below — the
+  // settle-at-top self-heal re-runs it where the geometry is guaranteed clean.
+  const measureLandingRef = useRef<(() => void) | null>(null);
   useEffect(() => {
     if (!playHeroIntro || !outerPaneEl) return;
     const measure = () => {
@@ -620,11 +623,13 @@ const App = () => {
       });
     };
     measure();
+    measureLandingRef.current = measure;
     const ro = new ResizeObserver(measure);
     if (stageRef.current) ro.observe(stageRef.current);
     ro.observe(outerPaneEl);
     window.addEventListener('resize', measure);
     return () => {
+      measureLandingRef.current = null;
       ro.disconnect();
       window.removeEventListener('resize', measure);
     };
@@ -1035,6 +1040,45 @@ const App = () => {
       }, wait);
     }
   });
+
+  // Self-heal at the top. The sequence's state lives in three places — latched
+  // React state set from motion events, the measured landing rect, and the
+  // rate-limiter's timers — and each has now been caught at least once holding
+  // a mid-flight value after a scroll back to the top (stale direction, stuck
+  // dissolve blur, and a landing rect polluted by a mid-runway resize, which
+  // leaves the card unclipped over the whole stage). Rather than chase each
+  // path, the invariant is enforced directly: whenever NATIVE scrolling
+  // settles at the top — measured off window.scrollY, deliberately not the
+  // motion pipeline, so it holds even if that pipeline is the thing that
+  // wedged — frame 1 is restored: Original selected, no queued direction, no
+  // preview latch, and the landing re-measured where every transform is
+  // guaranteed identity. Every reset is idempotent, so the common case (state
+  // already correct) is a no-op.
+  useEffect(() => {
+    if (!playHeroIntro) return;
+    let settleTimer: number | null = null;
+    const enforceFrameOne = () => {
+      if (window.scrollY > 2) return;
+      if (directionTimer.current !== null) {
+        window.clearTimeout(directionTimer.current);
+        directionTimer.current = null;
+      }
+      pendingDirection.current = null;
+      if (outerCtrl.selectedId !== ORIGINAL_ID) outerCtrl.select(ORIGINAL_ID);
+      setCardIsPreview(false);
+      setReversing(false);
+      measureLandingRef.current?.();
+    };
+    const onScroll = () => {
+      if (settleTimer !== null) window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(enforceFrameOne, 250);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      if (settleTimer !== null) window.clearTimeout(settleTimer);
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, [playHeroIntro, outerCtrl]);
 
   // The page's OWN nav slides back down as the sequence settles. The NavBar
   // inside the card flew off into the preview pane with the rest of the page,
