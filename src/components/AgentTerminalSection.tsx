@@ -844,6 +844,23 @@ const Card = ({
     return () => io.disconnect();
   }, [stacked, reveal.phase]);
   const isOpen = stacked ? opened : hovered === index;
+  // The card's EXPENSIVE contents — the directions window's embed iframes and
+  // the connect beat's panels — only mount once the card has been held open a
+  // beat. A pointer sweeping across the row opens and closes each card within
+  // milliseconds, and mounting the iframe stack just to tear it down mid-parse
+  // cancelled its whole subresource cascade (fonts, art, the embedded demo
+  // documents) in the network log. The card itself still opens instantly;
+  // 250ms is under the windows' own arrival transitions, so a purposeful
+  // hover never notices the gate.
+  const [heldOpen, setHeldOpen] = useState(false);
+  useEffect(() => {
+    if (!isOpen) {
+      setHeldOpen(false);
+      return;
+    }
+    const id = window.setTimeout(() => setHeldOpen(true), 250);
+    return () => window.clearTimeout(id);
+  }, [isOpen]);
   // The connect beat replays on every ENTER, not just when the card goes from
   // closed to open. The last-hovered card stays open, so returning to the card
   // you were already on never flips `isOpen` — keying off that alone left it
@@ -1080,7 +1097,7 @@ const Card = ({
                       transition: arrive(),
                     }}
                   >
-                    <DirectionsWindow open={isOpen} />
+                    <DirectionsWindow open={heldOpen} />
                   </div>
                 )}
 
@@ -1094,7 +1111,7 @@ const Card = ({
                     filter from its scroll reveal, and a filtered ancestor is
                     enough to leave a descendant's own rounded clip ragged at
                     the corners. Clipping again here fixes it. */}
-                {card.connect && isOpen && (
+                {card.connect && heldOpen && (
                   <div
                     className="pointer-events-none absolute inset-0 z-10"
                     style={{
