@@ -970,6 +970,16 @@ const App = () => {
     // the last-selected direction stays chosen, the card stays at opacity 0,
     // and the shrink would replay in reverse with nothing visible in it.
     if (p < CYCLE_START) {
+      // The rate-limiter's trailing timer must die with the region: a change
+      // queued inside the 420ms window would otherwise fire AFTER the
+      // Original reselect below and put a direction back — the card then sits
+      // at opacity 0 over the hero, which reads as the background container
+      // not rendering. Timing-dependent, so it only reproduced sometimes.
+      if (directionTimer.current !== null) {
+        window.clearTimeout(directionTimer.current);
+        directionTimer.current = null;
+      }
+      pendingDirection.current = null;
       if (outerCtrl.selectedId !== ORIGINAL_ID) outerCtrl.select(ORIGINAL_ID);
       return;
     }
