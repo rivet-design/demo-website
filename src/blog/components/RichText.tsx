@@ -227,7 +227,7 @@ export const Closing = ({ children }: { children: ReactNode }) => {
         so the two read as one object. Rendered by the component rather than
         the MDX because it is structure, not story copy. */}
     <a
-      href={`mailto:sam@tryrivet.design?subject=${encodeURIComponent('Interested in joining Rivet')}`}
+      href={`mailto:sam@rivet.design?subject=${encodeURIComponent('Interested in joining Rivet')}`}
       className="closing-row__cta flex w-fit items-center justify-center gap-[10px] whitespace-nowrap rounded-lg px-5 py-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px] text-white transition-opacity hover:opacity-90"
       style={{
         backgroundImage:
