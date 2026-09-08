@@ -116,7 +116,7 @@ const SHOW_SPLASH =
 const HERO_TEXT_LEFT = IS_EMBED && EMBED_VARIANT === 'left-aligned';
 
 // Geometry of the live-prototype's decorative panel. The aspect ratio is the
-// backdrop art's own (hero-showcase-bg.png, 1409x713) — the art paints
+// backdrop art's own (hero-showcase-bg.webp, 1409x713) — the art paints
 // `bg-contain`, so any other ratio letterboxes it and the window stops fitting
 // inside it. Shared by the container and the terminal layer above it so the
 // two can't drift apart.
@@ -1510,7 +1510,7 @@ const App = () => {
                     the stage so the container reads as a panel ON the page.
                     Children pin themselves `absolute inset-0` against it. */}
                 {/* The decorative panel is given the BACKDROP ART's own
-                    aspect ratio (hero-showcase-bg.png is 1409x713). The art
+                    aspect ratio (hero-showcase-bg.webp is 1409x713). The art
                     is painted `bg-contain`, so any other ratio letterboxes it
                     inside this box — which is how the window ended up wider
                     than the art behind it. Matching the ratio makes panel box
@@ -1844,7 +1844,7 @@ const App = () => {
                 <HeroShowcaseBackground
                   src={
                     HERO_TEXT_LEFT
-                      ? '/images/hero-showcase-bg-left.png'
+                      ? '/images/hero-showcase-bg-left.webp'
                       : undefined
                   }
                   fill={isMobileViewport && !HERO_TEXT_LEFT}

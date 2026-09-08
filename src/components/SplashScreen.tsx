@@ -74,15 +74,15 @@ const TEXT_HEIGHT = `calc((${ICON_SIZE}) * ${RIVET_TEXT_TO_ICON_HEIGHT})`;
 const TEXT_WIDTH_FULL = `calc((${ICON_SIZE}) * ${RIVET_TEXT_TO_ICON_HEIGHT} * ${RIVET_TEXT_NATIVE_ASPECT})`;
 
 const FLASH_FRAMES = [
-  '/images/splash/splash-gradient-tight.png',
-  '/images/splash/splash-outline-tight.png',
-  '/images/splash/splash-sketch-tight.png',
-  '/images/splash/splash-collage-tight.png',
-  '/images/splash/splash-metallic-tight.png',
-  '/images/splash/splash-outline-tight.png',
-  '/images/splash/splash-sketch-tight.png',
-  '/images/splash/splash-collage-tight.png',
-  '/images/splash/splash-metallic-tight.png',
+  '/images/splash/splash-gradient-tight.webp',
+  '/images/splash/splash-outline-tight.webp',
+  '/images/splash/splash-sketch-tight.webp',
+  '/images/splash/splash-collage-tight.webp',
+  '/images/splash/splash-metallic-tight.webp',
+  '/images/splash/splash-outline-tight.webp',
+  '/images/splash/splash-sketch-tight.webp',
+  '/images/splash/splash-collage-tight.webp',
+  '/images/splash/splash-metallic-tight.webp',
 ] as const;
 
 type Phase = 'loading' | 'flashing' | 'settled' | 'expanding' | 'landing' | 'exiting' | 'done';

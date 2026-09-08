@@ -8,7 +8,7 @@
 // and cutting into that border.
 const HeroShowcaseBackground = ({
   /** Override the artwork — the left-aligned direction uses its own panel. */
-  src = '/images/hero-showcase-bg.png',
+  src = '/images/hero-showcase-bg.webp',
   /**
    * `cover` instead of `contain`. The default contains the art so its baked-in
    * border isn't clipped, but that letterboxes badly in a portrait box — which

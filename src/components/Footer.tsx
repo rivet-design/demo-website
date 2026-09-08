@@ -160,7 +160,8 @@ const Footer = () => {
               row directly beneath it */}
           <div className="flex flex-col items-start gap-4" style={rise(0)}>
             <img
-              src="/images/rivet-app-icon.png"
+              loading="lazy"
+              src="/images/rivet-app-icon.webp"
               alt="Rivet"
               draggable={false}
               className="inline-block h-11 sm:h-12 w-auto"
@@ -284,7 +285,7 @@ const Footer = () => {
           shared page gutter
           so the logo aligns to the same horizontal margin as the wordmark and
           content sections above. Two layers: the wordmark as a PNG
-          (rivet-footer-wordmark.png, 3170x934 @2x) because its translucent
+          (rivet-footer-wordmark.webp, 3170x934 @2x) because its translucent
           overlapping letterforms come from foreignObject/backdrop-filter
           layers that an SVG loaded as an <img> never paints; and the heart as
           an SVG so it stays crisp and can be animated on its own. The box
@@ -310,8 +311,9 @@ const Footer = () => {
             so it runs to the viewport edges while the mark stays inside the
             page gutter. Same 2.097 ratio as the mark, so the two register. */}
         <img
-          src="/images/rivet-footer-bars.png"
+          src="/images/rivet-footer-bars.webp"
           alt=""
+          loading="lazy"
           draggable={false}
           className="pointer-events-none absolute inset-x-0 bottom-0 z-0 block w-full"
         />
@@ -333,6 +335,7 @@ const Footer = () => {
               placement this box was built around, so it maps 1:1. */}
           <iframe
             src="/demos/footer-heart.html"
+            loading="lazy"
             title=""
             aria-hidden="true"
             scrolling="no"
