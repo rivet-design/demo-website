@@ -8,7 +8,7 @@ const LINKEDIN_LINK = 'https://www.linkedin.com/company/rivetdesign';
 const INSTAGRAM_LINK = 'https://www.instagram.com/rivet.design';
 const RELEASES_LINK = 'https://docs.rivet.design/releases';
 const MCP_LINK = 'https://docs.rivet.design/mcp-guide';
-const EMAIL = 'sam@tryrivet.design';
+const EMAIL = 'sam@rivet.design';
 
 /** Smallest space allowed between the two footer link columns, in px. */
 const MIN_COLUMN_GUTTER = 8;
