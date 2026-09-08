@@ -741,7 +741,10 @@ const App = () => {
   const [reversing, setReversing] = useState(false);
   useMotionValueEvent(scrollVelocity, 'change', (v) => {
     const p = heroScrollProgress.get();
-    if (p >= CYCLE_START) {
+    // p <= 0 releases too: back on the full hero there is nothing left to
+    // dissolve, and a gesture that ends pinned at the top may never deliver
+    // the settle event the release below waits for.
+    if (p >= CYCLE_START || p <= 0) {
       setReversing((was) => (was ? false : was));
       return;
     }
@@ -749,6 +752,22 @@ const App = () => {
     else if (v > 0.02 || Math.abs(v) < 0.005)
       setReversing((was) => (was ? false : was));
   });
+  // Watchdog on the latch. Both release paths above live inside a VELOCITY
+  // change handler — if the scroll stops dead (boundary hit, tab throttled)
+  // and no further velocity event arrives, `reversing` stays true and the
+  // dissolve blur sits on the hero for good. While reversing, progress is
+  // sampled directly: two identical reads 180ms apart mean the gesture is
+  // over, whatever the velocity stream failed to say.
+  useEffect(() => {
+    if (!reversing) return;
+    let prev = heroScrollProgress.get();
+    const id = window.setInterval(() => {
+      const now = heroScrollProgress.get();
+      if (now <= 0 || now === prev) setReversing(false);
+      prev = now;
+    }, 180);
+    return () => window.clearInterval(id);
+  }, [reversing, heroScrollProgress]);
   const reverseAmount = useMotionValue(0);
   useEffect(() => {
     const controls = animate(reverseAmount, reversing ? 1 : 0, {
