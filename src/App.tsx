@@ -1380,35 +1380,13 @@ const App = () => {
               }`}
             >
               <a
-                href="#install-panel"
-                // A native hash jump resolves the target's position at click
-                // time. From up here that is six viewports of pinned runway
-                // away, and anything that settles on the way down (the stage
-                // unpinning, images) leaves the landing short. Measuring on
-                // the next frame and scrolling ourselves lands on the section
-                // itself.
-                onClick={(e) => {
-                  const target = document.getElementById('install-panel');
-                  if (!target) return;
-                  e.preventDefault();
-                  requestAnimationFrame(() =>
-                    target.scrollIntoView({
-                      behavior: window.matchMedia(
-                        '(prefers-reduced-motion: reduce)',
-                      ).matches
-                        ? 'auto'
-                        : 'smooth',
-                      block: 'start',
-                    }),
-                  );
-                }}
-                // Secondary now (the outline Watch demo wore): the install
-                // button beside it took over as the row's one primary when it
-                // moved down from the nav, and two gradient pills side by side
-                // read as the same button twice.
+                href="/about"
+                // Secondary (the outline Watch demo wore): the install button
+                // beside it is the row's one primary, and two gradient pills
+                // side by side read as the same button twice.
                 className="flex items-center justify-center whitespace-nowrap rounded-lg border-[0.5px] border-[#642e39] bg-[#f1efe8] px-5 py-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px] text-[#642e39] transition-colors hover:bg-[#642e39]/5"
               >
-                Try Rivet free
+                Learn more
               </a>
               {/* The nav's primary CTA, moved under the title — the nav copy
                   of this button drops to secondary styling so the page keeps

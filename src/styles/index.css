@@ -1430,6 +1430,14 @@ img[src$='blob-cluster.svg'] {
   grid-row: 3;
   margin-top: 1.5em;
 }
+/* The hiring CTA, on the copy's own track and left line, a beat below it. */
+.closing-row__cta {
+  position: relative;
+  grid-column: 2;
+  grid-row: 4;
+  justify-self: start;
+  margin-top: 2.5rem;
+}
 
 /* Rivet's corner marks: the same square the marks field scatters, here doing
    the job it came from — showing the box a thing occupies.
@@ -1569,6 +1577,13 @@ img[src$='blob-cluster.svg'] {
     margin-inline: auto;
     text-wrap: balance;
   }
+  /* The CTA centres with the blocks it belongs to. justify-self stops
+     binding once the mobile !important rules span it full-width, so the
+     centring is carried by the margins instead. */
+  .closing-row__cta {
+    justify-self: auto;
+    margin-inline: auto;
+  }
   /* The pictures bleed; the table does not. .chapter__rows carries the row
      TEXT as well as its pictures, so bleeding it dragged the numerals and
      tags out to the viewport edge and clipped them. */
@@ -1625,6 +1640,9 @@ img[src$='blob-cluster.svg'] {
     margin-inline: 0;
   }
   .closing-row > p {
+    margin-inline: 0;
+  }
+  .closing-row__cta {
     margin-inline: 0;
   }
 }
