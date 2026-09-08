@@ -124,6 +124,20 @@
        page edges. */
     overscroll-behavior: none;
   }
+  /* WebKit ONLY (the @supports test is a WebKit-exclusive image function —
+     Blink and Gecko both fail it): a non-auto overscroll-behavior on the
+     ROOT's vertical axis doesn't just remove the bounce in Safari, it stops
+     the page responding to wheel/trackpad scrolling AT ALL — events arrive
+     uncancelled and the document still never moves. Verified against Safari
+     17.5/WebKit 18: `none` and `contain` both dead, only `y: auto` scrolls.
+     So Safari trades the bounce lock for a page that scrolls; the horizontal
+     lock stays because only the y-axis triggers the bug. */
+  @supports (background: -webkit-named-image(i)) {
+    html,
+    body {
+      overscroll-behavior-y: auto;
+    }
+  }
   /* Horizontal clipping lives on the app wrapper, NOT on html/body. The
      root's overflow propagates to the viewport, and WebKit applies a
      propagated `overflow-x: clip` to BOTH axes — the page stops scrolling
