@@ -68,3 +68,18 @@ export const surfaceBackground: CSSProperties = USE_PAPER_TEXTURE
 export const footerBackground: CSSProperties = {
   backgroundColor: FOOTER_FILL,
 };
+
+/**
+ * The blog/About ground: the site's own tan at the top of the page fading to
+ * white at the bottom (Figma, Rivet Brand Exploration — F1EFE7 → FFFFFF).
+ *
+ * The top stop is exported on its own because the nav sits in it — the colour
+ * to match at the top of the page is the gradient's first stop, not its
+ * average.
+ */
+export const BLOG_FILL_TOP = '#f1efe7';
+export const BLOG_FILL_BOTTOM = '#ffffff';
+
+export const blogBackground: CSSProperties = {
+  backgroundImage: `linear-gradient(180deg, ${BLOG_FILL_TOP} 0%, ${BLOG_FILL_BOTTOM} 100%)`,
+};

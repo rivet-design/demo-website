@@ -217,6 +217,20 @@
   .hero-title-size {
     font-size: clamp(1.5rem, 7.5vw, 2.5rem);
   }
+  /* The below-fold statement, at the hero title's own size. It is a headline
+     of the same rank, so it takes the same formula rather than a text-2xl that
+     lands near it — on a phone the two sat visibly apart. */
+  .hero-statement-size {
+    font-size: clamp(1.5rem, 7.5vw, 2.5rem);
+  }
+  /* Any headline that must read at exactly the hero title's rank. Takes the
+     hero's OWN size straight from the variable — the two are meant to move
+     together at every width, and a second copy of the formula is how they
+     silently drift apart. --hero-title-font-size is set per breakpoint in the
+     media blocks below, beside .hero-title-text itself. */
+  .hero-title-matched-size {
+    font-size: var(--hero-title-font-size);
+  }
   /* Main hero title only, below lg: step up from the shared hero-title-size,
      capped at THREE lines. The title alone bleeds 1.5rem into the hero copy
      block's gutters (same idea as .bleed-page-gutter-x) — without the bleed
@@ -231,17 +245,21 @@
      Above ~615px the 3.5rem cap binds and fits comfortably up to lg.
      balance evens the three lines. */
   @media (max-width: 1023px) {
+    /* Sized for TWO lines. The markup carries a hard <br/> after "design",
+       so the constraint is the longer of the two lines — "directions from
+       your agent." — fitting the available width (100vw − gutters − the
+       bled px-12 = 86.8vw − 3rem). The divisor is that measure; /10 was
+       sized for three lines and let the second one wrap again.
+       In Aileron Regular at the title's -3% tracking that line measures
+       11.19em, so /13.5 leaves ~17% headroom. Re-measure before changing
+       the weight: Bold is ~6% wider, which would still fit here. */
+    :root {
+      --hero-title-font-size: clamp(1.25rem, calc((86.8vw - 3rem) / 13.5), 2.25rem);
+    }
+
     .hero-title-text {
       margin-inline: -1.5rem;
-      /* Sized for TWO lines. The markup carries a hard <br/> after "design",
-         so the constraint is the longer of the two lines — "directions from
-         your agent." — fitting the available width (100vw − gutters − the
-         bled px-12 = 86.8vw − 3rem). The divisor is that measure; /10 was
-         sized for three lines and let the second one wrap again.
-         In Aileron Regular at the title's -3% tracking that line measures
-         11.19em, so /13.5 leaves ~17% headroom. Re-measure before changing
-         the weight: Bold is ~6% wider, which would still fit here. */
-      font-size: clamp(1.25rem, calc((86.8vw - 3rem) / 13.5), 2.25rem);
+      font-size: var(--hero-title-font-size);
       text-wrap: balance;
     }
   }
@@ -269,12 +287,16 @@
        divisor of 18, so it fills ~62% of the width — the em figures in the
        block above are from Satoshi, before the face changed, and no longer
        describe this. */
-    .hero-title-text {
-      font-size: clamp(
+    :root {
+      --hero-title-font-size: clamp(
         1.5rem,
         calc((100vw - (var(--page-gutter-x) * 2) - 12rem) / 18),
         5rem
       );
+    }
+
+    .hero-title-text {
+      font-size: var(--hero-title-font-size);
     }
   }
 
@@ -658,4 +680,994 @@
   background-clip: text;
   -webkit-background-clip: text;
   animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ---------- the page's column grid, as layout ----------
+   The same 12 columns and the same 0.517% gutter GridOverlay draws, expressed
+   as a real grid so content can be placed ON it rather than beside it. As a
+   percentage, `column-gap` resolves against this element's own width — so a
+   .page-grid stretched across the frame's content box gives columns identical
+   to the measured ones in lib/pageGrid. */
+.page-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 0.517%;
+}
+/* Under 820 the grid overlay switches off because the page is one column by
+   then; the layout has to agree, or the text keeps a 12-column indent on a
+   phone. */
+@media (max-width: 1100px) {
+  .page-grid > * {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+/* ---------- column-grid overlay ----------
+   Paired with src/components/GridOverlay.tsx. The component supplies each
+   bar's measured left/width and the side it flies in from; this file only
+   says what a bar looks like and how it moves. */
+.grid-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80; /* above the nav (z-70) — the grid measures the nav too */
+  pointer-events: none;
+}
+/* Each bar comes in from its own side on a stagger: columns alternate up and
+   down across the page, the margins slide in from the edges they mark. */
+.grid-overlay__bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: block;
+  opacity: 0;
+  transform: translate(var(--gx, 0), var(--gy, 0));
+  transition:
+    transform 0.62s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.52s linear;
+  transition-delay: var(--gd, 0ms);
+}
+/* .16s in, .52s out: solid almost as soon as it moves, and smearing as it
+   leaves, so the exit trails instead of blinking off. */
+.grid-overlay.is-in .grid-overlay__bar {
+  transform: none;
+  opacity: 1;
+  transition:
+    transform 0.62s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.16s linear;
+}
+/* Columns are tinted; the gaps between them are the gutters. */
+.grid-overlay__bar--col {
+  background: rgba(225, 64, 23, 0.045);
+}
+.grid-overlay__bar--mar {
+  background: rgba(225, 64, 23, 0.1);
+}
+
+/* Kept quiet, and sat on the content column's left edge — the component
+   measures that x and supplies it as `left`. */
+.grid-overlay__btn {
+  position: fixed;
+  bottom: 10px;
+  left: 12px;
+  z-index: 81;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9.5px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: #8b8b88;
+  cursor: pointer;
+  opacity: 0.3;
+  transition:
+    opacity 0.18s linear,
+    color 0.18s linear;
+}
+.grid-overlay__btn:hover,
+.grid-overlay__btn[aria-pressed='true'] {
+  opacity: 1;
+  /* The literal, not var(--primary): at :root that token is a shadcn HSL
+     TRIPLE (`0 0% 9%`), not a colour — the orange only exists as a real
+     colour inside .rivet-comments. Same literal ::selection uses. */
+  color: #e14017;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grid-overlay__bar {
+    transition: none;
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Below 820 the page collapses toward a single column, so a multi-column
+   overlay is measuring a grid that is no longer there. */
+@media (max-width: 1100px) {
+  .grid-overlay,
+  .grid-overlay__btn {
+    display: none;
+  }
+}
+
+/* ---------- registration marks ----------
+   Paired with src/components/SquareField.tsx. The component supplies each
+   mark's measured position, weight and stagger; this file says what a mark
+   looks like and how it arrives. */
+.square-field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.square-field__mark {
+  position: absolute;
+  display: block;
+  width: 8px;
+  height: 8px;
+  /* Same object as the pictures' corner marks: same size, same colour, same
+     three-rounded-corners shape. */
+  background: #ec4423;
+  border-radius: 2px;
+  /* Centred on its crossing rather than hung off it, so the mark sits ON the
+     column line and level with the corner mark that set its row. */
+  margin: -4px 0 0 -4px;
+  opacity: 0;
+  will-change: opacity, transform;
+}
+/* The square corner points INTO the box the four of them bracket — the same
+   rule the pictures' marks follow, applied to empty space. */
+.square-field__mark--tl {
+  border-bottom-right-radius: 0;
+}
+.square-field__mark--tr {
+  border-bottom-left-radius: 0;
+}
+.square-field__mark--bl {
+  border-top-right-radius: 0;
+}
+.square-field__mark--br {
+  border-top-left-radius: 0;
+}
+/* The glitch: it does not fade in, it fails to resolve a few times first —
+   overshooting sideways and smearing horizontally before it locks on. */
+.square-field__mark.is-in {
+  animation: square-glitch 0.58s steps(1, end) var(--sq-d, 0ms) both;
+}
+@keyframes square-glitch {
+  0% {
+    opacity: 0;
+    transform: translate3d(-7px, 0, 0) scaleX(3);
+  }
+  16% {
+    opacity: var(--sq-o, 0.5);
+    transform: translate3d(4px, 0, 0) scaleX(0.35);
+  }
+  30% {
+    opacity: 0;
+    transform: translate3d(-3px, 1px, 0) scaleX(2.2);
+  }
+  44% {
+    opacity: var(--sq-o, 0.5);
+    transform: translate3d(2px, 0, 0) scaleX(0.7);
+  }
+  58% {
+    opacity: 0;
+    transform: translate3d(0, -1px, 0) scaleX(1.6);
+  }
+  72% {
+    opacity: var(--sq-o, 0.5);
+    transform: none;
+  }
+  84% {
+    opacity: 0.12;
+    transform: translate3d(1px, 0, 0) scaleX(1.2);
+  }
+  100% {
+    opacity: var(--sq-o, 0.5);
+    transform: none;
+  }
+}
+/* No flicker for anyone who has asked motion to stop — the marks just are. */
+@media (prefers-reduced-motion: reduce) {
+  .square-field__mark.is-in {
+    animation: none;
+    opacity: var(--sq-o, 0.5);
+  }
+}
+/* ================= the About article =================
+   Implements the Figma composition (Rivet Brand Exploration, node 977:9457).
+   Its frame is 1728 wide, which is exactly this page's grid at that width —
+   margin 22.5px, twelve 132.4px columns, 8.7px gutters — so every x in the
+   drawing lands on a column line and the layout below names columns rather
+   than repeating the drawing's pixel offsets.
+
+   Type sizes are the drawing's, expressed in vw against its own 1728 frame
+   (103px = 5.95vw) and clamped, so the page scales instead of snapping. */
+.about-accent {
+  color: #ec4423;
+}
+
+.article-flow {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 0.517%;
+  counter-reset: figure;
+  /* ONE type scale for the page's body copy. Every size below is set against
+     it, so the page's type moves together — the display sizes are already
+     fluid in vw, and a body size changed on its own would drift out of step
+     with them. The steps take the columns down as they narrow. */
+  --type: 1.125rem;
+}
+@media (max-width: 1400px) {
+  .article-flow {
+    --type: 1.0625rem;
+  }
+}
+@media (max-width: 1250px) {
+  .article-flow {
+    --type: 1rem;
+  }
+}
+@media (max-width: 1100px) {
+  .article-flow {
+    --type: 0.9375rem;
+  }
+}
+/* Running text lands in the first three columns unless a block says
+   otherwise — this composition works off the left edge, not off an indent. */
+.article-flow > * {
+  grid-column: 1 / span 3;
+}
+.article-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 0.517%;
+  align-items: start;
+}
+
+/* Body copy: 18px / 1.5 / -0.02em in the drawing. */
+.article-flow > p,
+.article-body,
+.tool-row__body,
+.closing-row > p {
+  font-size: var(--type);
+  line-height: 1.5;
+  letter-spacing: -0.02em;
+  color: #000;
+}
+.article-flow > p {
+  margin: 0 0 1.5em;
+}
+.article-body > p,
+.tool-row__body > p,
+.closing-row > p {
+  margin: 0;
+}
+.article-body > p + p,
+.tool-row__body > p + p {
+  margin-top: 1.5em;
+}
+
+/* The mono-ish caps tag. 18px in the accent, same object wherever it appears:
+   INTRO, PARCHMENT, TODAY. */
+.article-label {
+  margin: 0;
+  font-size: var(--type);
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: #ec4423;
+}
+
+/* Every block of copy gets the same rag treatment: in narrow columns the
+   greedy line-breaker leaves single-word last lines and a jagged right edge.
+   Hyphens stay off — a broken word costs more than the line it would fix. */
+.article-flow p,
+.article-flow h2,
+.pull-quote__body,
+h1 {
+  text-wrap: pretty;
+  hyphens: none;
+}
+/* The lede's rag is set in the copy, line by line, to match the drawing —
+   no breaker gets the same result twice across font loads and viewport
+   widths. Below 820 the block is one column wide and the drawn breaks would
+   leave it in ribbons, so they are dropped there. */
+/* The set line breaks hold only at the width they were drawn for — the
+   composition's own 1728 frame. Narrower than that, each one re-wraps and
+   leaves a short line behind it, which is a far worse rag than no set breaks
+   at all. So below the drawing's width they are dropped and the copy wraps on
+   its own, with `balance` evening it out. */
+@media (max-width: 1599px) {
+  .masthead__intro br,
+  .tool-row__body br {
+    display: none;
+  }
+}
+/* At the drawing's own width the breaks ARE honoured, so the breaker stands
+   down — balancing a paragraph whose lines are already chosen just fights it. */
+@media (min-width: 1600px) {
+  .masthead__intro .article-body > p,
+  .tool-row__body > p {
+    text-wrap: wrap;
+  }
+}
+
+/* ---------- the page's opening texture ---------- */
+.page-texture {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.page-texture img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ---------- the masthead ----------
+   The hero picture bleeds off the LEFT edge and stops on column 7's right
+   line; the lede sits away from it in column 9. */
+.about-hero {
+  grid-column: 1 / span 7;
+  /* No left padding: that edge bleeds off the page, so there is no column
+     line there for a mark to sit on. */
+  padding: 8px 8px 8px 0;
+  /* Out through the page margin to the viewport edge. html/body carry
+     overflow-x: clip, so the overhang costs no scrollbar. */
+  margin-left: calc(-1 * var(--frame-inset-x));
+  position: relative;
+}
+/* ---------- the dark brand clusters ----------
+   The gradient clusters carry a 1px #6273A1 outline in their own artwork; the
+   dark ones are flat fills with none. This gives them the same edge wherever
+   they appear — keyed off the artwork rather than a call site, so a new use of
+   either file gets it without being told to.
+
+   Four offset drop-shadows rather than an SVG stroke: each of these files is a
+   dozen overlapping circles and rects, so stroking the shapes would draw every
+   internal arc where they meet. The shadows outline the merged silhouette,
+   which is the only edge there is to see. */
+img[src$='circle-arc.svg'],
+img[src$='blob-cluster.svg'] {
+  filter: drop-shadow(1px 0 0 #6273a1) drop-shadow(-1px 0 0 #6273a1)
+    drop-shadow(0 1px 0 #6273a1) drop-shadow(0 -1px 0 #6273a1);
+}
+
+/* The wash the composition puts over the picture: E1A095 on hard light. It
+   sits in its own isolated frame so the blend has only the picture to work on
+   — left to the page's stacking context it would pick up the ground and the
+   line raster behind it as well. */
+.about-hero__frame {
+  position: relative;
+  isolation: isolate;
+}
+.about-hero__wash {
+  position: absolute;
+  inset: 0;
+  background: #e1a095;
+  mix-blend-mode: hard-light;
+  pointer-events: none;
+}
+
+/* Scoped to the picture, not `.about-hero img`: the blob that hangs off this
+   box is an <img> too, and the bare descendant selector was stretching it to
+   the picture's width and aspect ratio. */
+.about-hero__img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1007 / 483;
+  object-fit: cover;
+}
+.masthead {
+  /* Adds to the flow's own 24px top margin. The title is set at 0.9 leading,
+     so its box already carries very little air under the last line's
+     descenders — 48px between the boxes read as a good deal more than 48px of
+     white, and the picture drifted away from the line it belongs to. */
+  margin-top: 0.5rem;
+}
+/* Column 9, its LAST line sitting on the picture's bottom edge. Bottom-set
+   rather than pushed down from the top: a top offset only lines the two up at
+   one viewport width, since the picture's height and the copy's both change
+   with the column measure. */
+.masthead__intro {
+  /* Three columns, not the drawing's 301px box: with the breaks set, the box
+     only has to be wide enough that none of them re-wrap — and a column line
+     is a better right edge than an arbitrary width. */
+  grid-column: 9 / span 3;
+  align-self: end;
+}
+
+/* ---------- the chapter: heading left, numbered table right ----------
+   The heading holds two columns so "Tools, Then & Now" breaks to three lines;
+   the table runs from column 5 to the viewport's right edge. */
+.chapter {
+  margin: 14rem 0 0;
+}
+.chapter__title {
+  /* Three columns, not two: the breaks are set in the copy, but pre-line still
+     wraps on overflow, and "& Now" misses a two-column box by a few pixels —
+     which orphaned "Now" onto a fourth line. */
+  grid-column: 1 / span 3;
+  margin: 0;
+  font-size: clamp(2.75rem, 5.95vw, 7rem);
+  font-weight: 400;
+  /* Same leading as the page title: one display size, one setting. */
+  line-height: 0.9;
+  letter-spacing: -0.045em;
+  color: #000;
+}
+/* One drawn line each. */
+.chapter__line {
+  display: block;
+}
+/* On a phone the first two join, so the heading sets in two rows rather than
+   three short ones. */
+@media (max-width: 760px) {
+  .chapter__line:nth-child(1),
+  .chapter__line:nth-child(2) {
+    display: inline;
+  }
+  .chapter__line:nth-child(2)::before {
+    content: ' ';
+  }
+}
+
+.chapter__rows {
+  grid-column: 5 / -1;
+  counter-reset: figure;
+}
+
+.tool-row {
+  /* Named so the tag beside it can cap-align against it. */
+  --num-size: clamp(2rem, 2.8vw, 3rem);
+  position: relative;
+  display: grid;
+  /* Four cells of two columns each, on the page's own gutter. The row starts
+     at column 5, so these are columns 5-6, 7-8, 9-10, 11-12 — and the last
+     one runs on past the edge. */
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  column-gap: 0.66%;
+  align-items: start;
+  padding: 2.5rem 0;
+  counter-increment: figure;
+}
+/* The table is bounded by a double rule and divided by a single one: the pair
+   marks where the table starts and stops, a hairline marks where one row hands
+   over to the next. */
+.tool-row::before,
+.tool-row:last-child::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  /* Only the RULE runs past column 12 to the viewport edge — the row's cells
+     stay on the grid, so the pictures keep their column. A rule that stops on
+     the last column line reads as a mistake rather than as a margin. */
+  right: calc(-1 * var(--frame-inset-x));
+  background: rgba(236, 68, 35, 0.5);
+}
+.tool-row::before {
+  top: 0;
+  height: 1px;
+}
+/* The two ends. Drawn as a 4px band with a hairline at each edge rather than
+   as `border-style: double`, which splits its width three ways and gives no
+   control over the gap. */
+.tool-row:first-child::before,
+.tool-row:last-child::after {
+  height: 4px;
+  background: linear-gradient(
+    to bottom,
+    rgba(236, 68, 35, 0.5) 0 1px,
+    transparent 1px calc(100% - 1px),
+    rgba(236, 68, 35, 0.5) calc(100% - 1px) 100%
+  );
+}
+.tool-row:last-child::after {
+  top: auto;
+  bottom: 0;
+}
+.tool-row__marker {
+  grid-column: 1 / span 2;
+  display: flex;
+  /* Top-aligned, not baseline: the tag sits with the numeral's cap line. Both
+     run at line-height 1 so their text boxes start at the same y — with the
+     tag's own 1.5 leading its half-leading would push it down on its own. */
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.tool-row__marker .article-label {
+  line-height: 1;
+  /* Cap-aligned, not box-aligned. In a line-height:1 box Aileron's cap sits
+     0.269em below the top, so at 48px the numeral's cap is 12.9px down and the
+     18px tag's is only 4px — flush boxes leave the tag riding 9px high. This
+     drops it by the difference. */
+  margin-top: calc(0.269 * var(--num-size) - 0.222 * 1.125rem);
+}
+.tool-row__num {
+  margin: 0;
+  font-size: var(--num-size);
+  font-weight: 400;
+  line-height: 1;
+  /* The drawing's -0.13em collapsed the two digits into each other; this is
+     tight enough that the pair still reads as one mark. */
+  letter-spacing: -0.05em;
+  color: #000;
+}
+.tool-row__num::before {
+  content: counter(figure, decimal-leading-zero);
+}
+.tool-row__heading {
+  grid-column: 3 / span 2;
+  margin: 0;
+  font-size: clamp(1.5rem, 2.8vw, 3rem);
+  font-weight: 400;
+  line-height: 0.91;
+  letter-spacing: -0.05em;
+  color: #000;
+}
+.tool-row__body {
+  grid-column: 5 / span 2;
+  /* Two columns is the narrowest measure on the page, so this copy sits a
+     step below the rest of the body type — as a ratio of the page's scale,
+     not its own number, so it moves with everything else. */
+  font-size: calc(var(--type) * 0.889);
+}
+/* Short blocks get `balance`, which evens every line, rather than `pretty`,
+   which only tidies the last one and leaves the middle ones ragged. They are
+   all inside the ~6-line ceiling browsers put on it.
+
+   NOT keyed off :has(br). The set breaks are display:none below 1600 but the
+   <br>s are still in the markup, so a :has(br) opt-out matched at every width
+   and quietly dropped this copy back to the default greedy breaker — which is
+   the ragged setting it was meant to avoid. The opt-out belongs on the width
+   where the breaks are actually honoured, and lives with them below. */
+.article-body > p,
+.tool-row__body > p,
+.closing-row > p {
+  text-wrap: balance;
+}
+.tool-row__figure {
+  grid-column: 7 / span 2;
+  position: relative;
+  margin: 0;
+  padding: 8px;
+}
+.tool-row__figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ---------- the pull quote ----------
+   The drawing's largest type: 127px on a 1728 frame, holding eight columns,
+   with a paragraph set away from it in column 10. */
+.pull-quote {
+  margin: 14rem 0 0;
+}
+.pull-quote__body {
+  grid-column: 1 / span 8;
+  font-size: clamp(2.25rem, 7.36vw, 8.5rem);
+  font-weight: 400;
+  /* Tighter than the drawing's 0.95 / -0.03em: at this size the lines want to
+     read as one block, and the extra air between them broke it into three. */
+  line-height: 0.88;
+  letter-spacing: -0.045em;
+  color: #000;
+}
+.pull-quote__body > p {
+  margin: 0;
+}
+.pull-quote__aside {
+  grid-column: 10 / span 3;
+  align-self: start;
+}
+
+/* Punctuation, not decoration: sized in em so it tracks the type it closes,
+   and nudged up off the baseline the way a full stop's mass sits. */
+.text-mark {
+  display: inline-block;
+  width: 0.2em;
+  height: 0.2em;
+  margin-left: 0.04em;
+  vertical-align: 0.02em;
+}
+
+/* ---------- the wide picture ----------
+   Copy in the first three columns, the picture from column 6 out past the
+   right edge. */
+.wide-figure {
+  margin: 14rem 0 0;
+}
+/* Stretched to the row's full height so the copy can sit at the top and the
+   sign-off at the bottom, level with the picture's lower edge. */
+.wide-figure__text {
+  grid-column: 1 / span 3;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 4rem;
+}
+.wide-figure__media {
+  grid-column: 6 / -1;
+  position: relative;
+  margin: 0 calc(-1 * var(--frame-inset-x)) 0 0;
+  /* No right padding: that edge bleeds off the page. */
+  padding: 8px 0 8px 8px;
+}
+/* Scoped to the photograph: the cluster over it is an <img> too, and a bare
+   descendant selector would stretch it to the picture's box. */
+.wide-figure__img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1000 / 859;
+  object-fit: cover;
+}
+.wide-figure__blob {
+  position: absolute;
+  top: -6vw;
+  right: -2rem;
+  z-index: 1;
+  width: clamp(9rem, 16.6vw, 18rem);
+  animation: blob-drift 10s ease-in-out infinite -2s;
+  pointer-events: none;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wide-figure__blob {
+    animation: none;
+  }
+}
+@media (max-width: 1100px) {
+  .wide-figure__blob {
+    display: none;
+  }
+}
+
+/* ---------- the sign-off, at the foot of the picture's column ---------- */
+.signoff__title {
+  margin: 0 0 1.75rem;
+  font-size: clamp(1.75rem, 2.8vw, 3rem);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.05em;
+  color: #000;
+}
+
+/* ---------- the closing block ----------
+   "Join / Rivet" at the pull quote's scale in column 6, its copy stacked
+   under it, with a texture panel bleeding off each edge behind. */
+.closing-row {
+  position: relative;
+  margin: 14rem 0 0;
+  padding: 5rem 0;
+  /* Three tracks of its own rather than the page's twelve. The middle one
+     sizes to the widest block in it — the heading — and the 1fr tracks either
+     side centre that on the page, with both blocks starting on its left line.
+     Sharing a left line AND sitting on the page's centre is not something a
+     12-column span can do: any span wide enough to hold the heading is wider
+     than the heading, so centring the span leaves the type inside it sitting
+     left of the page's centre, which is what made this block read as
+     off-kilter however the span was placed. The copy's own max-width caps
+     what it contributes, so the track settles on a measure rather than on
+     the paragraph's whole length set on one line. */
+  grid-template-columns: 1fr max-content 1fr;
+}
+/* The field box carries the shared --frame-inset-x, the same margin the
+   landing section gives it, so the texture can't run to the viewport edge. */
+.closing-row__field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  pointer-events: none;
+}
+/* Same display style as the pull quote, so it takes the same tightening —
+   the two are one type object used twice. */
+.closing-row > h2 {
+  position: relative;
+  /* The centre track, which the copy's measure sizes. Two lines, broken by
+     hand in the MDX: at this scale the block is a stacked pair of words, not
+     a line of running text. */
+  grid-column: 2;
+  margin: 0 0 2rem;
+  font-size: clamp(2.25rem, 7.36vw, 8.5rem);
+  font-weight: 400;
+  line-height: 0.88;
+  letter-spacing: -0.045em;
+  color: #ec4423;
+}
+.closing-row > p {
+  position: relative;
+  /* Same track as the heading, so the two start on one line. The measure is
+     what keeps this from sizing the track itself: without it the track would
+     take this copy's max-content — the whole paragraph on one line.
+
+     27ch sets it at about the width of "Rivet" on the line above, which is
+     what makes the two read as one object: a display pair with its copy held
+     to the same column rather than a heading sitting on a paragraph twice its
+     width. ch is the "0" advance, wider than this copy's average letter, so
+     27ch lands around 32 characters to the line. */
+  grid-column: 2;
+  max-width: 27ch;
+}
+.closing-row > p:nth-of-type(1) {
+  grid-row: 2;
+}
+.closing-row > p:nth-of-type(2) {
+  grid-row: 3;
+  margin-top: 1.5em;
+}
+
+/* Rivet's corner marks: the same square the marks field scatters, here doing
+   the job it came from — showing the box a thing occupies.
+   
+   Each mark sits fully OUTSIDE its corner, offset by its own size so its inner
+   corner meets the picture's corner exactly — it snaps to the corner rather
+   than straddling and covering it. And the square corner is the INNER one, the
+   one pointing at the picture: three rounded corners and a sharp one aimed
+   into the box is what makes four of these read as brackets around it. */
+/* The picture insets by one mark so the MARKS, not the picture, are what
+   reach the column lines — a two-column figure is two columns wide including
+   its corner marks. Each marked box carries the matching padding. */
+.image-corner {
+  --mark: 8px;
+  position: absolute;
+  width: var(--mark);
+  height: var(--mark);
+  background: #ec4423;
+  border-radius: 2px;
+  z-index: 1;
+}
+.image-corner--tl {
+  top: 0;
+  left: 0;
+  border-bottom-right-radius: 0;
+}
+.image-corner--tr {
+  top: 0;
+  right: 0;
+  border-bottom-left-radius: 0;
+}
+.image-corner--bl {
+  bottom: 0;
+  left: 0;
+  border-top-right-radius: 0;
+}
+.image-corner--br {
+  bottom: 0;
+  right: 0;
+  border-top-left-radius: 0;
+}
+
+/* One column below 820, same threshold the grid overlay uses: a 12-column
+   placement on a phone is a placement on nothing. */
+@media (max-width: 1100px) {
+  .article-flow > *,
+  .article-row > * {
+    grid-column: 1 / -1 !important;
+    grid-row: auto !important;
+  }
+  /* A wider margin, set on the frame's OWN --frame-inset-x rather than on its
+     padding: every full-bleed element here pulls back out through that same
+     variable, so overriding the variable widens the text margin and leaves the
+     pictures running edge to edge. Overriding the padding alone would have
+     left them short of the edge by the difference — and left the numerals and
+     the chapter heading clipped against it. */
+  [data-page-frame] {
+    --frame-inset-x: clamp(1.25rem, 5vw, 3.5rem);
+  }
+  /* The section rhythm comes down with everything else. 14rem is a gap read
+     across a wide page; stacked on a phone it is most of a screen of nothing
+     between one block and the next. */
+  .chapter,
+  .pull-quote,
+  .wide-figure,
+  .closing-row {
+    margin-top: 6rem;
+  }
+  .closing-row {
+    padding: 2rem 0;
+    /* One track: every child here spans 1 / -1 anyway, and a max-content track
+       under a spanning item can size past the container and overflow. */
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* And a measure: at one column the copy would otherwise set the full width
+     of a tablet, which is far past what any of it was written for. */
+  .article-body,
+  .article-flow > p,
+  .tool-row__body,
+  .closing-row > p {
+    max-width: 46ch;
+  }
+  /* No rules here. They divide four columns of a table; at one column there is
+     no table left for them to divide, and they read as stray hairlines. */
+  .tool-row::before,
+  .tool-row:last-child::after {
+    display: none;
+  }
+  /* The quote carries the width on its own now, so it is set larger — three
+     lines, the shape it has in the drawing — and its aside is set well away
+     from it rather than tucked under the last line. */
+  .pull-quote__body {
+    font-size: clamp(2rem, 8.6vw, 5.5rem);
+  }
+  .pull-quote__aside {
+    margin-top: 3rem;
+  }
+  /* The closing block centres and comes up in scale. At one column it is the
+     last thing on the page with nothing beside it, so the off-centre column it
+     holds on the grid has nothing left to sit against.
+
+     The BLOCKS centre, not the type inside them: auto margins on each, with
+     the text left-aligned as everywhere else. Centred type would give this
+     copy a ragged left edge that nothing else on the page has. */
+  .closing-row > h2 {
+    /* At one column this block is the last thing on the page with nothing
+       beside it, so it centres — the BLOCKS centre, not the type inside them,
+       which stays left-aligned as everywhere else.
+
+       Own rule again, not inherited: the grid rules above set this block
+       flush left on column 6, which is where it belongs while there are
+       columns to sit on.
+
+       The cap is 5.06rem because that is EXACTLY what the grid rule's own
+       7.36vw comes to at 1100px, where this query hands over. At the old 7rem
+       the two formulas disagreed across that one pixel — 112px on this side,
+       81px on the other — so the heading lost a third of its size the moment
+       the window grew past the breakpoint, which is a jump you cannot miss on
+       a resize. Recompute this if 7.36vw changes.
+
+       It also stopped the heading overhanging its own copy: 112px set the
+       line 443px wide against a 46ch measure of 400, so the display line
+       stuck out past both edges of the paragraph it belongs to. */
+    width: max-content;
+    max-width: 100%;
+    margin: 0 auto 2.5rem;
+    font-size: clamp(3rem, 11vw, 5.06rem);
+  }
+  /* One line here, not the stacked pair: at one column the heading centres
+     over its copy, and the stack left a lone word floating over each line.
+     The markup keeps a space after the <br> so the two words don't fuse
+     when the break is dropped. */
+  .closing-row > h2 br {
+    display: none;
+  }
+  .closing-row > p {
+    margin-inline: auto;
+    text-wrap: balance;
+  }
+  /* The pictures bleed; the table does not. .chapter__rows carries the row
+     TEXT as well as its pictures, so bleeding it dragged the numerals and
+     tags out to the viewport edge and clipped them. */
+  .about-hero,
+  .wide-figure__media {
+    margin-left: calc(-1 * var(--frame-inset-x));
+    margin-right: calc(-1 * var(--frame-inset-x));
+  }
+  .chapter__rows {
+    margin-right: 0;
+  }
+  /* The picture leads its row here. Stacked, the copy and the sign-off read as
+     one long run of text with a picture appended; putting the picture first
+     gives the block something to open on. */
+  .wide-figure__media {
+    order: -1;
+    margin-bottom: 3rem;
+  }
+  /* Same centring the closing block gets: the copy kept its 46ch measure but
+     sat flush left, leaving everything right of it empty — the BLOCK centres
+     under the full-bleed picture while the type inside stays left-aligned. */
+  .wide-figure__text {
+    max-width: 46ch;
+    margin-inline: auto;
+  }
+  .tool-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 1.25rem;
+  }
+  /* Numeral left, tag pushed out to the right margin. Stacked, the pair sat
+     mid-row with the whole width empty beside it; set against the two edges it
+     reads as the row's own rule instead. */
+  .tool-row__marker {
+    grid-column: 1 / -1;
+    justify-content: space-between;
+  }
+  .tool-row__heading,
+  .tool-row__body,
+  .tool-row__figure {
+    grid-column: 1 / -1;
+  }
+  .closing-row__field {
+    display: none;
+  }
+}
+
+/* On a PHONE the closing block sets flush left with the rest of the page —
+   the centring above is for the tablet-to-small-desktop range, where the
+   block still has width to sit in the middle of. 640 rather than the 1100
+   the one-column rules use: a half-screen desktop window should keep the
+   centred coda; a phone shouldn't. */
+@media (max-width: 639px) {
+  .closing-row > h2 {
+    margin-inline: 0;
+  }
+  .closing-row > p {
+    margin-inline: 0;
+  }
+}
+
+/* ---------- the blobs flanking the About title ----------
+   Paired with src/components/TitleShapes.tsx. Hidden below 820 with the rest
+   of the grid furniture: at that width the margin they hang in is barely
+   wider than they are. */
+.title-shapes {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 20;
+  pointer-events: none;
+}
+.title-shapes__blob {
+  position: absolute;
+  display: block;
+  /* Each drifts on its own period, so the pair never reads as one object
+     moving — the same trick the hero's floating shapes use. */
+  animation: blob-drift 11s ease-in-out infinite;
+  will-change: transform;
+}
+/* Top right, past the last column and off the edge. */
+.title-shapes__blob--right {
+  top: 3.5rem;
+  right: calc(-1 * var(--frame-inset-x) - 2rem);
+  width: clamp(9rem, 16.6vw, 18rem);
+}
+/* The dark cluster hangs off the picture's lower-left corner, overlapping it.
+   Positioned against the PICTURE rather than the page, so it keeps that
+   overlap however tall the title above it happens to run. */
+.about-hero__blob {
+  position: absolute;
+  /* The drawing hangs it 114px below the picture's lower edge on a 1728
+     frame, which leaves the top ~34px of the cluster over the picture. */
+  bottom: -6.6vw;
+  left: -2rem;
+  width: clamp(9rem, 14.9vw, 16rem);
+  animation: blob-drift 9s ease-in-out infinite -3.5s;
+  pointer-events: none;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .about-hero__blob {
+    animation: none;
+  }
+}
+@media (max-width: 1100px) {
+  .about-hero__blob {
+    display: none;
+  }
+}
+@keyframes blob-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .title-shapes__blob {
+    animation: none;
+  }
+}
+@media (max-width: 1100px) {
+  .title-shapes {
+    display: none;
+  }
 }
