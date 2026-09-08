@@ -2033,8 +2033,17 @@ const App = () => {
           )}
 
           {/* Replays the whole intro: typing chat → window open → directions.
-              z-30 keeps it above the floating chat (z-20). */}
-          <ReplayButton className="z-30" onClick={replayHero} />
+              z-30 keeps it above the floating chat (z-20). On the pinned path
+              the inner panel box is display:contents, so this anchors to the
+              OUTER wrapper — whose lg:p-6 padding sits between it and the
+              panel's drawn edge. The offsets absorb that padding (24px + the
+              usual 12px inset) so the button renders INSIDE the panel; the
+              pinned path is lg-only, so only the lg padding matters. */}
+          <ReplayButton
+            className="z-30"
+            positionClassName={playHeroIntro ? 'bottom-9 right-9' : 'bottom-3 right-3'}
+            onClick={replayHero}
+          />
               </div>
         </div>
             </div>
