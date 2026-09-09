@@ -33,4 +33,13 @@ const getComponent = () => {
   return App;
 };
 
-root.render(createElement(getComponent()));
+const Page = getComponent();
+
+// Only App mounts SplashScreen, the one component that dismisses the inline
+// splash shell painted by index.html. The shell's own gate is path-based and
+// should never have raised it here — but if the two gates ever drift, this
+// takes it down instead of leaving the page covered until the shell's 10s
+// CSS timeout.
+if (Page !== App) document.documentElement.removeAttribute('data-splash');
+
+root.render(createElement(Page));

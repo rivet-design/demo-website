@@ -87,10 +87,22 @@ const FLASH_FRAMES = [
 
 type Phase = 'loading' | 'flashing' | 'settled' | 'expanding' | 'landing' | 'exiting' | 'done';
 
+// However slow the network, the canvas does not sit blank behind a locked page
+// for longer than this. A frame that misses its 85ms slot just shows the one
+// before it for another beat, which at that speed nobody can see; a blank hold
+// is the one thing that reads as broken. The frames are preloaded from the
+// document head (see index.html), so on a cold arrival they are usually in
+// cache well before the bundle has finished parsing and this never fires.
+const PRELOAD_DEADLINE_MS = 600;
+
 function preload(src: string) {
   return new Promise<void>((resolve) => {
     const img = new Image();
-    img.onload = () => resolve();
+    // decode(), not onload alone: onload promises only that the bytes landed,
+    // and a frame still decoding when its slot comes up is a dropped frame.
+    // Older browsers have no decode(); onload is the floor there.
+    img.onload = () =>
+      img.decode ? img.decode().then(() => resolve(), () => resolve()) : resolve();
     img.onerror = () => resolve();
     img.src = src;
   });
@@ -110,21 +122,53 @@ const IDENTITY_TRANSFORM = 'translate(0px, 0px) scale(1)';
 
 export default function SplashScreen() {
   const [phase, setPhase] = useState<Phase>('loading');
-  const [frameIndex, setFrameIndex] = useState(0);
+  // Whether index.html's shell has been strobing while the bundle downloaded.
+  // Read once, before the handoff effect below takes it down.
+  const [joinedShell] = useState(
+    () => typeof document !== 'undefined' && !!document.getElementById('splash-shell'),
+  );
+  // Joining a strobe already in progress, not starting one: come in near the
+  // end so the sequence settles promptly. Replaying all nine frames would
+  // hold the visitor on an animation they have been watching since the HTML
+  // landed — the strobe was the wait, and the wait is over.
+  const [frameIndex, setFrameIndex] = useState(() =>
+    joinedShell ? Math.max(0, FLASH_FRAMES.length - 2) : 0,
+  );
   const [landTransform, setLandTransform] = useState(IDENTITY_TRANSFORM);
   const lockupRef = useRef<HTMLDivElement>(null);
 
-  // Preload every frame so the strobe cadence isn't stalled by network fetches.
+  // Preload every frame so the strobe cadence isn't stalled by network fetches
+  // — but on a deadline, because waiting on ALL of them is what put a blank
+  // canvas on screen for over a second on a real connection.
   useEffect(() => {
-    let cancelled = false;
+    let settled = false;
+    const start = () => {
+      if (settled) return;
+      settled = true;
+      setPhase('flashing');
+    };
     const sources = Array.from(new Set<string>([...FLASH_FRAMES, RIVET_ICON_SRC]));
-    Promise.all(sources.map(preload)).then(() => {
-      if (!cancelled) setPhase('flashing');
-    });
+    Promise.all(sources.map(preload)).then(start);
+    const deadline = window.setTimeout(start, PRELOAD_DEADLINE_MS);
     return () => {
-      cancelled = true;
+      settled = true;
+      window.clearTimeout(deadline);
     };
   }, []);
+
+  // Hand off from the pre-bundle shell in index.html, which has been strobing
+  // since the HTML landed. Taken down on this component's first REAL frame,
+  // not on mount: during `loading` there is no strobe to show yet, so removing
+  // it earlier would put a hole where the animation was. The shell sits a
+  // layer above this one until then, so the two never both read and never
+  // leave a gap. The frame it happens to be on will not match the one this
+  // component starts from — at 85ms a frame, inside a strobe, that is not a
+  // thing anyone can see.
+  useEffect(() => {
+    if (phase === 'loading') return;
+    document.getElementById('splash-shell')?.remove();
+    document.documentElement.removeAttribute('data-splash');
+  }, [phase]);
 
   useEffect(() => {
     if (phase !== 'flashing') return;

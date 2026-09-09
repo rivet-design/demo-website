@@ -97,6 +97,12 @@ const EMBED_VARIANT = embedParams?.get('variant') ?? null;
  */
 const arrivedFromThisSite = (() => {
   try {
+    // A frame's referrer is its PARENT's URL, so every embed of this app —
+    // which the variants pane serves from this same origin — looked like an
+    // in-site hop and had its splash suppressed. The gate asks how the VISITOR
+    // entered the document, and a frame load is not the visitor going
+    // anywhere; only a top-level document can answer it.
+    if (window.top !== window.self) return false;
     const [entry] = performance.getEntriesByType(
       'navigation',
     ) as PerformanceNavigationTiming[];
@@ -109,14 +115,16 @@ const arrivedFromThisSite = (() => {
 })();
 
 // Inside an embed the splash plays for exactly one direction — "With splash",
-// whose whole point is that beat. Every other direction (Original included)
-// drops straight into the hero.
+// whose whole point is that beat. That direction asks for it by name, so it
+// plays outright rather than through the arrival gate above, which has nothing
+// to say about a frame the page opened for itself. Every other direction
+// (Original included) drops straight into the hero.
 const SHOW_SPLASH =
-  (!IS_EMBED || EMBED_VARIANT === 'with-splash') && !arrivedFromThisSite;
+  EMBED_VARIANT === 'with-splash' || (!IS_EMBED && !arrivedFromThisSite);
 const HERO_TEXT_LEFT = IS_EMBED && EMBED_VARIANT === 'left-aligned';
 
 // Geometry of the live-prototype's decorative panel. The aspect ratio is the
-// backdrop art's own (hero-showcase-bg.webp, 1409x713) — the art paints
+// backdrop art's own (hero-showcase-bg.webp, 2818x1426 — 1409:713) — the art paints
 // `bg-contain`, so any other ratio letterboxes it and the window stops fitting
 // inside it. Shared by the container and the terminal layer above it so the
 // two can't drift apart.
@@ -391,7 +399,7 @@ const App = () => {
   // on a tall-ish window the pane grows taller than the panel that houses it
   // and the whole composition breaks out of its own container — which is what
   // 1133x838 (aspect 1.35) was showing. 3/2 is the point below which the frame
-  // stops fitting the backdrop art's 1409x713.
+  // stops fitting the backdrop art's 1409:713.
   //
   // Reactive, unlike the reduced-motion check: this is a "can this layout even
   // work" test, so resizing into an unsupported shape must fall back rather
@@ -1573,7 +1581,7 @@ const App = () => {
                     the stage so the container reads as a panel ON the page.
                     Children pin themselves `absolute inset-0` against it. */}
                 {/* The decorative panel is given the BACKDROP ART's own
-                    aspect ratio (hero-showcase-bg.webp is 1409x713). The art
+                    aspect ratio (hero-showcase-bg.webp is 2818x1426). The art
                     is painted `bg-contain`, so any other ratio letterboxes it
                     inside this box — which is how the window ended up wider
                     than the art behind it. Matching the ratio makes panel box
@@ -1880,7 +1888,7 @@ const App = () => {
             >
               {/* Off the pinned path the window used to be sized independently
                   of the backdrop (h-[58vh] against a `bg-contain` image at
-                  1409x713), so on a narrow or tall viewport it grew past the
+                  1409:713), so on a narrow or tall viewport it grew past the
                   art and spilled out of its own container. This box locks to
                   the artwork's ratio — art box == panel box — and the window
                   is then a percentage of it, so it scales down with the panel

@@ -19,23 +19,35 @@ import {
 } from '@/lib/install';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
 
-// Logo rendered from public/ image files. `invert` flips it white (for dark
-// button tones); otherwise it stays black (for the light tone).
-const ToolLogo = ({
-  id,
-  label,
-  invert = true,
-}: {
-  id: AgentLogo;
-  label: string;
-  invert?: boolean;
-}) => (
-  <img
-    src={TOOL_LOGOS[id]}
-    alt={label}
-    width={16}
-    height={16}
-    className={`shrink-0 brightness-0 ${invert ? 'invert' : ''}`}
+// Logo painted in the button's own text colour rather than rendered as
+// artwork. The files are single-colour marks on transparency, so they go
+// through a mask and take `currentColor` as their fill — which means every
+// tone's icons match its label for free.
+//
+// The brightness-0/invert filter pair this replaces could only ever reach
+// black or white, so the outline tone (a #642e39 label on no fill) was stuck
+// with black icons beside maroon text. Masking is also what makes the three
+// files agree: they ship black, unfilled, and #ffffff respectively, and a
+// mask reads their alpha, not their colour.
+const ICON_PX = 16;
+const ToolLogo = ({ id, label }: { id: AgentLogo; label: string }) => (
+  <span
+    role="img"
+    aria-label={label}
+    className="block shrink-0"
+    style={{
+      width: ICON_PX,
+      height: ICON_PX,
+      backgroundColor: 'currentColor',
+      WebkitMaskImage: `url("${TOOL_LOGOS[id]}")`,
+      maskImage: `url("${TOOL_LOGOS[id]}")`,
+      WebkitMaskRepeat: 'no-repeat',
+      maskRepeat: 'no-repeat',
+      WebkitMaskPosition: 'center',
+      maskPosition: 'center',
+      WebkitMaskSize: 'contain',
+      maskSize: 'contain',
+    }}
   />
 );
 
@@ -76,13 +88,12 @@ type Tone = 'orange' | 'dark' | 'light' | 'secondary';
 
 const TONES: Record<
   Tone,
-  { bg: string; border: string; text: string; invertLogo: boolean; ring: string }
+  { bg: string; border: string; text: string; ring: string }
 > = {
   orange: {
     bg: 'bg-primary hover:bg-primary-hover',
     border: 'border-primary/20',
     text: 'text-white',
-    invertLogo: true,
     // Ring color around each icon so it reads as a distinct chip.
     ring: 'ring-primary',
   },
@@ -90,14 +101,12 @@ const TONES: Record<
     bg: 'bg-accent-foreground hover:bg-[hsl(0_0%_20%)]',
     border: 'border-white/15',
     text: 'text-white',
-    invertLogo: true,
     ring: 'ring-accent-foreground',
   },
   light: {
     bg: 'bg-white hover:bg-white/80',
     border: 'border-black/10',
     text: 'text-accent-foreground',
-    invertLogo: false,
     ring: 'ring-white',
   },
   // The nav links' outline treatment (the Community pill, the old Watch
@@ -107,7 +116,6 @@ const TONES: Record<
     bg: 'bg-transparent hover:bg-[#642e39]/5',
     border: 'border-[#642e39]',
     text: 'text-[#642e39]',
-    invertLogo: false,
     ring: 'ring-transparent',
   },
 };
@@ -206,7 +214,7 @@ const PromptInstallButton = ({
               key={logo}
               className={`relative flex ${iconBox} items-center justify-center rounded-full ${t.bg} ring-2 ${t.ring}`}
             >
-              <ToolLogo id={logo} label={logo} invert={t.invertLogo} />
+              <ToolLogo id={logo} label={logo} />
             </span>
           ))}
         </span>

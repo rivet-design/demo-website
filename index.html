@@ -30,6 +30,145 @@
   <meta property="twitter:description"
     content="Rivet is a design agent for your coding agent. It explores dozens of design directions in parallel so you can pick the one that fits." />
   <meta property="twitter:image" content="https://tryrivet.design/images/rivet-social-v2.jpg" />
+  <!-- The splash's strobe frames, started with the bundle rather than after it.
+       They are only requested once React has mounted SplashScreen, which on a
+       real connection is a second or more after the HTML lands — so the splash
+       used to open on a blank canvas and hold it while its own images caught
+       up. Tiny (41KB for all five) and always needed on a cold arrival, which
+       is exactly what preload is for. Paths are stable: /public is copied
+       verbatim, so these are not build-hashed. Keep in step with FLASH_FRAMES
+       in src/components/SplashScreen.tsx. -->
+  <link rel="preload" as="image" fetchpriority="high" href="/images/splash/splash-gradient-tight.webp" />
+  <link rel="preload" as="image" fetchpriority="high" href="/images/splash/splash-outline-tight.webp" />
+  <link rel="preload" as="image" fetchpriority="high" href="/images/splash/splash-sketch-tight.webp" />
+  <link rel="preload" as="image" fetchpriority="high" href="/images/splash/splash-collage-tight.webp" />
+  <link rel="preload" as="image" fetchpriority="high" href="/images/splash/splash-metallic-tight.webp" />
+  <link rel="preload" as="image" fetchpriority="high" href="/images/rivet-icon-mark.svg" />
+
+
+  <!-- ── Splash shell ────────────────────────────────────────────────────
+       The splash's first beat, in markup the browser can paint from the HTML
+       alone. SplashScreen.tsx cannot run until the bundle has downloaded and
+       parsed and React has mounted — ~2.2s on a real connection — and the
+       page was blank for every one of those milliseconds. This is the same
+       canvas and the same strobe, painting at first render instead.
+
+       It LOOPS rather than running the fixed nine frames, because it has no
+       idea when the bundle will arrive: the strobe becomes the wait. React
+       takes it down (see SplashScreen.tsx) the moment its own first frame is
+       up, and carries the sequence on from there.
+
+       Anything here that describes the splash's geometry is a copy of a
+       constant in SplashScreen.tsx and has to move with it: the sizes below,
+       the frame list, and the 85ms-per-frame cadence (9 x 85 = 765ms). -->
+  <style>
+    #splash-shell { display: none; }
+    :root[data-splash='shell'] #splash-shell {
+      --splash-size: clamp(150px, 16vmin, 240px);
+      --splash-icon: calc(var(--splash-size) * 0.44);
+      --splash-tick: clamp(5px, 0.56vmin, 8.4px);
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #fafafa;
+      /* If the bundle never arrives, the shell must not sit on the page
+         forever. Nothing else can take it down — this is the only actor
+         that runs without JS. */
+      animation: rivet-shell-timeout 0s linear 10s forwards;
+    }
+    @keyframes rivet-shell-timeout {
+      to { opacity: 0; visibility: hidden; pointer-events: none; }
+    }
+    #splash-shell .shell-canvas {
+      position: relative;
+      width: var(--splash-size);
+      height: var(--splash-size);
+      background-color: #F1EFE8;
+    }
+    #splash-shell .shell-mark {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      width: var(--splash-icon);
+      height: var(--splash-icon);
+      overflow: hidden;
+    }
+    /* Fills the icon box, then scales back up to the canvas's own size around
+       its centre — 1 / 0.44, matching FLASH_SCALE. */
+    #splash-shell .shell-frame {
+      position: absolute;
+      inset: 0;
+      background-position: center;
+      background-size: cover;
+      transform: scale(2.2727272727);
+      animation: rivet-shell-strobe 765ms linear infinite;
+    }
+    @keyframes rivet-shell-strobe {
+      0%,     11.10% { background-image: url('/images/splash/splash-gradient-tight.webp'); }
+      11.11%, 22.21% { background-image: url('/images/splash/splash-outline-tight.webp'); }
+      22.22%, 33.32% { background-image: url('/images/splash/splash-sketch-tight.webp'); }
+      33.33%, 44.43% { background-image: url('/images/splash/splash-collage-tight.webp'); }
+      44.44%, 55.54% { background-image: url('/images/splash/splash-metallic-tight.webp'); }
+      55.55%, 66.65% { background-image: url('/images/splash/splash-outline-tight.webp'); }
+      66.66%, 77.76% { background-image: url('/images/splash/splash-sketch-tight.webp'); }
+      77.77%, 88.87% { background-image: url('/images/splash/splash-collage-tight.webp'); }
+      88.88%, 100%   { background-image: url('/images/splash/splash-metallic-tight.webp'); }
+    }
+    /* Registration marks, straddling the canvas's corners (CORNER_TICKS). */
+    #splash-shell .shell-tick {
+      position: absolute;
+      width: var(--splash-tick);
+      height: var(--splash-tick);
+      background-position: center;
+      background-size: contain;
+      background-repeat: no-repeat;
+    }
+    #splash-shell .shell-tick.tl { top: 0; left: 0;  transform: translate(-100%, -100%) rotate(-90deg) scaleY(-1); background-image: url('/images/splash/corner-tl.svg'); }
+    #splash-shell .shell-tick.tr { top: 0; right: 0; transform: translate(100%, -100%)  rotate(-90deg);            background-image: url('/images/splash/corner-tr.svg'); }
+    #splash-shell .shell-tick.bl { bottom: 0; left: 0;  transform: translate(-100%, 100%) rotate(-90deg) scaleY(-1); background-image: url('/images/splash/corner-tl.svg'); }
+    #splash-shell .shell-tick.br { bottom: 0; right: 0; transform: translate(100%, 100%)  rotate(-90deg);            background-image: url('/images/splash/corner-tr.svg'); }
+  </style>
+  <script>
+    // Whether the shell shows at all. This mirrors SHOW_SPLASH in src/App.tsx
+    // — the two must agree, or the page flashes a splash it then takes back.
+    // Inline and synchronous on purpose: a decision made after first paint is
+    // a decision made too late.
+    (function () {
+      try {
+        // This document serves EVERY route, but only the home page mounts
+        // SplashScreen — the only thing that can take the shell down before
+        // its 10s CSS timeout. Painting the shell on /about, /download,
+        // /privacy, /terms or /variants left those pages covered and
+        // unclickable for the full timeout. main.ts removes the attribute
+        // defensively for non-splash routes too, in case these gates drift.
+        var isHome =
+          window.location.pathname === '/' ||
+          window.location.pathname === '/index.html';
+        if (!isHome) return;
+        var q = new URLSearchParams(window.location.search);
+        var isEmbed = q.get('embed') === '1';
+        var variant = q.get('variant');
+        var internal = false;
+        // A frame's referrer is its parent's URL, so only a top-level document
+        // can answer "did the visitor arrive from this same site".
+        if (window.top === window.self && document.referrer) {
+          var entry = performance.getEntriesByType('navigation')[0];
+          internal =
+            (!entry || entry.type === 'navigate') &&
+            new URL(document.referrer).origin === window.location.origin;
+        }
+        if (variant === 'with-splash' || (!isEmbed && !internal)) {
+          document.documentElement.setAttribute('data-splash', 'shell');
+        }
+      } catch (e) {
+        /* No shell rather than a wrong one. */
+      }
+    })();
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet" />
@@ -38,6 +177,16 @@
 </head>
 
 <body>
+  <!-- Painted from the HTML alone; React removes it on its first frame. -->
+  <div id="splash-shell" role="presentation" aria-hidden="true">
+    <div class="shell-canvas">
+      <div class="shell-mark"><div class="shell-frame"></div></div>
+      <span class="shell-tick tl"></span>
+      <span class="shell-tick tr"></span>
+      <span class="shell-tick bl"></span>
+      <span class="shell-tick br"></span>
+    </div>
+  </div>
   <div id="app"></div>
   <script type="module" src="/src/main.ts"></script>
 </body>

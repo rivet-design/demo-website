@@ -9,7 +9,7 @@ import DirectionsPanel from './DirectionsPanel';
 import SparkleLoader from './SparkleLoader';
 import { useVariantsDemo } from './useVariantsDemo';
 import Gallery from '../gallery/Gallery';
-import type { DemoVariant } from './data';
+import { WITH_SPLASH_ID, type DemoVariant } from './data';
 
 // Each variant page is rendered at a fixed, generously-tall logical viewport so
 // it fits without an internal scroll (a scrolling iframe would trap the page's
@@ -247,10 +247,18 @@ const VariantsShowcase = ({
   // the generating beat is still playing. Gated on `start` so a showcase that
   // is mounted but dormant (the hero pre-scroll) doesn't spend the page's
   // first-load budget on hidden embeds.
+  //
+  // "With splash" is the one direction warming must skip. Its whole subject is
+  // the arrival beat, and a warm iframe plays that beat behind opacity 0 —
+  // minutes before anyone selects it, so the direction reveals the plain hero
+  // and demonstrates nothing. It mounts on selection instead, and the beat it
+  // is showing off doubles as the load it would otherwise be hiding.
   useEffect(() => {
     if (!start || preview === 'gallery') return;
     if (!loaded.has(ctrl.selected.src)) return;
-    const next = ctrl.variants.find((v) => !visited.has(v.src));
+    const next = ctrl.variants.find(
+      (v) => !visited.has(v.src) && v.id !== WITH_SPLASH_ID,
+    );
     if (!next) return;
     const id = window.setTimeout(
       () =>
@@ -259,6 +267,21 @@ const VariantsShowcase = ({
     );
     return () => window.clearTimeout(id);
   }, [start, preview, loaded, visited, ctrl.variants, ctrl.selected.src]);
+
+  // "With splash" is a demo OF an arrival beat, so it has to arrive every time
+  // the direction is chosen. The stack keeps every visited embed mounted —
+  // right for the other directions, fatal for this one, whose document plays
+  // the splash on load and never again: after the first visit the direction
+  // reveals a plain hero and demonstrates nothing. Remounting replays it.
+  //
+  // The `key` changes, not the `src`: the visited/loaded bookkeeping is keyed
+  // by src, and a churning src would grow those sets a member per replay and
+  // drop the direction back into its generating state each time.
+  const [splashRun, setSplashRun] = useState(0);
+  useEffect(() => {
+    if (ctrl.selected.id !== WITH_SPLASH_ID) return;
+    setSplashRun((n) => n + 1);
+  }, [ctrl.selected.id]);
 
   // Arrow-key cycling, scoped to hover so it doesn't capture page scroll.
   useEffect(() => {
@@ -379,7 +402,9 @@ const VariantsShowcase = ({
             const opacity = isActive ? (activeReady ? 1 : 0) : isPrev ? 1 : 0;
             return (
               <iframe
-                key={v.src}
+                key={
+                  v.id === WITH_SPLASH_ID ? `${v.src}#${splashRun}` : v.src
+                }
                 src={v.src}
                 title={v.label}
                 {...(scrollable ? {} : { scrolling: 'no' as const })}
