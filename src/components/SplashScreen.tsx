@@ -122,7 +122,18 @@ const IDENTITY_TRANSFORM = 'translate(0px, 0px) scale(1)';
 
 export default function SplashScreen() {
   const [phase, setPhase] = useState<Phase>('loading');
-  const [frameIndex, setFrameIndex] = useState(0);
+  // Whether index.html's shell has been strobing while the bundle downloaded.
+  // Read once, before the handoff effect below takes it down.
+  const [joinedShell] = useState(
+    () => typeof document !== 'undefined' && !!document.getElementById('splash-shell'),
+  );
+  // Joining a strobe already in progress, not starting one: come in near the
+  // end so the sequence settles promptly. Replaying all nine frames would
+  // hold the visitor on an animation they have been watching since the HTML
+  // landed — the strobe was the wait, and the wait is over.
+  const [frameIndex, setFrameIndex] = useState(() =>
+    joinedShell ? Math.max(0, FLASH_FRAMES.length - 2) : 0,
+  );
   const [landTransform, setLandTransform] = useState(IDENTITY_TRANSFORM);
   const lockupRef = useRef<HTMLDivElement>(null);
 
@@ -144,6 +155,20 @@ export default function SplashScreen() {
       window.clearTimeout(deadline);
     };
   }, []);
+
+  // Hand off from the pre-bundle shell in index.html, which has been strobing
+  // since the HTML landed. Taken down on this component's first REAL frame,
+  // not on mount: during `loading` there is no strobe to show yet, so removing
+  // it earlier would put a hole where the animation was. The shell sits a
+  // layer above this one until then, so the two never both read and never
+  // leave a gap. The frame it happens to be on will not match the one this
+  // component starts from — at 85ms a frame, inside a strobe, that is not a
+  // thing anyone can see.
+  useEffect(() => {
+    if (phase === 'loading') return;
+    document.getElementById('splash-shell')?.remove();
+    document.documentElement.removeAttribute('data-splash');
+  }, [phase]);
 
   useEffect(() => {
     if (phase !== 'flashing') return;
