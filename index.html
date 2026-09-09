@@ -138,6 +138,16 @@
     // a decision made too late.
     (function () {
       try {
+        // This document serves EVERY route, but only the home page mounts
+        // SplashScreen — the only thing that can take the shell down before
+        // its 10s CSS timeout. Painting the shell on /about, /download,
+        // /privacy, /terms or /variants left those pages covered and
+        // unclickable for the full timeout. main.ts removes the attribute
+        // defensively for non-splash routes too, in case these gates drift.
+        var isHome =
+          window.location.pathname === '/' ||
+          window.location.pathname === '/index.html';
+        if (!isHome) return;
         var q = new URLSearchParams(window.location.search);
         var isEmbed = q.get('embed') === '1';
         var variant = q.get('variant');
