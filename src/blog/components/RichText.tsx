@@ -222,6 +222,20 @@ export const Closing = ({ children }: { children: ReactNode }) => {
       />
     </div>
     {children}
+    {/* The hiring ask, as an action: opens a mail draft with the subject
+        already filled in. Same primary treatment as the landing page's CTA,
+        so the two read as one object. Rendered by the component rather than
+        the MDX because it is structure, not story copy. */}
+    <a
+      href={`mailto:sam@rivet.design?subject=${encodeURIComponent('Interested in joining Rivet')}`}
+      className="closing-row__cta flex w-fit items-center justify-center gap-[10px] whitespace-nowrap rounded-lg px-5 py-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px] text-white transition-opacity hover:opacity-90"
+      style={{
+        backgroundImage:
+          'linear-gradient(137.74deg, rgb(236, 68, 35) 41.128%, rgb(243, 138, 118) 121.74%)',
+      }}
+    >
+      Join Rivet
+    </a>
   </div>
   );
 };

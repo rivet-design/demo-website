@@ -375,9 +375,16 @@ const AgentTerminal = ({
       )}
     >
       {/* Window chrome — desktop traffic lights + project name + folder. */}
+      {/* Rounded on its own top corners, not just clipped by the root: the
+          backdrop-blur promotes this bar to its own compositing surface, which
+          can escape an ancestor's border-radius clip when any ancestor carries
+          a filter (the workflow cards blur on scroll reveal) — the bar's
+          square corners then paint OVER the window's radius and the top
+          corners read as truncated. 1px under the root's 2xl so it nests
+          inside the root's border instead of poking through it. */}
       <div
         className={cn(
-          'flex shrink-0 items-center gap-2 border-b border-border bg-background/80 backdrop-blur',
+          'flex shrink-0 items-center gap-2 rounded-t-[calc(1rem-1px)] border-b border-border bg-background/80 backdrop-blur',
           compact ? 'px-3 py-2' : 'px-4 py-2.5',
         )}
       >

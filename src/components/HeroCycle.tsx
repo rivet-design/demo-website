@@ -24,10 +24,6 @@ const preload = (src: string) =>
     img.src = src;
   });
 
-const prefersReducedMotion = () =>
-  typeof window !== 'undefined' &&
-  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-
 type Props = {
   /** The picture the strobe settles on. */
   src: string;
@@ -44,7 +40,10 @@ const HeroCycle = ({ src, alt, frames, className }: Props) => {
   const [step, setStep] = useState<number | null>(null);
 
   useEffect(() => {
-    if (prefersReducedMotion()) return;
+    // NOT gated on prefers-reduced-motion: iOS turns that on under Low Power
+    // Mode, which silently skipped the strobe for every such phone. The
+    // sequence is a set of in-place image swaps — nothing moves — and it
+    // settles on the real picture within ~1.7s either way.
     let cancelled = false;
     Promise.all(cycle.map(preload)).then(() => {
       if (!cancelled) setStep(0);
@@ -62,8 +61,7 @@ const HeroCycle = ({ src, alt, frames, className }: Props) => {
     return () => window.clearTimeout(id);
   }, [step, total]);
 
-  // Before the frames land — and for anyone who has asked motion to stop — the
-  // final picture is simply what shows.
+  // Before the frames land, the final picture is simply what shows.
   const shown = step === null ? src : cycle[step % cycle.length];
 
   return <img className={className} src={shown} alt={alt} />;

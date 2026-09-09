@@ -116,7 +116,7 @@ const SHOW_SPLASH =
 const HERO_TEXT_LEFT = IS_EMBED && EMBED_VARIANT === 'left-aligned';
 
 // Geometry of the live-prototype's decorative panel. The aspect ratio is the
-// backdrop art's own (hero-showcase-bg.png, 1409x713) — the art paints
+// backdrop art's own (hero-showcase-bg.webp, 1409x713) — the art paints
 // `bg-contain`, so any other ratio letterboxes it and the window stops fitting
 // inside it. Shared by the container and the terminal layer above it so the
 // two can't drift apart.
@@ -584,6 +584,9 @@ const App = () => {
     bottom: 0,
     left: 0,
   });
+  // The live measure function, reachable from outside the effect below — the
+  // settle-at-top self-heal re-runs it where the geometry is guaranteed clean.
+  const measureLandingRef = useRef<(() => void) | null>(null);
   useEffect(() => {
     if (!playHeroIntro || !outerPaneEl) return;
     const measure = () => {
@@ -620,11 +623,13 @@ const App = () => {
       });
     };
     measure();
+    measureLandingRef.current = measure;
     const ro = new ResizeObserver(measure);
     if (stageRef.current) ro.observe(stageRef.current);
     ro.observe(outerPaneEl);
     window.addEventListener('resize', measure);
     return () => {
+      measureLandingRef.current = null;
       ro.disconnect();
       window.removeEventListener('resize', measure);
     };
@@ -741,7 +746,10 @@ const App = () => {
   const [reversing, setReversing] = useState(false);
   useMotionValueEvent(scrollVelocity, 'change', (v) => {
     const p = heroScrollProgress.get();
-    if (p >= CYCLE_START) {
+    // p <= 0 releases too: back on the full hero there is nothing left to
+    // dissolve, and a gesture that ends pinned at the top may never deliver
+    // the settle event the release below waits for.
+    if (p >= CYCLE_START || p <= 0) {
       setReversing((was) => (was ? false : was));
       return;
     }
@@ -749,6 +757,22 @@ const App = () => {
     else if (v > 0.02 || Math.abs(v) < 0.005)
       setReversing((was) => (was ? false : was));
   });
+  // Watchdog on the latch. Both release paths above live inside a VELOCITY
+  // change handler — if the scroll stops dead (boundary hit, tab throttled)
+  // and no further velocity event arrives, `reversing` stays true and the
+  // dissolve blur sits on the hero for good. While reversing, progress is
+  // sampled directly: two identical reads 180ms apart mean the gesture is
+  // over, whatever the velocity stream failed to say.
+  useEffect(() => {
+    if (!reversing) return;
+    let prev = heroScrollProgress.get();
+    const id = window.setInterval(() => {
+      const now = heroScrollProgress.get();
+      if (now <= 0 || now === prev) setReversing(false);
+      prev = now;
+    }, 180);
+    return () => window.clearInterval(id);
+  }, [reversing, heroScrollProgress]);
   const reverseAmount = useMotionValue(0);
   useEffect(() => {
     const controls = animate(reverseAmount, reversing ? 1 : 0, {
@@ -970,6 +994,16 @@ const App = () => {
     // the last-selected direction stays chosen, the card stays at opacity 0,
     // and the shrink would replay in reverse with nothing visible in it.
     if (p < CYCLE_START) {
+      // The rate-limiter's trailing timer must die with the region: a change
+      // queued inside the 420ms window would otherwise fire AFTER the
+      // Original reselect below and put a direction back — the card then sits
+      // at opacity 0 over the hero, which reads as the background container
+      // not rendering. Timing-dependent, so it only reproduced sometimes.
+      if (directionTimer.current !== null) {
+        window.clearTimeout(directionTimer.current);
+        directionTimer.current = null;
+      }
+      pendingDirection.current = null;
       if (outerCtrl.selectedId !== ORIGINAL_ID) outerCtrl.select(ORIGINAL_ID);
       return;
     }
@@ -1006,6 +1040,45 @@ const App = () => {
       }, wait);
     }
   });
+
+  // Self-heal at the top. The sequence's state lives in three places — latched
+  // React state set from motion events, the measured landing rect, and the
+  // rate-limiter's timers — and each has now been caught at least once holding
+  // a mid-flight value after a scroll back to the top (stale direction, stuck
+  // dissolve blur, and a landing rect polluted by a mid-runway resize, which
+  // leaves the card unclipped over the whole stage). Rather than chase each
+  // path, the invariant is enforced directly: whenever NATIVE scrolling
+  // settles at the top — measured off window.scrollY, deliberately not the
+  // motion pipeline, so it holds even if that pipeline is the thing that
+  // wedged — frame 1 is restored: Original selected, no queued direction, no
+  // preview latch, and the landing re-measured where every transform is
+  // guaranteed identity. Every reset is idempotent, so the common case (state
+  // already correct) is a no-op.
+  useEffect(() => {
+    if (!playHeroIntro) return;
+    let settleTimer: number | null = null;
+    const enforceFrameOne = () => {
+      if (window.scrollY > 2) return;
+      if (directionTimer.current !== null) {
+        window.clearTimeout(directionTimer.current);
+        directionTimer.current = null;
+      }
+      pendingDirection.current = null;
+      if (outerCtrl.selectedId !== ORIGINAL_ID) outerCtrl.select(ORIGINAL_ID);
+      setCardIsPreview(false);
+      setReversing(false);
+      measureLandingRef.current?.();
+    };
+    const onScroll = () => {
+      if (settleTimer !== null) window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(enforceFrameOne, 250);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      if (settleTimer !== null) window.clearTimeout(settleTimer);
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, [playHeroIntro, outerCtrl]);
 
   // The page's OWN nav slides back down as the sequence settles. The NavBar
   // inside the card flew off into the preview pane with the rest of the page,
@@ -1370,63 +1443,18 @@ const App = () => {
               }`}
             >
               <a
-                href="#hero-showcase"
-                // On the pinned path there is no anchor to jump to — the live
-                // demo is a scroll POSITION inside the runway, not an element
-                // in the flow — so drive the scroll directly. Everywhere else
-                // (mobile, reduced motion, embeds) the showcase really is an
-                // element below, and jumping to an anchor already in view may
-                // not move scrollY past the reveal threshold, so force it open
-                // rather than relying on the scroll listener.
-                onClick={(e) => {
-                  if (playHeroIntro && scrollToLiveDemo()) {
-                    e.preventDefault();
-                    return;
-                  }
-                  setShowcaseScrolled(true);
-                }}
-                // Auto width + nowrap: the old fixed w-[142px] broke the label
-                // onto two lines at phone widths. The copy is short enough to
-                // hold one line everywhere.
+                href="/about"
+                // Secondary (the outline Watch demo wore): the install button
+                // beside it is the row's one primary, and two gradient pills
+                // side by side read as the same button twice.
                 className="flex items-center justify-center whitespace-nowrap rounded-lg border-[0.5px] border-[#642e39] bg-[#f1efe8] px-5 py-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px] text-[#642e39] transition-colors hover:bg-[#642e39]/5"
               >
-                Watch demo
+                Learn more
               </a>
-              <a
-                href="#install-panel"
-                // A native hash jump resolves the target's position at click
-                // time. From up here that is six viewports of pinned runway
-                // away, and anything that settles on the way down (the stage
-                // unpinning, images) leaves the landing short. Measuring on
-                // the next frame and scrolling ourselves lands on the section
-                // itself.
-                onClick={(e) => {
-                  const target = document.getElementById('install-panel');
-                  if (!target) return;
-                  e.preventDefault();
-                  requestAnimationFrame(() =>
-                    target.scrollIntoView({
-                      behavior: window.matchMedia(
-                        '(prefers-reduced-motion: reduce)',
-                      ).matches
-                        ? 'auto'
-                        : 'smooth',
-                      block: 'start',
-                    }),
-                  );
-                }}
-                // Auto width with explicit side padding. The old fixed
-                // w-[199px] was sized for the previous, longer label, so the
-                // shorter copy sat in the middle of a box with a lot of air
-                // either side.
-                className="flex items-center justify-center gap-[10px] whitespace-nowrap rounded-lg px-5 py-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px] text-white transition-opacity hover:opacity-90"
-                style={{
-                  backgroundImage:
-                    'linear-gradient(137.74deg, rgb(236, 68, 35) 41.128%, rgb(243, 138, 118) 121.74%)',
-                }}
-              >
-                Try Rivet free
-              </a>
+              {/* The nav's primary CTA, moved under the title — the nav copy
+                  of this button drops to secondary styling so the page keeps
+                  a single primary. `hero` size matches the pill beside it. */}
+              <PromptInstallButton tone="orange" size="hero" label="Install Rivet" />
             </div>
           </div>
         </div>
@@ -1545,7 +1573,7 @@ const App = () => {
                     the stage so the container reads as a panel ON the page.
                     Children pin themselves `absolute inset-0` against it. */}
                 {/* The decorative panel is given the BACKDROP ART's own
-                    aspect ratio (hero-showcase-bg.png is 1409x713). The art
+                    aspect ratio (hero-showcase-bg.webp is 1409x713). The art
                     is painted `bg-contain`, so any other ratio letterboxes it
                     inside this box — which is how the window ended up wider
                     than the art behind it. Matching the ratio makes panel box
@@ -1879,7 +1907,7 @@ const App = () => {
                 <HeroShowcaseBackground
                   src={
                     HERO_TEXT_LEFT
-                      ? '/images/hero-showcase-bg-left.png'
+                      ? '/images/hero-showcase-bg-left.webp'
                       : undefined
                   }
                   fill={isMobileViewport && !HERO_TEXT_LEFT}
@@ -1953,7 +1981,11 @@ const App = () => {
                 // layout; desktop stays pinned, shows the panel, and uses the
                 // 1280px layout. Driven by the reactive viewport flag so a
                 // resize across 1024px switches layouts to match.
-                autoPlay={isMobileViewport && motionOK}
+                // NOT gated on motionOK: iOS turns prefers-reduced-motion on
+                // under Low Power Mode, which silently pinned every such phone
+                // on the first direction. The cycle is an opacity crossfade —
+                // no movement — so it stays on for reduced-motion users too.
+                autoPlay={isMobileViewport}
                 showDirections={!isMobileViewport}
                 portrait={isMobileViewport}
                 // The directions centre their splash in their own viewport, so
@@ -2023,8 +2055,17 @@ const App = () => {
           )}
 
           {/* Replays the whole intro: typing chat → window open → directions.
-              z-30 keeps it above the floating chat (z-20). */}
-          <ReplayButton className="z-30" onClick={replayHero} />
+              z-30 keeps it above the floating chat (z-20). On the pinned path
+              the inner panel box is display:contents, so this anchors to the
+              OUTER wrapper — whose lg:p-6 padding sits between it and the
+              panel's drawn edge. The offsets absorb that padding (24px + the
+              usual 12px inset) so the button renders INSIDE the panel; the
+              pinned path is lg-only, so only the lg padding matters. */}
+          <ReplayButton
+            className="z-30"
+            positionClassName={playHeroIntro ? 'bottom-9 right-9' : 'bottom-3 right-3'}
+            onClick={replayHero}
+          />
               </div>
         </div>
             </div>

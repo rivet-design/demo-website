@@ -68,13 +68,13 @@ const CARD_BOTTOM_GLOW =
 const CARDS = [
   {
     title: ['One-click install', 'from your agent'],
-    art: '/images/cards/oneclick.png',
+    art: '/images/cards/oneclick.webp',
     artScale: 1,
     artOpacity: 1,
     artShiftX: 0,
     artShiftY: 0,
     glow: CARD_CORNER_GLOW,
-    texture: '/images/cards/texture-stepped.png',
+    texture: '/images/cards/texture-stepped.webp',
     // Hand-broken into two balanced lines: the copy column is fixed to the
     // closed card's width, and left to auto-wrap the break point drifted with
     // the viewport — at ~1300px it orphaned "and Cursor" on its own line.
@@ -83,7 +83,7 @@ const CARDS = [
     // centred — the terminal is the subject here and the icons are set dressing.
     // Spread around the centred window rather than clustered beside it — the
     // artwork's three marks are already placed for that composition.
-    hoverArt: '/images/cards/agents-group.png',
+    hoverArt: '/images/cards/agents-group.webp',
     hoverArtClass: 'left-[3%] top-[70%] w-[98%]',
     connect: false,
     // The live hero agent window, cropped by the card's right edge.
@@ -98,13 +98,13 @@ const CARDS = [
   },
   {
     title: ['Connect your', 'design references'],
-    art: '/images/cards/connectref.png',
+    art: '/images/cards/connectref.webp',
     artScale: 1,
     artOpacity: 1,
     artShiftX: 0,
     artShiftY: 0,
     glow: CARD_BOTTOM_GLOW,
-    texture: '/images/cards/bgtexutre2.png',
+    texture: '/images/cards/bgtexutre2.webp',
     detail: [
       'Pull in inspiration from Pinterest,',
       'Are.na, and your own local files.',
@@ -134,7 +134,7 @@ const CARDS = [
     // a composition choice rather than damage control: at 1.15 the chevrons
     // fill the card a little more and bleed into their own margins, with no
     // sliced edge to hide. Nothing like the 1.62 the old asset forced.
-    art: '/images/cards/explore-chevrons-blush.png',
+    art: '/images/cards/explore-chevrons-blush.webp',
     artScale: 1.6,
     // This export carries its own blush tint and sits at ~79% alpha, close to
     // the 86-89% the other two cards' art measures — so it no longer needs the
@@ -148,7 +148,7 @@ const CARDS = [
     // bleed further off the bottom instead of sitting flush with it.
     artShiftY: 0.04,
     glow: CARD_LEFT_GLOW,
-    texture: '/images/cards/bgtexture3.png',
+    texture: '/images/cards/bgtexture3.webp',
     // Broken by hand after "that": the copy column is fixed to the closed
     // card's width, so where it wraps is predictable — and left to itself it
     // put "you can" on line one and orphaned the rest.
@@ -518,6 +518,7 @@ const ConnectPanels = ({ onDone }: { onDone: () => void }) => {
                 differ only in the button and the check, so a swap reads as a
                 flicker where a fade reads as the state changing. */}
             <img
+              loading="lazy"
               src={panel.idle}
               alt=""
               draggable={false}
@@ -525,6 +526,7 @@ const ConnectPanels = ({ onDone }: { onDone: () => void }) => {
               style={{ opacity: done ? 0 : 1, transition: `opacity 170ms ${EASE}` }}
             />
             <img
+              loading="lazy"
               src={panel.done}
               alt=""
               draggable={false}
@@ -570,6 +572,31 @@ const arrive = () =>
 
 const AgentTerminalSection = () => {
   const [hovered, setHovered] = useState<number | null>(null);
+  // A hover must mean the POINTER travelled onto a card, not that a card
+  // scrolled under a parked cursor: scrolling the row into view fires a
+  // synthetic mouseenter on whichever card lands beneath the pointer — mid
+  // screen, so usually the MIDDLE one — and that silently replaced the
+  // "first card open" default before the section was even looked at. Real
+  // movement is the tell: scroll-synthesized mouse events reuse the parked
+  // cursor's coordinates, so only a pointermove whose position actually
+  // changed refreshes the window a hover is accepted in.
+  const lastRealMoveAt = useRef(0);
+  const lastPointerPos = useRef<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      const prev = lastPointerPos.current;
+      if (!prev || prev.x !== e.clientX || prev.y !== e.clientY) {
+        lastRealMoveAt.current = performance.now();
+      }
+      lastPointerPos.current = { x: e.clientX, y: e.clientY };
+    };
+    window.addEventListener('pointermove', onMove, { passive: true });
+    return () => window.removeEventListener('pointermove', onMove);
+  }, []);
+  const hoverCard = useCallback((i: number) => {
+    if (performance.now() - lastRealMoveAt.current > 200) return;
+    setHovered(i);
+  }, []);
   // leave:false — the headline belongs to the cards below it, which are still
   // on screen long after the heading has crossed the leave band.
   const header = useScrollReveal<HTMLDivElement>({ leave: false });
@@ -743,7 +770,7 @@ const AgentTerminalSection = () => {
               hovered={openIndex}
               restW={restW}
               rowH={rowH}
-              onHover={setHovered}
+              onHover={hoverCard}
             />
           ))}
         </div>
@@ -817,6 +844,23 @@ const Card = ({
     return () => io.disconnect();
   }, [stacked, reveal.phase]);
   const isOpen = stacked ? opened : hovered === index;
+  // The card's EXPENSIVE contents — the directions window's embed iframes and
+  // the connect beat's panels — only mount once the card has been held open a
+  // beat. A pointer sweeping across the row opens and closes each card within
+  // milliseconds, and mounting the iframe stack just to tear it down mid-parse
+  // cancelled its whole subresource cascade (fonts, art, the embedded demo
+  // documents) in the network log. The card itself still opens instantly;
+  // 250ms is under the windows' own arrival transitions, so a purposeful
+  // hover never notices the gate.
+  const [heldOpen, setHeldOpen] = useState(false);
+  useEffect(() => {
+    if (!isOpen) {
+      setHeldOpen(false);
+      return;
+    }
+    const id = window.setTimeout(() => setHeldOpen(true), 250);
+    return () => window.clearTimeout(id);
+  }, [isOpen]);
   // The connect beat replays on every ENTER, not just when the card goes from
   // closed to open. The last-hovered card stays open, so returning to the card
   // you were already on never flips `isOpen` — keying off that alone left it
@@ -940,6 +984,7 @@ const Card = ({
                   }}
                 />
                 <img
+                  loading="lazy"
                   src={card.texture}
                   alt=""
                   draggable={false}
@@ -955,6 +1000,7 @@ const Card = ({
                     full-width image stretches with it. Pinned to the left edge
                     so what stays visible is the same crop it had at rest. */}
                 <img
+                  loading="lazy"
                   src={card.art}
                   alt=""
                   draggable={false}
@@ -1019,6 +1065,7 @@ const Card = ({
                       }}
                     >
                       <img
+                        loading="lazy"
                         src={card.hoverArt}
                         alt=""
                         draggable={false}
@@ -1050,7 +1097,7 @@ const Card = ({
                       transition: arrive(),
                     }}
                   >
-                    <DirectionsWindow open={isOpen} />
+                    <DirectionsWindow open={heldOpen} />
                   </div>
                 )}
 
@@ -1064,7 +1111,7 @@ const Card = ({
                     filter from its scroll reveal, and a filtered ancestor is
                     enough to leave a descendant's own rounded clip ragged at
                     the corners. Clipping again here fixes it. */}
-                {card.connect && isOpen && (
+                {card.connect && heldOpen && (
                   <div
                     className="pointer-events-none absolute inset-0 z-10"
                     style={{

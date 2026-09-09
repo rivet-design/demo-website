@@ -4,15 +4,26 @@
 type ReplayButtonProps = {
   onClick: () => void;
   className?: string;
+  /**
+   * Corner offsets, overridable because the anchor isn't always the visible
+   * panel: when the nearest positioned ancestor carries the panel's PADDING
+   * (the hero's pinned path, where the inner box is display:contents), the
+   * default 12px lands in the padding band, outside the panel's drawn edge.
+   */
+  positionClassName?: string;
 };
 
-const ReplayButton = ({ onClick, className }: ReplayButtonProps) => (
+const ReplayButton = ({
+  onClick,
+  className,
+  positionClassName = 'bottom-3 right-3',
+}: ReplayButtonProps) => (
   <button
     type="button"
     aria-label="Replay animation"
     title="Replay"
     onClick={onClick}
-    className={`absolute bottom-3 right-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white shadow-md backdrop-blur-sm transition-colors hover:bg-black/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 ${
+    className={`absolute ${positionClassName} z-20 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white shadow-md backdrop-blur-sm transition-colors hover:bg-black/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 ${
       className ?? ''
     }`}
   >
