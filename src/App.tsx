@@ -1981,7 +1981,11 @@ const App = () => {
                 // layout; desktop stays pinned, shows the panel, and uses the
                 // 1280px layout. Driven by the reactive viewport flag so a
                 // resize across 1024px switches layouts to match.
-                autoPlay={isMobileViewport && motionOK}
+                // NOT gated on motionOK: iOS turns prefers-reduced-motion on
+                // under Low Power Mode, which silently pinned every such phone
+                // on the first direction. The cycle is an opacity crossfade —
+                // no movement — so it stays on for reduced-motion users too.
+                autoPlay={isMobileViewport}
                 showDirections={!isMobileViewport}
                 portrait={isMobileViewport}
                 // The directions centre their splash in their own viewport, so
