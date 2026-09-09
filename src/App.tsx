@@ -97,6 +97,12 @@ const EMBED_VARIANT = embedParams?.get('variant') ?? null;
  */
 const arrivedFromThisSite = (() => {
   try {
+    // A frame's referrer is its PARENT's URL, so every embed of this app —
+    // which the variants pane serves from this same origin — looked like an
+    // in-site hop and had its splash suppressed. The gate asks how the VISITOR
+    // entered the document, and a frame load is not the visitor going
+    // anywhere; only a top-level document can answer it.
+    if (window.top !== window.self) return false;
     const [entry] = performance.getEntriesByType(
       'navigation',
     ) as PerformanceNavigationTiming[];
@@ -109,10 +115,12 @@ const arrivedFromThisSite = (() => {
 })();
 
 // Inside an embed the splash plays for exactly one direction — "With splash",
-// whose whole point is that beat. Every other direction (Original included)
-// drops straight into the hero.
+// whose whole point is that beat. That direction asks for it by name, so it
+// plays outright rather than through the arrival gate above, which has nothing
+// to say about a frame the page opened for itself. Every other direction
+// (Original included) drops straight into the hero.
 const SHOW_SPLASH =
-  (!IS_EMBED || EMBED_VARIANT === 'with-splash') && !arrivedFromThisSite;
+  EMBED_VARIANT === 'with-splash' || (!IS_EMBED && !arrivedFromThisSite);
 const HERO_TEXT_LEFT = IS_EMBED && EMBED_VARIANT === 'left-aligned';
 
 // Geometry of the live-prototype's decorative panel. The aspect ratio is the
