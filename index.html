@@ -30,6 +30,21 @@
   <meta property="twitter:description"
     content="Rivet is a design agent for your coding agent. It explores dozens of design directions in parallel so you can pick the one that fits." />
   <meta property="twitter:image" content="https://tryrivet.design/images/rivet-social-v2.jpg" />
+  <!-- The splash's strobe frames, started with the bundle rather than after it.
+       They are only requested once React has mounted SplashScreen, which on a
+       real connection is a second or more after the HTML lands — so the splash
+       used to open on a blank canvas and hold it while its own images caught
+       up. Tiny (41KB for all five) and always needed on a cold arrival, which
+       is exactly what preload is for. Paths are stable: /public is copied
+       verbatim, so these are not build-hashed. Keep in step with FLASH_FRAMES
+       in src/components/SplashScreen.tsx. -->
+  <link rel="preload" as="image" fetchpriority="high" href="/images/splash/splash-gradient-tight.webp" />
+  <link rel="preload" as="image" fetchpriority="high" href="/images/splash/splash-outline-tight.webp" />
+  <link rel="preload" as="image" fetchpriority="high" href="/images/splash/splash-sketch-tight.webp" />
+  <link rel="preload" as="image" fetchpriority="high" href="/images/splash/splash-collage-tight.webp" />
+  <link rel="preload" as="image" fetchpriority="high" href="/images/splash/splash-metallic-tight.webp" />
+  <link rel="preload" as="image" fetchpriority="high" href="/images/rivet-icon-mark.svg" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet" />
