@@ -233,6 +233,33 @@ const VariantsShowcase = ({
     );
   }, [ctrl.selected.src]);
 
+  // Warm-up: mount every direction's iframe AHEAD of selection, not on first
+  // visit. Mount-on-visit meant the first switch to each direction paid the
+  // whole iframe load — network, parse, the embed's own first paint — as a
+  // visible half-second hole before the crossfade had anything to fade to.
+  // The warm iframes sit at opacity 0 in the existing stack (which already
+  // keeps every visited iframe mounted), so a switch to a warm direction is
+  // pure crossfade.
+  //
+  // Paced, not all at once: warming starts only after the VISIBLE iframe has
+  // loaded (it owns the bandwidth until then) and then adds one direction per
+  // 400ms tick, so five full-page embeds don't stampede the connection while
+  // the generating beat is still playing. Gated on `start` so a showcase that
+  // is mounted but dormant (the hero pre-scroll) doesn't spend the page's
+  // first-load budget on hidden embeds.
+  useEffect(() => {
+    if (!start || preview === 'gallery') return;
+    if (!loaded.has(ctrl.selected.src)) return;
+    const next = ctrl.variants.find((v) => !visited.has(v.src));
+    if (!next) return;
+    const id = window.setTimeout(
+      () =>
+        setVisited((s) => (s.has(next.src) ? s : new Set(s).add(next.src))),
+      400,
+    );
+    return () => window.clearTimeout(id);
+  }, [start, preview, loaded, visited, ctrl.variants, ctrl.selected.src]);
+
   // Arrow-key cycling, scoped to hover so it doesn't capture page scroll.
   useEffect(() => {
     if (!hovered) return;
