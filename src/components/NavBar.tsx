@@ -167,7 +167,7 @@ const NavBar = ({
         <div className="flex items-center gap-1 sm:gap-2 lg:gap-6">
           {SHOW_ABOUT_LINK && (
             <a
-              href="/about"
+              href="/story"
               className={[
                 // Identical to Docs and Release notes — same type, same padding,
                 // same colour. It was `type-label`/text-sm in black, which made
@@ -272,7 +272,7 @@ const NavBar = ({
               className="min-w-[180px] rounded-xl border border-black/10 bg-white p-1 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.25)]"
             >
               {[
-                ...(SHOW_ABOUT_LINK ? [{ label: 'About', href: '/about' }] : []),
+                ...(SHOW_ABOUT_LINK ? [{ label: 'About', href: '/story' }] : []),
                 { label: 'Docs', href: 'https://docs.rivet.design/' },
                 {
                   label: 'Release notes',

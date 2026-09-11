@@ -48,7 +48,7 @@ const Footer = () => {
     // link is hidden (see SHOW_ABOUT_LINK in NavBar) it is "Docs", so the
     // columns keep following the nav row instead of falling back to flow.
     const firstNavLink =
-      document.querySelector('nav a[href="/about"]') ??
+      document.querySelector('nav a[href="/story"]') ??
       document.querySelector('nav a[href="https://docs.rivet.design/"]');
     const releases = document.querySelector(
       'nav a[href="https://docs.rivet.design/releases"]',
@@ -211,7 +211,7 @@ const Footer = () => {
               <div className="flex flex-col gap-3">
                 {SHOW_ABOUT_LINK && (
                   <a
-                    href="/about"
+                    href="/story"
                     className="font-main whitespace-nowrap text-lg font-normal text-black transition-colors hover:text-black/70"
                   >
                     About

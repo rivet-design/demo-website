@@ -84,7 +84,7 @@ const IS_EMBED = embedParams?.get('embed') === '1';
 const EMBED_VARIANT = embedParams?.get('variant') ?? null;
 /**
  * The splash is an arrival beat, so it plays on arrival and not on the way
- * back: coming to the home page from /about — a full page load, since routing
+ * back: coming to the home page from /story — a full page load, since routing
  * is by pathname — should drop straight into the hero rather than replay it.
  *
  * Decided from how this document was ENTERED, not from a stored flag. A flag
@@ -1451,7 +1451,7 @@ const App = () => {
               }`}
             >
               <a
-                href="/about"
+                href="/story"
                 // Secondary (the outline Watch demo wore): the install button
                 // beside it is the row's one primary, and two gradient pills
                 // side by side read as the same button twice.
