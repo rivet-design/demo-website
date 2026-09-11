@@ -17,11 +17,13 @@ const root = createRoot(container);
 
 // Simple routing based on pathname
 const requestedPath = window.location.pathname;
-const isLegacyBlogPath =
-  requestedPath === '/blog' || requestedPath.startsWith('/blog/');
-const path = isLegacyBlogPath ? '/about' : requestedPath;
+const isLegacyStoryPath =
+  requestedPath === '/about' ||
+  requestedPath === '/blog' ||
+  requestedPath.startsWith('/blog/');
+const path = isLegacyStoryPath ? '/story' : requestedPath;
 
-if (isLegacyBlogPath) window.history.replaceState(null, '', '/about');
+if (isLegacyStoryPath) window.history.replaceState(null, '', '/story');
 
 const getComponent = () => {
   if (path === '/download') return DownloadPage;
@@ -29,7 +31,7 @@ const getComponent = () => {
   if (path === '/privacy') return PrivacyPolicyPage;
   if (path === '/terms') return TermsPage;
   if (path === '/variants') return VariantsDemoPage;
-  if (path === '/about') return AboutPage;
+  if (path === '/story') return AboutPage;
   return App;
 };
 
