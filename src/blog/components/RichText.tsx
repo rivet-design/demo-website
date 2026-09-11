@@ -228,13 +228,13 @@ export const Closing = ({ children }: { children: ReactNode }) => {
         the MDX because it is structure, not story copy. */}
     <a
       href={`mailto:sam@rivet.design?subject=${encodeURIComponent('Interested in joining Rivet')}`}
-      className="closing-row__cta flex w-fit items-center justify-center gap-[10px] whitespace-nowrap rounded-lg px-5 py-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px] text-white transition-opacity hover:opacity-90"
+      className="closing-row__cta flex w-full items-center justify-center gap-[10px] whitespace-nowrap rounded-lg px-5 py-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px] text-white transition-opacity hover:opacity-90"
       style={{
         backgroundImage:
           'linear-gradient(137.74deg, rgb(236, 68, 35) 41.128%, rgb(243, 138, 118) 121.74%)',
       }}
     >
-      Join Rivet
+      Contact us
     </a>
   </div>
   );
