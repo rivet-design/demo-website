@@ -9,7 +9,7 @@
 // ephemeral npx cache. This replaced the Cursor deep link, whose npx-based
 // registration re-resolved `@latest` on every launch and ran the loopback
 // auth flow inside a disposable process.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { posthog } from '@/lib/posthog';
 import {
@@ -126,6 +126,8 @@ type PromptInstallButtonProps = {
   size?: 'md' | 'lg' | 'hero';
   fullWidth?: boolean;
   label?: string;
+  /** Close when the page scrolls, before the nav becomes part of the demo. */
+  dismissOnScroll?: boolean;
 };
 
 const PromptInstallButton = ({
@@ -133,10 +135,20 @@ const PromptInstallButton = ({
   size = 'md',
   fullWidth = false,
   label = 'Add Rivet to your agent',
+  dismissOnScroll = false,
 }: PromptInstallButtonProps) => {
   const [open, setOpen] = useState(false);
   // Keyboard highlight within the menu (-1 = no row highlighted).
   const [highlight, setHighlight] = useState(-1);
+
+  useEffect(() => {
+    if (!open || !dismissOnScroll) return;
+    const dismiss = () => setOpen(false);
+    // Only page scrolling dismisses the menu. Nested demo transcripts can
+    // scroll independently while the user is choosing an agent.
+    window.addEventListener('scroll', dismiss, { passive: true });
+    return () => window.removeEventListener('scroll', dismiss);
+  }, [open, dismissOnScroll]);
 
   const t = TONES[tone];
 

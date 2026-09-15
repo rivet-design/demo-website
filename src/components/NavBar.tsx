@@ -300,6 +300,7 @@ const NavBar = ({
             <PromptInstallButton
               tone={isDark ? 'light' : 'secondary'}
               label="Install Rivet"
+              dismissOnScroll
             />
           </div>
         </div>
