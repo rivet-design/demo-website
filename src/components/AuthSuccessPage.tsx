@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { telemetry } from '../lib/telemetry';
 
 const PROXY_URL = 'https://rivet-proxy.onrender.com';
 
@@ -58,19 +59,38 @@ const AuthSuccessPage = () => {
         // Legacy implicit flow: relay hash tokens to the proxy.
         const sessionId = urlParams.get('session');
 
-        if (!sessionId) {
-          setError('Missing session ID');
-          setAuthState('error');
-          return;
-        }
-
         // Extract tokens from URL hash (Supabase implicit flow)
         const hash = window.location.hash.substring(1);
         const hashParams = new URLSearchParams(hash);
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
 
+        // Drop the token fragment immediately so it never reaches browser
+        // history, session replay, or later analytics captures.
+        window.history.replaceState(
+          null,
+          '',
+          window.location.pathname + window.location.search,
+        );
+
+        if (!sessionId) {
+          // Tokens-without-session is the Supabase Site URL fallback: the
+          // requested redirect_to was not allowlisted, so the query was
+          // dropped while the token fragment survived.
+          telemetry.trackLandingAuthFailed({
+            reason: 'missing_session',
+            hadAccessToken: Boolean(accessToken),
+          });
+          setError('Missing session ID');
+          setAuthState('error');
+          return;
+        }
+
         if (!accessToken) {
+          telemetry.trackLandingAuthFailed({
+            reason: 'missing_token',
+            hadAccessToken: false,
+          });
           setError('No access token received');
           setAuthState('error');
           return;
@@ -92,13 +112,22 @@ const AuthSuccessPage = () => {
         const result = await response.json();
 
         if (!response.ok || !result.success) {
+          telemetry.trackLandingAuthFailed({
+            reason: 'proxy_rejected',
+            hadAccessToken: true,
+          });
           setError(result.error || 'Authentication failed');
           setAuthState('error');
           return;
         }
 
+        telemetry.trackLandingAuthCompleted();
         setAuthState('success');
       } catch (err) {
+        telemetry.trackLandingAuthFailed({
+          reason: 'exception',
+          hadAccessToken: false,
+        });
         setError(err instanceof Error ? err.message : 'Unknown error');
         setAuthState('error');
       }
