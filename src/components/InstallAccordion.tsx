@@ -12,9 +12,9 @@ import {
 } from '@/lib/install';
 
 const AGENT_ROWS: { id: InstallAgentId; label: string }[] = [
+  { id: 'codex', label: 'Codex' },
   { id: 'claude', label: 'Claude' },
   { id: 'cursor', label: 'Cursor' },
-  { id: 'codex', label: 'Codex' },
 ];
 
 const ChevronIcon = ({ open }: { open: boolean }) => (
