@@ -115,6 +115,35 @@ class Telemetry {
       variant_id: props.variantId,
     });
   }
+
+  // ----- Mobile install -----
+
+  /** Phone visitor opened the "email me the install link" dialog. */
+  trackMobileInstallEmailOpened(props: {
+    placement: MobileInstallPlacement;
+  }): void {
+    this.track('mobile_install_email_opened', {
+      placement: props.placement,
+    });
+  }
+
+  /**
+   * Phone visitor submitted their email. The address itself is never sent;
+   * `success` is whether it was stored.
+   */
+  trackMobileInstallEmailSubmitted(props: {
+    placement: MobileInstallPlacement;
+    success: boolean;
+  }): void {
+    this.track('mobile_install_email_submitted', {
+      placement: props.placement,
+      success: props.success,
+    });
+  }
 }
+
+// The bottom install section is hidden below lg, so the hero is the only
+// phone placement today.
+export type MobileInstallPlacement = 'hero';
 
 export const telemetry = new Telemetry();
