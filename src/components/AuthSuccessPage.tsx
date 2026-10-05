@@ -147,7 +147,9 @@ const AuthSuccessPage = () => {
           return;
         default: {
           const unhandled: never = outcome;
-          throw new Error(`Unhandled auth outcome: ${JSON.stringify(unhandled)}`);
+          throw new Error(
+            `Unhandled auth outcome: ${JSON.stringify(unhandled)}`,
+          );
         }
       }
     });
