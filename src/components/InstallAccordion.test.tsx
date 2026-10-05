@@ -141,6 +141,48 @@ describe('InstallAccordion copy', () => {
     ]);
   });
 
+  it('ignores a copy of the agent label alone', () => {
+    const label = [...row('claude').querySelectorAll('span')].find(
+      (s) => s.textContent === 'Claude',
+    )!;
+    select(label);
+    copyEvent(label);
+
+    expect(downloadClicks()).toEqual([]);
+  });
+
+  it('ignores a selection that stops at the start of the command', () => {
+    const label = [...row('claude').querySelectorAll('span')].find(
+      (s) => s.textContent === 'Claude',
+    )!;
+    const range = document.createRange();
+    range.setStart(label.firstChild!, 0);
+    range.setEnd(code('claude').firstChild!, 0);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+    copyEvent(label);
+
+    expect(downloadClicks()).toEqual([]);
+  });
+
+  it('counts a selection that runs from the label into the command', () => {
+    const label = [...row('claude').querySelectorAll('span')].find(
+      (s) => s.textContent === 'Claude',
+    )!;
+    const range = document.createRange();
+    range.setStart(label.firstChild!, 0);
+    range.setEnd(code('claude').firstChild!, 3);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+    copyEvent(label);
+
+    expect(downloadClicks().map((e) => e.copy_method)).toEqual([
+      'manual_select',
+    ]);
+  });
+
   it('ignores a copy event with nothing selected', () => {
     copyEvent(row('codex'));
 

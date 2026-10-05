@@ -79,7 +79,27 @@ const selectContents = (el: HTMLElement | null) => {
   selection.addRange(range);
 };
 
-const hasSelectedText = () => Boolean(window.getSelection()?.toString().trim());
+// Whether the current selection covers any of `code`'s text. A selection that
+// merely touches the element's edge intersects it without including a
+// character, so the overlap's text is what decides.
+const selectionIncludes = (code: HTMLElement | null) => {
+  const selection = window.getSelection();
+  if (!code || !selection) return false;
+  for (let i = 0; i < selection.rangeCount; i++) {
+    const range = selection.getRangeAt(i);
+    if (!range.intersectsNode(code)) continue;
+    const overlap = document.createRange();
+    overlap.selectNodeContents(code);
+    if (range.compareBoundaryPoints(Range.START_TO_START, overlap) > 0) {
+      overlap.setStart(range.startContainer, range.startOffset);
+    }
+    if (range.compareBoundaryPoints(Range.END_TO_END, overlap) < 0) {
+      overlap.setEnd(range.endContainer, range.endOffset);
+    }
+    if (overlap.toString().trim()) return true;
+  }
+  return false;
+};
 
 const InstallAccordion = () => {
   const [open, setOpen] = useState(false);
@@ -163,7 +183,9 @@ const InstallAccordion = () => {
                   data-testid={`install-command-${row.id}`}
                   onClick={() => handleRowClick(row.id)}
                   onCopy={() => {
-                    if (hasSelectedText()) track(row.id, 'manual_select');
+                    if (selectionIncludes(codeRefs.current[row.id] ?? null)) {
+                      track(row.id, 'manual_select');
+                    }
                   }}
                   className="group cursor-pointer px-4 py-3 transition-colors hover:bg-black/[0.03]"
                 >
