@@ -26,6 +26,7 @@ import FadeInText from './components/FadeInText';
 import VariantsDemoSection from './components/VariantsDemoSection';
 import PaperSheet from './components/PaperSheet';
 import PromptInstallButton from './components/PromptInstallButton';
+import HeroInstallOptions from './components/HeroInstallOptions';
 import InstallAccordion from './components/InstallAccordion';
 import BrowserFrame from './components/BrowserFrame';
 import HeroShowcaseBackground from './components/HeroShowcaseBackground';
@@ -1461,8 +1462,15 @@ const App = () => {
               </a>
               {/* The nav's primary CTA, moved under the title — the nav copy
                   of this button drops to secondary styling so the page keeps
-                  a single primary. `hero` size matches the pill beside it. */}
-              <PromptInstallButton tone="orange" size="hero" label="Install Rivet" />
+                  a single primary. `hero` size matches the pill beside it.
+                  From md up the agent choices sit inline in the pill; below
+                  md the popover keeps the row narrow enough for phones. */}
+              <div className="md:hidden">
+                <PromptInstallButton tone="orange" size="hero" label="Install Rivet" />
+              </div>
+              <div className="hidden md:block">
+                <HeroInstallOptions />
+              </div>
             </div>
           </div>
         </div>

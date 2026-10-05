@@ -14,7 +14,8 @@ import { toast } from 'sonner';
 import { posthog } from '@/lib/posthog';
 import {
   AGENT_LOGOS as TOOL_LOGOS,
-  INSTALL_COMMANDS,
+  INSTALL_AGENTS,
+  type InstallAgent,
   type InstallAgentId as AgentLogo,
 } from '@/lib/install';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
@@ -30,7 +31,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
 // files agree: they ship black, unfilled, and #ffffff respectively, and a
 // mask reads their alpha, not their colour.
 const ICON_PX = 16;
-const ToolLogo = ({ id, label }: { id: AgentLogo; label: string }) => (
+export const ToolLogo = ({ id, label }: { id: AgentLogo; label: string }) => (
   <span
     role="img"
     aria-label={label}
@@ -51,38 +52,10 @@ const ToolLogo = ({ id, label }: { id: AgentLogo; label: string }) => (
   />
 );
 
-type AgentItem = {
-  id: string;
-  label: string;
-  logo: AgentLogo;
-  prompt: string;
-};
+type AgentItem = InstallAgent;
 
-// Menu rows, in display order. Each copies a paste-ready install prompt; the
-// commands mirror rivet core's harness registry ids (`install claude` /
-// `cursor` / `codex`). Users rarely know which Claude surface they're on, so
-// the Claude row names both explicitly — the command itself shows what gets
-// set up (Claude Code + Claude Desktop chat MCP).
-const AGENT_ITEMS: AgentItem[] = [
-  {
-    id: 'codex',
-    label: 'Codex',
-    logo: 'codex',
-    prompt: `Please set up Rivet for Codex by running: ${INSTALL_COMMANDS.codex}`,
-  },
-  {
-    id: 'claude',
-    label: 'Claude',
-    logo: 'claude',
-    prompt: `Please set up Rivet for Claude Code and Claude Desktop by running: ${INSTALL_COMMANDS.claude}`,
-  },
-  {
-    id: 'cursor',
-    label: 'Cursor',
-    logo: 'cursor',
-    prompt: `Please set up Rivet for Cursor by running: ${INSTALL_COMMANDS.cursor}`,
-  },
-];
+// Menu rows, in display order. Each copies a paste-ready install prompt.
+const AGENT_ITEMS = INSTALL_AGENTS;
 
 type Tone = 'orange' | 'dark' | 'light' | 'secondary';
 
@@ -261,7 +234,7 @@ const PromptInstallButton = ({
                 i === highlight ? '-translate-y-0.5 drop-shadow-md' : ''
               }`}
             >
-              <ToolLogo id={item.logo} label={item.label} />
+              <ToolLogo id={item.id} label={item.label} />
             </span>
             <span className="flex-1 font-main">{item.label}</span>
           </button>
