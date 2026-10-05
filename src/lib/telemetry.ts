@@ -10,6 +10,9 @@ export type PromptInstallSource =
 
 type DownloadClickedSource = PromptInstallSource | 'landing_accordion';
 
+/** How an install command left the accordion; sent as `copy_method`. */
+export type CommandCopyMethod = 'row_click' | 'icon' | 'manual_select';
+
 /** `pkce` is the current proxy-completed flow; `implicit` is the legacy hash-token relay. */
 export type AuthFlow = 'pkce' | 'implicit';
 
@@ -68,10 +71,12 @@ class Telemetry {
   trackDownloadClicked(props: {
     source: DownloadClickedSource;
     downloadType: InstallAgentId;
+    copyMethod?: CommandCopyMethod;
   }): void {
     this.track('download_clicked', {
       source: props.source,
       download_type: props.downloadType,
+      ...(props.copyMethod && { copy_method: props.copyMethod }),
     });
   }
 
