@@ -6,6 +6,7 @@ import {
   type PkceErrorReason,
   type SignInFailureReason,
 } from '../lib/telemetry';
+import { parseInstallRef } from '../lib/installRef';
 
 const PROXY_URL = 'https://rivet-proxy.onrender.com';
 
@@ -131,16 +132,23 @@ const AuthSuccessPage = () => {
    * @deps None - runs once on mount
    */
   useEffect(() => {
+    const installRef = parseInstallRef(
+      new URLSearchParams(window.location.search).get('ref'),
+    );
     resolveAuth().then((outcome) => {
       switch (outcome.kind) {
         case 'success':
-          telemetry.trackEditorSignInCompleted({ flow: outcome.flow });
+          telemetry.trackEditorSignInCompleted({
+            flow: outcome.flow,
+            installRef,
+          });
           setAuthState('success');
           return;
         case 'error':
           telemetry.trackEditorSignInFailed({
             flow: outcome.flow,
             reason: outcome.reason,
+            installRef,
           });
           setError(outcome.message);
           setAuthState('error');

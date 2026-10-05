@@ -14,9 +14,10 @@ import { toast } from 'sonner';
 import { telemetry, type PromptInstallSource } from '@/lib/telemetry';
 import {
   AGENT_LOGOS as TOOL_LOGOS,
-  INSTALL_COMMANDS,
+  copiedInstallCommand,
   type InstallAgentId as AgentLogo,
 } from '@/lib/install';
+import { generateInstallRef } from '@/lib/installRef';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
 
 // Logo painted in the button's own text colour rather than rendered as
@@ -55,7 +56,7 @@ type AgentItem = {
   id: AgentLogo;
   label: string;
   logo: AgentLogo;
-  prompt: string;
+  prompt: (command: string) => string;
 };
 
 // Menu rows, in display order. Each copies a paste-ready install prompt; the
@@ -68,19 +69,21 @@ const AGENT_ITEMS: AgentItem[] = [
     id: 'codex',
     label: 'Codex',
     logo: 'codex',
-    prompt: `Please set up Rivet for Codex by running: ${INSTALL_COMMANDS.codex}`,
+    prompt: (command) => `Please set up Rivet for Codex by running: ${command}`,
   },
   {
     id: 'claude',
     label: 'Claude',
     logo: 'claude',
-    prompt: `Please set up Rivet for Claude Code and Claude Desktop by running: ${INSTALL_COMMANDS.claude}`,
+    prompt: (command) =>
+      `Please set up Rivet for Claude Code and Claude Desktop by running: ${command}`,
   },
   {
     id: 'cursor',
     label: 'Cursor',
     logo: 'cursor',
-    prompt: `Please set up Rivet for Cursor by running: ${INSTALL_COMMANDS.cursor}`,
+    prompt: (command) =>
+      `Please set up Rivet for Cursor by running: ${command}`,
   },
 ];
 
@@ -172,9 +175,15 @@ const PromptInstallButton = ({
   const iconBox = size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
 
   const activate = (item: AgentItem) => {
-    telemetry.trackDownloadClicked({ source, downloadType: item.id });
+    const installRef = generateInstallRef();
+    telemetry.trackDownloadClicked({
+      source,
+      downloadType: item.id,
+      installRef,
+    });
 
-    navigator.clipboard.writeText(item.prompt).then(() => {
+    const prompt = item.prompt(copiedInstallCommand(item.id, installRef));
+    navigator.clipboard.writeText(prompt).then(() => {
       toast.success('Prompt copied to clipboard', {
         description: `Paste into ${item.label} to install the Rivet MCP.`,
       });

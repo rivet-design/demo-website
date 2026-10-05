@@ -1,5 +1,6 @@
 import { posthog } from './posthog';
 import type { InstallAgentId } from './install';
+import type { InstallRef } from './installRef';
 
 /** Where a PromptInstallButton sits; sent as `source` on `download_clicked`. */
 export type PromptInstallSource =
@@ -8,7 +9,10 @@ export type PromptInstallSource =
   | 'landing_install_section'
   | 'story_nav';
 
-type DownloadClickedSource = PromptInstallSource | 'landing_accordion';
+type DownloadClickedSource =
+  | PromptInstallSource
+  | 'landing_accordion'
+  | 'download_page';
 
 /** `pkce` is the current proxy-completed flow; `implicit` is the legacy hash-token relay. */
 export type AuthFlow = 'pkce' | 'implicit';
@@ -64,14 +68,25 @@ class Telemetry {
 
   // ----- Install funnel -----
 
-  /** An install prompt or command was copied to the clipboard. */
+  /**
+   * An install prompt or command was copied to the clipboard, or the Mac app
+   * was downloaded. `last_install_ref` goes on the person too, so the copier
+   * and a sign-in from another browser share it at the person level.
+   */
   trackDownloadClicked(props: {
     source: DownloadClickedSource;
-    downloadType: InstallAgentId;
+    downloadType: InstallAgentId | 'mac';
+    installRef: InstallRef;
+    version?: string;
   }): void {
+    this.send('$set', () =>
+      posthog.setPersonProperties({ last_install_ref: props.installRef }),
+    );
     this.track('download_clicked', {
       source: props.source,
       download_type: props.downloadType,
+      install_ref: props.installRef,
+      ...(props.version !== undefined && { version: props.version }),
     });
   }
 
@@ -79,24 +94,37 @@ class Telemetry {
    * The editor sign-in landed on /auth-success and succeeded. Marks the
    * person as installed so later visits can be split by install state;
    * setPersonProperties also creates the profile for anonymous visitors.
+   * `installRef` is the copy that started this install, carried here by the
+   * CLI; it is only matched on, never used to merge persons.
    */
-  trackEditorSignInCompleted(props: { flow: AuthFlow }): void {
+  trackEditorSignInCompleted(props: {
+    flow: AuthFlow;
+    installRef: InstallRef | null;
+  }): void {
     this.send('$set', () =>
       posthog.setPersonProperties(
-        { rivet_installed: true },
+        {
+          rivet_installed: true,
+          ...(props.installRef && { last_install_ref: props.installRef }),
+        },
         { rivet_first_installed_at: new Date().toISOString() },
       ),
     );
-    this.track('editor_sign_in_completed', { auth_flow: props.flow });
+    this.track('editor_sign_in_completed', {
+      auth_flow: props.flow,
+      ...(props.installRef && { install_ref: props.installRef }),
+    });
   }
 
   trackEditorSignInFailed(props: {
     flow: AuthFlow;
     reason: SignInFailureReason;
+    installRef: InstallRef | null;
   }): void {
     this.track('editor_sign_in_failed', {
       auth_flow: props.flow,
       reason: props.reason,
+      ...(props.installRef && { install_ref: props.installRef }),
     });
   }
 

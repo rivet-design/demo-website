@@ -2,6 +2,8 @@ import { act, type ReactElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { CaptureResult } from 'posthog-js';
 import { posthog } from '../lib/posthog';
+import * as installRef from '../lib/installRef';
+import InstallAccordion from './InstallAccordion';
 import NavBar from './NavBar';
 import PromptInstallButton from './PromptInstallButton';
 
@@ -117,5 +119,80 @@ describe('PromptInstallButton download_clicked', () => {
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
       expect.stringContaining('install codex'),
     );
+  });
+});
+
+const REF = /^r_[0-9A-Za-z]{8}$/;
+
+const copiedText = () =>
+  (navigator.clipboard.writeText as jest.Mock).mock.calls.map(
+    ([text]) => text as string,
+  );
+
+const refsSent = () => ({
+  events: sent
+    .filter((e) => e.event === 'download_clicked')
+    .map((e) => e.properties.install_ref as string),
+  people: sent
+    .filter((e) => e.event === '$set')
+    .map((e) => e.properties.$set.last_install_ref as string),
+});
+
+const copyFromAccordion = async (label: string) => {
+  const button = container.querySelector(
+    `button[aria-label="Copy ${label} install command"]`,
+  );
+  if (!button) throw new Error(`${label} copy button not rendered`);
+  await act(async () => {
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  });
+};
+
+describe.each([
+  [
+    'PromptInstallButton',
+    () =>
+      render(
+        <PromptInstallButton source="landing_hero" label="Install Rivet" />,
+      ),
+    pickAgent,
+  ],
+  ['InstallAccordion', () => render(<InstallAccordion />), copyFromAccordion],
+] as const)('%s install_ref', (_, mount, copy) => {
+  it('sends a fresh ref on the event and the person for every copy', async () => {
+    mount();
+    await copy('Codex');
+    await copy('Claude');
+
+    const { events, people } = refsSent();
+    expect(events).toHaveLength(2);
+    events.forEach((ref) => expect(ref).toMatch(REF));
+    expect(events[0]).not.toBe(events[1]);
+    expect(people).toEqual(events);
+  });
+
+  it('leaves the ref out of the copied text while embedding is off', async () => {
+    mount();
+    await copy('Codex');
+
+    const [text] = copiedText();
+    expect(text).toMatch(/npx -y rivet-design@latest install codex$/);
+    expect(text).not.toContain('--ref');
+    expect(text).not.toContain(refsSent().events[0]);
+  });
+
+  it('puts the same ref in the copied command once embedding is on', async () => {
+    jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', true);
+    mount();
+    await copy('Cursor');
+
+    const [ref] = refsSent().events;
+    expect(copiedText()).toEqual([
+      expect.stringMatching(
+        new RegExp(
+          `npx -y rivet-design@latest install cursor --mcp --ref ${ref}$`,
+        ),
+      ),
+    ]);
   });
 });

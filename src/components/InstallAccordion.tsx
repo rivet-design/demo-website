@@ -8,8 +8,10 @@ import { telemetry } from '@/lib/telemetry';
 import {
   AGENT_LOGOS,
   INSTALL_COMMANDS,
+  copiedInstallCommand,
   type InstallAgentId,
 } from '@/lib/install';
+import { generateInstallRef } from '@/lib/installRef';
 
 const AGENT_ROWS: { id: InstallAgentId; label: string }[] = [
   { id: 'codex', label: 'Codex' },
@@ -73,11 +75,14 @@ const InstallAccordion = () => {
   const [copiedId, setCopiedId] = useState<InstallAgentId | null>(null);
 
   const copy = (id: InstallAgentId) => {
+    const installRef = generateInstallRef();
     telemetry.trackDownloadClicked({
       source: 'landing_accordion',
       downloadType: id,
+      installRef,
     });
-    navigator.clipboard.writeText(INSTALL_COMMANDS[id]).then(() => {
+    const command = copiedInstallCommand(id, installRef);
+    navigator.clipboard.writeText(command).then(() => {
       toast.success('Command copied to clipboard');
       setCopiedId(id);
       setTimeout(
