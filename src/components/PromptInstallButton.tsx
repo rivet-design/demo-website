@@ -128,6 +128,8 @@ type PromptInstallButtonProps = {
   label?: string;
   /** Close when the page scrolls, before the nav becomes part of the demo. */
   dismissOnScroll?: boolean;
+  /** `source` on the `download_clicked` event, so placements stay distinguishable. */
+  source?: string;
 };
 
 const PromptInstallButton = ({
@@ -136,6 +138,7 @@ const PromptInstallButton = ({
   fullWidth = false,
   label = 'Add Rivet to your agent',
   dismissOnScroll = false,
+  source = 'landing',
 }: PromptInstallButtonProps) => {
   const [open, setOpen] = useState(false);
   // Keyboard highlight within the menu (-1 = no row highlighted).
@@ -171,7 +174,7 @@ const PromptInstallButton = ({
 
   const activate = (item: AgentItem) => {
     posthog.capture('download_clicked', {
-      source: 'landing',
+      source,
       download_type: item.id,
     });
 

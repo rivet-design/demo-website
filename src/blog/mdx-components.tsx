@@ -6,6 +6,7 @@ import {
   Mark,
   Masthead,
   PullQuote,
+  StoryInstall,
   ToolRow,
   WideFigure,
 } from './components/RichText';
@@ -17,6 +18,7 @@ export const mdxComponents: MDXComponents = {
   Mark,
   Masthead,
   PullQuote,
+  StoryInstall,
   ToolRow,
   WideFigure,
   a: ({ href = '', ...props }) => {

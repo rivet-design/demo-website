@@ -1357,6 +1357,9 @@ img[src$='blob-cluster.svg'] {
 }
 
 /* ---------- the sign-off, at the foot of the picture's column ---------- */
+.story-install {
+  margin-top: 2.5rem;
+}
 .signoff__title {
   margin: 0 0 1.75rem;
   font-size: clamp(1.75rem, 2.8vw, 3rem);
