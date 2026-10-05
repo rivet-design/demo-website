@@ -10,13 +10,13 @@
 // registration re-resolved `@latest` on every launch and ran the loopback
 // auth flow inside a disposable process.
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 import { posthog } from '@/lib/posthog';
 import {
   AGENT_LOGOS as TOOL_LOGOS,
   INSTALL_COMMANDS,
   type InstallAgentId as AgentLogo,
 } from '@/lib/install';
+import { copyInstallText } from './installCopy';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
 
 // Logo painted in the button's own text colour rather than rendered as
@@ -52,7 +52,7 @@ const ToolLogo = ({ id, label }: { id: AgentLogo; label: string }) => (
 );
 
 type AgentItem = {
-  id: string;
+  id: AgentLogo;
   label: string;
   logo: AgentLogo;
   prompt: string;
@@ -175,11 +175,7 @@ const PromptInstallButton = ({
       download_type: item.id,
     });
 
-    navigator.clipboard.writeText(item.prompt).then(() => {
-      toast.success('Prompt copied to clipboard', {
-        description: `Paste into ${item.label} to install the Rivet MCP.`,
-      });
-    });
+    copyInstallText({ agent: item.id, kind: 'prompt', text: item.prompt });
     setOpen(false);
   };
 

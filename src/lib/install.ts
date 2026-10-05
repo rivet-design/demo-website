@@ -23,3 +23,50 @@ export const INSTALL_COMMANDS: Record<InstallAgentId, string> = {
   cursor: 'npx -y rivet-design@latest install cursor --mcp',
   codex: 'npx -y rivet-design@latest install codex',
 };
+
+// A prompt is pasted into the agent, which runs the command for the user. A
+// command is run by the user in their own terminal.
+export type InstallCopyKind = 'prompt' | 'command';
+
+const SIGN_IN_STEP = 'Sign in with Google in the browser window that opens.';
+
+const approveStep = (agent: InstallAgentId): string => {
+  switch (agent) {
+    case 'codex':
+      return 'Approve the command when Codex asks.';
+    case 'claude':
+      return 'Allow the command when Claude Code asks.';
+    case 'cursor':
+      return 'Click Run when Cursor shows the command.';
+    default: {
+      const unhandled: never = agent;
+      return unhandled;
+    }
+  }
+};
+
+const AGENT_APP_NAMES: Record<InstallAgentId, string> = {
+  codex: 'Codex',
+  claude: 'Claude Code',
+  cursor: 'Cursor',
+};
+
+export const installNextSteps = (
+  kind: InstallCopyKind,
+  agent: InstallAgentId,
+): string[] => {
+  switch (kind) {
+    case 'prompt':
+      return [
+        `Paste it into ${AGENT_APP_NAMES[agent]}.`,
+        approveStep(agent),
+        SIGN_IN_STEP,
+      ];
+    case 'command':
+      return ['Run it in your terminal.', SIGN_IN_STEP];
+    default: {
+      const unhandled: never = kind;
+      return unhandled;
+    }
+  }
+};
