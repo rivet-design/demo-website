@@ -27,6 +27,7 @@ import VariantsDemoSection from './components/VariantsDemoSection';
 import PaperSheet from './components/PaperSheet';
 import PromptInstallButton from './components/PromptInstallButton';
 import InstallAccordion from './components/InstallAccordion';
+import MobileInstallEmailButton from './components/MobileInstallEmailButton';
 import BrowserFrame from './components/BrowserFrame';
 import HeroShowcaseBackground from './components/HeroShowcaseBackground';
 import FloatingShapes from './components/FloatingShapes';
@@ -1462,7 +1463,10 @@ const App = () => {
               {/* The nav's primary CTA, moved under the title — the nav copy
                   of this button drops to secondary styling so the page keeps
                   a single primary. `hero` size matches the pill beside it. */}
-              <PromptInstallButton tone="orange" size="hero" label="Install Rivet" />
+              <div className="hidden md:contents">
+                <PromptInstallButton tone="orange" size="hero" label="Install Rivet" />
+              </div>
+              <MobileInstallEmailButton placement="hero" className="md:hidden" />
             </div>
           </div>
         </div>
