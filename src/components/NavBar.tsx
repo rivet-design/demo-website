@@ -3,6 +3,7 @@ import { motion, type MotionValue } from 'motion/react';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
 import Logo from './Logo';
 import PromptInstallButton from './PromptInstallButton';
+import type { PromptInstallSource } from '../lib/telemetry';
 import { surfaceBackground, withAlpha } from '../lib/background';
 
 // How much of the ground shows through the frosted bar.
@@ -29,6 +30,7 @@ const NavBar = ({
   rootRef,
   frosted = false,
   fill = surfaceBackground,
+  installSource,
 }: {
   /**
    * Optional scroll-driven motion values — used by the hero's shrink
@@ -61,7 +63,9 @@ const NavBar = ({
    * different colour from the page directly under it.
    */
   fill?: CSSProperties;
-} = {}) => {
+  /** The `download_clicked` source for this bar's install button. */
+  installSource: PromptInstallSource;
+}) => {
   // Experiment: keep the nav white throughout (isDark stays false).
   const [isDark] = useState(false);
 
@@ -298,6 +302,7 @@ const NavBar = ({
                 under the hero title now, and two primaries on one screen
                 fight each other. */}
             <PromptInstallButton
+              source={installSource}
               tone={isDark ? 'light' : 'secondary'}
               label="Install Rivet"
               dismissOnScroll

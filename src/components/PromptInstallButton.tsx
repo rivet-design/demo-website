@@ -11,7 +11,7 @@
 // auth flow inside a disposable process.
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { posthog } from '@/lib/posthog';
+import { telemetry, type PromptInstallSource } from '@/lib/telemetry';
 import {
   AGENT_LOGOS as TOOL_LOGOS,
   INSTALL_COMMANDS,
@@ -52,7 +52,7 @@ const ToolLogo = ({ id, label }: { id: AgentLogo; label: string }) => (
 );
 
 type AgentItem = {
-  id: string;
+  id: AgentLogo;
   label: string;
   logo: AgentLogo;
   prompt: string;
@@ -121,6 +121,7 @@ const TONES: Record<
 };
 
 type PromptInstallButtonProps = {
+  source: PromptInstallSource;
   tone?: Tone;
   /** `hero` matches the hero CTA pills (px-5 py-[10px] text-base). */
   size?: 'md' | 'lg' | 'hero';
@@ -131,6 +132,7 @@ type PromptInstallButtonProps = {
 };
 
 const PromptInstallButton = ({
+  source,
   tone = 'orange',
   size = 'md',
   fullWidth = false,
@@ -170,10 +172,7 @@ const PromptInstallButton = ({
   const iconBox = size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
 
   const activate = (item: AgentItem) => {
-    posthog.capture('download_clicked', {
-      source: 'landing',
-      download_type: item.id,
-    });
+    telemetry.trackDownloadClicked({ source, downloadType: item.id });
 
     navigator.clipboard.writeText(item.prompt).then(() => {
       toast.success('Prompt copied to clipboard', {
