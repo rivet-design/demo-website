@@ -1,5 +1,66 @@
-import type { CaptureResult } from 'posthog-js';
-import { redactAuthTokens } from './posthog';
+import { PostHog, type CaptureResult } from 'posthog-js';
+import { initPostHog, posthog, redactAuthTokens } from './posthog';
+
+describe('initPostHog', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it('persists identity in a cross-subdomain cookie and keeps the redaction hook', () => {
+    const init = jest.spyOn(posthog, 'init').mockReturnValue(posthog);
+    const register = jest.spyOn(posthog, 'register').mockImplementation();
+
+    initPostHog();
+
+    expect(init).toHaveBeenCalledTimes(1);
+    const [key, options] = init.mock.calls[0];
+    expect(key).toMatch(/^phc_/);
+    expect(options).toEqual({
+      api_host: 'https://us.i.posthog.com',
+      autocapture: true,
+      capture_pageview: true,
+      persistence: 'localStorage+cookie',
+      cross_subdomain_cookie: true,
+      before_send: redactAuthTokens,
+    });
+    expect(options?.before_send).toBe(redactAuthTokens);
+    expect(register).toHaveBeenCalledWith({ source: 'landing' });
+  });
+
+  it('works on localhost with a host-only cookie', () => {
+    const init = jest.spyOn(posthog, 'init').mockReturnValue(posthog);
+    jest.spyOn(posthog, 'register').mockImplementation();
+    initPostHog();
+    const [key, options] = init.mock.calls[0];
+    jest.restoreAllMocks();
+
+    const writes: string[] = [];
+    const cookie = Object.getOwnPropertyDescriptor(
+      Document.prototype,
+      'cookie',
+    )!;
+    jest.spyOn(document, 'cookie', 'set').mockImplementation((value) => {
+      writes.push(value);
+      cookie.set!.call(document, value);
+    });
+
+    const local = new PostHog().init(key, {
+      ...options,
+      api_host: 'http://posthog.invalid',
+      autocapture: false,
+      capture_pageview: false,
+      disable_session_recording: true,
+      advanced_disable_flags: true,
+      before_send: () => null,
+    })!;
+
+    const id = local.get_distinct_id();
+    expect(id).toBeTruthy();
+    const write = writes
+      .filter((w) => w.startsWith(`ph_${key}_posthog=`))
+      .at(-1);
+    expect(decodeURIComponent(write!)).toContain(id);
+    expect(write).not.toMatch(/domain=/);
+  });
+});
 
 const TOKEN_URL =
   'http://localhost/auth-success?session=s1#access_token=SECRET_A&refresh_token=SECRET_R';
