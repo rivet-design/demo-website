@@ -7,6 +7,14 @@ const POSTHOG_PUBLIC_HOST = 'https://us.i.posthog.com';
 // the URL hash, and posthog-js copies the URL into $current_url and friends.
 const TOKEN_FRAGMENT = /#\S*\b(?:access_token|refresh_token)=/;
 
+const isPlainObject = (value: unknown): value is Record<string, unknown> => {
+  if (value === null || typeof value !== 'object') return false;
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+};
+
+// Only plain objects and arrays are rebuilt; anything else (the event's Date
+// timestamp included) passes through by reference.
 const redact = (value: unknown): unknown => {
   if (typeof value === 'string') {
     return TOKEN_FRAGMENT.test(value)
@@ -14,7 +22,7 @@ const redact = (value: unknown): unknown => {
       : value;
   }
   if (Array.isArray(value)) return value.map(redact);
-  if (value && typeof value === 'object') {
+  if (isPlainObject(value)) {
     return Object.fromEntries(
       Object.entries(value).map(([key, v]) => [key, redact(v)]),
     );

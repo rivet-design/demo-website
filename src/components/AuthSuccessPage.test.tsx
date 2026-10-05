@@ -120,6 +120,7 @@ describe('AuthSuccessPage telemetry', () => {
       ['$set', undefined],
       ['editor_sign_in_completed', 'implicit'],
     ]);
+    expect(sent.every((e) => e.timestamp instanceof Date)).toBe(true);
     const payload = JSON.stringify(sent);
     expect(payload).not.toContain('secret-access');
     expect(payload).not.toContain('secret-refresh');
