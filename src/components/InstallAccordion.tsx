@@ -4,7 +4,7 @@
 // system; the grid-rows 0fr->1fr trick gives a smooth height animation.
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { posthog } from '@/lib/posthog';
+import { telemetry } from '@/lib/telemetry';
 import {
   AGENT_LOGOS,
   INSTALL_COMMANDS,
@@ -73,9 +73,9 @@ const InstallAccordion = () => {
   const [copiedId, setCopiedId] = useState<InstallAgentId | null>(null);
 
   const copy = (id: InstallAgentId) => {
-    posthog.capture('download_clicked', {
+    telemetry.trackDownloadClicked({
       source: 'landing_accordion',
-      download_type: id,
+      downloadType: id,
     });
     navigator.clipboard.writeText(INSTALL_COMMANDS[id]).then(() => {
       toast.success('Command copied to clipboard');

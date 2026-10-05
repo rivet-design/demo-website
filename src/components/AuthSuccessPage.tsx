@@ -1,11 +1,27 @@
 import { useEffect, useState } from 'react';
+import {
+  telemetry,
+  PKCE_ERROR_REASONS,
+  type AuthFlow,
+  type PkceErrorReason,
+  type SignInFailureReason,
+} from '../lib/telemetry';
 
 const PROXY_URL = 'https://rivet-proxy.onrender.com';
 
 type AuthState = 'processing' | 'success' | 'error';
 
+type AuthOutcome =
+  | { kind: 'success'; flow: AuthFlow }
+  | {
+      kind: 'error';
+      flow: AuthFlow;
+      reason: SignInFailureReason;
+      message: string;
+    };
+
 /** Friendly copy for the PKCE callback's ?reason= codes (see proxy auth.ts). */
-const PKCE_ERROR_MESSAGES: Record<string, string> = {
+const PKCE_ERROR_MESSAGES: Record<PkceErrorReason, string> = {
   session_expired:
     'This sign-in link expired. Start the sign-in again from your editor or terminal.',
   provider_denied: 'Google did not complete the sign-in. Please try again.',
@@ -14,6 +30,86 @@ const PKCE_ERROR_MESSAGES: Record<string, string> = {
   verification_failed: 'The sign-in could not be verified. Please try again.',
   session_invalid: 'This sign-in link is invalid. Please start again.',
   internal: 'Something went wrong on our side. Please try again.',
+};
+
+const parsePkceErrorReason = (raw: string | null): PkceErrorReason | null =>
+  PKCE_ERROR_REASONS.find((reason) => reason === raw) ?? null;
+
+const resolveAuth = async (): Promise<AuthOutcome> => {
+  const urlParams = new URLSearchParams(window.location.search);
+
+  // PKCE flow: the proxy already finished the login; just render it.
+  const pkceOutcome = urlParams.get('login');
+  if (pkceOutcome === 'complete') return { kind: 'success', flow: 'pkce' };
+  if (pkceOutcome === 'error') {
+    const reason = parsePkceErrorReason(urlParams.get('reason'));
+    return {
+      kind: 'error',
+      flow: 'pkce',
+      reason: reason ?? 'unknown',
+      message: reason
+        ? PKCE_ERROR_MESSAGES[reason]
+        : 'Something went wrong. Please try again.',
+    };
+  }
+
+  // Legacy implicit flow: relay hash tokens to the proxy.
+  const sessionId = urlParams.get('session');
+  if (!sessionId) {
+    return {
+      kind: 'error',
+      flow: 'implicit',
+      reason: 'missing_session',
+      message: 'Missing session ID',
+    };
+  }
+
+  // Extract tokens from URL hash (Supabase implicit flow)
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  const accessToken = hashParams.get('access_token');
+  const refreshToken = hashParams.get('refresh_token');
+  if (!accessToken) {
+    return {
+      kind: 'error',
+      flow: 'implicit',
+      reason: 'missing_token',
+      message: 'No access token received',
+    };
+  }
+
+  try {
+    const response = await fetch(`${PROXY_URL}/api/auth/google/complete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        sessionId,
+        accessToken,
+        refreshToken,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      return {
+        kind: 'error',
+        flow: 'implicit',
+        reason: 'proxy_rejected',
+        message: result.error || 'Authentication failed',
+      };
+    }
+
+    return { kind: 'success', flow: 'implicit' };
+  } catch (err) {
+    return {
+      kind: 'error',
+      flow: 'implicit',
+      reason: 'request_failed',
+      message: err instanceof Error ? err.message : 'Unknown error',
+    };
+  }
 };
 
 /**
@@ -35,76 +131,28 @@ const AuthSuccessPage = () => {
    * @deps None - runs once on mount
    */
   useEffect(() => {
-    const completeAuth = async () => {
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-
-        // PKCE flow: the proxy already finished the login; just render it.
-        const pkceOutcome = urlParams.get('login');
-        if (pkceOutcome === 'complete') {
+    resolveAuth().then((outcome) => {
+      switch (outcome.kind) {
+        case 'success':
+          telemetry.trackEditorSignInCompleted({ flow: outcome.flow });
           setAuthState('success');
           return;
-        }
-        if (pkceOutcome === 'error') {
-          const reason = urlParams.get('reason') ?? '';
-          setError(
-            PKCE_ERROR_MESSAGES[reason] ??
-              'Something went wrong. Please try again.',
+        case 'error':
+          telemetry.trackEditorSignInFailed({
+            flow: outcome.flow,
+            reason: outcome.reason,
+          });
+          setError(outcome.message);
+          setAuthState('error');
+          return;
+        default: {
+          const unhandled: never = outcome;
+          throw new Error(
+            `Unhandled auth outcome: ${JSON.stringify(unhandled)}`,
           );
-          setAuthState('error');
-          return;
         }
-
-        // Legacy implicit flow: relay hash tokens to the proxy.
-        const sessionId = urlParams.get('session');
-
-        if (!sessionId) {
-          setError('Missing session ID');
-          setAuthState('error');
-          return;
-        }
-
-        // Extract tokens from URL hash (Supabase implicit flow)
-        const hash = window.location.hash.substring(1);
-        const hashParams = new URLSearchParams(hash);
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token');
-
-        if (!accessToken) {
-          setError('No access token received');
-          setAuthState('error');
-          return;
-        }
-
-        // Complete OAuth flow with proxy
-        const response = await fetch(`${PROXY_URL}/api/auth/google/complete`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            sessionId,
-            accessToken,
-            refreshToken,
-          }),
-        });
-
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-          setError(result.error || 'Authentication failed');
-          setAuthState('error');
-          return;
-        }
-
-        setAuthState('success');
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
-        setAuthState('error');
       }
-    };
-
-    completeAuth();
+    });
   }, []);
 
   return (

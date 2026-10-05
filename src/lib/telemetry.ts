@@ -1,4 +1,36 @@
 import { posthog } from './posthog';
+import type { InstallAgentId } from './install';
+
+/** Where a PromptInstallButton sits; sent as `source` on `download_clicked`. */
+export type PromptInstallSource =
+  | 'landing_hero'
+  | 'landing_nav'
+  | 'landing_install_section'
+  | 'story_nav';
+
+type DownloadClickedSource = PromptInstallSource | 'landing_accordion';
+
+/** `pkce` is the current proxy-completed flow; `implicit` is the legacy hash-token relay. */
+export type AuthFlow = 'pkce' | 'implicit';
+
+export const PKCE_ERROR_REASONS = [
+  'session_expired',
+  'provider_denied',
+  'exchange_failed',
+  'verification_failed',
+  'session_invalid',
+  'internal',
+] as const;
+
+export type PkceErrorReason = (typeof PKCE_ERROR_REASONS)[number];
+
+export type SignInFailureReason =
+  | PkceErrorReason
+  | 'missing_session'
+  | 'missing_token'
+  | 'proxy_rejected'
+  | 'request_failed'
+  | 'unknown';
 
 /**
  * Browser-side telemetry wrapper around posthog-js. Mirrors the
@@ -14,16 +46,58 @@ import { posthog } from './posthog';
  * input (e.g. comment instructions) is never captured — only its length.
  */
 class Telemetry {
+  private send(label: string, call: () => void): void {
+    try {
+      call();
+    } catch (err) {
+      // Swallow — telemetry must never break the UI.
+      console.warn(`telemetry: failed to send "${label}"`, err);
+    }
+  }
+
   private track(
     event: string,
     properties: Record<string, unknown> = {},
   ): void {
-    try {
-      posthog.capture(event, properties);
-    } catch (err) {
-      // Swallow — telemetry must never break the UI.
-      console.warn(`telemetry: failed to send "${event}"`, err);
-    }
+    this.send(event, () => posthog.capture(event, properties));
+  }
+
+  // ----- Install funnel -----
+
+  /** An install prompt or command was copied to the clipboard. */
+  trackDownloadClicked(props: {
+    source: DownloadClickedSource;
+    downloadType: InstallAgentId;
+  }): void {
+    this.track('download_clicked', {
+      source: props.source,
+      download_type: props.downloadType,
+    });
+  }
+
+  /**
+   * The editor sign-in landed on /auth-success and succeeded. Marks the
+   * person as installed so later visits can be split by install state;
+   * setPersonProperties also creates the profile for anonymous visitors.
+   */
+  trackEditorSignInCompleted(props: { flow: AuthFlow }): void {
+    this.send('$set', () =>
+      posthog.setPersonProperties(
+        { rivet_installed: true },
+        { rivet_first_installed_at: new Date().toISOString() },
+      ),
+    );
+    this.track('editor_sign_in_completed', { auth_flow: props.flow });
+  }
+
+  trackEditorSignInFailed(props: {
+    flow: AuthFlow;
+    reason: SignInFailureReason;
+  }): void {
+    this.track('editor_sign_in_failed', {
+      auth_flow: props.flow,
+      reason: props.reason,
+    });
   }
 
   // ----- Comments demo -----
