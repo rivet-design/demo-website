@@ -53,6 +53,12 @@ type AgentItem = {
 // set up (Claude Code + Claude Desktop chat MCP).
 const AGENT_ITEMS: AgentItem[] = [
   {
+    id: 'codex',
+    label: 'Codex',
+    logo: 'codex',
+    prompt: `Please set up Rivet for Codex by running: ${INSTALL_COMMANDS.codex}`,
+  },
+  {
     id: 'claude',
     label: 'Claude',
     logo: 'claude',
@@ -63,12 +69,6 @@ const AGENT_ITEMS: AgentItem[] = [
     label: 'Cursor',
     logo: 'cursor',
     prompt: `Please set up Rivet for Cursor by running: ${INSTALL_COMMANDS.cursor}`,
-  },
-  {
-    id: 'codex',
-    label: 'Codex',
-    logo: 'codex',
-    prompt: `Please set up Rivet for Codex by running: ${INSTALL_COMMANDS.codex}`,
   },
 ];
 
@@ -185,7 +185,7 @@ const PromptInstallButton = ({
         } transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
       >
         <span className="flex shrink-0 items-center gap-1" aria-hidden>
-          {(['claude', 'cursor', 'codex'] as AgentLogo[]).map((logo) => (
+          {(['codex', 'claude', 'cursor'] as AgentLogo[]).map((logo) => (
             <span
               key={logo}
               className={`relative flex ${iconBox} items-center justify-center rounded-full ${t.bg} ring-2 ${t.ring}`}
