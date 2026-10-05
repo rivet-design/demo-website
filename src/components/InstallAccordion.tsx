@@ -67,14 +67,21 @@ const CheckIcon = () => (
   </svg>
 );
 
-const InstallAccordion = () => {
+type InstallAccordionProps = {
+  /** `source` on the `download_clicked` event, so placements stay distinguishable. */
+  source?: string;
+};
+
+const InstallAccordion = ({
+  source = 'landing_accordion',
+}: InstallAccordionProps) => {
   const [open, setOpen] = useState(false);
   // Which agent's command was just copied (drives that row's check icon).
   const [copiedId, setCopiedId] = useState<InstallAgentId | null>(null);
 
   const copy = (id: InstallAgentId) => {
     posthog.capture('download_clicked', {
-      source: 'landing_accordion',
+      source,
       download_type: id,
     });
     navigator.clipboard.writeText(INSTALL_COMMANDS[id]).then(() => {
