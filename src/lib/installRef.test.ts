@@ -60,8 +60,15 @@ describe('parseInstallRef', () => {
 describe('copiedInstallCommand', () => {
   const ref = 'r_aZ09bY18' as const;
 
+  it('includes the install ref in copied commands by default', () => {
+    expect(installRef.EMBED_INSTALL_REF_IN_COPY).toBe(true);
+    expect(copiedInstallCommand('codex', ref)).toBe(
+      `${INSTALL_COMMANDS.codex} --ref ${ref}`,
+    );
+  });
+
   it('copies the plain command while the flag is off', () => {
-    expect(installRef.EMBED_INSTALL_REF_IN_COPY).toBe(false);
+    jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', false);
     expect(copiedInstallCommand('codex', ref)).toBe(INSTALL_COMMANDS.codex);
   });
 

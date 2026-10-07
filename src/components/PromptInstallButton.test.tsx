@@ -176,6 +176,7 @@ describe.each([
   });
 
   it('leaves the ref out of the copied text while embedding is off', async () => {
+    jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', false);
     mount();
     await copy('Codex');
 
@@ -185,8 +186,7 @@ describe.each([
     expect(text).not.toContain(refsSent().events[0]);
   });
 
-  it('puts the same ref in the copied command once embedding is on', async () => {
-    jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', true);
+  it('puts the same ref in the copied command by default', async () => {
     mount();
     await copy('Cursor');
 

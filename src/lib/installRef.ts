@@ -6,13 +6,7 @@
 // Contract shared with rivet core's CLI: `r_` followed by exactly 8 base62
 // characters, passed as `--ref <value>` to `rivet install`.
 
-/**
- * Turns on `--ref <value>` in copied install commands. Keep this OFF until a
- * rivet-design release that accepts `--ref` is published as `@latest`:
- * through 0.20.0, `rivet install` rejects unknown flags and exits with code 2,
- * so a copied command carrying `--ref` would fail the install.
- */
-export const EMBED_INSTALL_REF_IN_COPY = false;
+export const EMBED_INSTALL_REF_IN_COPY = true;
 
 export type InstallRef = `r_${string}`;
 

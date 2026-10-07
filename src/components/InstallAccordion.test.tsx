@@ -106,7 +106,9 @@ describe('InstallAccordion copy', () => {
   it('copies the command when the row is clicked', async () => {
     await click(code('claude'));
 
-    expect(writeText).toHaveBeenCalledWith(INSTALL_COMMANDS.claude);
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(`${INSTALL_COMMANDS.claude} --ref r_`),
+    );
     expect(downloadClicks()).toEqual([
       {
         source: 'landing_accordion',
@@ -127,7 +129,9 @@ describe('InstallAccordion copy', () => {
     await click(icon);
 
     expect(writeText).toHaveBeenCalledTimes(1);
-    expect(writeText).toHaveBeenCalledWith(INSTALL_COMMANDS.cursor);
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(`${INSTALL_COMMANDS.cursor} --ref r_`),
+    );
     expect(downloadClicks()).toEqual([
       {
         source: 'landing_accordion',
@@ -225,7 +229,9 @@ describe('InstallAccordion copy', () => {
 
     await click(code('claude'));
 
-    expect(writeText).toHaveBeenCalledWith(INSTALL_COMMANDS.claude);
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(`${INSTALL_COMMANDS.claude} --ref r_`),
+    );
   });
 });
 
