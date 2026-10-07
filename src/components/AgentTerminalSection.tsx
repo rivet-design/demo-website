@@ -1180,22 +1180,7 @@ const Card = ({
                     restW ? { width: restW } : opened ? undefined : reveal.style
                   }
                 >
-                  {/* Weight is FAKED, not switched. Aileron ships as separate
-                      files rather than a variable font, so font-weight has
-                      nothing to tween between — it snapped, and because Bold
-                      is ~7% wider the line jumped sideways at the same
-                      instant. A text-shadow in the text's own colour thickens
-                      the strokes instead: it is animatable, and it costs no
-                      layout, so the glyphs stay exactly where they are. */}
-                  <h3
-                    className="font-aileron text-[22px] font-normal leading-[1.18] text-[#642e39] lg:text-[24px]"
-                    style={{
-                      textShadow: isOpen
-                        ? '0 0 0.55px currentColor, 0 0 0.55px currentColor'
-                        : '0 0 0 rgba(100, 46, 57, 0)',
-                      transition: `text-shadow ${ARRIVE_MS}ms ${EASE}`,
-                    }}
-                  >
+                  <h3 className="font-aileron text-[22px] font-normal leading-[1.18] text-[#642e39] lg:text-[24px]">
                     {card.title[0]}
                     <br />
                     {card.title[1]}
