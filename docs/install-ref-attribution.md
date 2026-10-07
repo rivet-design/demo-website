@@ -28,11 +28,13 @@ prerequisites are verified:
 2. The hosted proxy carries the ref through both CLI PKCE callbacks and editor
    sign-in redirects to `/auth-success`.
 
-At verification on October 6, 2026, npm's latest release was `0.21.1`; its
-package lacked both `rememberInstallRef` and `dist/utils/installRef.js`.
-Do not enable embedding against that release. Once the prerequisites pass,
-set the flag to `true` and update the default-command assertions to expect refs.
-The explicit enabled-mode tests already exercise the copied-text contract.
+During verification on October 6, 2026, npm published `0.21.2` under `latest`.
+Its package contains both `rememberInstallRef` and `dist/utils/installRef.js`,
+satisfying the CLI prerequisite. The live proxy returned HTTP 502 from both
+`/health` and `/api/auth/google/start`, so ref forwarding remains unverified.
+Keep embedding off until the proxy is healthy and both redirect checks pass.
+Then set the flag to `true` and update the default-command assertions to expect
+refs. The explicit enabled-mode tests already exercise the copied-text contract.
 
 ## Conflict-resolution verification
 
