@@ -4,15 +4,17 @@
 // action as a real button for keyboard and screen-reader users. Styled with the
 // Rivet design system; the grid-rows 0fr->1fr trick gives a smooth height
 // animation.
-import { useId, useRef, useState } from 'react';
+import { useId, useRef, useState, type ClipboardEvent } from 'react';
 import { toast } from 'sonner';
 import useClipboard from '@/hooks/useClipboard';
 import { telemetry, type CommandCopyMethod } from '@/lib/telemetry';
 import {
   AGENT_LOGOS,
   INSTALL_COMMANDS,
+  copiedInstallCommand,
   type InstallAgentId,
 } from '@/lib/install';
+import { generateInstallRef } from '@/lib/installRef';
 
 const AGENT_ROWS: { id: InstallAgentId; label: string }[] = [
   { id: 'codex', label: 'Codex' },
@@ -79,8 +81,6 @@ const selectContents = (el: HTMLElement | null) => {
   selection.addRange(range);
 };
 
-const hasSelectedText = () => Boolean(window.getSelection()?.toString().trim());
-
 const InstallAccordion = () => {
   const [open, setOpen] = useState(false);
   // Which agent's command was just copied (drives that row's "Copied" state).
@@ -91,16 +91,20 @@ const InstallAccordion = () => {
     {},
   );
 
-  const track = (id: InstallAgentId, copyMethod: CommandCopyMethod) =>
+  const track = (id: InstallAgentId, copyMethod: CommandCopyMethod) => {
+    const installRef = generateInstallRef();
     telemetry.trackDownloadClicked({
       source: 'landing_accordion',
       downloadType: id,
       copyMethod,
+      installRef,
     });
+    return installRef;
+  };
 
   const copy = (id: InstallAgentId, copyMethod: 'row_click' | 'icon') => {
-    track(id, copyMethod);
-    copyToClipboard(INSTALL_COMMANDS[id]).then(
+    const installRef = track(id, copyMethod);
+    copyToClipboard(copiedInstallCommand(id, installRef)).then(
       () => {
         toast.success('Command copied to clipboard');
         setCopiedId(id);
@@ -116,6 +120,17 @@ const InstallAccordion = () => {
         });
       },
     );
+  };
+
+  const handleManualCopy = (event: ClipboardEvent, id: InstallAgentId) => {
+    const selectedText = window.getSelection()?.toString().trim();
+    if (!selectedText) return;
+    const installRef = track(id, 'manual_select');
+    if (selectedText !== INSTALL_COMMANDS[id]) return;
+    const command = copiedInstallCommand(id, installRef);
+    if (command === selectedText) return;
+    event.clipboardData.setData('text/plain', command);
+    event.preventDefault();
   };
 
   const handleRowClick = (id: InstallAgentId) => {
@@ -162,9 +177,7 @@ const InstallAccordion = () => {
                   key={row.id}
                   data-testid={`install-command-${row.id}`}
                   onClick={() => handleRowClick(row.id)}
-                  onCopy={() => {
-                    if (hasSelectedText()) track(row.id, 'manual_select');
-                  }}
+                  onCopy={(event) => handleManualCopy(event, row.id)}
                   className="group cursor-pointer px-4 py-3 transition-colors hover:bg-black/[0.03]"
                 >
                   <div className="flex items-center gap-2">

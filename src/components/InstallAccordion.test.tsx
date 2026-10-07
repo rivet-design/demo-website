@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import type { CaptureResult } from 'posthog-js';
 import { posthog } from '../lib/posthog';
 import { INSTALL_COMMANDS } from '../lib/install';
+import * as installRef from '../lib/installRef';
 import InstallAccordion from './InstallAccordion';
 
 (
@@ -64,10 +65,19 @@ const select = (el: Element) => {
   selection.addRange(range);
 };
 
-const copyEvent = (el: Element) =>
-  act(() => {
-    el.dispatchEvent(new Event('copy', { bubbles: true }));
+const copyEvent = (el: Element) => {
+  const data = new Map<string, string>();
+  const event = new Event('copy', { bubbles: true, cancelable: true });
+  Object.defineProperty(event, 'clipboardData', {
+    value: {
+      setData: (format: string, text: string) => data.set(format, text),
+    },
   });
+  act(() => {
+    el.dispatchEvent(event);
+  });
+  return { event, data };
+};
 
 beforeEach(async () => {
   sent = [];
@@ -96,7 +106,9 @@ describe('InstallAccordion copy', () => {
   it('copies the command when the row is clicked', async () => {
     await click(code('claude'));
 
-    expect(writeText).toHaveBeenCalledWith(INSTALL_COMMANDS.claude);
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(`${INSTALL_COMMANDS.claude} --ref r_`),
+    );
     expect(downloadClicks()).toEqual([
       {
         source: 'landing_accordion',
@@ -117,7 +129,9 @@ describe('InstallAccordion copy', () => {
     await click(icon);
 
     expect(writeText).toHaveBeenCalledTimes(1);
-    expect(writeText).toHaveBeenCalledWith(INSTALL_COMMANDS.cursor);
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(`${INSTALL_COMMANDS.cursor} --ref r_`),
+    );
     expect(downloadClicks()).toEqual([
       {
         source: 'landing_accordion',
@@ -139,6 +153,42 @@ describe('InstallAccordion copy', () => {
         copy_method: 'manual_select',
       },
     ]);
+  });
+
+  it('carries a fresh matching ref in each manually copied command when enabled', () => {
+    jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', true);
+    select(code('codex'));
+    const first = copyEvent(code('codex'));
+    const second = copyEvent(code('codex'));
+    const clicks = sent.filter((event) => event.event === 'download_clicked');
+
+    expect(clicks).toHaveLength(2);
+    for (const [index, copied] of [first, second].entries()) {
+      const ref = clicks[index].properties.install_ref;
+      expect(ref).toMatch(/^r_[0-9A-Za-z]{8}$/);
+      expect(copied.event.defaultPrevented).toBe(true);
+      expect(copied.data.get('text/plain')).toBe(
+        `${INSTALL_COMMANDS.codex} --ref ${ref}`,
+      );
+      expect(clicks[index].properties.copy_method).toBe('manual_select');
+    }
+    expect(clicks[0].properties.install_ref).not.toBe(
+      clicks[1].properties.install_ref,
+    );
+    expect(writeText).not.toHaveBeenCalled();
+  });
+
+  it('leaves a partial manual selection unchanged when attribution is enabled', () => {
+    jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', true);
+    const text = code('codex').firstChild!;
+    const range = document.createRange();
+    range.setStart(text, 0);
+    range.setEnd(text, 3);
+    window.getSelection()?.addRange(range);
+    const copied = copyEvent(code('codex'));
+
+    expect(copied.event.defaultPrevented).toBe(false);
+    expect(copied.data.size).toBe(0);
   });
 
   it('ignores a copy event with nothing selected', () => {
@@ -179,7 +229,9 @@ describe('InstallAccordion copy', () => {
 
     await click(code('claude'));
 
-    expect(writeText).toHaveBeenCalledWith(INSTALL_COMMANDS.claude);
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(`${INSTALL_COMMANDS.claude} --ref r_`),
+    );
   });
 });
 

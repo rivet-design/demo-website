@@ -72,6 +72,26 @@ describe('redactAuthTokens', () => {
     expect(result?.properties.b).toBe(true);
   });
 
+  it('keeps the ?ref= query and cuts only the token fragment', () => {
+    const result = redactAuthTokens(
+      eventWith({
+        properties: {
+          $current_url:
+            'http://localhost/auth-success?login=complete&ref=r_aZ09bY18',
+          $session_entry_url:
+            'http://localhost/auth-success?session=s1&ref=r_aZ09bY18#access_token=SECRET_A',
+        },
+      }),
+    );
+
+    expect(result?.properties).toEqual({
+      $current_url:
+        'http://localhost/auth-success?login=complete&ref=r_aZ09bY18',
+      $session_entry_url:
+        'http://localhost/auth-success?session=s1&ref=r_aZ09bY18',
+    });
+  });
+
   it('passes a dropped event through as null', () => {
     expect(redactAuthTokens(null)).toBeNull();
   });

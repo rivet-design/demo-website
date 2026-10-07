@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { posthog } from '@/lib/posthog';
+import { generateInstallRef } from '@/lib/installRef';
+import { telemetry } from '@/lib/telemetry';
 
 const R2_PUBLIC_URL = 'https://releases.rivet.design';
 
@@ -77,10 +79,11 @@ const DownloadPage = () => {
 
   const handleDownload = () => {
     if (manifest?.url) {
-      posthog.capture('download_clicked', {
-        version: manifest.version,
+      telemetry.trackDownloadClicked({
         source: 'download_page',
-        download_type: 'mac',
+        downloadType: 'mac',
+        installRef: generateInstallRef(),
+        version: manifest.version,
       });
       window.location.href = manifest.url;
     }
