@@ -51,7 +51,10 @@ const HeroCycle = ({ src, alt, frames, className }: Props) => {
     return () => {
       cancelled = true;
     };
-    // The set is fixed for the life of the page.
+    // Mount-only on purpose: the set is fixed for the life of the page, but
+    // callers pass `frames` as an inline array literal, so its identity (and
+    // `cycle`'s) changes on every parent render — depending on it would
+    // restart the preload and the strobe each time.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
