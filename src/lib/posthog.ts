@@ -42,7 +42,11 @@ export const initPostHog = (): void => {
     api_host: POSTHOG_PUBLIC_HOST,
     autocapture: true,
     capture_pageview: true,
-    persistence: 'localStorage',
+    // The cookie lands on .rivet.design so docs.rivet.design shares the
+    // anonymous distinct_id. Returning visitors keep theirs: this store reads
+    // the same ph_<token>_posthog localStorage entry and copies it to the cookie.
+    persistence: 'localStorage+cookie',
+    cross_subdomain_cookie: true,
     before_send: redactAuthTokens,
   });
 
