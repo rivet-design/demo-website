@@ -66,6 +66,10 @@ const pickAgent = async (label: string) => {
 
 beforeEach(() => {
   sent = [];
+  Object.defineProperty(window, 'isSecureContext', {
+    value: true,
+    configurable: true,
+  });
   Object.assign(navigator, {
     clipboard: { writeText: jest.fn().mockResolvedValue(undefined) },
   });

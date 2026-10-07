@@ -14,6 +14,9 @@ type DownloadClickedSource =
   | 'landing_accordion'
   | 'download_page';
 
+/** How an install command left the accordion; sent as `copy_method`. */
+export type CommandCopyMethod = 'row_click' | 'icon' | 'manual_select';
+
 /** `pkce` is the current proxy-completed flow; `implicit` is the legacy hash-token relay. */
 export type AuthFlow = 'pkce' | 'implicit';
 
@@ -59,10 +62,7 @@ class Telemetry {
     }
   }
 
-  private track(
-    event: string,
-    properties: Record<string, unknown> = {},
-  ): void {
+  private track(event: string, properties: Record<string, unknown> = {}): void {
     this.send(event, () => posthog.capture(event, properties));
   }
 
@@ -78,6 +78,7 @@ class Telemetry {
     downloadType: InstallAgentId | 'mac';
     installRef: InstallRef;
     version?: string;
+    copyMethod?: CommandCopyMethod;
   }): void {
     this.send('$set', () =>
       posthog.setPersonProperties({ last_install_ref: props.installRef }),
@@ -87,6 +88,7 @@ class Telemetry {
       download_type: props.downloadType,
       install_ref: props.installRef,
       ...(props.version !== undefined && { version: props.version }),
+      ...(props.copyMethod && { copy_method: props.copyMethod }),
     });
   }
 

@@ -151,7 +151,7 @@ describe('AuthSuccessPage telemetry', () => {
     const urlProps = (event: CaptureResult) =>
       Object.fromEntries(
         Object.entries(event.properties).filter(
-          ([key, value]) => typeof value === 'string' && value.includes('://'),
+          ([, value]) => typeof value === 'string' && value.includes('://'),
         ),
       );
 
