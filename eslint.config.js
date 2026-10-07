@@ -1,5 +1,6 @@
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
+import eslintConfigPrettier from 'eslint-config-prettier/flat';
 
 export default [
   {
@@ -49,4 +50,5 @@ export default [
       ],
     },
   },
+  eslintConfigPrettier,
 ];
