@@ -41,7 +41,7 @@
     "framer-motion": "^12.42.0",
     "lenis": "^1.3.17",
     "lucide-react": "^0.544.0",
-    "motion": "^12.23.12",
+    "motion": "^14.0.0",
     "pdfjs-dist": "^6.1.200",
     "postcss": "^8.4.32",
     "posthog-js": "^1.304.0",
