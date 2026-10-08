@@ -10,8 +10,10 @@ const supabase =
     : null;
 
 type WaitlistSignup = {
-  firstName: string;
-  lastName: string;
+  // Optional so lightweight captures (e.g. the mobile email CTA) can submit an
+  // email alone; the full waitlist form still passes both names.
+  firstName?: string;
+  lastName?: string;
   email: string;
   description?: string;
 };
@@ -43,8 +45,8 @@ const useEmailSignup = (): UseEmailSignupResult => {
       const [supabaseResult, clayResult] = await Promise.allSettled([
         supabase.from('email_signups').insert([
           {
-            first_name: data.firstName,
-            last_name: data.lastName,
+            first_name: data.firstName || null,
+            last_name: data.lastName || null,
             email: data.email,
             description: data.description || null,
           },
@@ -55,8 +57,8 @@ const useEmailSignup = (): UseEmailSignupResult => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            firstName: data.firstName,
-            lastName: data.lastName,
+            firstName: data.firstName || null,
+            lastName: data.lastName || null,
             email: data.email,
             description: data.description || null,
           }),
