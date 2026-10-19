@@ -2,10 +2,11 @@
 const config = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
-  roots: ['<rootDir>/src'],
+  roots: ['<rootDir>/src', '<rootDir>/worker'],
   testMatch: [
     '**/src/**/__tests__/**/*.+(ts|tsx|js)',
     '**/src/**/*.(test|spec).+(ts|tsx|js)',
+    '**/worker/**/*.test.ts',
   ],
   testPathIgnorePatterns: ['/node_modules/', '/dist/'],
   transform: {
