@@ -32,7 +32,7 @@ beforeEach(() => {
       });
     }
     if (String(url).endsWith('/finish_install_link'))
-      return Response.json(null);
+      return new Response(null, { status: 204 });
     if (url === 'https://api.resend.com/emails')
       return Response.json({ id: 'message-1' });
     throw new Error('Unexpected network request');

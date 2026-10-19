@@ -1,0 +1,17 @@
+Open this on your computer to install Rivet.
+
+Open install page: https://rivet.design/install?ref=r_aZ09bY18&utm_source=email&utm_medium=transactional&utm_campaign=mobile_install
+
+Rivet helps you explore design directions with your coding agent.
+Or paste this into your coding agent:
+
+Claude
+npx -y rivet-design@latest install claude-code claude-desktop --ref r_aZ09bY18
+
+Codex
+npx -y rivet-design@latest install codex --ref r_aZ09bY18
+
+Cursor
+npx -y rivet-design@latest install cursor --mcp --ref r_aZ09bY18
+
+You're getting this because you asked for an install link on rivet.design.

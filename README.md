@@ -4,6 +4,11 @@ Run `npm ci`, then `npm run dev`. Validate with `npm run lint`, `npm run build`,
 and `npm test -- --runInBand`. Browser configuration is in `.env.example`
 (`.env.sample` remains available for existing setups).
 
+CI also applies the migration to disposable PostgreSQL 17 and checks claims,
+rolling rate limits, retry leases, and role permissions. To run those checks
+against an empty local test database, use
+`psql -v ON_ERROR_STOP=1 -f supabase/tests/install_link_requests.sql`.
+
 ## Mobile install email
 
 Below the `md` breakpoint, the hero offers **Email me the link**. The browser

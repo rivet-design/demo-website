@@ -37,6 +37,7 @@ const rpc = async (env: InstallLinkEnv, name: string, body: object) => {
     signal: AbortSignal.timeout(10_000),
   });
   if (!response.ok) throw new Error('Install request storage unavailable');
+  if (response.status === 204) return null;
   return response.json();
 };
 

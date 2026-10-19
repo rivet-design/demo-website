@@ -12,7 +12,7 @@ create table public.install_link_requests (
 );
 create index install_link_requests_email_created_at on public.install_link_requests (email, created_at desc);
 alter table public.install_link_requests enable row level security;
-revoke all on public.install_link_requests from anon, authenticated;
+revoke all on public.install_link_requests from public, anon, authenticated;
 grant all on public.install_link_requests to service_role;
 
 create table public.install_link_rate_limits (
@@ -23,7 +23,7 @@ create table public.install_link_rate_limits (
 create index install_link_rate_limits_ip_created_at on public.install_link_rate_limits (ip_hash, created_at);
 create index install_link_rate_limits_created_at on public.install_link_rate_limits (created_at);
 alter table public.install_link_rate_limits enable row level security;
-revoke all on public.install_link_rate_limits from anon, authenticated;
+revoke all on public.install_link_rate_limits from public, anon, authenticated;
 grant all on public.install_link_rate_limits to service_role;
 
 -- Locks serialize concurrent claims across Worker instances, IPs, and addresses.
