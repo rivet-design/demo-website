@@ -1623,6 +1623,16 @@ img[src$='blob-cluster.svg'] {
   .tool-row__figure {
     grid-column: 1 / -1;
   }
+  .tool-row__figure {
+    justify-self: start;
+    width: fit-content;
+    max-width: 100%;
+  }
+  .tool-row__figure img {
+    width: auto;
+    max-width: 100%;
+    max-height: min(28rem, 55svh);
+  }
   .closing-row__field {
     display: none;
   }
