@@ -1520,6 +1520,7 @@ img[src$='blob-cluster.svg'] {
   }
   .closing-row {
     padding: 2rem 0;
+    font-size: var(--type);
     /* One track, capped at the copy's measure and centred as a unit: the
        BLOCK sits in the middle of the page, but heading, copy and CTA all
        share the track's left edge, so the type inside stays left-aligned.
@@ -1580,13 +1581,6 @@ img[src$='blob-cluster.svg'] {
   .closing-row > p {
     text-wrap: balance;
   }
-  /* Full-width is the desktop grid's treatment, where the CTA fills its own
-     column; at one column that column is the page, so the button goes back
-     to hugging its label. */
-  .closing-row__cta {
-    justify-self: start;
-    width: fit-content;
-  }
   /* The pictures bleed; the table does not. .chapter__rows carries the row
      TEXT as well as its pictures, so bleeding it dragged the numerals and
      tags out to the viewport edge and clipped them. */
@@ -1609,6 +1603,7 @@ img[src$='blob-cluster.svg'] {
      sat flush left, leaving everything right of it empty — the BLOCK centres
      under the full-bleed picture while the type inside stays left-aligned. */
   .wide-figure__text {
+    font-size: var(--type);
     max-width: 46ch;
     margin-inline: auto;
   }
