@@ -1336,6 +1336,14 @@ img[src$='blob-cluster.svg'] {
   aspect-ratio: 1000 / 859;
   object-fit: cover;
 }
+@media (min-width: 1101px) {
+  .wide-figure__media {
+    align-self: stretch;
+  }
+  .wide-figure__img {
+    height: 100%;
+  }
+}
 .wide-figure__blob {
   position: absolute;
   top: -6vw;
