@@ -17,7 +17,7 @@ import {
   copiedInstallCommand,
   type InstallAgentId as AgentLogo,
 } from '@/lib/install';
-import { generateInstallRef } from '@/lib/installRef';
+import { generateInstallRef, type InstallRef } from '@/lib/installRef';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
 
 // Logo painted in the button's own text colour rather than rendered as
@@ -125,6 +125,7 @@ const TONES: Record<
 
 type PromptInstallButtonProps = {
   source: PromptInstallSource;
+  installRef?: InstallRef;
   tone?: Tone;
   /** `hero` matches the hero CTA pills (px-5 py-[10px] text-base). */
   size?: 'md' | 'lg' | 'hero';
@@ -136,6 +137,7 @@ type PromptInstallButtonProps = {
 
 const PromptInstallButton = ({
   source,
+  installRef: providedRef,
   tone = 'orange',
   size = 'md',
   fullWidth = false,
@@ -175,7 +177,7 @@ const PromptInstallButton = ({
   const iconBox = size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
 
   const activate = (item: AgentItem) => {
-    const installRef = generateInstallRef();
+    const installRef = providedRef ?? generateInstallRef();
     telemetry.trackDownloadClicked({
       source,
       downloadType: item.id,
@@ -224,7 +226,7 @@ const PromptInstallButton = ({
           fade (via t.bg's hover variant) — no lift/fan animation. */}
       <PopoverTrigger
         onKeyDown={handleMenuKeyDown}
-        className={`group type-label-lg font-normal flex items-center gap-2.5 rounded-lg border ${t.border} ${t.bg} ${gradient} ${t.text} ${mainSize} ${
+        className={`type-label-lg group flex items-center gap-2.5 rounded-lg border font-normal ${t.border} ${t.bg} ${gradient} ${t.text} ${mainSize} ${
           fullWidth ? 'w-full justify-center' : 'w-fit'
         } transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
       >

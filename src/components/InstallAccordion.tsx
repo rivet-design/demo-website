@@ -14,7 +14,7 @@ import {
   copiedInstallCommand,
   type InstallAgentId,
 } from '@/lib/install';
-import { generateInstallRef } from '@/lib/installRef';
+import { generateInstallRef, type InstallRef } from '@/lib/installRef';
 
 const AGENT_ROWS: { id: InstallAgentId; label: string }[] = [
   { id: 'codex', label: 'Codex' },
@@ -81,8 +81,16 @@ const selectContents = (el: HTMLElement | null) => {
   selection.addRange(range);
 };
 
-const InstallAccordion = () => {
-  const [open, setOpen] = useState(false);
+const InstallAccordion = ({
+  installRef: providedRef,
+  source = 'landing_accordion',
+  defaultOpen = false,
+}: {
+  installRef?: InstallRef;
+  source?: 'landing_accordion' | 'email_install_page';
+  defaultOpen?: boolean;
+} = {}) => {
+  const [open, setOpen] = useState(defaultOpen);
   // Which agent's command was just copied (drives that row's "Copied" state).
   const [copiedId, setCopiedId] = useState<InstallAgentId | null>(null);
   const { copyToClipboard } = useClipboard();
@@ -92,9 +100,9 @@ const InstallAccordion = () => {
   );
 
   const track = (id: InstallAgentId, copyMethod: CommandCopyMethod) => {
-    const installRef = generateInstallRef();
+    const installRef = providedRef ?? generateInstallRef();
     telemetry.trackDownloadClicked({
-      source: 'landing_accordion',
+      source,
       downloadType: id,
       copyMethod,
       installRef,

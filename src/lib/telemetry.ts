@@ -7,6 +7,7 @@ export type PromptInstallSource =
   | 'landing_hero'
   | 'landing_nav'
   | 'landing_install_section'
+  | 'email_install_page'
   | 'story'
   | 'story_nav';
 
@@ -234,7 +235,7 @@ class Telemetry {
 
   /**
    * Phone visitor submitted their email. The address itself is never sent;
-   * `success` is whether it was stored.
+   * `success` is whether the server accepted delivery or suppressed a duplicate.
    */
   trackMobileInstallEmailSubmitted(props: {
     placement: MobileInstallPlacement;

@@ -8,15 +8,14 @@ export default [
       '**/node_modules/**',
       '**/dist/**',
       '**/scripts/**',
-      '**/worker/**',
+      '**/worker/**/*.js',
       'scripts',
-      'worker',
       '**/*.config.js',
       '**/*.config.ts',
     ],
   },
   {
-    files: ['src/**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}', 'worker/**/*.ts'],
     languageOptions: {
       parser: tsparser,
       parserOptions: {

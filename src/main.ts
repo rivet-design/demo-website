@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { createElement } from 'react';
 import App from './App';
 import DownloadPage from './components/DownloadPage';
+import InstallPage from './components/InstallPage';
 import AuthSuccessPage from './components/AuthSuccessPage';
 import PrivacyPolicyPage from './components/PrivacyPolicyPage';
 import TermsPage from './components/TermsPage';
@@ -27,6 +28,7 @@ if (isLegacyStoryPath) window.history.replaceState(null, '', '/story');
 
 const getComponent = () => {
   if (path === '/download') return DownloadPage;
+  if (path === '/install') return InstallPage;
   if (path === '/auth-success') return AuthSuccessPage;
   if (path === '/privacy') return PrivacyPolicyPage;
   if (path === '/terms') return TermsPage;
