@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import GravityField from '../../components/GravityField';
 import HeroCycle from '../../components/HeroCycle';
-import InstallAccordion from '../../components/InstallAccordion';
 import PromptInstallButton from '../../components/PromptInstallButton';
 import { useScrollReveal } from '../../hooks/use-scroll-reveal';
 
@@ -246,12 +245,12 @@ export const Closing = ({ children }: { children: ReactNode }) => {
 };
 
 /**
- * The install CTA under "Go give Rivet a try": the landing page's install
- * section, set in the sign-off's column. Desktop only, as the landing
- * page's is — installing means pasting into a coding agent on a computer.
+ * The install CTA under "Go give Rivet a try", set in the sign-off's column.
+ * Desktop only, as on the landing page: installation requires a coding agent
+ * on a computer.
  */
 export const StoryInstall = () => (
-  <div className="story-install hidden flex-col gap-4 lg:flex">
+  <div className="story-install hidden lg:flex">
     <PromptInstallButton
       tone="orange"
       size="hero"
@@ -259,6 +258,5 @@ export const StoryInstall = () => (
       label="Install Rivet"
       source="story"
     />
-    <InstallAccordion source="story_accordion" />
   </div>
 );

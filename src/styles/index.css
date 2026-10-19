@@ -957,6 +957,7 @@
 /* Body copy: 18px / 1.5 / -0.02em in the drawing. */
 .article-flow > p,
 .article-body,
+.story-install,
 .tool-row__body,
 .closing-row > p {
   font-size: var(--type);
@@ -1522,6 +1523,7 @@ img[src$='blob-cluster.svg'] {
   /* And a measure: at one column the copy would otherwise set the full width
      of a tablet, which is far past what any of it was written for. */
   .article-body,
+  .story-install,
   .article-flow > p,
   .tool-row__body,
   .closing-row > p {
