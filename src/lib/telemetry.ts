@@ -7,6 +7,7 @@ export type PromptInstallSource =
   | 'landing_hero'
   | 'landing_nav'
   | 'landing_install_section'
+  | 'story'
   | 'story_nav';
 
 type DownloadClickedSource =

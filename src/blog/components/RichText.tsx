@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import GravityField from '../../components/GravityField';
 import HeroCycle from '../../components/HeroCycle';
+import PromptInstallButton from '../../components/PromptInstallButton';
 import { useScrollReveal } from '../../hooks/use-scroll-reveal';
 
 /**
@@ -159,11 +160,13 @@ export const WideFigure = ({
   alt,
   signoffTitle,
   signoff,
+  signoffAction,
   children,
 }: ImageProps & {
   children: ReactNode;
   signoffTitle?: string;
   signoff?: ReactNode;
+  signoffAction?: ReactNode;
 }) => {
   const reveal = useScrollReveal<HTMLElement>({ once: true });
   return (
@@ -174,6 +177,7 @@ export const WideFigure = ({
         <div className="wide-figure__signoff">
           <h2 className="signoff__title">{signoffTitle}</h2>
           <div className="article-body">{signoff}</div>
+          {signoffAction}
         </div>
       )}
     </div>
@@ -239,3 +243,20 @@ export const Closing = ({ children }: { children: ReactNode }) => {
   </div>
   );
 };
+
+/**
+ * The install CTA under "Go give Rivet a try", set in the sign-off's column.
+ * Desktop only, as on the landing page: installation requires a coding agent
+ * on a computer.
+ */
+export const StoryInstall = () => (
+  <div className="story-install hidden lg:flex">
+    <PromptInstallButton
+      tone="orange"
+      size="hero"
+      fullWidth
+      label="Install Rivet"
+      source="story"
+    />
+  </div>
+);

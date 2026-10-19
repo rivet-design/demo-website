@@ -85,6 +85,7 @@ describe('PromptInstallButton download_clicked', () => {
   it.each([
     ['landing_hero', 'Codex', 'codex'],
     ['landing_install_section', 'Claude', 'claude'],
+    ['story', 'Claude', 'claude'],
     ['landing_nav', 'Cursor', 'cursor'],
     ['story_nav', 'Codex', 'codex'],
   ] as const)(

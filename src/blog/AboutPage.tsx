@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useScrollReveal } from '../hooks/use-scroll-reveal';
 import { MDXProvider } from '@mdx-js/react';
+import { Toaster } from 'sonner';
 import BlogShell from './BlogShell';
 import GridOverlay from '../components/GridOverlay';
 import SquareField from '../components/SquareField';
@@ -45,6 +46,7 @@ const AboutPage = () => {
 
   return (
     <BlogShell>
+      <Toaster position="bottom-right" theme="dark" duration={8000} />
       {/* No max-width and no padding of its own: the article IS the frame's
           content box, so its 12 columns are the page's 12 columns. Everything
           inside is placed on them. */}
