@@ -52,7 +52,6 @@ const HeroCycle = ({ src, alt, frames, className }: Props) => {
       cancelled = true;
     };
     // The set is fixed for the life of the page.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

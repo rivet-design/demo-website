@@ -42,6 +42,7 @@ const BlogShell = ({ children, background }: BlogShellProps) => {
       {/* Same fill the landing page's nav frosts over (#fafafa), so the bar
           is the one object across the site rather than two lookalikes. */}
       <NavBar
+        installSource="story_nav"
         frosted={scrolled}
         fill={{ backgroundColor: scrolled ? FOOTER_FILL : 'transparent' }}
       />

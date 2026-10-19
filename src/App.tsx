@@ -1343,7 +1343,7 @@ const App = () => {
             className="flex justify-center"
             style={installButton.style}
           >
-            <PromptInstallButton />
+            <PromptInstallButton source="landing_install_section" />
           </div>
           <div ref={installAccordion.ref} style={installAccordion.style}>
             <InstallAccordion />
@@ -1462,7 +1462,12 @@ const App = () => {
               {/* The nav's primary CTA, moved under the title — the nav copy
                   of this button drops to secondary styling so the page keeps
                   a single primary. `hero` size matches the pill beside it. */}
-              <PromptInstallButton tone="orange" size="hero" label="Install Rivet" />
+              <PromptInstallButton
+                source="landing_hero"
+                tone="orange"
+                size="hero"
+                label="Install Rivet"
+              />
             </div>
           </div>
         </div>
@@ -1497,7 +1502,11 @@ const App = () => {
             {/* Frosted over the stage's own #fafafa ground, not the tan
                 hero card — the card has already shrunk away underneath by the
                 time this bar is visible. */}
-            <NavBar frosted fill={{ backgroundColor: FOOTER_FILL }} />
+            <NavBar
+              installSource="landing_nav"
+              frosted
+              fill={{ backgroundColor: FOOTER_FILL }}
+            />
           </motion.div>
         )}
 
@@ -1821,7 +1830,7 @@ const App = () => {
                   : 'contents'
               }
             >
-            <NavBar />
+            <NavBar installSource="landing_nav" />
             {/* Hero copy gets 3x the horizontal padding of the content panels
                 (p-4/sm:p-6/lg:p-8 → px-12/sm:px-[4.5rem]/lg:px-24), symmetric on
                 both ends. The hero-title-text font formula subtracts this same

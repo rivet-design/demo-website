@@ -1,4 +1,44 @@
 import { posthog } from './posthog';
+import type { InstallAgentId } from './install';
+import type { InstallRef } from './installRef';
+
+/** Where a PromptInstallButton sits; sent as `source` on `download_clicked`. */
+export type PromptInstallSource =
+  | 'landing_hero'
+  | 'landing_nav'
+  | 'landing_install_section'
+  | 'story'
+  | 'story_nav';
+
+type DownloadClickedSource =
+  | PromptInstallSource
+  | 'landing_accordion'
+  | 'download_page';
+
+/** How an install command left the accordion; sent as `copy_method`. */
+export type CommandCopyMethod = 'row_click' | 'icon' | 'manual_select';
+
+/** `pkce` is the current proxy-completed flow; `implicit` is the legacy hash-token relay. */
+export type AuthFlow = 'pkce' | 'implicit';
+
+export const PKCE_ERROR_REASONS = [
+  'session_expired',
+  'provider_denied',
+  'exchange_failed',
+  'verification_failed',
+  'session_invalid',
+  'internal',
+] as const;
+
+export type PkceErrorReason = (typeof PKCE_ERROR_REASONS)[number];
+
+export type SignInFailureReason =
+  | PkceErrorReason
+  | 'missing_session'
+  | 'missing_token'
+  | 'proxy_rejected'
+  | 'request_failed'
+  | 'unknown';
 
 /**
  * Browser-side telemetry wrapper around posthog-js. Mirrors the
@@ -14,16 +54,81 @@ import { posthog } from './posthog';
  * input (e.g. comment instructions) is never captured — only its length.
  */
 class Telemetry {
-  private track(
-    event: string,
-    properties: Record<string, unknown> = {},
-  ): void {
+  private send(label: string, call: () => void): void {
     try {
-      posthog.capture(event, properties);
+      call();
     } catch (err) {
       // Swallow — telemetry must never break the UI.
-      console.warn(`telemetry: failed to send "${event}"`, err);
+      console.warn(`telemetry: failed to send "${label}"`, err);
     }
+  }
+
+  private track(event: string, properties: Record<string, unknown> = {}): void {
+    this.send(event, () => posthog.capture(event, properties));
+  }
+
+  // ----- Install funnel -----
+
+  /**
+   * An install prompt or command was copied to the clipboard, or the Mac app
+   * was downloaded. `last_install_ref` goes on the person too, so the copier
+   * and a sign-in from another browser share it at the person level.
+   */
+  trackDownloadClicked(props: {
+    source: DownloadClickedSource;
+    downloadType: InstallAgentId | 'mac';
+    installRef: InstallRef;
+    version?: string;
+    copyMethod?: CommandCopyMethod;
+  }): void {
+    this.send('$set', () =>
+      posthog.setPersonProperties({ last_install_ref: props.installRef }),
+    );
+    this.track('download_clicked', {
+      source: props.source,
+      download_type: props.downloadType,
+      install_ref: props.installRef,
+      ...(props.version !== undefined && { version: props.version }),
+      ...(props.copyMethod && { copy_method: props.copyMethod }),
+    });
+  }
+
+  /**
+   * The editor sign-in landed on /auth-success and succeeded. Marks the
+   * person as installed so later visits can be split by install state;
+   * setPersonProperties also creates the profile for anonymous visitors.
+   * `installRef` is the copy that started this install, carried here by the
+   * CLI; it is only matched on, never used to merge persons.
+   */
+  trackEditorSignInCompleted(props: {
+    flow: AuthFlow;
+    installRef: InstallRef | null;
+  }): void {
+    this.send('$set', () =>
+      posthog.setPersonProperties(
+        {
+          rivet_installed: true,
+          ...(props.installRef && { last_install_ref: props.installRef }),
+        },
+        { rivet_first_installed_at: new Date().toISOString() },
+      ),
+    );
+    this.track('editor_sign_in_completed', {
+      auth_flow: props.flow,
+      ...(props.installRef && { install_ref: props.installRef }),
+    });
+  }
+
+  trackEditorSignInFailed(props: {
+    flow: AuthFlow;
+    reason: SignInFailureReason;
+    installRef: InstallRef | null;
+  }): void {
+    this.track('editor_sign_in_failed', {
+      auth_flow: props.flow,
+      reason: props.reason,
+      ...(props.installRef && { install_ref: props.installRef }),
+    });
   }
 
   // ----- Comments demo -----

@@ -6,6 +6,8 @@
 // where npx's "Ok to proceed?" prompt would stall) and `@latest` forces a
 // registry resolve so a stale npx cache or old global install never serves an
 // outdated version. The agent ids mirror rivet core's harness registry.
+import { EMBED_INSTALL_REF_IN_COPY, type InstallRef } from './installRef';
+
 export type InstallAgentId = 'claude' | 'cursor' | 'codex';
 
 export const AGENT_LOGOS: Record<InstallAgentId, string> = {
@@ -23,3 +25,12 @@ export const INSTALL_COMMANDS: Record<InstallAgentId, string> = {
   cursor: 'npx -y rivet-design@latest install cursor --mcp',
   codex: 'npx -y rivet-design@latest install codex',
 };
+
+/** The command to copy for one install; carries `--ref` once the CLI accepts it. */
+export const copiedInstallCommand = (
+  agent: InstallAgentId,
+  ref: InstallRef,
+): string =>
+  EMBED_INSTALL_REF_IN_COPY
+    ? `${INSTALL_COMMANDS[agent]} --ref ${ref}`
+    : INSTALL_COMMANDS[agent];

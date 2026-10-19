@@ -11,12 +11,13 @@
 // auth flow inside a disposable process.
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { posthog } from '@/lib/posthog';
+import { telemetry, type PromptInstallSource } from '@/lib/telemetry';
 import {
   AGENT_LOGOS as TOOL_LOGOS,
-  INSTALL_COMMANDS,
+  copiedInstallCommand,
   type InstallAgentId as AgentLogo,
 } from '@/lib/install';
+import { generateInstallRef } from '@/lib/installRef';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
 
 // Logo painted in the button's own text colour rather than rendered as
@@ -52,10 +53,10 @@ const ToolLogo = ({ id, label }: { id: AgentLogo; label: string }) => (
 );
 
 type AgentItem = {
-  id: string;
+  id: AgentLogo;
   label: string;
   logo: AgentLogo;
-  prompt: string;
+  prompt: (command: string) => string;
 };
 
 // Menu rows, in display order. Each copies a paste-ready install prompt; the
@@ -68,19 +69,21 @@ const AGENT_ITEMS: AgentItem[] = [
     id: 'codex',
     label: 'Codex',
     logo: 'codex',
-    prompt: `Please set up Rivet for Codex by running: ${INSTALL_COMMANDS.codex}`,
+    prompt: (command) => `Please set up Rivet for Codex by running: ${command}`,
   },
   {
     id: 'claude',
     label: 'Claude',
     logo: 'claude',
-    prompt: `Please set up Rivet for Claude Code and Claude Desktop by running: ${INSTALL_COMMANDS.claude}`,
+    prompt: (command) =>
+      `Please set up Rivet for Claude Code and Claude Desktop by running: ${command}`,
   },
   {
     id: 'cursor',
     label: 'Cursor',
     logo: 'cursor',
-    prompt: `Please set up Rivet for Cursor by running: ${INSTALL_COMMANDS.cursor}`,
+    prompt: (command) =>
+      `Please set up Rivet for Cursor by running: ${command}`,
   },
 ];
 
@@ -121,6 +124,7 @@ const TONES: Record<
 };
 
 type PromptInstallButtonProps = {
+  source: PromptInstallSource;
   tone?: Tone;
   /** `hero` matches the hero CTA pills (px-5 py-[10px] text-base). */
   size?: 'md' | 'lg' | 'hero';
@@ -128,17 +132,15 @@ type PromptInstallButtonProps = {
   label?: string;
   /** Close when the page scrolls, before the nav becomes part of the demo. */
   dismissOnScroll?: boolean;
-  /** `source` on the `download_clicked` event, so placements stay distinguishable. */
-  source?: string;
 };
 
 const PromptInstallButton = ({
+  source,
   tone = 'orange',
   size = 'md',
   fullWidth = false,
   label = 'Add Rivet to your agent',
   dismissOnScroll = false,
-  source = 'landing',
 }: PromptInstallButtonProps) => {
   const [open, setOpen] = useState(false);
   // Keyboard highlight within the menu (-1 = no row highlighted).
@@ -173,12 +175,15 @@ const PromptInstallButton = ({
   const iconBox = size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
 
   const activate = (item: AgentItem) => {
-    posthog.capture('download_clicked', {
+    const installRef = generateInstallRef();
+    telemetry.trackDownloadClicked({
       source,
-      download_type: item.id,
+      downloadType: item.id,
+      installRef,
     });
 
-    navigator.clipboard.writeText(item.prompt).then(() => {
+    const prompt = item.prompt(copiedInstallCommand(item.id, installRef));
+    navigator.clipboard.writeText(prompt).then(() => {
       toast.success('Prompt copied to clipboard', {
         description: `Paste into ${item.label} to install the Rivet MCP.`,
       });
