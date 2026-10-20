@@ -47,7 +47,7 @@ function Menu() {
         onHighlight={onHighlight}
       >
         <FluidMenuItem index={0} onClick={runAction}>
-          Copy prompt for agent
+          Copy prompt
         </FluidMenuItem>
       </FluidMenuGroup>
     </>
@@ -164,7 +164,7 @@ it('starts a separate highlight in the copy section and leaves headings inert', 
   pointer(desktop, 'pointerout', 180);
   const copy = group('Copy prompt to install');
   pointer(copy, 'pointermove', 224);
-  expect(activeLabels()).toEqual(['Copy prompt for agent']);
+  expect(activeLabels()).toEqual(['Copy prompt']);
   expect(
     copy.querySelector('[data-slot="fluid-hover-highlight"]'),
   ).not.toBeNull();

@@ -66,7 +66,7 @@ const pickAgent = async (label: string) => {
   const row = [...popup.querySelectorAll('button')].find(
     (button) =>
       button.getAttribute('aria-label') ===
-      (label === 'Copy prompt for agent' ? label : `Continue in ${label}`),
+      (label === 'Copy prompt' ? label : `Continue in ${label}`),
   );
   if (!row) throw new Error(`${label} row not rendered`);
   await act(async () => {
@@ -298,12 +298,12 @@ describe('PromptInstallButton copy prompt', () => {
       [...chooser.querySelectorAll('button')].map(
         (button) => button.textContent,
       ),
-    ).toEqual(['Codex', 'Claude', 'Cursor', 'Copy prompt for agent']);
+    ).toEqual(['Codex', 'Claude', 'Cursor', 'Copy prompt']);
   });
 
   it('copies a general install prompt with a fresh ref without opening an app', async () => {
     render(<PromptInstallButton source="story_nav" />);
-    await pickAgent('Copy prompt for agent');
+    await pickAgent('Copy prompt');
     const [ref] = refsSent().events;
     expect(ref).toMatch(REF);
     expect(refsSent().people).toEqual([ref]);
@@ -324,14 +324,14 @@ describe('PromptInstallButton copy prompt', () => {
     expect(container.querySelector('button')?.textContent).toBe(
       'Continue in Codex',
     );
-    await pickAgent('Copy prompt for agent');
+    await pickAgent('Copy prompt');
     expect(refsSent().events[1]).not.toBe(ref);
   });
 
   it('leaves the ref out of the copied prompt when embedding is off', async () => {
     jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', false);
     render(<PromptInstallButton source="landing_hero" />);
-    await pickAgent('Copy prompt for agent');
+    await pickAgent('Copy prompt');
     expect(copiedText()).toEqual([
       'Please install Rivet for this agent by running: npx -y rivet-design@latest install',
     ]);
@@ -360,13 +360,13 @@ describe('PromptInstallButton copy prompt', () => {
       new Error('denied'),
     );
     render(<PromptInstallButton source="landing_hero" />);
-    await pickAgent('Copy prompt for agent');
+    await pickAgent('Copy prompt');
     expect(downloadClicks()).toEqual([]);
     expect(toast.success).not.toHaveBeenCalled();
     expect(document.querySelector('[role="status"]')?.textContent).toBe(
       'Couldn’t copy. Try again.',
     );
-    await pickAgent('Copy prompt for agent');
+    await pickAgent('Copy prompt');
     expect(document.querySelector('[role="status"]')?.textContent).toBe(
       'Prompt copied',
     );

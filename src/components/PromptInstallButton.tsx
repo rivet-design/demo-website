@@ -319,7 +319,7 @@ const PromptInstallButton = ({
           <FluidMenuItem
             index={0}
             onClick={() => void copyPrompt()}
-            aria-label="Copy prompt for agent"
+            aria-label="Copy prompt"
           >
             <Copy
               size={20}
@@ -327,7 +327,7 @@ const PromptInstallButton = ({
               aria-hidden
               className="text-[#818181]"
             />
-            <span>{isCopied ? 'Copied' : 'Copy prompt for agent'}</span>
+            <span>{isCopied ? 'Copied' : 'Copy prompt'}</span>
           </FluidMenuItem>
           <span
             role="status"
