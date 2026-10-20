@@ -1,7 +1,7 @@
 // Opens the selected desktop agent with a CLI-first install prompt ready to
 // review and send. Cursor receives a prompt link, not an MCP registration link,
 // so the install still uses the CLI's durable global bootstrap.
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import useClipboard from '@/hooks/useClipboard';
@@ -14,6 +14,11 @@ import {
 } from '@/lib/install';
 import { generateInstallRef } from '@/lib/installRef';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
+import {
+  FluidMenuGroup,
+  FluidMenuItem,
+  type MenuInputMode,
+} from './ui/FluidMenuGroup';
 
 const ICON_PX = 20;
 const ToolLogo = ({
@@ -122,6 +127,11 @@ const PromptInstallButton = ({
   const [copyFailed, setCopyFailed] = useState(false);
   // Keyboard highlight within the menu (-1 = no row highlighted).
   const [highlight, setHighlight] = useState(-1);
+  const [inputMode, setInputMode] = useState<MenuInputMode>('pointer');
+  const highlightItem = useCallback((index: number, mode: MenuInputMode) => {
+    setHighlight(index);
+    setInputMode(mode);
+  }, []);
 
   useEffect(() => {
     if (!open || !dismissOnScroll) return;
@@ -197,6 +207,7 @@ const PromptInstallButton = ({
   // Arrow keys move the highlight; Enter activates; Escape closes. Shared by the
   // trigger and the menu so keyboard users can drive the whole thing.
   const handleMenuKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') setInputMode('keyboard');
     if (!open) {
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
@@ -228,6 +239,7 @@ const PromptInstallButton = ({
       open={open}
       onOpenChange={(next) => {
         setHighlight(-1);
+        setInputMode('pointer');
         setOpen(next);
       }}
     >
@@ -272,19 +284,19 @@ const PromptInstallButton = ({
         className="overflow-y-auto overscroll-contain rounded-2xl border-black/[0.12] bg-white p-2 text-black shadow-[0_12px_32px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)]"
         onKeyDown={handleMenuKeyDown}
       >
-        <div role="group" aria-label="Open in desktop">
-          <p className="px-3 pb-1 pt-2 font-main text-xs font-normal text-[#646464]">
-            Open in desktop
-          </p>
+        <FluidMenuGroup
+          label="Open in desktop"
+          startIndex={0}
+          activeIndex={highlight}
+          inputMode={inputMode}
+          onHighlight={highlightItem}
+        >
           {AGENT_ITEMS.map((item, index) => (
-            <button
+            <FluidMenuItem
               key={item.id}
-              type="button"
+              index={index}
               aria-label={continuationLabel(item)}
               onClick={() => activate(item)}
-              onMouseEnter={() => setHighlight(index)}
-              onFocus={() => setHighlight(index)}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left font-main text-sm text-black transition-colors duration-150 hover:bg-black/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/30 motion-reduce:transition-none ${index === highlight ? 'bg-black/[0.04]' : ''}`}
             >
               <span aria-hidden>
                 <ToolLogo id={item.id} label={item.label} />
@@ -293,24 +305,21 @@ const PromptInstallButton = ({
               {selected.id === item.id && (
                 <Check aria-hidden size={15} className="text-[#969696]" />
               )}
-            </button>
+            </FluidMenuItem>
           ))}
-        </div>
-        <div
-          role="group"
-          aria-label="Copy prompt to install"
+        </FluidMenuGroup>
+        <FluidMenuGroup
+          label="Copy prompt to install"
+          startIndex={AGENT_ITEMS.length}
+          activeIndex={highlight}
+          inputMode={inputMode}
+          onHighlight={highlightItem}
           className="mt-2 border-t border-black/10 pt-2"
         >
-          <p className="px-3 pb-1 pt-2 font-main text-xs font-normal text-[#646464]">
-            Copy prompt to install
-          </p>
-          <button
-            type="button"
+          <FluidMenuItem
+            index={0}
             onClick={() => void copyPrompt()}
             aria-label="Copy prompt for agent"
-            onMouseEnter={() => setHighlight(AGENT_ITEMS.length)}
-            onFocus={() => setHighlight(AGENT_ITEMS.length)}
-            className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left font-main text-sm text-black transition-colors duration-150 hover:bg-black/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/30 motion-reduce:transition-none ${highlight === AGENT_ITEMS.length ? 'bg-black/[0.04]' : ''}`}
           >
             <Copy
               size={20}
@@ -319,7 +328,7 @@ const PromptInstallButton = ({
               className="text-[#818181]"
             />
             <span>{isCopied ? 'Copied' : 'Copy prompt for agent'}</span>
-          </button>
+          </FluidMenuItem>
           <span
             role="status"
             className={
@@ -334,7 +343,7 @@ const PromptInstallButton = ({
                 ? 'Prompt copied'
                 : ''}
           </span>
-        </div>
+        </FluidMenuGroup>
       </PopoverContent>
     </Popover>
   );
