@@ -21,14 +21,22 @@ import {
 import InstallAccordion from './InstallAccordion';
 
 const ICON_PX = 20;
-const ToolLogo = ({ id, label }: { id: AgentLogo; label: string }) => (
+const ToolLogo = ({
+  id,
+  label,
+  size = ICON_PX,
+}: {
+  id: AgentLogo;
+  label: string;
+  size?: number;
+}) => (
   <span
     role="img"
     aria-label={label}
     className="block shrink-0"
     style={{
-      width: ICON_PX,
-      height: ICON_PX,
+      width: size,
+      height: size,
       backgroundColor: 'currentColor',
       WebkitMaskImage: `url("${TOOL_LOGOS[id]}")`,
       maskImage: `url("${TOOL_LOGOS[id]}")`,
@@ -102,8 +110,28 @@ const continuationLabel = (item: AgentItem) =>
     ? 'Continue in Codex'
     : `Continue in ${item.label}${item.id === 'claude-code' ? ' (Terminal)' : ' (Desktop)'}`;
 
+const BUTTON_TONES = {
+  orange: {
+    frame:
+      'border-primary/20 bg-primary bg-[linear-gradient(137.74deg,rgb(236,68,35)_41.128%,rgb(243,138,118)_121.74%)] text-white',
+    action: 'hover:bg-white/[0.06]',
+    chevron: 'border-white/20 bg-white/[0.06] hover:bg-white/[0.12]',
+  },
+  secondary: {
+    frame: 'border-[#642e39] bg-transparent text-[#642e39]',
+    action: 'hover:bg-[#642e39]/5',
+    chevron: 'border-[#642e39]/20 hover:bg-[#642e39]/5',
+  },
+  light: {
+    frame: 'border-black/10 bg-white text-[#171715]',
+    action: 'hover:bg-black/[0.04]',
+    chevron: 'border-black/10 bg-black/[0.03] hover:bg-black/[0.06]',
+  },
+};
+
 type PromptInstallButtonProps = {
   source: PromptInstallSource;
+  tone?: keyof typeof BUTTON_TONES;
   size?: 'md' | 'lg' | 'hero';
   fullWidth?: boolean;
   label?: string;
@@ -113,6 +141,7 @@ type PromptInstallButtonProps = {
 
 const PromptInstallButton = ({
   source,
+  tone = 'orange',
   size = 'md',
   fullWidth = false,
   label,
@@ -136,11 +165,12 @@ const PromptInstallButton = ({
 
   const buttonSize =
     size === 'lg'
-      ? 'min-h-[60px] text-base'
+      ? 'px-6 py-4 font-main text-lg'
       : size === 'hero'
-        ? 'min-h-[52px] text-base'
-        : 'min-h-11 text-sm';
+        ? 'px-5 py-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px]'
+        : 'px-4 py-2 font-main text-sm';
   const actionLabel = continuationLabel(selected);
+  const buttonTone = BUTTON_TONES[tone];
 
   const activate = (item: AgentItem) => {
     setSelected(item);
@@ -207,16 +237,16 @@ const PromptInstallButton = ({
       >
         <div
           ref={splitRef}
-          className={`flex min-w-0 overflow-hidden rounded-xl border border-black/10 bg-[#171715] text-white shadow-[0_1px_2px_rgba(0,0,0,0.12)] ${buttonSize} ${fullWidth ? 'w-full' : ''}`}
+          className={`flex min-w-0 overflow-hidden rounded-xl border ${buttonTone.frame} ${fullWidth ? 'w-full' : ''}`}
         >
           <button
             type="button"
             onClick={() => activate(selected)}
             title={actionLabel}
-            className="flex min-w-0 flex-1 items-center justify-center gap-3 px-5 py-3 font-main font-normal transition-colors duration-150 hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/70 motion-reduce:transition-none"
+            className={`flex min-w-0 flex-1 items-center justify-center gap-2.5 font-normal ${buttonSize} transition-colors duration-150 ${buttonTone.action} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-current motion-reduce:transition-none`}
           >
             <span aria-hidden>
-              <ToolLogo id={selected.logo} label={selected.label} />
+              <ToolLogo id={selected.logo} label={selected.label} size={16} />
             </span>
             <span className="truncate">{label ?? actionLabel}</span>
           </button>
@@ -224,7 +254,7 @@ const PromptInstallButton = ({
             aria-label="Choose your agent"
             aria-haspopup="dialog"
             onKeyDown={handleMenuKeyDown}
-            className="flex w-12 shrink-0 items-center justify-center border-l border-white/15 bg-white/[0.06] transition-colors duration-150 hover:bg-white/[0.12] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/70 motion-reduce:transition-none sm:w-[52px]"
+            className={`flex w-10 shrink-0 items-center justify-center border-l ${buttonTone.chevron} transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-current motion-reduce:transition-none`}
           >
             <ChevronDown
               aria-hidden

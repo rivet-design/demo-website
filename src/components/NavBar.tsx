@@ -300,6 +300,7 @@ const NavBar = ({
           <div className="hidden md:block">
             <PromptInstallButton
               source={installSource}
+              tone={isDark ? 'light' : 'secondary'}
               dismissOnScroll
             />
           </div>
