@@ -285,7 +285,7 @@ const PromptInstallButton = ({
           collisionPadding={12}
           data-lenis-prevent
           aria-label="Choose where to install Rivet"
-          className="overflow-y-auto overscroll-contain rounded-2xl border-black/[0.12] bg-white p-2 text-[#202020] shadow-[0_12px_32px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)]"
+          className="overflow-y-auto overscroll-contain rounded-2xl border-black/[0.12] bg-white p-2 text-black shadow-[0_12px_32px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)]"
           onKeyDown={handleMenuKeyDown}
         >
           {AGENT_GROUPS.map((group, groupIndex) => (
@@ -316,7 +316,7 @@ const PromptInstallButton = ({
                       onClick={() => activate(item)}
                       onMouseEnter={() => setHighlight(index)}
                       onFocus={() => setHighlight(index)}
-                      className={`flex w-full items-center gap-3 rounded-lg py-2.5 pl-11 pr-3 text-left font-main text-sm text-[#646464] transition-colors duration-150 hover:bg-black/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/30 motion-reduce:transition-none ${index === highlight ? 'bg-black/[0.04]' : ''}`}
+                      className={`flex w-full items-center gap-3 rounded-lg py-2.5 pl-11 pr-3 text-left font-main text-sm text-black transition-colors duration-150 hover:bg-black/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/30 motion-reduce:transition-none ${index === highlight ? 'bg-black/[0.04]' : ''}`}
                     >
                       <SurfaceIcon
                         aria-hidden
@@ -346,7 +346,7 @@ const PromptInstallButton = ({
               onClick={openTerminal}
               onMouseEnter={() => setHighlight(AGENT_ITEMS.length)}
               onFocus={() => setHighlight(AGENT_ITEMS.length)}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left font-main text-sm text-[#646464] transition-colors duration-150 hover:bg-black/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/30 motion-reduce:transition-none ${highlight === AGENT_ITEMS.length ? 'bg-black/[0.04]' : ''}`}
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left font-main text-sm text-black transition-colors duration-150 hover:bg-black/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/30 motion-reduce:transition-none ${highlight === AGENT_ITEMS.length ? 'bg-black/[0.04]' : ''}`}
             >
               <Copy
                 size={20}
