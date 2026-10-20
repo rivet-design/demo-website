@@ -67,7 +67,9 @@ const pickAgent = async (label: string) => {
     label === 'Terminal'
       ? button.textContent === 'Copy instructions'
       : button.getAttribute('aria-label') ===
-        `Continue in ${label}${label === 'Claude Code' ? ' (Terminal)' : ' (Desktop)'}`,
+        (label === 'Codex'
+          ? 'Continue in Codex'
+          : `Continue in ${label}${label === 'Claude Code' ? ' (Terminal)' : ' (Desktop)'}`),
   );
   if (!row) throw new Error(`${label} row not rendered`);
   await act(async () => {
@@ -97,11 +99,11 @@ afterEach(() => {
 
 describe('PromptInstallButton download_clicked', () => {
   it.each([
-    ['landing_hero', 'ChatGPT', 'codex'],
+    ['landing_hero', 'Codex', 'codex'],
     ['landing_install_section', 'Claude', 'claude'],
     ['story', 'Claude', 'claude'],
     ['landing_nav', 'Cursor', 'cursor'],
-    ['story_nav', 'ChatGPT', 'codex'],
+    ['story_nav', 'Codex', 'codex'],
   ] as const)(
     'sends source %s with the picked agent',
     async (source, label, downloadType) => {
@@ -141,7 +143,7 @@ describe('PromptInstallButton download_clicked', () => {
     });
 
     render(<PromptInstallButton source="landing_hero" label="Install Rivet" />);
-    await pickAgent('ChatGPT');
+    await pickAgent('Codex');
 
     expect(openedPrompts()).toEqual([expect.stringContaining('install codex')]);
   });
@@ -188,7 +190,7 @@ describe.each([
       ),
     pickAgent,
     openedPrompts,
-    'ChatGPT',
+    'Codex',
   ],
   [
     'InstallAccordion',
@@ -241,7 +243,7 @@ describe.each([
 
 describe('PromptInstallButton desktop handoff', () => {
   it.each([
-    ['ChatGPT', 'codex://new', 'prompt'],
+    ['Codex', 'codex://new', 'prompt'],
     ['Claude', 'claude://code/new', 'q'],
     ['Claude Code', 'claude-cli://open', 'q'],
     ['Cursor', 'cursor://anysphere.cursor-deeplink/prompt', 'text'],
@@ -360,7 +362,7 @@ it('dismisses the nav chooser on scroll', () => {
 it('launches the default app from the main button without opening the menu', async () => {
   render(<PromptInstallButton source="landing_hero" />);
   const main = container.querySelector('button')!;
-  expect(main.textContent).toBe('Continue in ChatGPT (Desktop)');
+  expect(main.textContent).toBe('Continue in Codex');
   await act(async () => click(main));
   expect(window.open).toHaveBeenCalledWith(
     expect.stringMatching(/^codex:\/\/new\?prompt=/),

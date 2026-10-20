@@ -57,10 +57,9 @@ const AGENT_ITEMS: AgentItem[] = [
   {
     id: 'codex',
     group: 'codex',
-    label: 'ChatGPT',
+    label: 'Codex',
     logo: 'codex',
-    prompt: (command) =>
-      `Please set up Rivet for ChatGPT Desktop (Codex) by running: ${command}`,
+    prompt: (command) => `Please set up Rivet for Codex by running: ${command}`,
     deepLink: 'codex://new?prompt=',
   },
   {
@@ -93,13 +92,15 @@ const AGENT_ITEMS: AgentItem[] = [
 ];
 
 const AGENT_GROUPS = [
-  { id: 'codex', label: 'ChatGPT' },
+  { id: 'codex', label: 'Codex' },
   { id: 'claude', label: 'Claude' },
   { id: 'cursor', label: 'Cursor' },
 ] as const;
 
 const continuationLabel = (item: AgentItem) =>
-  `Continue in ${item.label}${item.id === 'claude-code' ? ' (Terminal)' : ' (Desktop)'}`;
+  item.id === 'codex'
+    ? 'Continue in Codex'
+    : `Continue in ${item.label}${item.id === 'claude-code' ? ' (Terminal)' : ' (Desktop)'}`;
 
 type PromptInstallButtonProps = {
   source: PromptInstallSource;

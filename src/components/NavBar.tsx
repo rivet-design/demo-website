@@ -300,7 +300,6 @@ const NavBar = ({
           <div className="hidden md:block">
             <PromptInstallButton
               source={installSource}
-              label="Install Rivet"
               dismissOnScroll
             />
           </div>
