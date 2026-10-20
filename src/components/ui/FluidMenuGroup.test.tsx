@@ -26,6 +26,7 @@ function Menu() {
   }, []);
   return (
     <>
+      <output aria-label="Input mode">{mode}</output>
       <FluidMenuGroup
         label="Open in desktop"
         startIndex={0}
@@ -199,4 +200,26 @@ it('disables all highlight animation for reduced motion', () => {
     type: 'spring',
     bounce: 0,
   });
+});
+
+it('keeps pointer focus in pointer mode after clicking the copy action', () => {
+  const copy = group('Copy prompt to install');
+  const button = copy.querySelector('button')!;
+  pointer(copy, 'pointermove', 224);
+  // The browser leaves :focus-visible off when a mouse click focuses a button.
+  const matches = button.matches.bind(button);
+  jest
+    .spyOn(button, 'matches')
+    .mockImplementation((selector) =>
+      selector === ':focus-visible' ? false : matches(selector),
+    );
+  act(() => {
+    button.focus();
+    button.click();
+  });
+  expect(container.querySelector('output')?.textContent).toBe('pointer');
+  expect(activeLabels()).toEqual(['Copy prompt']);
+  const fill = copy.querySelector('[data-slot="fluid-hover-highlight"]');
+  pointer(copy, 'pointermove', 225);
+  expect(copy.querySelector('[data-slot="fluid-hover-highlight"]')).toBe(fill);
 });

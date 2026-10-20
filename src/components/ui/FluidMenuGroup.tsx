@@ -28,7 +28,7 @@ type GroupProps = {
 type GroupContext = {
   registerItem: (index: number, element: HTMLElement | null) => void;
   activeIndex: number | null;
-  onFocus: (index: number) => void;
+  onFocus: (index: number, mode: MenuInputMode) => void;
 };
 
 const GroupContext = createContext<GroupContext | null>(null);
@@ -59,7 +59,7 @@ export function FluidMenuGroup({
       value={{
         registerItem: hover.registerItem,
         activeIndex: localIndex,
-        onFocus: (index) => onHighlight(startIndex + index, 'keyboard'),
+        onFocus: (index, mode) => onHighlight(startIndex + index, mode),
       }}
     >
       <div
@@ -69,13 +69,13 @@ export function FluidMenuGroup({
         className={cn('relative isolate', className)}
         onPointerEnter={(event) => {
           if (event.pointerType !== 'mouse') return;
-          if (inputMode !== 'pointer') onHighlight(-1, 'pointer');
+          if (inputMode !== 'pointer') onHighlight(activeIndex, 'pointer');
           hover.handlers.onMouseEnter();
           hover.handlers.onMouseMove(event);
         }}
         onPointerMove={(event) => {
           if (event.pointerType !== 'mouse') return;
-          if (inputMode !== 'pointer') onHighlight(-1, 'pointer');
+          if (inputMode !== 'pointer') onHighlight(activeIndex, 'pointer');
           hover.handlers.onMouseMove(event);
         }}
         onPointerLeave={(event) => {
@@ -116,7 +116,13 @@ export function FluidMenuItem({
       type="button"
       data-highlighted={group.activeIndex === index ? '' : undefined}
       onFocus={(event) => {
-        group.onFocus(index);
+        // Native focus visibility distinguishes keyboard focus from a click.
+        group.onFocus(
+          index,
+          event.currentTarget.matches(':focus-visible')
+            ? 'keyboard'
+            : 'pointer',
+        );
         onFocus?.(event);
       }}
       className={cn(
