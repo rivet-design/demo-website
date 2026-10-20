@@ -70,8 +70,8 @@ class Telemetry {
   // ----- Install funnel -----
 
   /**
-   * An install prompt or command was copied to the clipboard, or the Mac app
-   * was downloaded. `last_install_ref` goes on the person too, so the copier
+   * An install prompt was opened in an agent, a command was copied, or the Mac
+   * app was downloaded. `last_install_ref` goes on the person too, so the visitor
    * and a sign-in from another browser share it at the person level.
    */
   trackDownloadClicked(props: {

@@ -1,11 +1,16 @@
 import { act, type ReactElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { CaptureResult } from 'posthog-js';
+import { toast } from 'sonner';
 import { posthog } from '../lib/posthog';
 import * as installRef from '../lib/installRef';
 import InstallAccordion from './InstallAccordion';
 import NavBar from './NavBar';
 import PromptInstallButton from './PromptInstallButton';
+
+jest.mock('sonner', () => ({
+  toast: Object.assign(jest.fn(), { success: jest.fn(), error: jest.fn() }),
+}));
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -66,6 +71,8 @@ const pickAgent = async (label: string) => {
 
 beforeEach(() => {
   sent = [];
+  jest.clearAllMocks();
+  jest.spyOn(window, 'open').mockReturnValue(null);
   Object.defineProperty(window, 'isSecureContext', {
     value: true,
     configurable: true,
@@ -83,11 +90,11 @@ afterEach(() => {
 
 describe('PromptInstallButton download_clicked', () => {
   it.each([
-    ['landing_hero', 'Codex', 'codex'],
+    ['landing_hero', 'ChatGPT', 'codex'],
     ['landing_install_section', 'Claude', 'claude'],
     ['story', 'Claude', 'claude'],
     ['landing_nav', 'Cursor', 'cursor'],
-    ['story_nav', 'Codex', 'codex'],
+    ['story_nav', 'ChatGPT', 'codex'],
   ] as const)(
     'sends source %s with the picked agent',
     async (source, label, downloadType) => {
@@ -97,9 +104,17 @@ describe('PromptInstallButton download_clicked', () => {
       expect(downloadClicks()).toEqual([
         { source, download_type: downloadType },
       ]);
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-        expect.stringContaining(`install ${downloadType}`),
-      );
+      expect(openedPrompts()).toEqual([
+        expect.stringContaining(
+          `install ${downloadType === 'claude' ? 'claude-code claude-desktop' : downloadType}`,
+        ),
+      ]);
+      expect(navigator.clipboard.writeText).not.toHaveBeenCalled();
+      expect(
+        container
+          .querySelector('[aria-expanded]')
+          ?.getAttribute('aria-expanded'),
+      ).toBe('false');
     },
   );
 
@@ -112,18 +127,16 @@ describe('PromptInstallButton download_clicked', () => {
     ]);
   });
 
-  it('still copies the prompt when PostHog throws', async () => {
+  it('still opens the app when PostHog throws', async () => {
     jest.spyOn(console, 'warn').mockImplementation(() => {});
     jest.spyOn(posthog, 'capture').mockImplementation(() => {
       throw new Error('blocked');
     });
 
     render(<PromptInstallButton source="landing_hero" label="Install Rivet" />);
-    await pickAgent('Codex');
+    await pickAgent('ChatGPT');
 
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-      expect.stringContaining('install codex'),
-    );
+    expect(openedPrompts()).toEqual([expect.stringContaining('install codex')]);
   });
 });
 
@@ -133,6 +146,12 @@ const copiedText = () =>
   (navigator.clipboard.writeText as jest.Mock).mock.calls.map(
     ([text]) => text as string,
   );
+
+const openedPrompts = () =>
+  (window.open as jest.Mock).mock.calls.map(([url]) => {
+    const params = new URL(url).searchParams;
+    return params.get('prompt') ?? params.get('q') ?? params.get('text');
+  });
 
 const refsSent = () => ({
   events: sent
@@ -161,43 +180,134 @@ describe.each([
         <PromptInstallButton source="landing_hero" label="Install Rivet" />,
       ),
     pickAgent,
+    openedPrompts,
+    'ChatGPT',
   ],
-  ['InstallAccordion', () => render(<InstallAccordion />), copyFromAccordion],
-] as const)('%s install_ref', (_, mount, copy) => {
-  it('sends a fresh ref on the event and the person for every copy', async () => {
-    mount();
-    await copy('Codex');
-    await copy('Claude');
+  [
+    'InstallAccordion',
+    () => render(<InstallAccordion />),
+    copyFromAccordion,
+    copiedText,
+    'Codex',
+  ],
+] as const)(
+  '%s install_ref',
+  (_, mount, activate, deliveredText, codexLabel) => {
+    it('sends a fresh ref on the event and the person for every activation', async () => {
+      mount();
+      await activate(codexLabel);
+      await activate('Claude');
 
-    const { events, people } = refsSent();
-    expect(events).toHaveLength(2);
-    events.forEach((ref) => expect(ref).toMatch(REF));
-    expect(events[0]).not.toBe(events[1]);
-    expect(people).toEqual(events);
-  });
+      const { events, people } = refsSent();
+      expect(events).toHaveLength(2);
+      events.forEach((ref) => expect(ref).toMatch(REF));
+      expect(events[0]).not.toBe(events[1]);
+      expect(people).toEqual(events);
+    });
 
-  it('leaves the ref out of the copied text while embedding is off', async () => {
-    jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', false);
-    mount();
-    await copy('Codex');
+    it('leaves the ref out of the delivered text while embedding is off', async () => {
+      jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', false);
+      mount();
+      await activate(codexLabel);
 
-    const [text] = copiedText();
-    expect(text).toMatch(/npx -y rivet-design@latest install codex$/);
-    expect(text).not.toContain('--ref');
-    expect(text).not.toContain(refsSent().events[0]);
-  });
+      const [text] = deliveredText();
+      expect(text).toMatch(/npx -y rivet-design@latest install codex$/);
+      expect(text).not.toContain('--ref');
+      expect(text).not.toContain(refsSent().events[0]);
+    });
 
-  it('puts the same ref in the copied command by default', async () => {
-    mount();
-    await copy('Cursor');
+    it('puts the same ref in the delivered command by default', async () => {
+      mount();
+      await activate('Cursor');
 
-    const [ref] = refsSent().events;
-    expect(copiedText()).toEqual([
-      expect.stringMatching(
-        new RegExp(
-          `npx -y rivet-design@latest install cursor --mcp --ref ${ref}$`,
+      const [ref] = refsSent().events;
+      expect(deliveredText()).toEqual([
+        expect.stringMatching(
+          new RegExp(
+            `npx -y rivet-design@latest install cursor --mcp --ref ${ref}$`,
+          ),
         ),
-      ),
-    ]);
+      ]);
+    });
+  },
+);
+
+describe('PromptInstallButton desktop handoff', () => {
+  it.each([
+    ['ChatGPT', 'codex://new', 'prompt'],
+    ['Claude', 'claude://code/new', 'q'],
+    ['Cursor', 'cursor://anysphere.cursor-deeplink/prompt', 'text'],
+  ])(
+    'opens %s with an encoded install prompt',
+    async (label, base, parameter) => {
+      render(
+        <PromptInstallButton source="landing_hero" label="Install Rivet" />,
+      );
+      await pickAgent(label);
+
+      const [[url, target]] = (window.open as jest.Mock).mock.calls;
+      const parsed = new URL(url);
+      expect(`${parsed.protocol}//${parsed.host}${parsed.pathname}`).toBe(base);
+      expect(target).toBe('_self');
+      expect([...parsed.searchParams.keys()]).toEqual([parameter]);
+      const prompt = parsed.searchParams.get(parameter)!;
+      expect(prompt).toContain(`--ref ${refsSent().events[0]}`);
+      expect(url).toBe(`${base}?${parameter}=${encodeURIComponent(prompt)}`);
+    },
+  );
+
+  it('opens the selected app with arrow keys and Enter', () => {
+    render(<PromptInstallButton source="landing_hero" label="Install Rivet" />);
+    const trigger = container.querySelector('button')!;
+    click(trigger);
+    for (const key of ['ArrowDown', 'ArrowDown', 'Enter']) {
+      act(() => {
+        trigger.dispatchEvent(
+          new KeyboardEvent('keydown', { key, bubbles: true }),
+        );
+      });
+    }
+    expect(window.open).toHaveBeenCalledWith(
+      expect.stringMatching(/^claude:\/\/code\/new\?q=/),
+      '_self',
+    );
   });
+
+  it('offers a copy fallback with the same prompt and install ref', async () => {
+    render(<PromptInstallButton source="landing_hero" label="Install Rivet" />);
+    await pickAgent('Claude');
+
+    const [, options] = (toast as unknown as jest.Mock).mock.calls[0];
+    expect(options.action.label).toBe('Copy prompt');
+    await act(async () => options.action.onClick());
+    expect(copiedText()).toEqual(openedPrompts());
+    expect(downloadClicks()).toHaveLength(1);
+  });
+
+  it.each(['denied', 'unavailable'])(
+    'handles %s clipboard access in the fallback',
+    async (failure) => {
+      if (failure === 'denied') {
+        (navigator.clipboard.writeText as jest.Mock).mockRejectedValue(
+          new Error('denied'),
+        );
+      } else {
+        Object.assign(navigator, { clipboard: undefined });
+      }
+      render(
+        <PromptInstallButton source="landing_hero" label="Install Rivet" />,
+      );
+      await pickAgent('ChatGPT');
+      expect(window.open).toHaveBeenCalledTimes(1);
+
+      const [, options] = (toast as unknown as jest.Mock).mock.calls[0];
+      await act(async () => options.action.onClick());
+      expect(toast.error).toHaveBeenCalledWith(
+        "Couldn't copy the prompt",
+        expect.objectContaining({
+          description: expect.stringContaining('install command'),
+        }),
+      );
+    },
+  );
 });

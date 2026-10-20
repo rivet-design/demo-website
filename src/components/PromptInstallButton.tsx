@@ -1,14 +1,6 @@
-// Single "Add Rivet to your agent" button. On click it opens a popover menu
-// with one row per coding agent (logo + title). Every row copies a
-// paste-ready prompt the user drops into the agent, which then runs `npx -y
-// rivet-design@latest install <agent>` — rivet core's CLI-first install
-// (skill / rules file + command allowlist per harness; Cursor adds `--mcp`
-// to also register the MCP server in ~/.cursor/mcp.json). The install's
-// global bootstrap makes everything durable: it installs the CLI globally
-// and re-executes from there, so registrations never point into the
-// ephemeral npx cache. This replaced the Cursor deep link, whose npx-based
-// registration re-resolved `@latest` on every launch and ran the loopback
-// auth flow inside a disposable process.
+// Opens the selected desktop agent with a CLI-first install prompt ready to
+// review and send. Cursor receives a prompt link, not an MCP registration link,
+// so the install still uses the CLI's durable global bootstrap.
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { telemetry, type PromptInstallSource } from '@/lib/telemetry';
@@ -57,19 +49,19 @@ type AgentItem = {
   label: string;
   logo: AgentLogo;
   prompt: (command: string) => string;
+  deepLink: string;
 };
 
-// Menu rows, in display order. Each copies a paste-ready install prompt; the
-// commands mirror rivet core's harness registry ids (`install claude` /
-// `cursor` / `codex`). Users rarely know which Claude surface they're on, so
-// the Claude row names both explicitly — the command itself shows what gets
-// set up (Claude Code + Claude Desktop chat MCP).
+// ChatGPT Desktop retains the codex:// scheme and Codex install target.
+// Claude opens its Code view so the agent can run the install command.
 const AGENT_ITEMS: AgentItem[] = [
   {
     id: 'codex',
-    label: 'Codex',
+    label: 'ChatGPT',
     logo: 'codex',
-    prompt: (command) => `Please set up Rivet for Codex by running: ${command}`,
+    prompt: (command) =>
+      `Please set up Rivet for ChatGPT Desktop (Codex) by running: ${command}`,
+    deepLink: 'codex://new?prompt=',
   },
   {
     id: 'claude',
@@ -77,6 +69,7 @@ const AGENT_ITEMS: AgentItem[] = [
     logo: 'claude',
     prompt: (command) =>
       `Please set up Rivet for Claude Code and Claude Desktop by running: ${command}`,
+    deepLink: 'claude://code/new?q=',
   },
   {
     id: 'cursor',
@@ -84,6 +77,7 @@ const AGENT_ITEMS: AgentItem[] = [
     logo: 'cursor',
     prompt: (command) =>
       `Please set up Rivet for Cursor by running: ${command}`,
+    deepLink: 'cursor://anysphere.cursor-deeplink/prompt?text=',
   },
 ];
 
@@ -183,10 +177,29 @@ const PromptInstallButton = ({
     });
 
     const prompt = item.prompt(copiedInstallCommand(item.id, installRef));
-    navigator.clipboard.writeText(prompt).then(() => {
-      toast.success('Prompt copied to clipboard', {
-        description: `Paste into ${item.label} to install the Rivet MCP.`,
-      });
+    // Keep navigation in the click/keyboard gesture; clipboard permissions
+    // must not delay or block the desktop handoff.
+    window.open(`${item.deepLink}${encodeURIComponent(prompt)}`, '_self');
+    toast(`Continue in ${item.label}`, {
+      description:
+        "Review and send the install prompt in the desktop app. Didn't open? Copy the prompt instead.",
+      duration: 12000,
+      action: {
+        label: 'Copy prompt',
+        onClick: async () => {
+          try {
+            await navigator.clipboard.writeText(prompt);
+            toast.success('Prompt copied to clipboard', {
+              description: `Paste into ${item.label} to install Rivet.`,
+            });
+          } catch {
+            toast.error("Couldn't copy the prompt", {
+              description:
+                'Copy the install command from the command-line instructions on the home page.',
+            });
+          }
+        },
+      },
     });
     setOpen(false);
   };
@@ -224,7 +237,7 @@ const PromptInstallButton = ({
           fade (via t.bg's hover variant) — no lift/fan animation. */}
       <PopoverTrigger
         onKeyDown={handleMenuKeyDown}
-        className={`group type-label-lg font-normal flex items-center gap-2.5 rounded-lg border ${t.border} ${t.bg} ${gradient} ${t.text} ${mainSize} ${
+        className={`type-label-lg group flex items-center gap-2.5 rounded-lg border font-normal ${t.border} ${t.bg} ${gradient} ${t.text} ${mainSize} ${
           fullWidth ? 'w-full justify-center' : 'w-fit'
         } transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
       >
@@ -255,6 +268,7 @@ const PromptInstallButton = ({
           <button
             key={item.id}
             type="button"
+            title={`Open ${item.label} desktop with the install prompt`}
             onClick={() => activate(item)}
             onMouseEnter={() => setHighlight(i)}
             className={`group flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white transition-colors hover:bg-[hsl(0_0%_25%)] focus:outline-none ${
