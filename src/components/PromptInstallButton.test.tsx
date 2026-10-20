@@ -256,7 +256,9 @@ describe('PromptInstallButton desktop handoff', () => {
       expect(`${parsed.protocol}//${parsed.host}${parsed.pathname}`).toBe(base);
       expect(target).toBe('_blank');
       expect(features).toBe('noopener,noreferrer');
-      expect(toast).not.toHaveBeenCalled();
+      expect(toast.success).toHaveBeenCalledWith(`Opening ${label}…`, {
+        duration: 3000,
+      });
       expect([...parsed.searchParams.keys()]).toEqual([parameter]);
       const prompt = parsed.searchParams.get(parameter)!;
       expect(prompt).toContain(`--ref ${refsSent().events[0]}`);
@@ -312,7 +314,10 @@ describe('PromptInstallButton copy prompt', () => {
       { source: 'story_nav', download_type: 'agent' },
     ]);
     expect(window.open).not.toHaveBeenCalled();
-    expect(toast).not.toHaveBeenCalled();
+    expect(toast.success).toHaveBeenCalledWith('Prompt copied', {
+      description: 'Paste it into your agent to install Rivet.',
+      duration: 5000,
+    });
     expect(document.querySelector('[role="status"]')?.textContent).toBe(
       'Prompt copied',
     );
@@ -357,6 +362,7 @@ describe('PromptInstallButton copy prompt', () => {
     render(<PromptInstallButton source="landing_hero" />);
     await pickAgent('Copy prompt for agent');
     expect(downloadClicks()).toEqual([]);
+    expect(toast.success).not.toHaveBeenCalled();
     expect(document.querySelector('[role="status"]')?.textContent).toBe(
       'Couldn’t copy. Try again.',
     );

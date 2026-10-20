@@ -3,6 +3,7 @@
 // so the install still uses the CLI's durable global bootstrap.
 import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Copy } from 'lucide-react';
+import { toast } from 'sonner';
 import useClipboard from '@/hooks/useClipboard';
 import { telemetry, type PromptInstallSource } from '@/lib/telemetry';
 import {
@@ -170,6 +171,7 @@ const PromptInstallButton = ({
       '_blank',
       'noopener,noreferrer',
     );
+    toast.success(`Opening ${item.label}…`, { duration: 3000 });
   };
 
   const copyPrompt = async () => {
@@ -182,6 +184,10 @@ const PromptInstallButton = ({
         downloadType: 'agent',
         copyMethod: 'row_click',
         installRef,
+      });
+      toast.success('Prompt copied', {
+        description: 'Paste it into your agent to install Rivet.',
+        duration: 5000,
       });
     } catch {
       setCopyFailed(true);
@@ -266,26 +272,38 @@ const PromptInstallButton = ({
         className="overflow-y-auto overscroll-contain rounded-2xl border-black/[0.12] bg-white p-2 text-black shadow-[0_12px_32px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)]"
         onKeyDown={handleMenuKeyDown}
       >
-        {AGENT_ITEMS.map((item, index) => (
-          <button
-            key={item.id}
-            type="button"
-            aria-label={continuationLabel(item)}
-            onClick={() => activate(item)}
-            onMouseEnter={() => setHighlight(index)}
-            onFocus={() => setHighlight(index)}
-            className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left font-main text-sm text-black transition-colors duration-150 hover:bg-black/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/30 motion-reduce:transition-none ${index === highlight ? 'bg-black/[0.04]' : ''}`}
-          >
-            <span aria-hidden>
-              <ToolLogo id={item.id} label={item.label} />
-            </span>
-            <span className="flex-1">{item.label}</span>
-            {selected.id === item.id && (
-              <Check aria-hidden size={15} className="text-[#969696]" />
-            )}
-          </button>
-        ))}
-        <div className="mt-2 border-t border-black/10 pt-2">
+        <div role="group" aria-label="Open in desktop">
+          <p className="px-3 pb-1 pt-2 font-main text-xs font-medium text-[#646464]">
+            Open in desktop
+          </p>
+          {AGENT_ITEMS.map((item, index) => (
+            <button
+              key={item.id}
+              type="button"
+              aria-label={continuationLabel(item)}
+              onClick={() => activate(item)}
+              onMouseEnter={() => setHighlight(index)}
+              onFocus={() => setHighlight(index)}
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left font-main text-sm text-black transition-colors duration-150 hover:bg-black/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/30 motion-reduce:transition-none ${index === highlight ? 'bg-black/[0.04]' : ''}`}
+            >
+              <span aria-hidden>
+                <ToolLogo id={item.id} label={item.label} />
+              </span>
+              <span className="flex-1">{item.label}</span>
+              {selected.id === item.id && (
+                <Check aria-hidden size={15} className="text-[#969696]" />
+              )}
+            </button>
+          ))}
+        </div>
+        <div
+          role="group"
+          aria-label="Copy prompt to install"
+          className="mt-2 border-t border-black/10 pt-2"
+        >
+          <p className="px-3 pb-1 pt-2 font-main text-xs font-medium text-[#646464]">
+            Copy prompt to install
+          </p>
           <button
             type="button"
             onClick={() => void copyPrompt()}
