@@ -2,23 +2,17 @@
 // review and send. Cursor receives a prompt link, not an MCP registration link,
 // so the install still uses the CLI's durable global bootstrap.
 import { useEffect, useRef, useState } from 'react';
-import { Check, ChevronDown, Copy, Monitor, Terminal } from 'lucide-react';
+import { Check, ChevronDown, Copy } from 'lucide-react';
+import useClipboard from '@/hooks/useClipboard';
 import { telemetry, type PromptInstallSource } from '@/lib/telemetry';
 import {
   AGENT_LOGOS as TOOL_LOGOS,
   copiedInstallCommand,
+  copiedAgentInstallPrompt,
   type InstallAgentId as AgentLogo,
 } from '@/lib/install';
 import { generateInstallRef } from '@/lib/installRef';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from './ui/dialog';
-import InstallAccordion from './InstallAccordion';
 
 const ICON_PX = 20;
 const ToolLogo = ({
@@ -51,64 +45,37 @@ const ToolLogo = ({
 );
 
 type AgentItem = {
-  id: AgentLogo;
-  group: 'codex' | 'claude' | 'cursor';
+  id: Exclude<AgentLogo, 'claude-code'>;
   label: string;
-  logo: AgentLogo;
   prompt: (command: string) => string;
   deepLink: string;
 };
 
-// ChatGPT Desktop retains the codex:// scheme and Codex install target.
 // Claude opens its Code view so the agent can run the install command.
 const AGENT_ITEMS: AgentItem[] = [
   {
     id: 'codex',
-    group: 'codex',
     label: 'Codex',
-    logo: 'codex',
     prompt: (command) => `Please set up Rivet for Codex by running: ${command}`,
     deepLink: 'codex://new?prompt=',
   },
   {
     id: 'claude',
-    group: 'claude',
     label: 'Claude',
-    logo: 'claude',
     prompt: (command) =>
       `Please set up Rivet for Claude Code and Claude Desktop by running: ${command}`,
     deepLink: 'claude://code/new?q=',
   },
   {
-    id: 'claude-code',
-    group: 'claude',
-    label: 'Claude Code',
-    logo: 'claude-code',
-    prompt: (command) =>
-      `Please set up Rivet for Claude Code by running: ${command}`,
-    deepLink: 'claude-cli://open?q=',
-  },
-  {
     id: 'cursor',
-    group: 'cursor',
     label: 'Cursor',
-    logo: 'cursor',
     prompt: (command) =>
       `Please set up Rivet for Cursor by running: ${command}`,
     deepLink: 'cursor://anysphere.cursor-deeplink/prompt?text=',
   },
 ];
 
-const AGENT_GROUPS = [
-  { id: 'codex', label: 'Codex' },
-  { id: 'claude', label: 'Claude' },
-  { id: 'cursor', label: 'Cursor' },
-] as const;
-
-const continuationLabel = (item: AgentItem) =>
-  item.id === 'codex'
-    ? 'Continue in Codex'
-    : `Continue in ${item.label}${item.id === 'claude-code' ? ' (Terminal)' : ' (Desktop)'}`;
+const continuationLabel = (item: AgentItem) => `Continue in ${item.label}`;
 
 const BUTTON_TONES = {
   orange: {
@@ -150,7 +117,8 @@ const PromptInstallButton = ({
   const splitRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState(AGENT_ITEMS[0]);
   const [open, setOpen] = useState(false);
-  const [terminalOpen, setTerminalOpen] = useState(false);
+  const { isCopied, copyToClipboard } = useClipboard();
+  const [copyFailed, setCopyFailed] = useState(false);
   // Keyboard highlight within the menu (-1 = no row highlighted).
   const [highlight, setHighlight] = useState(-1);
 
@@ -204,9 +172,20 @@ const PromptInstallButton = ({
     );
   };
 
-  const openTerminal = () => {
-    setOpen(false);
-    setTerminalOpen(true);
+  const copyPrompt = async () => {
+    setCopyFailed(false);
+    const installRef = generateInstallRef();
+    try {
+      await copyToClipboard(copiedAgentInstallPrompt(installRef));
+      telemetry.trackDownloadClicked({
+        source,
+        downloadType: 'agent',
+        copyMethod: 'row_click',
+        installRef,
+      });
+    } catch {
+      setCopyFailed(true);
+    }
   };
 
   // Arrow keys move the highlight; Enter activates; Escape closes. Shared by the
@@ -229,7 +208,7 @@ const PromptInstallButton = ({
     } else if (e.key === 'Enter') {
       if (highlight >= 0) {
         e.preventDefault();
-        if (highlight === AGENT_ITEMS.length) openTerminal();
+        if (highlight === AGENT_ITEMS.length) void copyPrompt();
         else activate(AGENT_ITEMS[highlight]);
       }
     } else if (e.key === 'Escape') {
@@ -238,142 +217,108 @@ const PromptInstallButton = ({
   };
 
   return (
-    <>
-      <Popover
-        className={fullWidth ? 'flex w-full' : 'max-w-full'}
-        open={open}
-        onOpenChange={(next) => {
-          setHighlight(-1);
-          setOpen(next);
-        }}
+    <Popover
+      className={fullWidth ? 'flex w-full' : 'max-w-full'}
+      open={open}
+      onOpenChange={(next) => {
+        setHighlight(-1);
+        setOpen(next);
+      }}
+    >
+      <div
+        ref={splitRef}
+        className={`flex min-w-0 overflow-hidden rounded-xl border ${buttonTone.frame} ${fullWidth ? 'w-full' : ''}`}
       >
-        <div
-          ref={splitRef}
-          className={`flex min-w-0 overflow-hidden rounded-xl border ${buttonTone.frame} ${fullWidth ? 'w-full' : ''}`}
+        <button
+          type="button"
+          onClick={() => activate(selected)}
+          title={actionLabel}
+          className={`flex min-w-0 flex-1 items-center justify-center gap-2.5 font-normal ${buttonSize} transition-colors duration-150 ${buttonTone.action} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-current motion-reduce:transition-none`}
         >
+          <span aria-hidden>
+            <ToolLogo id={selected.id} label={selected.label} size={16} />
+          </span>
+          <span className="truncate">{label ?? actionLabel}</span>
+        </button>
+        <PopoverTrigger
+          aria-label="Choose your agent"
+          aria-haspopup="dialog"
+          onKeyDown={handleMenuKeyDown}
+          className={`flex w-10 shrink-0 items-center justify-center border-l ${buttonTone.chevron} transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-current motion-reduce:transition-none`}
+        >
+          <ChevronDown
+            aria-hidden
+            size={18}
+            className={`transition-transform duration-150 ease-out motion-reduce:transition-none ${open ? 'rotate-180' : ''}`}
+          />
+        </PopoverTrigger>
+      </div>
+
+      <PopoverContent
+        align={fullWidth ? 'center' : 'start'}
+        sideOffset={6}
+        matchTriggerWidth
+        minWidth={240}
+        anchorRef={splitRef}
+        collisionPadding={12}
+        data-lenis-prevent
+        aria-label="Choose where to install Rivet"
+        className="overflow-y-auto overscroll-contain rounded-2xl border-black/[0.12] bg-white p-2 text-black shadow-[0_12px_32px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)]"
+        onKeyDown={handleMenuKeyDown}
+      >
+        {AGENT_ITEMS.map((item, index) => (
           <button
+            key={item.id}
             type="button"
-            onClick={() => activate(selected)}
-            title={actionLabel}
-            className={`flex min-w-0 flex-1 items-center justify-center gap-2.5 font-normal ${buttonSize} transition-colors duration-150 ${buttonTone.action} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-current motion-reduce:transition-none`}
+            aria-label={continuationLabel(item)}
+            onClick={() => activate(item)}
+            onMouseEnter={() => setHighlight(index)}
+            onFocus={() => setHighlight(index)}
+            className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left font-main text-sm text-black transition-colors duration-150 hover:bg-black/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/30 motion-reduce:transition-none ${index === highlight ? 'bg-black/[0.04]' : ''}`}
           >
             <span aria-hidden>
-              <ToolLogo id={selected.logo} label={selected.label} size={16} />
+              <ToolLogo id={item.id} label={item.label} />
             </span>
-            <span className="truncate">{label ?? actionLabel}</span>
+            <span className="flex-1">{item.label}</span>
+            {selected.id === item.id && (
+              <Check aria-hidden size={15} className="text-[#969696]" />
+            )}
           </button>
-          <PopoverTrigger
-            aria-label="Choose your agent"
-            aria-haspopup="dialog"
-            onKeyDown={handleMenuKeyDown}
-            className={`flex w-10 shrink-0 items-center justify-center border-l ${buttonTone.chevron} transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-current motion-reduce:transition-none`}
+        ))}
+        <div className="mt-2 border-t border-black/10 pt-2">
+          <button
+            type="button"
+            onClick={() => void copyPrompt()}
+            aria-label="Copy prompt for agent"
+            onMouseEnter={() => setHighlight(AGENT_ITEMS.length)}
+            onFocus={() => setHighlight(AGENT_ITEMS.length)}
+            className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left font-main text-sm text-black transition-colors duration-150 hover:bg-black/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/30 motion-reduce:transition-none ${highlight === AGENT_ITEMS.length ? 'bg-black/[0.04]' : ''}`}
           >
-            <ChevronDown
+            <Copy
+              size={20}
+              strokeWidth={1.7}
               aria-hidden
-              size={18}
-              className={`transition-transform duration-150 ease-out motion-reduce:transition-none ${open ? 'rotate-180' : ''}`}
+              className="text-[#818181]"
             />
-          </PopoverTrigger>
+            <span>{isCopied ? 'Copied' : 'Copy prompt for agent'}</span>
+          </button>
+          <span
+            role="status"
+            className={
+              copyFailed
+                ? 'block px-3 pb-2 font-main text-xs text-black'
+                : 'sr-only'
+            }
+          >
+            {copyFailed
+              ? 'Couldn’t copy. Try again.'
+              : isCopied
+                ? 'Prompt copied'
+                : ''}
+          </span>
         </div>
-
-        <PopoverContent
-          align={fullWidth ? 'center' : 'start'}
-          sideOffset={6}
-          matchTriggerWidth
-          minWidth={240}
-          anchorRef={splitRef}
-          collisionPadding={12}
-          data-lenis-prevent
-          aria-label="Choose where to install Rivet"
-          className="overflow-y-auto overscroll-contain rounded-2xl border-black/[0.12] bg-white p-2 text-black shadow-[0_12px_32px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)]"
-          onKeyDown={handleMenuKeyDown}
-        >
-          {AGENT_GROUPS.map((group, groupIndex) => (
-            <div
-              key={group.id}
-              role="group"
-              aria-label={group.label}
-              className={
-                groupIndex > 0 ? 'mt-2 border-t border-black/10 pt-2' : ''
-              }
-            >
-              <div className="flex items-center gap-3 px-3 pb-1 pt-2.5 font-main text-[15px] font-semibold">
-                <span aria-hidden>
-                  <ToolLogo id={group.id} label={group.label} />
-                </span>
-                {group.label}
-              </div>
-              {AGENT_ITEMS.filter((item) => item.group === group.id).map(
-                (item) => {
-                  const index = AGENT_ITEMS.indexOf(item);
-                  const isTerminal = item.id === 'claude-code';
-                  const SurfaceIcon = isTerminal ? Terminal : Monitor;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      aria-label={continuationLabel(item)}
-                      onClick={() => activate(item)}
-                      onMouseEnter={() => setHighlight(index)}
-                      onFocus={() => setHighlight(index)}
-                      className={`flex w-full items-center gap-3 rounded-lg py-2.5 pl-11 pr-3 text-left font-main text-sm text-black transition-colors duration-150 hover:bg-black/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/30 motion-reduce:transition-none ${index === highlight ? 'bg-black/[0.04]' : ''}`}
-                    >
-                      <SurfaceIcon
-                        aria-hidden
-                        size={18}
-                        strokeWidth={1.7}
-                        className="shrink-0 text-[#818181]"
-                      />
-                      <span className="flex-1">
-                        {isTerminal ? 'Claude Code' : 'Desktop'}
-                      </span>
-                      {selected.id === item.id && (
-                        <Check
-                          aria-hidden
-                          size={15}
-                          className="text-[#969696]"
-                        />
-                      )}
-                    </button>
-                  );
-                },
-              )}
-            </div>
-          ))}
-          <div className="mt-2 border-t border-black/10 pt-2">
-            <button
-              type="button"
-              onClick={openTerminal}
-              onMouseEnter={() => setHighlight(AGENT_ITEMS.length)}
-              onFocus={() => setHighlight(AGENT_ITEMS.length)}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left font-main text-sm text-black transition-colors duration-150 hover:bg-black/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/30 motion-reduce:transition-none ${highlight === AGENT_ITEMS.length ? 'bg-black/[0.04]' : ''}`}
-            >
-              <Copy
-                size={20}
-                strokeWidth={1.7}
-                aria-hidden
-                className="text-[#818181]"
-              />
-              <span>Copy instructions</span>
-            </button>
-          </div>
-        </PopoverContent>
-      </Popover>
-      <Dialog open={terminalOpen} onOpenChange={setTerminalOpen}>
-        <DialogContent
-          overlayClassName="z-[1001]"
-          className="z-[1002] max-h-[80vh] overflow-y-auto"
-        >
-          <DialogHeader className="mb-4">
-            <DialogTitle>Install from your terminal</DialogTitle>
-            <DialogDescription>
-              Copy a command and run it in your terminal.
-            </DialogDescription>
-          </DialogHeader>
-          <InstallAccordion collapsible={false} source={source} />
-        </DialogContent>
-      </Dialog>
-    </>
+      </PopoverContent>
+    </Popover>
   );
 };
 

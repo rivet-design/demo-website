@@ -36,3 +36,13 @@ export const copiedInstallCommand = (
   EMBED_INSTALL_REF_IN_COPY
     ? `${INSTALL_COMMANDS[agent]} --ref ${ref}`
     : INSTALL_COMMANDS[agent];
+
+// Placeholder until the general Rivet install command ships.
+export const AGENT_INSTALL_COMMAND = 'npx -y rivet-design@latest install';
+
+export const copiedAgentInstallPrompt = (ref: InstallRef): string => {
+  const command = EMBED_INSTALL_REF_IN_COPY
+    ? `${AGENT_INSTALL_COMMAND} --ref ${ref}`
+    : AGENT_INSTALL_COMMAND;
+  return `Please install Rivet for this agent by running: ${command}`;
+};

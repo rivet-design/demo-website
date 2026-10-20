@@ -6,11 +6,7 @@
 // animation.
 import { useId, useRef, useState, type ClipboardEvent } from 'react';
 import useClipboard from '@/hooks/useClipboard';
-import {
-  telemetry,
-  type CommandCopyMethod,
-  type PromptInstallSource,
-} from '@/lib/telemetry';
+import { telemetry, type CommandCopyMethod } from '@/lib/telemetry';
 import {
   AGENT_LOGOS,
   INSTALL_COMMANDS,
@@ -85,15 +81,7 @@ const selectContents = (el: HTMLElement | null) => {
   selection.addRange(range);
 };
 
-type InstallAccordionProps = {
-  collapsible?: boolean;
-  source?: PromptInstallSource | 'landing_accordion';
-};
-
-const InstallAccordion = ({
-  collapsible = true,
-  source = 'landing_accordion',
-}: InstallAccordionProps) => {
+const InstallAccordion = () => {
   const [open, setOpen] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
   // Which agent's command was just copied (drives that row's "Copied" state).
@@ -107,7 +95,7 @@ const InstallAccordion = ({
   const track = (id: InstallAgentId, copyMethod: CommandCopyMethod) => {
     const installRef = generateInstallRef();
     telemetry.trackDownloadClicked({
-      source,
+      source: 'landing_accordion',
       downloadType: id,
       copyMethod,
       installRef,
@@ -157,18 +145,16 @@ const InstallAccordion = ({
     <div className="w-full">
       {/* Padding widens the hit area; the matching negative margin keeps the
           layout where it was. */}
-      {collapsible && (
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
-          aria-controls={panelId}
-          className="-my-2 mx-auto flex items-center gap-1.5 rounded-md px-3 py-2 font-main text-sm font-medium text-black/70 transition-colors hover:text-black"
-        >
-          Or run the install command yourself
-          <ChevronIcon open={open} />
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-controls={panelId}
+        className="-my-2 mx-auto flex items-center gap-1.5 rounded-md px-3 py-2 font-main text-sm font-medium text-black/70 transition-colors hover:text-black"
+      >
+        Or run the install command yourself
+        <ChevronIcon open={open} />
+      </button>
 
       {/* Smoothly-expanding content. `invisible` keeps the collapsed rows out
           of the tab order and the accessibility tree; visibility flips at the
@@ -176,8 +162,8 @@ const InstallAccordion = ({
       <div
         id={panelId}
         className={`grid transition-all duration-200 ease-out ${
-          open || !collapsible
-            ? `visible grid-rows-[1fr] opacity-100 ${collapsible ? 'mt-3' : ''}`
+          open
+            ? 'visible mt-3 grid-rows-[1fr] opacity-100'
             : 'invisible grid-rows-[0fr] opacity-0'
         }`}
       >

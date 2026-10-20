@@ -76,7 +76,7 @@ class Telemetry {
    */
   trackDownloadClicked(props: {
     source: DownloadClickedSource;
-    downloadType: InstallAgentId | 'mac';
+    downloadType: InstallAgentId | 'agent' | 'mac';
     installRef: InstallRef;
     version?: string;
     copyMethod?: CommandCopyMethod;

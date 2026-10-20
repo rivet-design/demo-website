@@ -63,13 +63,10 @@ const pickAgent = async (label: string) => {
   const popup = document.querySelector(
     '[aria-label="Choose where to install Rivet"]',
   )!;
-  const row = [...popup.querySelectorAll('button')].find((button) =>
-    label === 'Terminal'
-      ? button.textContent === 'Copy instructions'
-      : button.getAttribute('aria-label') ===
-        (label === 'Codex'
-          ? 'Continue in Codex'
-          : `Continue in ${label}${label === 'Claude Code' ? ' (Terminal)' : ' (Desktop)'}`),
+  const row = [...popup.querySelectorAll('button')].find(
+    (button) =>
+      button.getAttribute('aria-label') ===
+      (label === 'Copy prompt for agent' ? label : `Continue in ${label}`),
   );
   if (!row) throw new Error(`${label} row not rendered`);
   await act(async () => {
@@ -245,7 +242,6 @@ describe('PromptInstallButton desktop handoff', () => {
   it.each([
     ['Codex', 'codex://new', 'prompt'],
     ['Claude', 'claude://code/new', 'q'],
-    ['Claude Code', 'claude-cli://open', 'q'],
     ['Cursor', 'cursor://anysphere.cursor-deeplink/prompt', 'text'],
   ])(
     'opens %s with an encoded install prompt',
@@ -289,63 +285,86 @@ describe('PromptInstallButton desktop handoff', () => {
   });
 });
 
-describe('PromptInstallButton terminal options', () => {
-  it('opens Claude Code in a terminal with only its own install target', async () => {
-    render(<PromptInstallButton source="story" label="Install Rivet" />);
-    await pickAgent('Claude Code');
-    expect(window.open).toHaveBeenCalledWith(
-      expect.stringMatching(/^claude-cli:\/\/open\?q=/),
-      '_blank',
-      'noopener,noreferrer',
-    );
-    const [prompt] = openedPrompts();
-    expect(prompt).toMatch(/install claude-code --ref r_[0-9A-Za-z]{8}$/);
-    expect(prompt).not.toContain('claude-desktop');
-    expect(downloadClicks()).toEqual([
-      { source: 'story', download_type: 'claude-code' },
-    ]);
-  });
-
-  it('shows terminal commands from every install menu without opening an app', async () => {
-    render(<PromptInstallButton source="story_nav" label="Install Rivet" />);
-    await pickAgent('Terminal');
-    expect(window.open).not.toHaveBeenCalled();
-    expect(document.querySelector('[role="dialog"]')?.textContent).toContain(
-      'Install from your terminal',
-    );
-    expect(
-      document.querySelector('[role="dialog"]')?.textContent,
-    ).not.toContain('Or run the install command yourself');
-    const copy = document.querySelector(
-      'button[aria-label="Copy Claude Code install command"]',
+describe('PromptInstallButton copy prompt', () => {
+  it('shows exactly three desktop agents and the copy action', () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    click(container.querySelector('button[aria-label="Choose your agent"]')!);
+    const chooser = document.querySelector(
+      '[aria-label="Choose where to install Rivet"]',
     )!;
-    await act(async () => click(copy));
-    expect(copiedText()).toEqual([
-      expect.stringMatching(/install claude-code --ref r_[0-9A-Za-z]{8}$/),
-    ]);
-    expect(downloadClicks()).toEqual([
-      { source: 'story_nav', download_type: 'claude-code' },
-    ]);
-    expect(toast).not.toHaveBeenCalled();
+    expect(
+      [...chooser.querySelectorAll('button')].map(
+        (button) => button.textContent,
+      ),
+    ).toEqual(['Codex', 'Claude', 'Cursor', 'Copy prompt for agent']);
   });
 
-  it('reaches Terminal with ArrowUp and Enter', () => {
-    render(<PromptInstallButton source="landing_hero" label="Install Rivet" />);
+  it('copies a general install prompt with a fresh ref without opening an app', async () => {
+    render(<PromptInstallButton source="story_nav" />);
+    await pickAgent('Copy prompt for agent');
+    const [ref] = refsSent().events;
+    expect(ref).toMatch(REF);
+    expect(refsSent().people).toEqual([ref]);
+    expect(copiedText()).toEqual([
+      `Please install Rivet for this agent by running: npx -y rivet-design@latest install --ref ${ref}`,
+    ]);
+    expect(downloadClicks()).toEqual([
+      { source: 'story_nav', download_type: 'agent' },
+    ]);
+    expect(window.open).not.toHaveBeenCalled();
+    expect(toast).not.toHaveBeenCalled();
+    expect(document.querySelector('[role="status"]')?.textContent).toBe(
+      'Prompt copied',
+    );
+    expect(container.querySelector('button')?.textContent).toBe(
+      'Continue in Codex',
+    );
+    await pickAgent('Copy prompt for agent');
+    expect(refsSent().events[1]).not.toBe(ref);
+  });
+
+  it('leaves the ref out of the copied prompt when embedding is off', async () => {
+    jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', false);
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Copy prompt for agent');
+    expect(copiedText()).toEqual([
+      'Please install Rivet for this agent by running: npx -y rivet-design@latest install',
+    ]);
+  });
+
+  it('reaches the copy action with ArrowUp and Enter', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
     const trigger = container.querySelector(
       'button[aria-label="Choose your agent"]',
     )!;
     click(trigger);
     for (const key of ['ArrowUp', 'Enter']) {
-      act(() =>
+      await act(async () => {
         trigger.dispatchEvent(
           new KeyboardEvent('keydown', { key, bubbles: true }),
-        ),
-      );
+        );
+      });
     }
-    expect(document.querySelector('[role="dialog"]')?.textContent).toContain(
-      'Install from your terminal',
-    );
+    expect(copiedText()).toHaveLength(1);
     expect(window.open).not.toHaveBeenCalled();
+  });
+
+  it('shows a retry message when copying fails, then recovers', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    (navigator.clipboard.writeText as jest.Mock).mockRejectedValueOnce(
+      new Error('denied'),
+    );
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Copy prompt for agent');
+    expect(downloadClicks()).toEqual([]);
+    expect(document.querySelector('[role="status"]')?.textContent).toBe(
+      'Couldn’t copy. Try again.',
+    );
+    await pickAgent('Copy prompt for agent');
+    expect(document.querySelector('[role="status"]')?.textContent).toBe(
+      'Prompt copied',
+    );
+    expect(downloadClicks()).toHaveLength(1);
   });
 });
 
@@ -376,13 +395,13 @@ it('launches the default app from the main button without opening the menu', asy
 
 it('updates the main action after choosing another agent', async () => {
   render(<PromptInstallButton source="landing_hero" />);
-  await pickAgent('Claude Code');
+  await pickAgent('Claude');
   const main = container.querySelector('button')!;
-  expect(main.textContent).toBe('Continue in Claude Code (Terminal)');
+  expect(main.textContent).toBe('Continue in Claude');
   await act(async () => click(main));
   expect(window.open).toHaveBeenCalledTimes(2);
   expect((window.open as jest.Mock).mock.calls[1][0]).toMatch(
-    /^claude-cli:\/\/open\?q=/,
+    /^claude:\/\/code\/new\?q=/,
   );
 });
 
