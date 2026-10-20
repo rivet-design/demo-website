@@ -1,23 +1,16 @@
-// Single "Add Rivet to your agent" button. On click it opens a popover menu
-// with one row per coding agent (logo + title). Every row copies a
-// paste-ready prompt the user drops into the agent, which then runs `npx -y
-// rivet-design@latest install <agent>` — rivet core's CLI-first install
-// (skill / rules file + command allowlist per harness; Cursor adds `--mcp`
-// to also register the MCP server in ~/.cursor/mcp.json). The install's
-// global bootstrap makes everything durable: it installs the CLI globally
-// and re-executes from there, so registrations never point into the
-// ephemeral npx cache. This replaced the Cursor deep link, whose npx-based
-// registration re-resolved `@latest` on every launch and ran the loopback
-// auth flow inside a disposable process.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { telemetry, type PromptInstallSource } from '@/lib/telemetry';
 import {
   AGENT_LOGOS as TOOL_LOGOS,
-  copiedInstallCommand,
+  installDeepLink,
+  installPrompt,
+  type DeepLinkAgentId,
   type InstallAgentId as AgentLogo,
 } from '@/lib/install';
 import { generateInstallRef } from '@/lib/installRef';
+import useClipboard from '@/hooks/useClipboard';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
 
 // Logo painted in the button's own text colour rather than rendered as
@@ -52,39 +45,12 @@ const ToolLogo = ({ id, label }: { id: AgentLogo; label: string }) => (
   />
 );
 
-type AgentItem = {
-  id: AgentLogo;
-  label: string;
-  logo: AgentLogo;
-  prompt: (command: string) => string;
-};
+type AgentItem = { id: DeepLinkAgentId | 'agent'; label: string };
 
-// Menu rows, in display order. Each copies a paste-ready install prompt; the
-// commands mirror rivet core's harness registry ids (`install claude` /
-// `cursor` / `codex`). Users rarely know which Claude surface they're on, so
-// the Claude row names both explicitly — the command itself shows what gets
-// set up (Claude Code + Claude Desktop chat MCP).
 const AGENT_ITEMS: AgentItem[] = [
-  {
-    id: 'codex',
-    label: 'Codex',
-    logo: 'codex',
-    prompt: (command) => `Please set up Rivet for Codex by running: ${command}`,
-  },
-  {
-    id: 'claude',
-    label: 'Claude',
-    logo: 'claude',
-    prompt: (command) =>
-      `Please set up Rivet for Claude Code and Claude Desktop by running: ${command}`,
-  },
-  {
-    id: 'cursor',
-    label: 'Cursor',
-    logo: 'cursor',
-    prompt: (command) =>
-      `Please set up Rivet for Cursor by running: ${command}`,
-  },
+  { id: 'codex', label: 'Continue with Codex' },
+  { id: 'claude', label: 'Continue with Claude' },
+  { id: 'agent', label: 'Copy to agent' },
 ];
 
 type Tone = 'orange' | 'dark' | 'light' | 'secondary';
@@ -142,18 +108,23 @@ const PromptInstallButton = ({
   label = 'Add Rivet to your agent',
   dismissOnScroll = false,
 }: PromptInstallButtonProps) => {
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [installRef, setInstallRef] = useState(generateInstallRef);
+  const menuItemRefs = useRef<(HTMLAnchorElement | HTMLButtonElement | null)[]>(
+    [],
+  );
+  const { copyToClipboard } = useClipboard();
   // Keyboard highlight within the menu (-1 = no row highlighted).
   const [highlight, setHighlight] = useState(-1);
 
   useEffect(() => {
-    if (!open || !dismissOnScroll) return;
-    const dismiss = () => setOpen(false);
+    if (!isOpen || !dismissOnScroll) return;
+    const dismiss = () => setIsOpen(false);
     // Only page scrolling dismisses the menu. Nested demo transcripts can
     // scroll independently while the user is choosing an agent.
     window.addEventListener('scroll', dismiss, { passive: true });
     return () => window.removeEventListener('scroll', dismiss);
-  }, [open, dismissOnScroll]);
+  }, [isOpen, dismissOnScroll]);
 
   const t = TONES[tone];
 
@@ -174,27 +145,29 @@ const PromptInstallButton = ({
       : '';
   const iconBox = size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
 
-  const activate = (item: AgentItem) => {
-    const installRef = generateInstallRef();
+  const activate = (target: AgentItem['id']) => {
     telemetry.trackDownloadClicked({
       source,
-      downloadType: item.id,
+      downloadType: target,
       installRef,
     });
-
-    const prompt = item.prompt(copiedInstallCommand(item.id, installRef));
-    navigator.clipboard.writeText(prompt).then(() => {
-      toast.success('Prompt copied to clipboard', {
-        description: `Paste into ${item.label} to install the Rivet MCP.`,
-      });
-    });
-    setOpen(false);
+    if (target === 'agent') {
+      copyToClipboard(installPrompt(target, installRef)).then(
+        () => {
+          toast.success('Prompt copied to clipboard', {
+            description: 'Paste into your coding agent to install Rivet.',
+          });
+        },
+        () => toast.error("Couldn't copy the prompt. Try again."),
+      );
+    }
+    setIsOpen(false);
   };
 
   // Arrow keys move the highlight; Enter activates; Escape closes. Shared by the
   // trigger and the menu so keyboard users can drive the whole thing.
   const handleMenuKeyDown = (e: React.KeyboardEvent) => {
-    if (!open) return;
+    if (!isOpen) return;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setHighlight((i) => (i + 1) % AGENT_ITEMS.length);
@@ -204,27 +177,28 @@ const PromptInstallButton = ({
     } else if (e.key === 'Enter') {
       if (highlight >= 0) {
         e.preventDefault();
-        activate(AGENT_ITEMS[highlight]);
+        menuItemRefs.current[highlight]?.click();
       }
     } else if (e.key === 'Escape') {
-      setOpen(false);
+      setIsOpen(false);
     }
   };
 
   return (
     <Popover
       className={fullWidth ? 'flex w-full' : undefined}
-      open={open}
+      open={isOpen}
       onOpenChange={(next) => {
         setHighlight(-1);
-        setOpen(next);
+        if (next) setInstallRef(generateInstallRef());
+        setIsOpen(next);
       }}
     >
       {/* The trigger: label + agent icon row. Hover is a plain background
           fade (via t.bg's hover variant) — no lift/fan animation. */}
       <PopoverTrigger
         onKeyDown={handleMenuKeyDown}
-        className={`group type-label-lg font-normal flex items-center gap-2.5 rounded-lg border ${t.border} ${t.bg} ${gradient} ${t.text} ${mainSize} ${
+        className={`type-label-lg group flex items-center gap-2.5 rounded-lg border font-normal ${t.border} ${t.bg} ${gradient} ${t.text} ${mainSize} ${
           fullWidth ? 'w-full justify-center' : 'w-fit'
         } transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
       >
@@ -240,8 +214,6 @@ const PromptInstallButton = ({
         </span>
         <span className="whitespace-nowrap">{label}</span>
       </PopoverTrigger>
-
-      {/* Dropdown menu — one row per agent, on the dark menu surface. */}
       {/* The menu matches the trigger's width exactly, so the dropdown reads
           as an extension of the button it opens from. */}
       <PopoverContent
@@ -251,29 +223,58 @@ const PromptInstallButton = ({
         className="py-1"
         onKeyDown={handleMenuKeyDown}
       >
-        {AGENT_ITEMS.map((item, i) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => activate(item)}
-            onMouseEnter={() => setHighlight(i)}
-            className={`group flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white transition-colors hover:bg-[hsl(0_0%_25%)] focus:outline-none ${
-              i === highlight ? 'bg-[hsl(0_0%_22%)]' : ''
-            }`}
-          >
-            {/* Same lift as the trigger's fanned icons: the logo rises with a
-                soft shadow while the row is hovered or keyboard-highlighted.
-                drop-shadow (not box-shadow) so it hugs the logo shape. */}
-            <span
-              className={`flex shrink-0 transition-[transform,filter] duration-200 ease-out will-change-transform group-hover:-translate-y-0.5 group-hover:drop-shadow-md motion-reduce:!translate-y-0 motion-reduce:!drop-shadow-none motion-reduce:transition-none ${
-                i === highlight ? '-translate-y-0.5 drop-shadow-md' : ''
-              }`}
+        {AGENT_ITEMS.map((item, i) => {
+          const className = `group flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white transition-colors hover:bg-[hsl(0_0%_25%)] focus:outline-none ${
+            i === highlight ? 'bg-[hsl(0_0%_22%)]' : ''
+          }`;
+          const content = (
+            <>
+              <span
+                aria-hidden
+                className={`flex shrink-0 transition-[transform,filter] duration-200 ease-out will-change-transform group-hover:-translate-y-0.5 group-hover:drop-shadow-md motion-reduce:!translate-y-0 motion-reduce:!drop-shadow-none motion-reduce:transition-none ${
+                  i === highlight ? '-translate-y-0.5 drop-shadow-md' : ''
+                }`}
+              >
+                {item.id === 'agent' ? (
+                  <Copy size={ICON_PX} aria-hidden />
+                ) : (
+                  <ToolLogo id={item.id} label={item.id} />
+                )}
+              </span>
+              <span className="flex-1 font-main">{item.label}</span>
+            </>
+          );
+
+          return item.id === 'agent' ? (
+            <button
+              key={item.id}
+              ref={(element) => {
+                menuItemRefs.current[i] = element;
+              }}
+              type="button"
+              onClick={() => activate(item.id)}
+              onMouseEnter={() => setHighlight(i)}
+              onFocus={() => setHighlight(i)}
+              className={className}
             >
-              <ToolLogo id={item.logo} label={item.label} />
-            </span>
-            <span className="flex-1 font-main">{item.label}</span>
-          </button>
-        ))}
+              {content}
+            </button>
+          ) : (
+            <a
+              key={item.id}
+              ref={(element) => {
+                menuItemRefs.current[i] = element;
+              }}
+              href={installDeepLink(item.id, installRef)}
+              onClick={() => activate(item.id)}
+              onMouseEnter={() => setHighlight(i)}
+              onFocus={() => setHighlight(i)}
+              className={className}
+            >
+              {content}
+            </a>
+          );
+        })}
       </PopoverContent>
     </Popover>
   );

@@ -46,7 +46,9 @@ describe('installDeepLink', () => {
       expect(url.hostname).toBe(hostname);
       expect(url.pathname).toBe(pathname);
       expect([...url.searchParams.keys()]).toEqual([parameter]);
-      expect(url.searchParams.get(parameter)).toBe(installPrompt(agent, REF));
+      expect(url.searchParams.get(parameter)).toBe(
+        `Install Rivet for this agent: \`npx -y rivet-design@latest install ${agent} --ref r_aZ09bY18\``,
+      );
       expect(link).not.toContain(' ');
       expect(link).not.toContain('`');
     },

@@ -1,5 +1,5 @@
 import { posthog } from './posthog';
-import type { InstallAgentId } from './install';
+import type { InstallTarget } from './install';
 import type { InstallRef } from './installRef';
 
 /** Where a PromptInstallButton sits; sent as `source` on `download_clicked`. */
@@ -69,14 +69,9 @@ class Telemetry {
 
   // ----- Install funnel -----
 
-  /**
-   * An install prompt or command was copied to the clipboard, or the Mac app
-   * was downloaded. `last_install_ref` goes on the person too, so the copier
-   * and a sign-in from another browser share it at the person level.
-   */
   trackDownloadClicked(props: {
     source: DownloadClickedSource;
-    downloadType: InstallAgentId | 'mac';
+    downloadType: InstallTarget | 'mac';
     installRef: InstallRef;
     version?: string;
     copyMethod?: CommandCopyMethod;

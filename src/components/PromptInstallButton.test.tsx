@@ -3,7 +3,6 @@ import { createRoot, type Root } from 'react-dom/client';
 import type { CaptureResult } from 'posthog-js';
 import { posthog } from '../lib/posthog';
 import * as installRef from '../lib/installRef';
-import InstallAccordion from './InstallAccordion';
 import NavBar from './NavBar';
 import PromptInstallButton from './PromptInstallButton';
 
@@ -28,10 +27,11 @@ posthog.init('phc_test', {
 
 const downloadClicks = () =>
   sent
-    .filter((e) => e.event === 'download_clicked')
-    .map((e) => ({
-      source: e.properties.source,
-      download_type: e.properties.download_type,
+    .filter((event) => event.event === 'download_clicked')
+    .map((event) => ({
+      source: event.properties.source,
+      download_type: event.properties.download_type,
+      install_ref: event.properties.install_ref as string,
     }));
 
 let container: HTMLDivElement;
@@ -44,25 +44,44 @@ const render = (element: ReactElement) => {
   act(() => root.render(element));
 };
 
-const click = (el: Element) =>
+const click = (element: Element) =>
   act(() => {
-    el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    element.dispatchEvent(
+      new MouseEvent('click', { bubbles: true, cancelable: true }),
+    );
   });
 
-const pickAgent = async (label: string) => {
-  const trigger = [...container.querySelectorAll('button')].find((b) =>
-    b.textContent?.includes('Install Rivet'),
+const openMenu = () => {
+  const trigger = [...container.querySelectorAll('button')].find((button) =>
+    button.textContent?.includes('Install Rivet'),
   );
   if (!trigger) throw new Error('install trigger not rendered');
   click(trigger);
-  const row = [...document.body.querySelectorAll('button')].find(
-    (b) => b.textContent === label,
-  );
-  if (!row) throw new Error(`${label} row not rendered`);
-  await act(async () => {
-    row.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-  });
+  return trigger;
 };
+
+const menuItem = (label: string) => {
+  const item = [...document.body.querySelectorAll('button, a')].find(
+    (element) => element.textContent === label,
+  );
+  if (!item) throw new Error(`${label} row not rendered`);
+  return item;
+};
+
+const pickItem = async (label: string) => {
+  openMenu();
+  const item = menuItem(label);
+  item.addEventListener('click', (event) => event.preventDefault(), {
+    once: true,
+  });
+  await act(async () => click(item));
+  return item;
+};
+
+const copiedText = () =>
+  (navigator.clipboard.writeText as jest.Mock).mock.calls.map(
+    ([text]) => text as string,
+  );
 
 beforeEach(() => {
   sent = [];
@@ -81,123 +100,136 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-describe('PromptInstallButton download_clicked', () => {
+describe('PromptInstallButton', () => {
   it.each([
-    ['landing_hero', 'Codex', 'codex'],
-    ['landing_install_section', 'Claude', 'claude'],
-    ['story', 'Claude', 'claude'],
-    ['landing_nav', 'Cursor', 'cursor'],
-    ['story_nav', 'Codex', 'codex'],
-  ] as const)(
-    'sends source %s with the picked agent',
-    async (source, label, downloadType) => {
-      render(<PromptInstallButton source={source} label="Install Rivet" />);
-      await pickAgent(label);
+    'landing_hero',
+    'landing_install_section',
+    'story',
+    'landing_nav',
+    'story_nav',
+  ] as const)('copies one short universal prompt from %s', async (source) => {
+    render(<PromptInstallButton source={source} label="Install Rivet" />);
+    await pickItem('Copy to agent');
 
-      expect(downloadClicks()).toEqual([
-        { source, download_type: downloadType },
-      ]);
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-        expect.stringContaining(`install ${downloadType}`),
+    const [event] = downloadClicks();
+    expect(event).toEqual({
+      source,
+      download_type: 'agent',
+      install_ref: expect.stringMatching(/^r_[0-9A-Za-z]{8}$/),
+    });
+    expect(copiedText()).toEqual([
+      `Install Rivet for this agent: \`npx -y rivet-design@latest install --ref ${event.install_ref}\``,
+    ]);
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it.each([
+    ['Claude', 'claude', 'q'],
+    ['Codex', 'codex', 'prompt'],
+  ] as const)(
+    'links Continue with %s to an attributed coding prompt',
+    async (label, agent, parameter) => {
+      render(
+        <PromptInstallButton source="landing_hero" label="Install Rivet" />,
       );
+      const item = await pickItem(`Continue with ${label}`);
+
+      const [event] = downloadClicks();
+      const link = new URL((item as HTMLAnchorElement).href);
+      expect(event.download_type).toBe(agent);
+      expect(link.protocol).toBe(`${agent}:`);
+      expect(link.hostname).toBe(agent === 'claude' ? 'code' : 'new');
+      expect(link.searchParams.get(parameter)).toBe(
+        `Install Rivet for this agent: \`npx -y rivet-design@latest install ${agent} --ref ${event.install_ref}\``,
+      );
+      expect(copiedText()).toEqual([]);
+      expect(document.querySelector('[role="dialog"]')).toBeNull();
     },
   );
 
-  it('carries the NavBar placement through to the event', async () => {
+  it('carries the NavBar placement through to the copy event', async () => {
     render(<NavBar installSource="story_nav" />);
-    await pickAgent('Cursor');
+    await pickItem('Copy to agent');
 
     expect(downloadClicks()).toEqual([
-      { source: 'story_nav', download_type: 'cursor' },
+      {
+        source: 'story_nav',
+        download_type: 'agent',
+        install_ref: expect.stringMatching(/^r_[0-9A-Za-z]{8}$/),
+      },
     ]);
   });
 
+  it('uses a fresh attributed prompt on each handoff', async () => {
+    render(<PromptInstallButton source="landing_hero" label="Install Rivet" />);
+    await pickItem('Copy to agent');
+    await pickItem('Continue with Claude');
+
+    const refs = downloadClicks().map((event) => event.install_ref);
+    expect(refs).toHaveLength(2);
+    refs.forEach((ref) => expect(ref).toMatch(/^r_[0-9A-Za-z]{8}$/));
+    expect(refs[0]).not.toBe(refs[1]);
+    const people = sent
+      .filter((event) => event.event === '$set')
+      .map((event) => event.properties.$set.last_install_ref);
+    expect(people).toEqual(refs);
+  });
+
+  it('keeps the exact short copy payload when attribution is disabled', async () => {
+    jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', false);
+    render(<PromptInstallButton source="landing_hero" label="Install Rivet" />);
+    await pickItem('Copy to agent');
+
+    expect(copiedText()).toEqual([
+      'Install Rivet for this agent: `npx -y rivet-design@latest install`',
+    ]);
+  });
+
+  it('activates the highlighted coding link with the keyboard', () => {
+    render(<PromptInstallButton source="landing_hero" label="Install Rivet" />);
+    const trigger = openMenu();
+    const link = menuItem('Continue with Codex');
+    link.addEventListener('click', (event) => event.preventDefault(), {
+      once: true,
+    });
+    act(() => {
+      trigger.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }),
+      );
+    });
+    act(() => {
+      trigger.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+      );
+    });
+
+    expect(downloadClicks()).toEqual([
+      {
+        source: 'landing_hero',
+        download_type: 'codex',
+        install_ref: expect.stringMatching(/^r_[0-9A-Za-z]{8}$/),
+      },
+    ]);
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+  });
+
   it('still copies the prompt when PostHog throws', async () => {
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => {});
     jest.spyOn(posthog, 'capture').mockImplementation(() => {
       throw new Error('blocked');
     });
 
     render(<PromptInstallButton source="landing_hero" label="Install Rivet" />);
-    await pickAgent('Codex');
+    await pickItem('Copy to agent');
 
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-      expect.stringContaining('install codex'),
-    );
-  });
-});
-
-const REF = /^r_[0-9A-Za-z]{8}$/;
-
-const copiedText = () =>
-  (navigator.clipboard.writeText as jest.Mock).mock.calls.map(
-    ([text]) => text as string,
-  );
-
-const refsSent = () => ({
-  events: sent
-    .filter((e) => e.event === 'download_clicked')
-    .map((e) => e.properties.install_ref as string),
-  people: sent
-    .filter((e) => e.event === '$set')
-    .map((e) => e.properties.$set.last_install_ref as string),
-});
-
-const copyFromAccordion = async (label: string) => {
-  const button = container.querySelector(
-    `button[aria-label="Copy ${label} install command"]`,
-  );
-  if (!button) throw new Error(`${label} copy button not rendered`);
-  await act(async () => {
-    button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-  });
-};
-
-describe.each([
-  [
-    'PromptInstallButton',
-    () =>
-      render(
-        <PromptInstallButton source="landing_hero" label="Install Rivet" />,
-      ),
-    pickAgent,
-  ],
-  ['InstallAccordion', () => render(<InstallAccordion />), copyFromAccordion],
-] as const)('%s install_ref', (_, mount, copy) => {
-  it('sends a fresh ref on the event and the person for every copy', async () => {
-    mount();
-    await copy('Codex');
-    await copy('Claude');
-
-    const { events, people } = refsSent();
-    expect(events).toHaveLength(2);
-    events.forEach((ref) => expect(ref).toMatch(REF));
-    expect(events[0]).not.toBe(events[1]);
-    expect(people).toEqual(events);
-  });
-
-  it('leaves the ref out of the copied text while embedding is off', async () => {
-    jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', false);
-    mount();
-    await copy('Codex');
-
-    const [text] = copiedText();
-    expect(text).toMatch(/npx -y rivet-design@latest install codex$/);
-    expect(text).not.toContain('--ref');
-    expect(text).not.toContain(refsSent().events[0]);
-  });
-
-  it('puts the same ref in the copied command by default', async () => {
-    mount();
-    await copy('Cursor');
-
-    const [ref] = refsSent().events;
     expect(copiedText()).toEqual([
       expect.stringMatching(
-        new RegExp(
-          `npx -y rivet-design@latest install cursor --mcp --ref ${ref}$`,
-        ),
+        /^Install Rivet for this agent: `npx -y rivet-design@latest install --ref r_[0-9A-Za-z]{8}`$/,
       ),
     ]);
+    expect(warning).toHaveBeenCalledWith(
+      'telemetry: failed to send "download_clicked"',
+      expect.objectContaining({ message: 'blocked' }),
+    );
   });
 });

@@ -1,15 +1,33 @@
 # Install ref attribution
 
-Each install copy generates an `r_` ref with eight base62 characters. The
+Each install handoff generates an `r_` ref with eight base62 characters. The
 website records it as `install_ref` on `download_clicked` and as
 `last_install_ref` on the person. `/auth-success` validates query-string refs
 and records them on sign-in outcomes. Matching refs connect events across
 browsers without merging PostHog identities. Token fragments remain redacted.
 
-## Copy paths
+## Handoff paths
+
+The dropdown offers **Continue with Codex**, **Continue with Claude**, and
+**Copy to agent**. Targeted links prefill a coding session through
+`codex://new?prompt=` or `claude://code/new?q=`. The user sends the prompt in
+the destination app. **Copy to agent** copies one sentence for any coding
+agent, including terminal CLIs.
+
+All three paths use `Install Rivet for this agent: \`<command>\``. Targeted
+commands include `install codex`or`install claude`. The universal command
+uses bare `install`, and Rivet selects the current coding host. Attribution
+adds only `--ref <ref>` inside the command. Deploy this website change after
+the package with host-aware untargeted installation is published.
+
+Opening the dropdown prepares a fresh ref for the next handoff. A link click
+records `download_clicked` with `download_type` set to `codex` or `claude`.
+The copy action uses `agent`. These events record handoff intent, not proof
+that an app opened or Rivet installed. The ref in a link's decoded prompt or
+copied text matches `install_ref` and the person's `last_install_ref`.
 
 The dropdown, accordion rows, copy icons, and manual command copies retain the
-same ref between telemetry and copied text when embedding is enabled. The
+same ref between telemetry and the command when embedding is enabled. The
 accordion keeps `copy_method` values `row_click`, `icon`, and `manual_select`.
 
 A native copy of a complete accordion command appends its ref through the copy
