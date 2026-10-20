@@ -8,16 +8,18 @@
 // outdated version. The agent ids mirror rivet core's harness registry.
 import { EMBED_INSTALL_REF_IN_COPY, type InstallRef } from './installRef';
 
-export type InstallAgentId = 'claude' | 'cursor' | 'codex';
+export type InstallAgentId = 'claude' | 'claude-code' | 'cursor' | 'codex';
 
 export const AGENT_LOGOS: Record<InstallAgentId, string> = {
   claude: '/images/claude.svg',
+  'claude-code': '/images/claude.svg',
   cursor: '/images/cursor.svg',
   codex: '/images/codex.svg',
 };
 
 export const INSTALL_COMMANDS: Record<InstallAgentId, string> = {
   claude: 'npx -y rivet-design@latest install claude-code claude-desktop',
+  'claude-code': 'npx -y rivet-design@latest install claude-code',
   // `--mcp` registers the `rivet mcp serve` server in ~/.cursor/mcp.json so
   // Rivet's MCP tools are available to Cursor. The install's global bootstrap
   // makes the registration durable (absolute path to the globally-installed

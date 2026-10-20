@@ -5,9 +5,12 @@
 // Rivet design system; the grid-rows 0fr->1fr trick gives a smooth height
 // animation.
 import { useId, useRef, useState, type ClipboardEvent } from 'react';
-import { toast } from 'sonner';
 import useClipboard from '@/hooks/useClipboard';
-import { telemetry, type CommandCopyMethod } from '@/lib/telemetry';
+import {
+  telemetry,
+  type CommandCopyMethod,
+  type PromptInstallSource,
+} from '@/lib/telemetry';
 import {
   AGENT_LOGOS,
   INSTALL_COMMANDS,
@@ -19,6 +22,7 @@ import { generateInstallRef } from '@/lib/installRef';
 const AGENT_ROWS: { id: InstallAgentId; label: string }[] = [
   { id: 'codex', label: 'Codex' },
   { id: 'claude', label: 'Claude' },
+  { id: 'claude-code', label: 'Claude Code' },
   { id: 'cursor', label: 'Cursor' },
 ];
 
@@ -81,8 +85,17 @@ const selectContents = (el: HTMLElement | null) => {
   selection.addRange(range);
 };
 
-const InstallAccordion = () => {
+type InstallAccordionProps = {
+  collapsible?: boolean;
+  source?: PromptInstallSource | 'landing_accordion';
+};
+
+const InstallAccordion = ({
+  collapsible = true,
+  source = 'landing_accordion',
+}: InstallAccordionProps) => {
   const [open, setOpen] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   // Which agent's command was just copied (drives that row's "Copied" state).
   const [copiedId, setCopiedId] = useState<InstallAgentId | null>(null);
   const { copyToClipboard } = useClipboard();
@@ -94,7 +107,7 @@ const InstallAccordion = () => {
   const track = (id: InstallAgentId, copyMethod: CommandCopyMethod) => {
     const installRef = generateInstallRef();
     telemetry.trackDownloadClicked({
-      source: 'landing_accordion',
+      source,
       downloadType: id,
       copyMethod,
       installRef,
@@ -103,10 +116,11 @@ const InstallAccordion = () => {
   };
 
   const copy = (id: InstallAgentId, copyMethod: 'row_click' | 'icon') => {
+    setCopyFailed(false);
+    setCopiedId(null);
     const installRef = track(id, copyMethod);
     copyToClipboard(copiedInstallCommand(id, installRef)).then(
       () => {
-        toast.success('Command copied to clipboard');
         setCopiedId(id);
         setTimeout(() => setCopiedId((cur) => (cur === id ? null : cur)), 2000);
       },
@@ -114,10 +128,7 @@ const InstallAccordion = () => {
         // Leave the command selected so a keyboard copy is one keystroke away;
         // that copy is then counted as `manual_select`.
         selectContents(codeRefs.current[id] ?? null);
-        toast("Couldn't copy automatically", {
-          description:
-            'The command is selected. Press ⌘C or Ctrl+C to copy it.',
-        });
+        setCopyFailed(true);
       },
     );
   };
@@ -146,16 +157,18 @@ const InstallAccordion = () => {
     <div className="w-full">
       {/* Padding widens the hit area; the matching negative margin keeps the
           layout where it was. */}
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        aria-controls={panelId}
-        className="-my-2 mx-auto flex items-center gap-1.5 rounded-md px-3 py-2 font-main text-sm font-medium text-black/70 transition-colors hover:text-black"
-      >
-        Or run the install command yourself
-        <ChevronIcon open={open} />
-      </button>
+      {collapsible && (
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          aria-controls={panelId}
+          className="-my-2 mx-auto flex items-center gap-1.5 rounded-md px-3 py-2 font-main text-sm font-medium text-black/70 transition-colors hover:text-black"
+        >
+          Or run the install command yourself
+          <ChevronIcon open={open} />
+        </button>
+      )}
 
       {/* Smoothly-expanding content. `invisible` keeps the collapsed rows out
           of the tab order and the accessibility tree; visibility flips at the
@@ -163,8 +176,8 @@ const InstallAccordion = () => {
       <div
         id={panelId}
         className={`grid transition-all duration-200 ease-out ${
-          open
-            ? 'visible mt-3 grid-rows-[1fr] opacity-100'
+          open || !collapsible
+            ? `visible grid-rows-[1fr] opacity-100 ${collapsible ? 'mt-3' : ''}`
             : 'invisible grid-rows-[0fr] opacity-0'
         }`}
       >
@@ -222,7 +235,7 @@ const InstallAccordion = () => {
                     ref={(el) => {
                       codeRefs.current[row.id] = el;
                     }}
-                    className="type-code mt-1 block text-left text-accent-foreground/80"
+                    className="type-code mt-1 block whitespace-pre-wrap break-words text-left text-accent-foreground/80"
                   >
                     {INSTALL_COMMANDS[row.id]}
                   </code>
@@ -232,8 +245,19 @@ const InstallAccordion = () => {
           </div>
         </div>
       </div>
-      <span role="status" className="sr-only">
-        {copiedLabel ? `${copiedLabel} install command copied` : ''}
+      <span
+        role="status"
+        className={
+          copyFailed
+            ? 'mt-2 block text-sm text-accent-foreground/70'
+            : 'sr-only'
+        }
+      >
+        {copyFailed
+          ? 'Command selected. Press ⌘C or Ctrl+C to copy.'
+          : copiedLabel
+            ? `${copiedLabel} install command copied`
+            : ''}
       </span>
     </div>
   );

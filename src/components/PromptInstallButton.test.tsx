@@ -59,7 +59,7 @@ const pickAgent = async (label: string) => {
     b.textContent?.includes('Install Rivet'),
   );
   if (!trigger) throw new Error('install trigger not rendered');
-  click(trigger);
+  if (trigger.getAttribute('aria-expanded') !== 'true') click(trigger);
   const row = [...document.body.querySelectorAll('button')].find(
     (b) => b.textContent === label,
   );
@@ -71,6 +71,7 @@ const pickAgent = async (label: string) => {
 
 beforeEach(() => {
   sent = [];
+  window.getSelection()?.removeAllRanges();
   jest.clearAllMocks();
   jest.spyOn(window, 'open').mockReturnValue(null);
   Object.defineProperty(window, 'isSecureContext', {
@@ -114,7 +115,7 @@ describe('PromptInstallButton download_clicked', () => {
         container
           .querySelector('[aria-expanded]')
           ?.getAttribute('aria-expanded'),
-      ).toBe('false');
+      ).toBe('true');
     },
   );
 
@@ -236,6 +237,7 @@ describe('PromptInstallButton desktop handoff', () => {
   it.each([
     ['ChatGPT', 'codex://new', 'prompt'],
     ['Claude', 'claude://code/new', 'q'],
+    ['Claude Code', 'claude-cli://open', 'q'],
     ['Cursor', 'cursor://anysphere.cursor-deeplink/prompt', 'text'],
   ])(
     'opens %s with an encoded install prompt',
@@ -245,10 +247,12 @@ describe('PromptInstallButton desktop handoff', () => {
       );
       await pickAgent(label);
 
-      const [[url, target]] = (window.open as jest.Mock).mock.calls;
+      const [[url, target, features]] = (window.open as jest.Mock).mock.calls;
       const parsed = new URL(url);
       expect(`${parsed.protocol}//${parsed.host}${parsed.pathname}`).toBe(base);
-      expect(target).toBe('_self');
+      expect(target).toBe('_blank');
+      expect(features).toBe('noopener,noreferrer');
+      expect(toast).not.toHaveBeenCalled();
       expect([...parsed.searchParams.keys()]).toEqual([parameter]);
       const prompt = parsed.searchParams.get(parameter)!;
       expect(prompt).toContain(`--ref ${refsSent().events[0]}`);
@@ -269,7 +273,8 @@ describe('PromptInstallButton desktop handoff', () => {
     }
     expect(window.open).toHaveBeenCalledWith(
       expect.stringMatching(/^claude:\/\/code\/new\?q=/),
-      '_self',
+      '_blank',
+      'noopener,noreferrer',
     );
   });
 
@@ -277,9 +282,12 @@ describe('PromptInstallButton desktop handoff', () => {
     render(<PromptInstallButton source="landing_hero" label="Install Rivet" />);
     await pickAgent('Claude');
 
-    const [, options] = (toast as unknown as jest.Mock).mock.calls[0];
-    expect(options.action.label).toBe('Copy prompt');
-    await act(async () => options.action.onClick());
+    const copy = [...document.body.querySelectorAll('button')].find(
+      (button) => button.textContent === 'Copy prompt',
+    )!;
+    await act(async () => click(copy));
+    expect(copy.textContent).toBe('Copied');
+    expect(toast).not.toHaveBeenCalled();
     expect(copiedText()).toEqual(openedPrompts());
     expect(downloadClicks()).toHaveLength(1);
   });
@@ -300,14 +308,86 @@ describe('PromptInstallButton desktop handoff', () => {
       await pickAgent('ChatGPT');
       expect(window.open).toHaveBeenCalledTimes(1);
 
-      const [, options] = (toast as unknown as jest.Mock).mock.calls[0];
-      await act(async () => options.action.onClick());
-      expect(toast.error).toHaveBeenCalledWith(
-        "Couldn't copy the prompt",
-        expect.objectContaining({
-          description: expect.stringContaining('install command'),
-        }),
+      const copy = [...document.body.querySelectorAll('button')].find(
+        (button) => button.textContent === 'Copy prompt',
+      )!;
+      await act(async () => click(copy));
+      expect(document.querySelector('textarea')?.value).toBe(
+        openedPrompts()[0],
       );
+      expect(toast.error).not.toHaveBeenCalled();
     },
   );
+});
+
+describe('PromptInstallButton terminal options', () => {
+  it('opens Claude Code in a terminal with only its own install target', async () => {
+    render(<PromptInstallButton source="story" label="Install Rivet" />);
+    await pickAgent('Claude Code');
+    expect(window.open).toHaveBeenCalledWith(
+      expect.stringMatching(/^claude-cli:\/\/open\?q=/),
+      '_blank',
+      'noopener,noreferrer',
+    );
+    const [prompt] = openedPrompts();
+    expect(prompt).toMatch(/install claude-code --ref r_[0-9A-Za-z]{8}$/);
+    expect(prompt).not.toContain('claude-desktop');
+    expect(downloadClicks()).toEqual([
+      { source: 'story', download_type: 'claude-code' },
+    ]);
+  });
+
+  it('shows terminal commands from every install menu without opening an app', async () => {
+    render(<PromptInstallButton source="story_nav" label="Install Rivet" />);
+    await pickAgent('Terminal');
+    expect(window.open).not.toHaveBeenCalled();
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain(
+      'Install from your terminal',
+    );
+    expect(
+      document.querySelector('[role="dialog"]')?.textContent,
+    ).not.toContain('Or run the install command yourself');
+    const copy = document.querySelector(
+      'button[aria-label="Copy Claude Code install command"]',
+    )!;
+    await act(async () => click(copy));
+    expect(copiedText()).toEqual([
+      expect.stringMatching(/install claude-code --ref r_[0-9A-Za-z]{8}$/),
+    ]);
+    expect(downloadClicks()).toEqual([
+      { source: 'story_nav', download_type: 'claude-code' },
+    ]);
+    expect(toast).not.toHaveBeenCalled();
+  });
+
+  it('reaches Terminal with ArrowUp and Enter', () => {
+    render(<PromptInstallButton source="landing_hero" label="Install Rivet" />);
+    const trigger = container.querySelector('button')!;
+    click(trigger);
+    for (const key of ['ArrowUp', 'Enter']) {
+      act(() =>
+        trigger.dispatchEvent(
+          new KeyboardEvent('keydown', { key, bubbles: true }),
+        ),
+      );
+    }
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain(
+      'Install from your terminal',
+    );
+    expect(window.open).not.toHaveBeenCalled();
+  });
+
+  it('does not relaunch an app when Enter is pressed on the copy fallback', async () => {
+    render(<PromptInstallButton source="landing_hero" label="Install Rivet" />);
+    await pickAgent('Claude');
+    const copy = [...document.body.querySelectorAll('button')].find(
+      (button) => button.textContent === 'Copy prompt',
+    )!;
+    act(() =>
+      copy.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+      ),
+    );
+    expect(window.open).toHaveBeenCalledTimes(1);
+  });
 });

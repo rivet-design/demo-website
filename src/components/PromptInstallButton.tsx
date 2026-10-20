@@ -2,7 +2,7 @@
 // review and send. Cursor receives a prompt link, not an MCP registration link,
 // so the install still uses the CLI's durable global bootstrap.
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { Terminal } from 'lucide-react';
 import { telemetry, type PromptInstallSource } from '@/lib/telemetry';
 import {
   AGENT_LOGOS as TOOL_LOGOS,
@@ -11,6 +11,14 @@ import {
 } from '@/lib/install';
 import { generateInstallRef } from '@/lib/installRef';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
+import InstallAccordion from './InstallAccordion';
 
 // Logo painted in the button's own text colour rather than rendered as
 // artwork. The files are single-colour marks on transparency, so they go
@@ -70,6 +78,14 @@ const AGENT_ITEMS: AgentItem[] = [
     prompt: (command) =>
       `Please set up Rivet for Claude Code and Claude Desktop by running: ${command}`,
     deepLink: 'claude://code/new?q=',
+  },
+  {
+    id: 'claude-code',
+    label: 'Claude Code',
+    logo: 'claude-code',
+    prompt: (command) =>
+      `Please set up Rivet for Claude Code by running: ${command}`,
+    deepLink: 'claude-cli://open?q=',
   },
   {
     id: 'cursor',
@@ -137,6 +153,11 @@ const PromptInstallButton = ({
   dismissOnScroll = false,
 }: PromptInstallButtonProps) => {
   const [open, setOpen] = useState(false);
+  const [terminalOpen, setTerminalOpen] = useState(false);
+  const [handoff, setHandoff] = useState<{ prompt: string } | null>(null);
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>(
+    'idle',
+  );
   // Keyboard highlight within the menu (-1 = no row highlighted).
   const [highlight, setHighlight] = useState(-1);
 
@@ -179,29 +200,28 @@ const PromptInstallButton = ({
     const prompt = item.prompt(copiedInstallCommand(item.id, installRef));
     // Keep navigation in the click/keyboard gesture; clipboard permissions
     // must not delay or block the desktop handoff.
-    window.open(`${item.deepLink}${encodeURIComponent(prompt)}`, '_self');
-    toast(`Continue in ${item.label}`, {
-      description:
-        "Review and send the install prompt in the desktop app. Didn't open? Copy the prompt instead.",
-      duration: 12000,
-      action: {
-        label: 'Copy prompt',
-        onClick: async () => {
-          try {
-            await navigator.clipboard.writeText(prompt);
-            toast.success('Prompt copied to clipboard', {
-              description: `Paste into ${item.label} to install Rivet.`,
-            });
-          } catch {
-            toast.error("Couldn't copy the prompt", {
-              description:
-                'Copy the install command from the command-line instructions on the home page.',
-            });
-          }
-        },
-      },
-    });
+    setHandoff({ prompt });
+    setCopyState('idle');
+    window.open(
+      `${item.deepLink}${encodeURIComponent(prompt)}`,
+      '_blank',
+      'noopener,noreferrer',
+    );
+  };
+
+  const openTerminal = () => {
     setOpen(false);
+    setTerminalOpen(true);
+  };
+
+  const copyPrompt = async () => {
+    if (!handoff) return;
+    try {
+      await navigator.clipboard.writeText(handoff.prompt);
+      setCopyState('copied');
+    } catch {
+      setCopyState('failed');
+    }
   };
 
   // Arrow keys move the highlight; Enter activates; Escape closes. Shared by the
@@ -210,14 +230,15 @@ const PromptInstallButton = ({
     if (!open) return;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setHighlight((i) => (i + 1) % AGENT_ITEMS.length);
+      setHighlight((i) => (i + 1) % (AGENT_ITEMS.length + 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setHighlight((i) => (i - 1 + AGENT_ITEMS.length) % AGENT_ITEMS.length);
+      setHighlight((i) => (i <= 0 ? AGENT_ITEMS.length : i - 1));
     } else if (e.key === 'Enter') {
       if (highlight >= 0) {
         e.preventDefault();
-        activate(AGENT_ITEMS[highlight]);
+        if (highlight === AGENT_ITEMS.length) openTerminal();
+        else activate(AGENT_ITEMS[highlight]);
       }
     } else if (e.key === 'Escape') {
       setOpen(false);
@@ -225,71 +246,130 @@ const PromptInstallButton = ({
   };
 
   return (
-    <Popover
-      className={fullWidth ? 'flex w-full' : undefined}
-      open={open}
-      onOpenChange={(next) => {
-        setHighlight(-1);
-        setOpen(next);
-      }}
-    >
-      {/* The trigger: label + agent icon row. Hover is a plain background
+    <>
+      <Popover
+        className={fullWidth ? 'flex w-full' : undefined}
+        open={open}
+        onOpenChange={(next) => {
+          setHighlight(-1);
+          setHandoff(null);
+          setCopyState('idle');
+          setOpen(next);
+        }}
+      >
+        {/* The trigger: label + agent icon row. Hover is a plain background
           fade (via t.bg's hover variant) — no lift/fan animation. */}
-      <PopoverTrigger
-        onKeyDown={handleMenuKeyDown}
-        className={`type-label-lg group flex items-center gap-2.5 rounded-lg border font-normal ${t.border} ${t.bg} ${gradient} ${t.text} ${mainSize} ${
-          fullWidth ? 'w-full justify-center' : 'w-fit'
-        } transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
-      >
-        <span className="flex shrink-0 items-center gap-1" aria-hidden>
-          {(['codex', 'claude', 'cursor'] as AgentLogo[]).map((logo) => (
-            <span
-              key={logo}
-              className={`relative flex ${iconBox} items-center justify-center rounded-full ${t.bg} ring-2 ${t.ring}`}
-            >
-              <ToolLogo id={logo} label={logo} />
-            </span>
-          ))}
-        </span>
-        <span className="whitespace-nowrap">{label}</span>
-      </PopoverTrigger>
+        <PopoverTrigger
+          onKeyDown={handleMenuKeyDown}
+          className={`type-label-lg group flex items-center gap-2.5 rounded-lg border font-normal ${t.border} ${t.bg} ${gradient} ${t.text} ${mainSize} ${
+            fullWidth ? 'w-full justify-center' : 'w-fit'
+          } transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
+        >
+          <span className="flex shrink-0 items-center gap-1" aria-hidden>
+            {(['codex', 'claude', 'cursor'] as AgentLogo[]).map((logo) => (
+              <span
+                key={logo}
+                className={`relative flex ${iconBox} items-center justify-center rounded-full ${t.bg} ring-2 ${t.ring}`}
+              >
+                <ToolLogo id={logo} label={logo} />
+              </span>
+            ))}
+          </span>
+          <span className="whitespace-nowrap">{label}</span>
+        </PopoverTrigger>
 
-      {/* Dropdown menu — one row per agent, on the dark menu surface. */}
-      {/* The menu matches the trigger's width exactly, so the dropdown reads
+        {/* Dropdown menu — one row per agent, on the dark menu surface. */}
+        {/* The menu matches the trigger's width exactly, so the dropdown reads
           as an extension of the button it opens from. */}
-      <PopoverContent
-        align={fullWidth ? 'center' : 'start'}
-        sideOffset={6}
-        matchTriggerWidth
-        className="py-1"
-        onKeyDown={handleMenuKeyDown}
-      >
-        {AGENT_ITEMS.map((item, i) => (
-          <button
-            key={item.id}
-            type="button"
-            title={`Open ${item.label} desktop with the install prompt`}
-            onClick={() => activate(item)}
-            onMouseEnter={() => setHighlight(i)}
-            className={`group flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white transition-colors hover:bg-[hsl(0_0%_25%)] focus:outline-none ${
-              i === highlight ? 'bg-[hsl(0_0%_22%)]' : ''
-            }`}
-          >
-            {/* Same lift as the trigger's fanned icons: the logo rises with a
-                soft shadow while the row is hovered or keyboard-highlighted.
-                drop-shadow (not box-shadow) so it hugs the logo shape. */}
-            <span
-              className={`flex shrink-0 transition-[transform,filter] duration-200 ease-out will-change-transform group-hover:-translate-y-0.5 group-hover:drop-shadow-md motion-reduce:!translate-y-0 motion-reduce:!drop-shadow-none motion-reduce:transition-none ${
-                i === highlight ? '-translate-y-0.5 drop-shadow-md' : ''
+        <PopoverContent
+          align={fullWidth ? 'center' : 'start'}
+          sideOffset={6}
+          matchTriggerWidth
+          className="py-1"
+          onKeyDown={handleMenuKeyDown}
+        >
+          {AGENT_ITEMS.map((item, i) => (
+            <button
+              key={item.id}
+              type="button"
+              title={`Open ${item.label} ${item.id === 'claude-code' ? 'in your terminal' : 'desktop'} with the install prompt`}
+              onClick={() => activate(item)}
+              onMouseEnter={() => setHighlight(i)}
+              onFocus={() => setHighlight(i)}
+              className={`group flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white transition-colors hover:bg-[hsl(0_0%_25%)] focus:outline-none ${
+                i === highlight ? 'bg-[hsl(0_0%_22%)]' : ''
               }`}
             >
-              <ToolLogo id={item.logo} label={item.label} />
-            </span>
-            <span className="flex-1 font-main">{item.label}</span>
+              {/* Same lift as the trigger's fanned icons: the logo rises with a
+                soft shadow while the row is hovered or keyboard-highlighted.
+                drop-shadow (not box-shadow) so it hugs the logo shape. */}
+              <span
+                className={`flex shrink-0 transition-[transform,filter] duration-200 ease-out will-change-transform group-hover:-translate-y-0.5 group-hover:drop-shadow-md motion-reduce:!translate-y-0 motion-reduce:!drop-shadow-none motion-reduce:transition-none ${
+                  i === highlight ? '-translate-y-0.5 drop-shadow-md' : ''
+                }`}
+              >
+                <ToolLogo id={item.logo} label={item.label} />
+              </span>
+              <span className="flex-1 font-main">{item.label}</span>
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={openTerminal}
+            onMouseEnter={() => setHighlight(AGENT_ITEMS.length)}
+            onFocus={() => setHighlight(AGENT_ITEMS.length)}
+            className={`flex w-full items-center gap-3 border-t border-white/10 px-4 py-2.5 text-left text-sm text-white hover:bg-[hsl(0_0%_25%)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-white ${highlight === AGENT_ITEMS.length ? 'bg-[hsl(0_0%_22%)]' : ''}`}
+          >
+            <Terminal size={ICON_PX} aria-hidden />
+            <span className="font-main">Terminal</span>
           </button>
-        ))}
-      </PopoverContent>
-    </Popover>
+          {handoff && (
+            <div
+              onKeyDown={(event) => {
+                if (event.key !== 'Escape') event.stopPropagation();
+              }}
+              className="border-t border-white/10 px-4 py-2.5 text-xs text-white/70"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span>Didn't open?</span>
+                <button
+                  type="button"
+                  onClick={copyPrompt}
+                  className="rounded px-1 py-1 text-white underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+                >
+                  {copyState === 'copied' ? 'Copied' : 'Copy prompt'}
+                </button>
+              </div>
+              <span role="status" className="sr-only">
+                {copyState === 'copied' ? 'Install prompt copied' : ''}
+              </span>
+              {copyState === 'failed' && (
+                <label className="mt-2 block">
+                  Select and copy the prompt
+                  <textarea
+                    readOnly
+                    value={handoff.prompt}
+                    onFocus={(event) => event.currentTarget.select()}
+                    className="mt-1 block w-full rounded border border-white/20 bg-transparent p-2 text-xs text-white"
+                  />
+                </label>
+              )}
+            </div>
+          )}
+        </PopoverContent>
+      </Popover>
+      <Dialog open={terminalOpen} onOpenChange={setTerminalOpen}>
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
+          <DialogHeader className="mb-4">
+            <DialogTitle>Install from your terminal</DialogTitle>
+            <DialogDescription>
+              Copy a command and run it in your terminal.
+            </DialogDescription>
+          </DialogHeader>
+          <InstallAccordion collapsible={false} source={source} />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
