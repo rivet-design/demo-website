@@ -273,7 +273,7 @@ const PromptInstallButton = ({
         onKeyDown={handleMenuKeyDown}
       >
         <div role="group" aria-label="Open in desktop">
-          <p className="px-3 pb-1 pt-2 font-main text-xs font-medium text-[#646464]">
+          <p className="px-3 pb-1 pt-2 font-main text-xs font-normal text-[#646464]">
             Open in desktop
           </p>
           {AGENT_ITEMS.map((item, index) => (
@@ -301,7 +301,7 @@ const PromptInstallButton = ({
           aria-label="Copy prompt to install"
           className="mt-2 border-t border-black/10 pt-2"
         >
-          <p className="px-3 pb-1 pt-2 font-main text-xs font-medium text-[#646464]">
+          <p className="px-3 pb-1 pt-2 font-main text-xs font-normal text-[#646464]">
             Copy prompt to install
           </p>
           <button
