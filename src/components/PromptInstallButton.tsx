@@ -121,10 +121,6 @@ const PromptInstallButton = ({
   const [selected, setSelected] = useState(AGENT_ITEMS[0]);
   const [open, setOpen] = useState(false);
   const [terminalOpen, setTerminalOpen] = useState(false);
-  const [handoff, setHandoff] = useState<{ prompt: string } | null>(null);
-  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>(
-    'idle',
-  );
   // Keyboard highlight within the menu (-1 = no row highlighted).
   const [highlight, setHighlight] = useState(-1);
 
@@ -157,8 +153,7 @@ const PromptInstallButton = ({
     const prompt = item.prompt(copiedInstallCommand(item.id, installRef));
     // Keep navigation in the click/keyboard gesture; clipboard permissions
     // must not delay or block the desktop handoff.
-    setHandoff({ prompt });
-    setCopyState('idle');
+    setOpen(false);
     window.open(
       `${item.deepLink}${encodeURIComponent(prompt)}`,
       '_blank',
@@ -169,16 +164,6 @@ const PromptInstallButton = ({
   const openTerminal = () => {
     setOpen(false);
     setTerminalOpen(true);
-  };
-
-  const copyPrompt = async () => {
-    if (!handoff) return;
-    try {
-      await navigator.clipboard.writeText(handoff.prompt);
-      setCopyState('copied');
-    } catch {
-      setCopyState('failed');
-    }
   };
 
   // Arrow keys move the highlight; Enter activates; Escape closes. Shared by the
@@ -216,7 +201,6 @@ const PromptInstallButton = ({
         open={open}
         onOpenChange={(next) => {
           setHighlight(-1);
-          setCopyState('idle');
           setOpen(next);
         }}
       >
@@ -328,39 +312,6 @@ const PromptInstallButton = ({
               <span>Copy instructions</span>
             </button>
           </div>
-          {handoff && (
-            <div
-              onKeyDown={(event) => {
-                if (event.key !== 'Escape') event.stopPropagation();
-              }}
-              className="mt-2 border-t border-black/10 px-3 py-2.5 text-xs text-[#646464]"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span>Didn't open?</span>
-                <button
-                  type="button"
-                  onClick={copyPrompt}
-                  className="rounded px-1 py-1 text-[#202020] underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-black"
-                >
-                  {copyState === 'copied' ? 'Copied' : 'Copy prompt'}
-                </button>
-              </div>
-              <span role="status" className="sr-only">
-                {copyState === 'copied' ? 'Install prompt copied' : ''}
-              </span>
-              {copyState === 'failed' && (
-                <label className="mt-2 block">
-                  Select and copy the prompt
-                  <textarea
-                    readOnly
-                    value={handoff.prompt}
-                    onFocus={(event) => event.currentTarget.select()}
-                    className="mt-1 block w-full rounded border border-black/15 bg-white p-2 text-xs text-[#202020]"
-                  />
-                </label>
-              )}
-            </div>
-          )}
         </PopoverContent>
       </Popover>
       <Dialog open={terminalOpen} onOpenChange={setTerminalOpen}>

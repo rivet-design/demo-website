@@ -121,7 +121,7 @@ describe('PromptInstallButton download_clicked', () => {
         container
           .querySelector('[aria-expanded]')
           ?.getAttribute('aria-expanded'),
-      ).toBe('true');
+      ).toBe('false');
     },
   );
 
@@ -285,47 +285,6 @@ describe('PromptInstallButton desktop handoff', () => {
       'noopener,noreferrer',
     );
   });
-
-  it('offers a copy fallback with the same prompt and install ref', async () => {
-    render(<PromptInstallButton source="landing_hero" label="Install Rivet" />);
-    await pickAgent('Claude');
-
-    const copy = [...document.body.querySelectorAll('button')].find(
-      (button) => button.textContent === 'Copy prompt',
-    )!;
-    await act(async () => click(copy));
-    expect(copy.textContent).toBe('Copied');
-    expect(toast).not.toHaveBeenCalled();
-    expect(copiedText()).toEqual(openedPrompts());
-    expect(downloadClicks()).toHaveLength(1);
-  });
-
-  it.each(['denied', 'unavailable'])(
-    'handles %s clipboard access in the fallback',
-    async (failure) => {
-      if (failure === 'denied') {
-        (navigator.clipboard.writeText as jest.Mock).mockRejectedValue(
-          new Error('denied'),
-        );
-      } else {
-        Object.assign(navigator, { clipboard: undefined });
-      }
-      render(
-        <PromptInstallButton source="landing_hero" label="Install Rivet" />,
-      );
-      await pickAgent('ChatGPT');
-      expect(window.open).toHaveBeenCalledTimes(1);
-
-      const copy = [...document.body.querySelectorAll('button')].find(
-        (button) => button.textContent === 'Copy prompt',
-      )!;
-      await act(async () => click(copy));
-      expect(document.querySelector('textarea')?.value).toBe(
-        openedPrompts()[0],
-      );
-      expect(toast.error).not.toHaveBeenCalled();
-    },
-  );
 });
 
 describe('PromptInstallButton terminal options', () => {
@@ -386,44 +345,16 @@ describe('PromptInstallButton terminal options', () => {
     );
     expect(window.open).not.toHaveBeenCalled();
   });
-
-  it('does not relaunch an app when Enter is pressed on the copy fallback', async () => {
-    render(<PromptInstallButton source="landing_hero" label="Install Rivet" />);
-    await pickAgent('Claude');
-    const copy = [...document.body.querySelectorAll('button')].find(
-      (button) => button.textContent === 'Copy prompt',
-    )!;
-    act(() =>
-      copy.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
-      ),
-    );
-    expect(window.open).toHaveBeenCalledTimes(1);
-  });
 });
 
-it('keeps the same copy fallback after the nav menu dismisses on scroll', async () => {
-  render(
-    <PromptInstallButton
-      source="landing_nav"
-      label="Install Rivet"
-      dismissOnScroll
-    />,
-  );
-  await pickAgent('Claude Code');
-  const [prompt] = openedPrompts();
+it('dismisses the nav chooser on scroll', () => {
+  render(<PromptInstallButton source="landing_nav" dismissOnScroll />);
+  const trigger = container.querySelector(
+    'button[aria-label="Choose your agent"]',
+  )!;
+  click(trigger);
   act(() => window.dispatchEvent(new Event('scroll')));
-  expect(
-    container.querySelector('[aria-expanded]')?.getAttribute('aria-expanded'),
-  ).toBe('false');
-  click(container.querySelector('button[aria-label="Choose your agent"]')!);
-  const copy = [...document.body.querySelectorAll('button')].find(
-    (button) => button.textContent === 'Copy prompt',
-  );
-  expect(copy).toBeDefined();
-  await act(async () => click(copy!));
-  expect(copiedText()).toEqual([prompt]);
-  expect(downloadClicks()).toHaveLength(1);
+  expect(trigger.getAttribute('aria-expanded')).toBe('false');
 });
 
 it('launches the default app from the main button without opening the menu', async () => {
