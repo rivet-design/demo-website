@@ -252,7 +252,6 @@ const PromptInstallButton = ({
         open={open}
         onOpenChange={(next) => {
           setHighlight(-1);
-          setHandoff(null);
           setCopyState('idle');
           setOpen(next);
         }}
@@ -359,7 +358,10 @@ const PromptInstallButton = ({
         </PopoverContent>
       </Popover>
       <Dialog open={terminalOpen} onOpenChange={setTerminalOpen}>
-        <DialogContent className="max-h-[80vh] overflow-y-auto">
+        <DialogContent
+          overlayClassName="z-[1001]"
+          className="z-[1002] max-h-[80vh] overflow-y-auto"
+        >
           <DialogHeader className="mb-4">
             <DialogTitle>Install from your terminal</DialogTitle>
             <DialogDescription>

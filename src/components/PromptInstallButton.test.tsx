@@ -391,3 +391,27 @@ describe('PromptInstallButton terminal options', () => {
     expect(window.open).toHaveBeenCalledTimes(1);
   });
 });
+
+it('keeps the same copy fallback after the nav menu dismisses on scroll', async () => {
+  render(
+    <PromptInstallButton
+      source="landing_nav"
+      label="Install Rivet"
+      dismissOnScroll
+    />,
+  );
+  await pickAgent('Claude Code');
+  const [prompt] = openedPrompts();
+  act(() => window.dispatchEvent(new Event('scroll')));
+  expect(
+    container.querySelector('[aria-expanded]')?.getAttribute('aria-expanded'),
+  ).toBe('false');
+  click(container.querySelector('button')!);
+  const copy = [...document.body.querySelectorAll('button')].find(
+    (button) => button.textContent === 'Copy prompt',
+  );
+  expect(copy).toBeDefined();
+  await act(async () => click(copy!));
+  expect(copiedText()).toEqual([prompt]);
+  expect(downloadClicks()).toHaveLength(1);
+});
