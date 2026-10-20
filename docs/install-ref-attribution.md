@@ -16,9 +16,13 @@ agent, including terminal CLIs.
 
 All three paths use `Install Rivet for this agent: \`<command>\``. Targeted
 commands include `install codex`or`install claude`. The universal command
-uses bare `install`, and Rivet selects the current coding host. Attribution
-adds only `--ref <ref>` inside the command. Deploy this website change after
-the package with host-aware untargeted installation is published.
+uses bare `install`. Rivet reports a proposed agent and asks the host agent to
+get user confirmation in the conversation before setup. The user can confirm,
+choose another supported agent, or choose Other to see the support limit.
+Installed agents are suggestions rather than caller identity. Attribution adds
+only `--ref <ref>` inside the command and is retained in the explicit-target
+follow-up. Deploy this website change after the package with installation
+confirmation is published.
 
 Opening the dropdown prepares a fresh ref for the next handoff. A link click
 records `download_clicked` with `download_type` set to `codex` or `claude`.

@@ -34,6 +34,19 @@ The website must deploy after the Rivet package with host-aware untargeted
 installation is published. An older package can treat bare `install` as an
 installation for every detected host.
 
+## Installation confirmation
+
+Sam approved confirming the detected agent in the host conversation before
+untargeted setup. The short copied prompt and targeted deep links remain the
+same. Bare install returns the proposed agent, evidence, supported choices, and
+an Other explanation. A follow-up explicit-target invocation preserves the
+install ref. Installed agents cannot establish caller identity. The website
+must ship after the core package containing this confirmation behavior.
+
+This follow-up changes Markdown documentation only. Existing website source and
+its 78-test validation remain unchanged; whitespace checks pass. CI and review
+for the documentation commit remain under coordinator monitoring.
+
 The expected React companion skill was not present in the available skill
 roots. The TypeScript skill and existing React patterns govern the change.
 The default Node 23 version falls outside Jest's supported engine range.
