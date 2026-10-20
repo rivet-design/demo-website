@@ -55,13 +55,19 @@ const click = (el: Element) =>
   });
 
 const pickAgent = async (label: string) => {
-  const trigger = [...container.querySelectorAll('button')].find((b) =>
-    b.textContent?.includes('Install Rivet'),
+  const trigger = container.querySelector(
+    'button[aria-label="Choose your agent"]',
   );
   if (!trigger) throw new Error('install trigger not rendered');
   if (trigger.getAttribute('aria-expanded') !== 'true') click(trigger);
-  const row = [...document.body.querySelectorAll('button')].find(
-    (b) => b.textContent === label,
+  const popup = document.querySelector(
+    '[aria-label="Choose where to install Rivet"]',
+  )!;
+  const row = [...popup.querySelectorAll('button')].find((button) =>
+    label === 'Terminal'
+      ? button.textContent === 'Copy instructions'
+      : button.getAttribute('aria-label') ===
+        `Continue in ${label}${label === 'Claude Code' ? ' (Terminal)' : ' (Desktop)'}`,
   );
   if (!row) throw new Error(`${label} row not rendered`);
   await act(async () => {
@@ -262,7 +268,9 @@ describe('PromptInstallButton desktop handoff', () => {
 
   it('opens the selected app with arrow keys and Enter', () => {
     render(<PromptInstallButton source="landing_hero" label="Install Rivet" />);
-    const trigger = container.querySelector('button')!;
+    const trigger = container.querySelector(
+      'button[aria-label="Choose your agent"]',
+    )!;
     click(trigger);
     for (const key of ['ArrowDown', 'ArrowDown', 'Enter']) {
       act(() => {
@@ -362,7 +370,9 @@ describe('PromptInstallButton terminal options', () => {
 
   it('reaches Terminal with ArrowUp and Enter', () => {
     render(<PromptInstallButton source="landing_hero" label="Install Rivet" />);
-    const trigger = container.querySelector('button')!;
+    const trigger = container.querySelector(
+      'button[aria-label="Choose your agent"]',
+    )!;
     click(trigger);
     for (const key of ['ArrowUp', 'Enter']) {
       act(() =>
@@ -406,7 +416,7 @@ it('keeps the same copy fallback after the nav menu dismisses on scroll', async 
   expect(
     container.querySelector('[aria-expanded]')?.getAttribute('aria-expanded'),
   ).toBe('false');
-  click(container.querySelector('button')!);
+  click(container.querySelector('button[aria-label="Choose your agent"]')!);
   const copy = [...document.body.querySelectorAll('button')].find(
     (button) => button.textContent === 'Copy prompt',
   );
@@ -414,4 +424,31 @@ it('keeps the same copy fallback after the nav menu dismisses on scroll', async 
   await act(async () => click(copy!));
   expect(copiedText()).toEqual([prompt]);
   expect(downloadClicks()).toHaveLength(1);
+});
+
+it('launches the default app from the main button without opening the menu', async () => {
+  render(<PromptInstallButton source="landing_hero" />);
+  const main = container.querySelector('button')!;
+  expect(main.textContent).toBe('Continue in ChatGPT (Desktop)');
+  await act(async () => click(main));
+  expect(window.open).toHaveBeenCalledWith(
+    expect.stringMatching(/^codex:\/\/new\?prompt=/),
+    '_blank',
+    'noopener,noreferrer',
+  );
+  expect(
+    container.querySelector('[aria-expanded]')?.getAttribute('aria-expanded'),
+  ).toBe('false');
+});
+
+it('updates the main action after choosing another agent', async () => {
+  render(<PromptInstallButton source="landing_hero" />);
+  await pickAgent('Claude Code');
+  const main = container.querySelector('button')!;
+  expect(main.textContent).toBe('Continue in Claude Code (Terminal)');
+  await act(async () => click(main));
+  expect(window.open).toHaveBeenCalledTimes(2);
+  expect((window.open as jest.Mock).mock.calls[1][0]).toMatch(
+    /^claude-cli:\/\/open\?q=/,
+  );
 });

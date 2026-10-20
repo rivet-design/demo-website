@@ -1,8 +1,8 @@
 // Opens the selected desktop agent with a CLI-first install prompt ready to
 // review and send. Cursor receives a prompt link, not an MCP registration link,
 // so the install still uses the CLI's durable global bootstrap.
-import { useEffect, useState } from 'react';
-import { Terminal } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Check, ChevronDown, Copy, Monitor, Terminal } from 'lucide-react';
 import { telemetry, type PromptInstallSource } from '@/lib/telemetry';
 import {
   AGENT_LOGOS as TOOL_LOGOS,
@@ -20,17 +20,7 @@ import {
 } from './ui/dialog';
 import InstallAccordion from './InstallAccordion';
 
-// Logo painted in the button's own text colour rather than rendered as
-// artwork. The files are single-colour marks on transparency, so they go
-// through a mask and take `currentColor` as their fill — which means every
-// tone's icons match its label for free.
-//
-// The brightness-0/invert filter pair this replaces could only ever reach
-// black or white, so the outline tone (a #642e39 label on no fill) was stuck
-// with black icons beside maroon text. Masking is also what makes the three
-// files agree: they ship black, unfilled, and #ffffff respectively, and a
-// mask reads their alpha, not their colour.
-const ICON_PX = 16;
+const ICON_PX = 20;
 const ToolLogo = ({ id, label }: { id: AgentLogo; label: string }) => (
   <span
     role="img"
@@ -54,6 +44,7 @@ const ToolLogo = ({ id, label }: { id: AgentLogo; label: string }) => (
 
 type AgentItem = {
   id: AgentLogo;
+  group: 'codex' | 'claude' | 'cursor';
   label: string;
   logo: AgentLogo;
   prompt: (command: string) => string;
@@ -65,6 +56,7 @@ type AgentItem = {
 const AGENT_ITEMS: AgentItem[] = [
   {
     id: 'codex',
+    group: 'codex',
     label: 'ChatGPT',
     logo: 'codex',
     prompt: (command) =>
@@ -73,6 +65,7 @@ const AGENT_ITEMS: AgentItem[] = [
   },
   {
     id: 'claude',
+    group: 'claude',
     label: 'Claude',
     logo: 'claude',
     prompt: (command) =>
@@ -81,6 +74,7 @@ const AGENT_ITEMS: AgentItem[] = [
   },
   {
     id: 'claude-code',
+    group: 'claude',
     label: 'Claude Code',
     logo: 'claude-code',
     prompt: (command) =>
@@ -89,6 +83,7 @@ const AGENT_ITEMS: AgentItem[] = [
   },
   {
     id: 'cursor',
+    group: 'cursor',
     label: 'Cursor',
     logo: 'cursor',
     prompt: (command) =>
@@ -97,46 +92,17 @@ const AGENT_ITEMS: AgentItem[] = [
   },
 ];
 
-type Tone = 'orange' | 'dark' | 'light' | 'secondary';
+const AGENT_GROUPS = [
+  { id: 'codex', label: 'ChatGPT' },
+  { id: 'claude', label: 'Claude' },
+  { id: 'cursor', label: 'Cursor' },
+] as const;
 
-const TONES: Record<
-  Tone,
-  { bg: string; border: string; text: string; ring: string }
-> = {
-  orange: {
-    bg: 'bg-primary hover:bg-primary-hover',
-    border: 'border-primary/20',
-    text: 'text-white',
-    // Ring color around each icon so it reads as a distinct chip.
-    ring: 'ring-primary',
-  },
-  dark: {
-    bg: 'bg-accent-foreground hover:bg-[hsl(0_0%_20%)]',
-    border: 'border-white/15',
-    text: 'text-white',
-    ring: 'ring-accent-foreground',
-  },
-  light: {
-    bg: 'bg-white hover:bg-white/80',
-    border: 'border-black/10',
-    text: 'text-accent-foreground',
-    ring: 'ring-white',
-  },
-  // The nav links' outline treatment (the Community pill, the old Watch
-  // demo): transparent over whatever ground the bar sits on. The icon chips
-  // drop their fill and ring with it — filled chips are the primary's dress.
-  secondary: {
-    bg: 'bg-transparent hover:bg-[#642e39]/5',
-    border: 'border-[#642e39]',
-    text: 'text-[#642e39]',
-    ring: 'ring-transparent',
-  },
-};
+const continuationLabel = (item: AgentItem) =>
+  `Continue in ${item.label}${item.id === 'claude-code' ? ' (Terminal)' : ' (Desktop)'}`;
 
 type PromptInstallButtonProps = {
   source: PromptInstallSource;
-  tone?: Tone;
-  /** `hero` matches the hero CTA pills (px-5 py-[10px] text-base). */
   size?: 'md' | 'lg' | 'hero';
   fullWidth?: boolean;
   label?: string;
@@ -146,12 +112,13 @@ type PromptInstallButtonProps = {
 
 const PromptInstallButton = ({
   source,
-  tone = 'orange',
   size = 'md',
   fullWidth = false,
-  label = 'Add Rivet to your agent',
+  label,
   dismissOnScroll = false,
 }: PromptInstallButtonProps) => {
+  const splitRef = useRef<HTMLDivElement>(null);
+  const [selected, setSelected] = useState(AGENT_ITEMS[0]);
   const [open, setOpen] = useState(false);
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [handoff, setHandoff] = useState<{ prompt: string } | null>(null);
@@ -170,26 +137,16 @@ const PromptInstallButton = ({
     return () => window.removeEventListener('scroll', dismiss);
   }, [open, dismissOnScroll]);
 
-  const t = TONES[tone];
-
-  const mainSize =
+  const buttonSize =
     size === 'lg'
-      ? 'px-6 py-4 text-lg'
+      ? 'min-h-[60px] text-base'
       : size === 'hero'
-        ? 'px-5 py-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px]'
-        : 'px-[16px] py-[8px] text-sm';
-  // Orange gets the hero CTA's gradient rather than a flat fill, so the two
-  // primary buttons on the page read as the same object. As a CLASS, not a
-  // style prop: the trigger is a PopoverTrigger, which forwards className but
-  // has no `style` in its props. Other tones stay flat — a gradient on the
-  // dark/light variants would just muddy them.
-  const gradient =
-    tone === 'orange'
-      ? 'bg-[linear-gradient(137.74deg,rgb(236,68,35)_41.128%,rgb(243,138,118)_121.74%)]'
-      : '';
-  const iconBox = size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
+        ? 'min-h-[52px] text-base'
+        : 'min-h-11 text-sm';
+  const actionLabel = continuationLabel(selected);
 
   const activate = (item: AgentItem) => {
+    setSelected(item);
     const installRef = generateInstallRef();
     telemetry.trackDownloadClicked({
       source,
@@ -227,7 +184,14 @@ const PromptInstallButton = ({
   // Arrow keys move the highlight; Enter activates; Escape closes. Shared by the
   // trigger and the menu so keyboard users can drive the whole thing.
   const handleMenuKeyDown = (e: React.KeyboardEvent) => {
-    if (!open) return;
+    if (!open) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        setOpen(true);
+        setHighlight(e.key === 'ArrowDown' ? 0 : AGENT_ITEMS.length);
+      }
+      return;
+    }
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setHighlight((i) => (i + 1) % (AGENT_ITEMS.length + 1));
@@ -248,7 +212,7 @@ const PromptInstallButton = ({
   return (
     <>
       <Popover
-        className={fullWidth ? 'flex w-full' : undefined}
+        className={fullWidth ? 'flex w-full' : 'max-w-full'}
         open={open}
         onOpenChange={(next) => {
           setHighlight(-1);
@@ -256,85 +220,127 @@ const PromptInstallButton = ({
           setOpen(next);
         }}
       >
-        {/* The trigger: label + agent icon row. Hover is a plain background
-          fade (via t.bg's hover variant) — no lift/fan animation. */}
-        <PopoverTrigger
-          onKeyDown={handleMenuKeyDown}
-          className={`type-label-lg group flex items-center gap-2.5 rounded-lg border font-normal ${t.border} ${t.bg} ${gradient} ${t.text} ${mainSize} ${
-            fullWidth ? 'w-full justify-center' : 'w-fit'
-          } transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
+        <div
+          ref={splitRef}
+          className={`flex min-w-0 overflow-hidden rounded-xl border border-black/10 bg-[#171715] text-white shadow-[0_1px_2px_rgba(0,0,0,0.12)] ${buttonSize} ${fullWidth ? 'w-full' : ''}`}
         >
-          <span className="flex shrink-0 items-center gap-1" aria-hidden>
-            {(['codex', 'claude', 'cursor'] as AgentLogo[]).map((logo) => (
-              <span
-                key={logo}
-                className={`relative flex ${iconBox} items-center justify-center rounded-full ${t.bg} ring-2 ${t.ring}`}
-              >
-                <ToolLogo id={logo} label={logo} />
-              </span>
-            ))}
-          </span>
-          <span className="whitespace-nowrap">{label}</span>
-        </PopoverTrigger>
+          <button
+            type="button"
+            onClick={() => activate(selected)}
+            title={actionLabel}
+            className="flex min-w-0 flex-1 items-center justify-center gap-3 px-5 py-3 font-main font-normal transition-colors duration-150 hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/70 motion-reduce:transition-none"
+          >
+            <span aria-hidden>
+              <ToolLogo id={selected.logo} label={selected.label} />
+            </span>
+            <span className="truncate">{label ?? actionLabel}</span>
+          </button>
+          <PopoverTrigger
+            aria-label="Choose your agent"
+            aria-haspopup="dialog"
+            onKeyDown={handleMenuKeyDown}
+            className="flex w-12 shrink-0 items-center justify-center border-l border-white/15 bg-white/[0.06] transition-colors duration-150 hover:bg-white/[0.12] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/70 motion-reduce:transition-none sm:w-[52px]"
+          >
+            <ChevronDown
+              aria-hidden
+              size={18}
+              className={`transition-transform duration-150 ease-out motion-reduce:transition-none ${open ? 'rotate-180' : ''}`}
+            />
+          </PopoverTrigger>
+        </div>
 
-        {/* Dropdown menu — one row per agent, on the dark menu surface. */}
-        {/* The menu matches the trigger's width exactly, so the dropdown reads
-          as an extension of the button it opens from. */}
         <PopoverContent
           align={fullWidth ? 'center' : 'start'}
           sideOffset={6}
           matchTriggerWidth
-          className="py-1"
+          anchorRef={splitRef}
+          collisionPadding={12}
+          aria-label="Choose where to install Rivet"
+          className="overflow-y-auto rounded-2xl border-black/[0.12] bg-white p-2 text-[#202020] shadow-[0_12px_32px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)]"
           onKeyDown={handleMenuKeyDown}
         >
-          {AGENT_ITEMS.map((item, i) => (
-            <button
-              key={item.id}
-              type="button"
-              title={`Open ${item.label} ${item.id === 'claude-code' ? 'in your terminal' : 'desktop'} with the install prompt`}
-              onClick={() => activate(item)}
-              onMouseEnter={() => setHighlight(i)}
-              onFocus={() => setHighlight(i)}
-              className={`group flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white transition-colors hover:bg-[hsl(0_0%_25%)] focus:outline-none ${
-                i === highlight ? 'bg-[hsl(0_0%_22%)]' : ''
-              }`}
+          {AGENT_GROUPS.map((group, groupIndex) => (
+            <div
+              key={group.id}
+              role="group"
+              aria-label={group.label}
+              className={
+                groupIndex > 0 ? 'mt-2 border-t border-black/10 pt-2' : ''
+              }
             >
-              {/* Same lift as the trigger's fanned icons: the logo rises with a
-                soft shadow while the row is hovered or keyboard-highlighted.
-                drop-shadow (not box-shadow) so it hugs the logo shape. */}
-              <span
-                className={`flex shrink-0 transition-[transform,filter] duration-200 ease-out will-change-transform group-hover:-translate-y-0.5 group-hover:drop-shadow-md motion-reduce:!translate-y-0 motion-reduce:!drop-shadow-none motion-reduce:transition-none ${
-                  i === highlight ? '-translate-y-0.5 drop-shadow-md' : ''
-                }`}
-              >
-                <ToolLogo id={item.logo} label={item.label} />
-              </span>
-              <span className="flex-1 font-main">{item.label}</span>
-            </button>
+              <div className="flex items-center gap-3 px-3 pb-1 pt-2.5 font-main text-[15px] font-semibold">
+                <span aria-hidden>
+                  <ToolLogo id={group.id} label={group.label} />
+                </span>
+                {group.label}
+              </div>
+              {AGENT_ITEMS.filter((item) => item.group === group.id).map(
+                (item) => {
+                  const index = AGENT_ITEMS.indexOf(item);
+                  const isTerminal = item.id === 'claude-code';
+                  const SurfaceIcon = isTerminal ? Terminal : Monitor;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      aria-label={continuationLabel(item)}
+                      onClick={() => activate(item)}
+                      onMouseEnter={() => setHighlight(index)}
+                      onFocus={() => setHighlight(index)}
+                      className={`flex w-full items-center gap-3 rounded-lg py-2.5 pl-11 pr-3 text-left font-main text-sm text-[#646464] transition-colors duration-150 hover:bg-black/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/30 motion-reduce:transition-none ${index === highlight ? 'bg-black/[0.04]' : ''}`}
+                    >
+                      <SurfaceIcon
+                        aria-hidden
+                        size={18}
+                        strokeWidth={1.7}
+                        className="shrink-0 text-[#818181]"
+                      />
+                      <span className="flex-1">
+                        {isTerminal ? 'Claude Code' : 'Desktop'}
+                      </span>
+                      {selected.id === item.id && (
+                        <Check
+                          aria-hidden
+                          size={15}
+                          className="text-[#969696]"
+                        />
+                      )}
+                    </button>
+                  );
+                },
+              )}
+            </div>
           ))}
-          <button
-            type="button"
-            onClick={openTerminal}
-            onMouseEnter={() => setHighlight(AGENT_ITEMS.length)}
-            onFocus={() => setHighlight(AGENT_ITEMS.length)}
-            className={`flex w-full items-center gap-3 border-t border-white/10 px-4 py-2.5 text-left text-sm text-white hover:bg-[hsl(0_0%_25%)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-white ${highlight === AGENT_ITEMS.length ? 'bg-[hsl(0_0%_22%)]' : ''}`}
-          >
-            <Terminal size={ICON_PX} aria-hidden />
-            <span className="font-main">Terminal</span>
-          </button>
+          <div className="mt-2 border-t border-black/10 pt-2">
+            <button
+              type="button"
+              onClick={openTerminal}
+              onMouseEnter={() => setHighlight(AGENT_ITEMS.length)}
+              onFocus={() => setHighlight(AGENT_ITEMS.length)}
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left font-main text-sm text-[#646464] transition-colors duration-150 hover:bg-black/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/30 motion-reduce:transition-none ${highlight === AGENT_ITEMS.length ? 'bg-black/[0.04]' : ''}`}
+            >
+              <Copy
+                size={20}
+                strokeWidth={1.7}
+                aria-hidden
+                className="text-[#818181]"
+              />
+              <span>Copy instructions</span>
+            </button>
+          </div>
           {handoff && (
             <div
               onKeyDown={(event) => {
                 if (event.key !== 'Escape') event.stopPropagation();
               }}
-              className="border-t border-white/10 px-4 py-2.5 text-xs text-white/70"
+              className="mt-2 border-t border-black/10 px-3 py-2.5 text-xs text-[#646464]"
             >
               <div className="flex items-center justify-between gap-2">
                 <span>Didn't open?</span>
                 <button
                   type="button"
                   onClick={copyPrompt}
-                  className="rounded px-1 py-1 text-white underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+                  className="rounded px-1 py-1 text-[#202020] underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-black"
                 >
                   {copyState === 'copied' ? 'Copied' : 'Copy prompt'}
                 </button>
@@ -349,7 +355,7 @@ const PromptInstallButton = ({
                     readOnly
                     value={handoff.prompt}
                     onFocus={(event) => event.currentTarget.select()}
-                    className="mt-1 block w-full rounded border border-white/20 bg-transparent p-2 text-xs text-white"
+                    className="mt-1 block w-full rounded border border-black/15 bg-white p-2 text-xs text-[#202020]"
                   />
                 </label>
               )}
