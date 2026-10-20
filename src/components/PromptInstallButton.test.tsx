@@ -385,3 +385,68 @@ it('updates the main action after choosing another agent', async () => {
     /^claude-cli:\/\/open\?q=/,
   );
 });
+
+it('dismisses the hero chooser before page scrolling shrinks its anchor', () => {
+  render(<PromptInstallButton source="landing_hero" />);
+  const trigger = container.querySelector(
+    'button[aria-label="Choose your agent"]',
+  )!;
+  click(trigger);
+  act(() => window.dispatchEvent(new Event('scroll')));
+  expect(trigger.getAttribute('aria-expanded')).toBe('false');
+});
+
+it('dismisses the chooser when an ancestor scrolls', () => {
+  render(
+    <div data-scroll-container>
+      <PromptInstallButton source="landing_hero" />
+    </div>,
+  );
+  const trigger = container.querySelector(
+    'button[aria-label="Choose your agent"]',
+  )!;
+  click(trigger);
+  act(() =>
+    container
+      .querySelector('[data-scroll-container]')!
+      .dispatchEvent(new Event('scroll')),
+  );
+  expect(trigger.getAttribute('aria-expanded')).toBe('false');
+});
+
+it('allows the chooser contents to scroll without dismissing it', () => {
+  render(<PromptInstallButton source="landing_hero" />);
+  const trigger = container.querySelector(
+    'button[aria-label="Choose your agent"]',
+  )!;
+  click(trigger);
+  const chooser = document.querySelector(
+    '[aria-label="Choose where to install Rivet"]',
+  )!;
+  act(() => chooser.dispatchEvent(new Event('scroll')));
+  expect(trigger.getAttribute('aria-expanded')).toBe('true');
+});
+
+it('keeps the chooser readable beside a scaled button and inside a narrow viewport', () => {
+  render(<PromptInstallButton source="landing_hero" />);
+  const anchor = container.querySelector('button')!.parentElement!;
+  jest.spyOn(anchor, 'getBoundingClientRect').mockReturnValue({
+    x: 100,
+    y: 100,
+    left: 100,
+    top: 100,
+    right: 220,
+    bottom: 122,
+    width: 120,
+    height: 22,
+    toJSON: () => ({}),
+  });
+  click(container.querySelector('button[aria-label="Choose your agent"]')!);
+  const chooser = document.querySelector<HTMLElement>(
+    '[aria-label="Choose where to install Rivet"]',
+  )!;
+  expect(Number.parseFloat(chooser.style.width)).toBeGreaterThanOrEqual(240);
+  jest.replaceProperty(window, 'innerWidth', 220);
+  act(() => window.dispatchEvent(new Event('resize')));
+  expect(Number.parseFloat(chooser.style.width)).toBeLessThanOrEqual(196);
+});

@@ -123,9 +123,11 @@ type PopoverContentProps = {
   side?: PopoverSide;
   sideOffset?: number;
   matchTriggerWidth?: boolean;
+  minWidth?: number;
   anchorRef?: React.RefObject<HTMLElement>;
   collisionPadding?: number;
   'aria-label'?: string;
+  'data-lenis-prevent'?: boolean;
   onKeyDown?: React.KeyboardEventHandler<HTMLDivElement>;
 };
 
@@ -136,9 +138,11 @@ export const PopoverContent = ({
   side = 'bottom',
   sideOffset = 6,
   matchTriggerWidth = false,
+  minWidth = 0,
   anchorRef,
   collisionPadding,
   'aria-label': ariaLabel,
+  'data-lenis-prevent': preventLenis,
   onKeyDown,
 }: PopoverContentProps) => {
   const { open, triggerRef, contentRef } = usePopover();
@@ -159,7 +163,8 @@ export const PopoverContent = ({
       const r = t.getBoundingClientRect();
       const next: CSSProperties = { position: 'fixed' };
       const padding = collisionPadding ?? 0;
-      const width = collisionPadding === undefined ? r.width : Math.max(0, Math.min(r.width, window.innerWidth - padding * 2));
+      const anchorWidth = Math.max(r.width, minWidth);
+      const width = collisionPadding === undefined ? anchorWidth : Math.max(0, Math.min(anchorWidth, window.innerWidth - padding * 2));
       const spaceAbove = r.top - sideOffset - padding;
       const spaceBelow = window.innerHeight - r.bottom - sideOffset - padding;
       const useTop = side === 'top' || (collisionPadding !== undefined && spaceBelow < 320 && spaceAbove > spaceBelow);
@@ -193,7 +198,7 @@ export const PopoverContent = ({
       window.removeEventListener('scroll', compute, true);
       window.removeEventListener('resize', compute);
     };
-  }, [open, align, side, sideOffset, matchTriggerWidth, triggerRef, anchorRef, collisionPadding]);
+  }, [open, align, side, sideOffset, matchTriggerWidth, minWidth, triggerRef, anchorRef, collisionPadding]);
 
   if (!open || !style) return null;
 
@@ -202,6 +207,7 @@ export const PopoverContent = ({
       ref={contentRef}
       role="dialog"
       aria-label={ariaLabel}
+      data-lenis-prevent={preventLenis ? '' : undefined}
       style={style}
       onKeyDown={onKeyDown}
       className={cn(

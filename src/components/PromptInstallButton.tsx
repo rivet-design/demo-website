@@ -135,7 +135,7 @@ type PromptInstallButtonProps = {
   size?: 'md' | 'lg' | 'hero';
   fullWidth?: boolean;
   label?: string;
-  /** Close when the page scrolls, before the nav becomes part of the demo. */
+  /** Dismiss when the page or one of the button's ancestors scrolls. */
   dismissOnScroll?: boolean;
 };
 
@@ -145,7 +145,7 @@ const PromptInstallButton = ({
   size = 'md',
   fullWidth = false,
   label,
-  dismissOnScroll = false,
+  dismissOnScroll = true,
 }: PromptInstallButtonProps) => {
   const splitRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState(AGENT_ITEMS[0]);
@@ -156,11 +156,23 @@ const PromptInstallButton = ({
 
   useEffect(() => {
     if (!open || !dismissOnScroll) return;
-    const dismiss = () => setOpen(false);
-    // Only page scrolling dismisses the menu. Nested demo transcripts can
-    // scroll independently while the user is choosing an agent.
-    window.addEventListener('scroll', dismiss, { passive: true });
-    return () => window.removeEventListener('scroll', dismiss);
+    const dismiss = (event: Event) => {
+      const anchor = splitRef.current;
+      const target = event.target;
+      // The chooser and unrelated demo panes keep their own native scroll.
+      if (
+        target === window ||
+        target === document ||
+        (anchor && target instanceof Element && target.contains(anchor))
+      ) {
+        setOpen(false);
+      }
+    };
+    window.addEventListener('scroll', dismiss, {
+      passive: true,
+      capture: true,
+    });
+    return () => window.removeEventListener('scroll', dismiss, true);
   }, [open, dismissOnScroll]);
 
   const buttonSize =
@@ -268,10 +280,12 @@ const PromptInstallButton = ({
           align={fullWidth ? 'center' : 'start'}
           sideOffset={6}
           matchTriggerWidth
+          minWidth={240}
           anchorRef={splitRef}
           collisionPadding={12}
+          data-lenis-prevent
           aria-label="Choose where to install Rivet"
-          className="overflow-y-auto rounded-2xl border-black/[0.12] bg-white p-2 text-[#202020] shadow-[0_12px_32px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)]"
+          className="overflow-y-auto overscroll-contain rounded-2xl border-black/[0.12] bg-white p-2 text-[#202020] shadow-[0_12px_32px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)]"
           onKeyDown={handleMenuKeyDown}
         >
           {AGENT_GROUPS.map((group, groupIndex) => (
