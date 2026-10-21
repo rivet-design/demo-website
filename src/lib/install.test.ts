@@ -22,20 +22,22 @@ describe('installPrompt', () => {
     );
   });
 
-  it.each(['claude', 'codex'] as const)(
-    'targets only the selected %s coding agent',
-    (agent) => {
-      expect(installPrompt(agent, REF)).toBe(
-        `Install Rivet for this agent: \`npx -y rivet-design@latest install ${agent} --ref ${REF}\``,
-      );
-    },
-  );
+  it.each([
+    ['claude', 'claude'],
+    ['codex', 'codex'],
+    ['cursor', 'cursor --mcp'],
+  ] as const)('targets only the selected %s coding agent', (agent, target) => {
+    expect(installPrompt(agent, REF)).toBe(
+      `Install Rivet for this agent: \`npx -y rivet-design@latest install ${target} --ref ${REF}\``,
+    );
+  });
 });
 
 describe('installDeepLink', () => {
   it.each([
     ['claude', 'claude:', 'code', '/new', 'q'],
     ['codex', 'codex:', 'new', '', 'prompt'],
+    ['cursor', 'cursor:', 'anysphere.cursor-deeplink', '/prompt', 'text'],
   ] as const)(
     'prefills the %s coding composer with its attributed prompt',
     (agent, protocol, hostname, pathname, parameter) => {
@@ -47,19 +49,24 @@ describe('installDeepLink', () => {
       expect(url.pathname).toBe(pathname);
       expect([...url.searchParams.keys()]).toEqual([parameter]);
       expect(url.searchParams.get(parameter)).toBe(
-        `Install Rivet for this agent: \`npx -y rivet-design@latest install ${agent} --ref r_aZ09bY18\``,
+        `Install Rivet for this agent: \`npx -y rivet-design@latest install ${agent}${agent === 'cursor' ? ' --mcp' : ''} --ref r_aZ09bY18\``,
       );
       expect(link).not.toContain(' ');
       expect(link).not.toContain('`');
     },
   );
 
-  it('respects the attribution rollout flag in deep links', () => {
-    jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', false);
+  it.each(['claude', 'codex', 'cursor'] as const)(
+    'respects the attribution rollout flag in %s deep links',
+    (agent) => {
+      jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', false);
 
-    const url = new URL(installDeepLink('claude', REF));
-    expect(url.searchParams.get('q')).toBe(
-      'Install Rivet for this agent: `npx -y rivet-design@latest install claude`',
-    );
-  });
+      const url = new URL(installDeepLink(agent, REF));
+      const parameter =
+        agent === 'claude' ? 'q' : agent === 'codex' ? 'prompt' : 'text';
+      expect(url.searchParams.get(parameter)).toBe(
+        `Install Rivet for this agent: \`npx -y rivet-design@latest install ${agent}${agent === 'cursor' ? ' --mcp' : ''}\``,
+      );
+    },
+  );
 });

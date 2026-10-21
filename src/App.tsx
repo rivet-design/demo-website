@@ -1334,10 +1334,8 @@ const App = () => {
             Built for designers on the
             <br />frontier of code and design.
           </h2>
-          {/* Sized like the hero's CTA rather than a full-width block: the
-              default `md` is px-4/py-2 at text-sm, and self-center stops the
-              flex column from stretching it edge to edge. Same agent icons as
-              the nav — they come from the component itself. */}
+          {/* Keep the closing install CTA centered at its natural width;
+              the shared component supplies its selected agent and chooser. */}
           <div
             ref={installButton.ref}
             className="flex justify-center"
@@ -1446,27 +1444,13 @@ const App = () => {
 
             <div
               style={heroRise(110)}
-              className={`flex items-center gap-[15px] ${
+              className={`flex max-w-full items-center ${
                 HERO_TEXT_LEFT ? 'self-start' : ''
               }`}
             >
-              <a
-                href="/story"
-                // Secondary (the outline Watch demo wore): the install button
-                // beside it is the row's one primary, and two gradient pills
-                // side by side read as the same button twice.
-                className="flex items-center justify-center whitespace-nowrap rounded-lg border-[0.5px] border-[#642e39] bg-[#f1efe8] px-5 py-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px] text-[#642e39] transition-colors hover:bg-[#642e39]/5"
-              >
-                Learn more
-              </a>
-              {/* The nav's primary CTA, moved under the title — the nav copy
-                  of this button drops to secondary styling so the page keeps
-                  a single primary. `hero` size matches the pill beside it. */}
               <PromptInstallButton
                 source="landing_hero"
-                tone="orange"
                 size="hero"
-                label="Install Rivet"
               />
             </div>
           </div>

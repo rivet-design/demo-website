@@ -8,27 +8,42 @@ browsers without merging PostHog identities. Token fragments remain redacted.
 
 ## Handoff paths
 
-The dropdown offers **Continue with Codex**, **Continue with Claude**, and
-**Copy to agent**. Targeted links prefill a coding session through
-`codex://new?prompt=` or `claude://code/new?q=`. The user sends the prompt in
-the destination app. **Copy to agent** copies one sentence for any coding
-agent, including terminal CLIs.
+The split CTA defaults to **Continue in Codex**. Its **Open in desktop**
+section offers Codex, Claude, and Cursor; **Copy prompt** copies the general
+installer for any coding agent, including terminal CLIs. The desktop links
+prefill a coding session through `codex://new?prompt=`, `claude://code/new?q=`,
+or `cursor://anysphere.cursor-deeplink/prompt?text=`. The user sends the prompt
+in the destination app.
 
-All three paths use `Install Rivet for this agent: \`<command>\``. Targeted
-commands include `install codex`or`install claude`. The universal command
-uses bare `install`. Rivet reports a proposed agent and asks the host agent to
-get user confirmation in the conversation before setup. The user can confirm,
-choose another supported agent, or choose Other to see the support limit.
-Installed agents are suggestions rather than caller identity. Attribution adds
-only `--ref <ref>` inside the command and is retained in the explicit-target
-follow-up. Deploy this website change after the package with installation
-confirmation is published.
+Every path uses the shared `installPrompt` builder:
 
-Opening the dropdown prepares a fresh ref for the next handoff. A link click
-records `download_clicked` with `download_type` set to `codex` or `claude`.
-The copy action uses `agent`. These events record handoff intent, not proof
-that an app opened or Rivet installed. The ref in a link's decoded prompt or
-copied text matches `install_ref` and the person's `last_install_ref`.
+```text
+Install Rivet for this agent: `<command>`
+```
+
+Targeted commands use `install codex`, `install claude`, or `install cursor
+--mcp`. Claude targets Claude Code, including its view in the desktop app;
+it does not also configure Claude Desktop chat. The separate command accordion
+keeps its existing Claude Code alias and command-copy behavior.
+
+The general prompt uses bare `install`. With the matching CLI release, Rivet
+returns a proposed agent and asks the host agent to get user confirmation in
+the conversation before setup. The user can confirm, choose another supported
+agent, or choose Other to see the support limit. Installed agents provide
+suggestions rather than caller identity. The explicit-target follow-up retains
+the attribution ref.
+
+Publish the CLI package containing untargeted installation confirmation before
+deploying this website change. A merge into the CLI's main branch does not make
+that behavior available through `rivet-design@latest`; older packages may
+configure every detected host for bare `install`.
+
+Every desktop activation and copy attempt prepares a fresh ref. Desktop links
+record `download_clicked` with `download_type` set to `codex`, `claude`, or
+`cursor`. A successful prompt copy records `agent` after the clipboard write.
+These events record handoff intent, not proof that an app opened or Rivet
+installed. The ref in the decoded prompt matches `install_ref` and the
+person's `last_install_ref`. The embedding flag controls refs in every path.
 
 The dropdown, accordion rows, copy icons, and manual command copies retain the
 same ref between telemetry and the command when embedding is enabled. The
@@ -55,12 +70,3 @@ core auth tests cover successful PKCE callbacks through the same redirect path.
 If rolling back command embedding, set the flag to `false`. Explicit disabled-mode
 tests preserve plain-command behavior; default-mode tests require the copied
 command and telemetry to carry the same ref.
-
-## Conflict-resolution verification
-
-The regression for native command copying failed before the copy handler was
-added, then passed. The merged copy flow preserves clipboard fallback and copy
-method telemetry. The full suite contains 71 passing tests; the production
-build passes. Scoped lint passes for the PR files. Full lint remains blocked by
-main's `HeroCycle.tsx` directive for the unregistered
-`react-hooks/exhaustive-deps` rule.

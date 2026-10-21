@@ -5,7 +5,6 @@
 // Rivet design system; the grid-rows 0fr->1fr trick gives a smooth height
 // animation.
 import { useId, useRef, useState, type ClipboardEvent } from 'react';
-import { toast } from 'sonner';
 import useClipboard from '@/hooks/useClipboard';
 import { telemetry, type CommandCopyMethod } from '@/lib/telemetry';
 import {
@@ -19,6 +18,7 @@ import { generateInstallRef } from '@/lib/installRef';
 const AGENT_ROWS: { id: InstallAgentId; label: string }[] = [
   { id: 'codex', label: 'Codex' },
   { id: 'claude', label: 'Claude' },
+  { id: 'claude-code', label: 'Claude Code' },
   { id: 'cursor', label: 'Cursor' },
 ];
 
@@ -83,6 +83,7 @@ const selectContents = (el: HTMLElement | null) => {
 
 const InstallAccordion = () => {
   const [open, setOpen] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   // Which agent's command was just copied (drives that row's "Copied" state).
   const [copiedId, setCopiedId] = useState<InstallAgentId | null>(null);
   const { copyToClipboard } = useClipboard();
@@ -103,10 +104,11 @@ const InstallAccordion = () => {
   };
 
   const copy = (id: InstallAgentId, copyMethod: 'row_click' | 'icon') => {
+    setCopyFailed(false);
+    setCopiedId(null);
     const installRef = track(id, copyMethod);
     copyToClipboard(copiedInstallCommand(id, installRef)).then(
       () => {
-        toast.success('Command copied to clipboard');
         setCopiedId(id);
         setTimeout(() => setCopiedId((cur) => (cur === id ? null : cur)), 2000);
       },
@@ -114,10 +116,7 @@ const InstallAccordion = () => {
         // Leave the command selected so a keyboard copy is one keystroke away;
         // that copy is then counted as `manual_select`.
         selectContents(codeRefs.current[id] ?? null);
-        toast("Couldn't copy automatically", {
-          description:
-            'The command is selected. Press ⌘C or Ctrl+C to copy it.',
-        });
+        setCopyFailed(true);
       },
     );
   };
@@ -222,7 +221,7 @@ const InstallAccordion = () => {
                     ref={(el) => {
                       codeRefs.current[row.id] = el;
                     }}
-                    className="type-code mt-1 block text-left text-accent-foreground/80"
+                    className="type-code mt-1 block whitespace-pre-wrap break-words text-left text-accent-foreground/80"
                   >
                     {INSTALL_COMMANDS[row.id]}
                   </code>
@@ -232,8 +231,19 @@ const InstallAccordion = () => {
           </div>
         </div>
       </div>
-      <span role="status" className="sr-only">
-        {copiedLabel ? `${copiedLabel} install command copied` : ''}
+      <span
+        role="status"
+        className={
+          copyFailed
+            ? 'mt-2 block text-sm text-accent-foreground/70'
+            : 'sr-only'
+        }
+      >
+        {copyFailed
+          ? 'Command selected. Press ⌘C or Ctrl+C to copy.'
+          : copiedLabel
+            ? `${copiedLabel} install command copied`
+            : ''}
       </span>
     </div>
   );
