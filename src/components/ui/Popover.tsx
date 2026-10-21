@@ -86,9 +86,11 @@ type PopoverTriggerProps = {
   asChild?: boolean;
   className?: string;
   onKeyDown?: React.KeyboardEventHandler<HTMLButtonElement>;
+  'aria-label'?: string;
+  'aria-haspopup'?: React.AriaAttributes['aria-haspopup'];
 };
 
-export const PopoverTrigger = ({ children, className, onKeyDown }: PopoverTriggerProps) => {
+export const PopoverTrigger = ({ children, className, onKeyDown, 'aria-label': ariaLabel, 'aria-haspopup': ariaHasPopup = true }: PopoverTriggerProps) => {
   const { open, setOpen, triggerRef } = usePopover();
 
   return (
@@ -96,7 +98,8 @@ export const PopoverTrigger = ({ children, className, onKeyDown }: PopoverTrigge
       ref={triggerRef}
       type="button"
       aria-expanded={open}
-      aria-haspopup="true"
+      aria-haspopup={ariaHasPopup}
+      aria-label={ariaLabel}
       onClick={() => setOpen(!open)}
       onKeyDown={onKeyDown}
       className={className}
@@ -120,6 +123,11 @@ type PopoverContentProps = {
   side?: PopoverSide;
   sideOffset?: number;
   matchTriggerWidth?: boolean;
+  minWidth?: number;
+  anchorRef?: React.RefObject<HTMLElement>;
+  collisionPadding?: number;
+  'aria-label'?: string;
+  'data-lenis-prevent'?: boolean;
   onKeyDown?: React.KeyboardEventHandler<HTMLDivElement>;
 };
 
@@ -130,6 +138,11 @@ export const PopoverContent = ({
   side = 'bottom',
   sideOffset = 6,
   matchTriggerWidth = false,
+  minWidth = 0,
+  anchorRef,
+  collisionPadding,
+  'aria-label': ariaLabel,
+  'data-lenis-prevent': preventLenis,
   onKeyDown,
 }: PopoverContentProps) => {
   const { open, triggerRef, contentRef } = usePopover();
@@ -145,31 +158,47 @@ export const PopoverContent = ({
       return;
     }
     const compute = () => {
-      const t = triggerRef.current;
+      const t = anchorRef?.current ?? triggerRef.current;
       if (!t) return;
       const r = t.getBoundingClientRect();
       const next: CSSProperties = { position: 'fixed' };
-      if (matchTriggerWidth) next.width = r.width;
-      if (side === 'bottom') next.top = r.bottom + sideOffset;
-      else next.bottom = window.innerHeight - r.top + sideOffset;
+      const padding = collisionPadding ?? 0;
+      const anchorWidth = Math.max(r.width, minWidth);
+      const width = collisionPadding === undefined ? anchorWidth : Math.max(0, Math.min(anchorWidth, window.innerWidth - padding * 2));
+      const spaceAbove = r.top - sideOffset - padding;
+      const spaceBelow = window.innerHeight - r.bottom - sideOffset - padding;
+      const useTop = side === 'top' || (collisionPadding !== undefined && spaceBelow < 320 && spaceAbove > spaceBelow);
+      if (matchTriggerWidth) next.width = width;
+      if (useTop) next.bottom = window.innerHeight - r.top + sideOffset;
+      else next.top = r.bottom + sideOffset;
+      if (collisionPadding !== undefined) next.maxHeight = Math.max(0, useTop ? spaceAbove : spaceBelow);
       if (align === 'start') next.left = r.left;
       else if (align === 'end') next.right = window.innerWidth - r.right;
       else {
         next.left = r.left + r.width / 2;
         next.transform = 'translateX(-50%)';
       }
+      if (collisionPadding !== undefined && matchTriggerWidth) {
+        next.left = Math.max(padding, Math.min(r.left, window.innerWidth - width - padding));
+        delete next.right;
+        delete next.transform;
+      }
       setStyle(next);
     };
     compute();
+    const anchor = anchorRef?.current ?? triggerRef.current;
+    const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(compute);
+    if (anchor) observer?.observe(anchor);
     // Reposition while open so it tracks scroll/resize. Capture phase catches
     // scrolling on any ancestor, not just the window.
     window.addEventListener('scroll', compute, true);
     window.addEventListener('resize', compute);
     return () => {
+      observer?.disconnect();
       window.removeEventListener('scroll', compute, true);
       window.removeEventListener('resize', compute);
     };
-  }, [open, align, side, sideOffset, matchTriggerWidth, triggerRef]);
+  }, [open, align, side, sideOffset, matchTriggerWidth, minWidth, triggerRef, anchorRef, collisionPadding]);
 
   if (!open || !style) return null;
 
@@ -177,6 +206,8 @@ export const PopoverContent = ({
     <div
       ref={contentRef}
       role="dialog"
+      aria-label={ariaLabel}
+      data-lenis-prevent={preventLenis ? '' : undefined}
       style={style}
       onKeyDown={onKeyDown}
       className={cn(

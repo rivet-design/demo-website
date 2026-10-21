@@ -1,44 +1,42 @@
-// Single "Add Rivet to your agent" button. On click it opens a popover menu
-// with one row per coding agent (logo + title). Every row copies a
-// paste-ready prompt the user drops into the agent, which then runs `npx -y
-// rivet-design@latest install <agent>` — rivet core's CLI-first install
-// (skill / rules file + command allowlist per harness; Cursor adds `--mcp`
-// to also register the MCP server in ~/.cursor/mcp.json). The install's
-// global bootstrap makes everything durable: it installs the CLI globally
-// and re-executes from there, so registrations never point into the
-// ephemeral npx cache. This replaced the Cursor deep link, whose npx-based
-// registration re-resolved `@latest` on every launch and ran the loopback
-// auth flow inside a disposable process.
-import { useEffect, useState } from 'react';
+// Opens the selected desktop agent with a CLI-first install prompt ready to
+// review and send. Cursor receives a prompt link, not an MCP registration link,
+// so the install still uses the CLI's durable global bootstrap.
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Check, ChevronDown, Copy } from 'lucide-react';
 import { toast } from 'sonner';
+import useClipboard from '@/hooks/useClipboard';
 import { telemetry, type PromptInstallSource } from '@/lib/telemetry';
 import {
   AGENT_LOGOS as TOOL_LOGOS,
   copiedInstallCommand,
+  copiedAgentInstallPrompt,
   type InstallAgentId as AgentLogo,
 } from '@/lib/install';
 import { generateInstallRef } from '@/lib/installRef';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
+import {
+  FluidMenuGroup,
+  FluidMenuItem,
+  type MenuInputMode,
+} from './ui/FluidMenuGroup';
 
-// Logo painted in the button's own text colour rather than rendered as
-// artwork. The files are single-colour marks on transparency, so they go
-// through a mask and take `currentColor` as their fill — which means every
-// tone's icons match its label for free.
-//
-// The brightness-0/invert filter pair this replaces could only ever reach
-// black or white, so the outline tone (a #642e39 label on no fill) was stuck
-// with black icons beside maroon text. Masking is also what makes the three
-// files agree: they ship black, unfilled, and #ffffff respectively, and a
-// mask reads their alpha, not their colour.
-const ICON_PX = 16;
-const ToolLogo = ({ id, label }: { id: AgentLogo; label: string }) => (
+const ICON_PX = 20;
+const ToolLogo = ({
+  id,
+  label,
+  size = ICON_PX,
+}: {
+  id: AgentLogo;
+  label: string;
+  size?: number;
+}) => (
   <span
     role="img"
     aria-label={label}
     className="block shrink-0"
     style={{
-      width: ICON_PX,
-      height: ICON_PX,
+      width: size,
+      height: size,
       backgroundColor: 'currentColor',
       WebkitMaskImage: `url("${TOOL_LOGOS[id]}")`,
       maskImage: `url("${TOOL_LOGOS[id]}")`,
@@ -53,84 +51,64 @@ const ToolLogo = ({ id, label }: { id: AgentLogo; label: string }) => (
 );
 
 type AgentItem = {
-  id: AgentLogo;
+  id: Exclude<AgentLogo, 'claude-code'>;
   label: string;
-  logo: AgentLogo;
   prompt: (command: string) => string;
+  deepLink: string;
 };
 
-// Menu rows, in display order. Each copies a paste-ready install prompt; the
-// commands mirror rivet core's harness registry ids (`install claude` /
-// `cursor` / `codex`). Users rarely know which Claude surface they're on, so
-// the Claude row names both explicitly — the command itself shows what gets
-// set up (Claude Code + Claude Desktop chat MCP).
+// Claude opens its Code view so the agent can run the install command.
 const AGENT_ITEMS: AgentItem[] = [
   {
     id: 'codex',
     label: 'Codex',
-    logo: 'codex',
     prompt: (command) => `Please set up Rivet for Codex by running: ${command}`,
+    deepLink: 'codex://new?prompt=',
   },
   {
     id: 'claude',
     label: 'Claude',
-    logo: 'claude',
     prompt: (command) =>
       `Please set up Rivet for Claude Code and Claude Desktop by running: ${command}`,
+    deepLink: 'claude://code/new?q=',
   },
   {
     id: 'cursor',
     label: 'Cursor',
-    logo: 'cursor',
     prompt: (command) =>
       `Please set up Rivet for Cursor by running: ${command}`,
+    deepLink: 'cursor://anysphere.cursor-deeplink/prompt?text=',
   },
 ];
 
-type Tone = 'orange' | 'dark' | 'light' | 'secondary';
+const continuationLabel = (item: AgentItem) => `Continue in ${item.label}`;
 
-const TONES: Record<
-  Tone,
-  { bg: string; border: string; text: string; ring: string }
-> = {
+const BUTTON_TONES = {
   orange: {
-    bg: 'bg-primary hover:bg-primary-hover',
-    border: 'border-primary/20',
-    text: 'text-white',
-    // Ring color around each icon so it reads as a distinct chip.
-    ring: 'ring-primary',
+    frame:
+      'border-primary/20 bg-primary bg-[linear-gradient(137.74deg,rgb(236,68,35)_41.128%,rgb(243,138,118)_121.74%)] text-white',
+    action: 'hover:bg-white/[0.06]',
+    chevron: 'border-white/20 bg-white/[0.06] hover:bg-white/[0.12]',
   },
-  dark: {
-    bg: 'bg-accent-foreground hover:bg-[hsl(0_0%_20%)]',
-    border: 'border-white/15',
-    text: 'text-white',
-    ring: 'ring-accent-foreground',
+  secondary: {
+    frame: 'border-[#642e39] bg-transparent text-[#642e39]',
+    action: 'hover:bg-[#642e39]/5',
+    chevron: 'border-[#642e39]/20 hover:bg-[#642e39]/5',
   },
   light: {
-    bg: 'bg-white hover:bg-white/80',
-    border: 'border-black/10',
-    text: 'text-accent-foreground',
-    ring: 'ring-white',
-  },
-  // The nav links' outline treatment (the Community pill, the old Watch
-  // demo): transparent over whatever ground the bar sits on. The icon chips
-  // drop their fill and ring with it — filled chips are the primary's dress.
-  secondary: {
-    bg: 'bg-transparent hover:bg-[#642e39]/5',
-    border: 'border-[#642e39]',
-    text: 'text-[#642e39]',
-    ring: 'ring-transparent',
+    frame: 'border-black/10 bg-white text-[#171715]',
+    action: 'hover:bg-black/[0.04]',
+    chevron: 'border-black/10 bg-black/[0.03] hover:bg-black/[0.06]',
   },
 };
 
 type PromptInstallButtonProps = {
   source: PromptInstallSource;
-  tone?: Tone;
-  /** `hero` matches the hero CTA pills (px-5 py-[10px] text-base). */
+  tone?: keyof typeof BUTTON_TONES;
   size?: 'md' | 'lg' | 'hero';
   fullWidth?: boolean;
   label?: string;
-  /** Close when the page scrolls, before the nav becomes part of the demo. */
+  /** Dismiss when the page or one of the button's ancestors scrolls. */
   dismissOnScroll?: boolean;
 };
 
@@ -139,42 +117,54 @@ const PromptInstallButton = ({
   tone = 'orange',
   size = 'md',
   fullWidth = false,
-  label = 'Add Rivet to your agent',
-  dismissOnScroll = false,
+  label,
+  dismissOnScroll = true,
 }: PromptInstallButtonProps) => {
+  const splitRef = useRef<HTMLDivElement>(null);
+  const [selected, setSelected] = useState(AGENT_ITEMS[0]);
   const [open, setOpen] = useState(false);
+  const { isCopied, copyToClipboard } = useClipboard();
+  const [copyFailed, setCopyFailed] = useState(false);
   // Keyboard highlight within the menu (-1 = no row highlighted).
   const [highlight, setHighlight] = useState(-1);
+  const [inputMode, setInputMode] = useState<MenuInputMode>('pointer');
+  const highlightItem = useCallback((index: number, mode: MenuInputMode) => {
+    setHighlight(index);
+    setInputMode(mode);
+  }, []);
 
   useEffect(() => {
     if (!open || !dismissOnScroll) return;
-    const dismiss = () => setOpen(false);
-    // Only page scrolling dismisses the menu. Nested demo transcripts can
-    // scroll independently while the user is choosing an agent.
-    window.addEventListener('scroll', dismiss, { passive: true });
-    return () => window.removeEventListener('scroll', dismiss);
+    const dismiss = (event: Event) => {
+      const anchor = splitRef.current;
+      const target = event.target;
+      // The chooser and unrelated demo panes keep their own native scroll.
+      if (
+        target === window ||
+        target === document ||
+        (anchor && target instanceof Element && target.contains(anchor))
+      ) {
+        setOpen(false);
+      }
+    };
+    window.addEventListener('scroll', dismiss, {
+      passive: true,
+      capture: true,
+    });
+    return () => window.removeEventListener('scroll', dismiss, true);
   }, [open, dismissOnScroll]);
 
-  const t = TONES[tone];
-
-  const mainSize =
+  const buttonSize =
     size === 'lg'
-      ? 'px-6 py-4 text-lg'
+      ? 'px-6 py-4 font-main text-lg'
       : size === 'hero'
         ? 'px-5 py-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px]'
-        : 'px-[16px] py-[8px] text-sm';
-  // Orange gets the hero CTA's gradient rather than a flat fill, so the two
-  // primary buttons on the page read as the same object. As a CLASS, not a
-  // style prop: the trigger is a PopoverTrigger, which forwards className but
-  // has no `style` in its props. Other tones stay flat — a gradient on the
-  // dark/light variants would just muddy them.
-  const gradient =
-    tone === 'orange'
-      ? 'bg-[linear-gradient(137.74deg,rgb(236,68,35)_41.128%,rgb(243,138,118)_121.74%)]'
-      : '';
-  const iconBox = size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
+        : 'px-4 py-2 font-main text-sm';
+  const actionLabel = continuationLabel(selected);
+  const buttonTone = BUTTON_TONES[tone];
 
   const activate = (item: AgentItem) => {
+    setSelected(item);
     const installRef = generateInstallRef();
     telemetry.trackDownloadClicked({
       source,
@@ -183,28 +173,60 @@ const PromptInstallButton = ({
     });
 
     const prompt = item.prompt(copiedInstallCommand(item.id, installRef));
-    navigator.clipboard.writeText(prompt).then(() => {
-      toast.success('Prompt copied to clipboard', {
-        description: `Paste into ${item.label} to install the Rivet MCP.`,
-      });
-    });
+    // Keep navigation in the click/keyboard gesture; clipboard permissions
+    // must not delay or block the desktop handoff.
     setOpen(false);
+    window.open(
+      `${item.deepLink}${encodeURIComponent(prompt)}`,
+      '_blank',
+      'noopener,noreferrer',
+    );
+    toast.success(`Opening ${item.label}…`, { duration: 3000 });
+  };
+
+  const copyPrompt = async () => {
+    setCopyFailed(false);
+    const installRef = generateInstallRef();
+    try {
+      await copyToClipboard(copiedAgentInstallPrompt(installRef));
+      telemetry.trackDownloadClicked({
+        source,
+        downloadType: 'agent',
+        copyMethod: 'row_click',
+        installRef,
+      });
+      toast.success('Prompt copied', {
+        description: 'Paste it into your agent to install Rivet.',
+        duration: 5000,
+      });
+    } catch {
+      setCopyFailed(true);
+    }
   };
 
   // Arrow keys move the highlight; Enter activates; Escape closes. Shared by the
   // trigger and the menu so keyboard users can drive the whole thing.
   const handleMenuKeyDown = (e: React.KeyboardEvent) => {
-    if (!open) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') setInputMode('keyboard');
+    if (!open) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        setOpen(true);
+        setHighlight(e.key === 'ArrowDown' ? 0 : AGENT_ITEMS.length);
+      }
+      return;
+    }
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setHighlight((i) => (i + 1) % AGENT_ITEMS.length);
+      setHighlight((i) => (i + 1) % (AGENT_ITEMS.length + 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setHighlight((i) => (i - 1 + AGENT_ITEMS.length) % AGENT_ITEMS.length);
+      setHighlight((i) => (i <= 0 ? AGENT_ITEMS.length : i - 1));
     } else if (e.key === 'Enter') {
       if (highlight >= 0) {
         e.preventDefault();
-        activate(AGENT_ITEMS[highlight]);
+        if (highlight === AGENT_ITEMS.length) void copyPrompt();
+        else activate(AGENT_ITEMS[highlight]);
       }
     } else if (e.key === 'Escape') {
       setOpen(false);
@@ -213,67 +235,115 @@ const PromptInstallButton = ({
 
   return (
     <Popover
-      className={fullWidth ? 'flex w-full' : undefined}
+      className={fullWidth ? 'flex w-full' : 'max-w-full'}
       open={open}
       onOpenChange={(next) => {
         setHighlight(-1);
+        setInputMode('pointer');
         setOpen(next);
       }}
     >
-      {/* The trigger: label + agent icon row. Hover is a plain background
-          fade (via t.bg's hover variant) — no lift/fan animation. */}
-      <PopoverTrigger
-        onKeyDown={handleMenuKeyDown}
-        className={`group type-label-lg font-normal flex items-center gap-2.5 rounded-lg border ${t.border} ${t.bg} ${gradient} ${t.text} ${mainSize} ${
-          fullWidth ? 'w-full justify-center' : 'w-fit'
-        } transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
+      <div
+        ref={splitRef}
+        className={`flex min-w-0 overflow-hidden rounded-xl border ${buttonTone.frame} ${fullWidth ? 'w-full' : ''}`}
       >
-        <span className="flex shrink-0 items-center gap-1" aria-hidden>
-          {(['codex', 'claude', 'cursor'] as AgentLogo[]).map((logo) => (
-            <span
-              key={logo}
-              className={`relative flex ${iconBox} items-center justify-center rounded-full ${t.bg} ring-2 ${t.ring}`}
-            >
-              <ToolLogo id={logo} label={logo} />
-            </span>
-          ))}
-        </span>
-        <span className="whitespace-nowrap">{label}</span>
-      </PopoverTrigger>
+        <button
+          type="button"
+          onClick={() => activate(selected)}
+          title={actionLabel}
+          className={`flex min-w-0 flex-1 items-center justify-center gap-2.5 font-normal ${buttonSize} transition-colors duration-150 ${buttonTone.action} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-current motion-reduce:transition-none`}
+        >
+          <span aria-hidden>
+            <ToolLogo id={selected.id} label={selected.label} size={16} />
+          </span>
+          <span className="truncate">{label ?? actionLabel}</span>
+        </button>
+        <PopoverTrigger
+          aria-label="Choose your agent"
+          aria-haspopup="dialog"
+          onKeyDown={handleMenuKeyDown}
+          className={`flex w-10 shrink-0 items-center justify-center border-l ${buttonTone.chevron} transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-current motion-reduce:transition-none`}
+        >
+          <ChevronDown
+            aria-hidden
+            size={18}
+            className={`transition-transform duration-150 ease-out motion-reduce:transition-none ${open ? 'rotate-180' : ''}`}
+          />
+        </PopoverTrigger>
+      </div>
 
-      {/* Dropdown menu — one row per agent, on the dark menu surface. */}
-      {/* The menu matches the trigger's width exactly, so the dropdown reads
-          as an extension of the button it opens from. */}
       <PopoverContent
         align={fullWidth ? 'center' : 'start'}
         sideOffset={6}
         matchTriggerWidth
-        className="py-1"
+        minWidth={240}
+        anchorRef={splitRef}
+        collisionPadding={12}
+        data-lenis-prevent
+        aria-label="Choose where to install Rivet"
+        className="overflow-y-auto overscroll-contain rounded-2xl border-black/[0.12] bg-white p-2 text-black shadow-[0_12px_32px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)]"
         onKeyDown={handleMenuKeyDown}
       >
-        {AGENT_ITEMS.map((item, i) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => activate(item)}
-            onMouseEnter={() => setHighlight(i)}
-            className={`group flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-white transition-colors hover:bg-[hsl(0_0%_25%)] focus:outline-none ${
-              i === highlight ? 'bg-[hsl(0_0%_22%)]' : ''
-            }`}
-          >
-            {/* Same lift as the trigger's fanned icons: the logo rises with a
-                soft shadow while the row is hovered or keyboard-highlighted.
-                drop-shadow (not box-shadow) so it hugs the logo shape. */}
-            <span
-              className={`flex shrink-0 transition-[transform,filter] duration-200 ease-out will-change-transform group-hover:-translate-y-0.5 group-hover:drop-shadow-md motion-reduce:!translate-y-0 motion-reduce:!drop-shadow-none motion-reduce:transition-none ${
-                i === highlight ? '-translate-y-0.5 drop-shadow-md' : ''
-              }`}
+        <FluidMenuGroup
+          label="Open in desktop"
+          startIndex={0}
+          activeIndex={highlight}
+          inputMode={inputMode}
+          onHighlight={highlightItem}
+        >
+          {AGENT_ITEMS.map((item, index) => (
+            <FluidMenuItem
+              key={item.id}
+              index={index}
+              aria-label={continuationLabel(item)}
+              onClick={() => activate(item)}
             >
-              <ToolLogo id={item.logo} label={item.label} />
-            </span>
-            <span className="flex-1 font-main">{item.label}</span>
-          </button>
-        ))}
+              <span aria-hidden>
+                <ToolLogo id={item.id} label={item.label} />
+              </span>
+              <span className="flex-1">{item.label}</span>
+              {selected.id === item.id && (
+                <Check aria-hidden size={15} className="text-[#969696]" />
+              )}
+            </FluidMenuItem>
+          ))}
+        </FluidMenuGroup>
+        <FluidMenuGroup
+          label="Copy prompt to install"
+          startIndex={AGENT_ITEMS.length}
+          activeIndex={highlight}
+          inputMode={inputMode}
+          onHighlight={highlightItem}
+          className="mt-2 border-t border-black/10 pt-2"
+        >
+          <FluidMenuItem
+            index={0}
+            onClick={() => void copyPrompt()}
+            aria-label="Copy prompt"
+          >
+            <Copy
+              size={20}
+              strokeWidth={1.7}
+              aria-hidden
+              className="text-[#818181]"
+            />
+            <span>{isCopied ? 'Copied' : 'Copy prompt'}</span>
+          </FluidMenuItem>
+          <span
+            role="status"
+            className={
+              copyFailed
+                ? 'block px-3 pb-2 font-main text-xs text-black'
+                : 'sr-only'
+            }
+          >
+            {copyFailed
+              ? 'Couldn’t copy. Try again.'
+              : isCopied
+                ? 'Prompt copied'
+                : ''}
+          </span>
+        </FluidMenuGroup>
       </PopoverContent>
     </Popover>
   );

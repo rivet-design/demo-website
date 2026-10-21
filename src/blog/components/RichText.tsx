@@ -252,10 +252,8 @@ export const Closing = ({ children }: { children: ReactNode }) => {
 export const StoryInstall = () => (
   <div className="story-install hidden lg:flex">
     <PromptInstallButton
-      tone="secondary"
       size="hero"
       fullWidth
-      label="Install Rivet"
       source="story"
     />
   </div>
