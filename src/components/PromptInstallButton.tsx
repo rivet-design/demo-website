@@ -8,8 +8,9 @@ import useClipboard from '@/hooks/useClipboard';
 import { telemetry, type PromptInstallSource } from '@/lib/telemetry';
 import {
   AGENT_LOGOS as TOOL_LOGOS,
-  copiedInstallCommand,
-  copiedAgentInstallPrompt,
+  installDeepLink,
+  installPrompt,
+  type DeepLinkAgentId,
   type InstallAgentId as AgentLogo,
 } from '@/lib/install';
 import { generateInstallRef } from '@/lib/installRef';
@@ -51,10 +52,8 @@ const ToolLogo = ({
 );
 
 type AgentItem = {
-  id: Exclude<AgentLogo, 'claude-code'>;
+  id: DeepLinkAgentId;
   label: string;
-  prompt: (command: string) => string;
-  deepLink: string;
 };
 
 // Claude opens its Code view so the agent can run the install command.
@@ -62,22 +61,14 @@ const AGENT_ITEMS: AgentItem[] = [
   {
     id: 'codex',
     label: 'Codex',
-    prompt: (command) => `Please set up Rivet for Codex by running: ${command}`,
-    deepLink: 'codex://new?prompt=',
   },
   {
     id: 'claude',
     label: 'Claude',
-    prompt: (command) =>
-      `Please set up Rivet for Claude Code and Claude Desktop by running: ${command}`,
-    deepLink: 'claude://code/new?q=',
   },
   {
     id: 'cursor',
     label: 'Cursor',
-    prompt: (command) =>
-      `Please set up Rivet for Cursor by running: ${command}`,
-    deepLink: 'cursor://anysphere.cursor-deeplink/prompt?text=',
   },
 ];
 
@@ -172,12 +163,11 @@ const PromptInstallButton = ({
       installRef,
     });
 
-    const prompt = item.prompt(copiedInstallCommand(item.id, installRef));
     // Keep navigation in the click/keyboard gesture; clipboard permissions
     // must not delay or block the desktop handoff.
     setOpen(false);
     window.open(
-      `${item.deepLink}${encodeURIComponent(prompt)}`,
+      installDeepLink(item.id, installRef),
       '_blank',
       'noopener,noreferrer',
     );
@@ -188,7 +178,7 @@ const PromptInstallButton = ({
     setCopyFailed(false);
     const installRef = generateInstallRef();
     try {
-      await copyToClipboard(copiedAgentInstallPrompt(installRef));
+      await copyToClipboard(installPrompt('agent', installRef));
       telemetry.trackDownloadClicked({
         source,
         downloadType: 'agent',

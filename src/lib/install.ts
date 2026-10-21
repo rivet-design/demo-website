@@ -9,6 +9,8 @@
 import { EMBED_INSTALL_REF_IN_COPY, type InstallRef } from './installRef';
 
 export type InstallAgentId = 'claude' | 'claude-code' | 'cursor' | 'codex';
+export type InstallTarget = InstallAgentId | 'agent';
+export type DeepLinkAgentId = Exclude<InstallAgentId, 'claude-code'>;
 
 export const AGENT_LOGOS: Record<InstallAgentId, string> = {
   claude: '/images/claude.svg',
@@ -17,8 +19,8 @@ export const AGENT_LOGOS: Record<InstallAgentId, string> = {
   codex: '/images/codex.svg',
 };
 
-export const INSTALL_COMMANDS: Record<InstallAgentId, string> = {
-  claude: 'npx -y rivet-design@latest install claude-code claude-desktop',
+export const INSTALL_COMMANDS: Record<InstallTarget, string> = {
+  claude: 'npx -y rivet-design@latest install claude',
   'claude-code': 'npx -y rivet-design@latest install claude-code',
   // `--mcp` registers the `rivet mcp serve` server in ~/.cursor/mcp.json so
   // Rivet's MCP tools are available to Cursor. The install's global bootstrap
@@ -26,23 +28,29 @@ export const INSTALL_COMMANDS: Record<InstallAgentId, string> = {
   // bin, not the ephemeral npx cache).
   cursor: 'npx -y rivet-design@latest install cursor --mcp',
   codex: 'npx -y rivet-design@latest install codex',
+  agent: 'npx -y rivet-design@latest install',
 };
 
-/** The command to copy for one install; carries `--ref` once the CLI accepts it. */
+/** The command for one install, with attribution when embedding is enabled. */
 export const copiedInstallCommand = (
-  agent: InstallAgentId,
+  agent: InstallTarget,
   ref: InstallRef,
 ): string =>
   EMBED_INSTALL_REF_IN_COPY
     ? `${INSTALL_COMMANDS[agent]} --ref ${ref}`
     : INSTALL_COMMANDS[agent];
 
-// Placeholder until the general Rivet install command ships.
-export const AGENT_INSTALL_COMMAND = 'npx -y rivet-design@latest install';
+export const installPrompt = (target: InstallTarget, ref: InstallRef): string =>
+  `Install Rivet for this agent: \`${copiedInstallCommand(target, ref)}\``;
 
-export const copiedAgentInstallPrompt = (ref: InstallRef): string => {
-  const command = EMBED_INSTALL_REF_IN_COPY
-    ? `${AGENT_INSTALL_COMMAND} --ref ${ref}`
-    : AGENT_INSTALL_COMMAND;
-  return `Please install Rivet for this agent by running: ${command}`;
+const INSTALL_DEEP_LINKS: Record<DeepLinkAgentId, string> = {
+  claude: 'claude://code/new?q=',
+  codex: 'codex://new?prompt=',
+  cursor: 'cursor://anysphere.cursor-deeplink/prompt?text=',
 };
+
+export const installDeepLink = (
+  agent: DeepLinkAgentId,
+  ref: InstallRef,
+): string =>
+  `${INSTALL_DEEP_LINKS[agent]}${encodeURIComponent(installPrompt(agent, ref))}`;

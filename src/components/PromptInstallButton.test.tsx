@@ -111,9 +111,7 @@ describe('PromptInstallButton download_clicked', () => {
         { source, download_type: downloadType },
       ]);
       expect(openedPrompts()).toEqual([
-        expect.stringContaining(
-          `install ${downloadType === 'claude' ? 'claude-code claude-desktop' : downloadType}`,
-        ),
+        `Install Rivet for this agent: \`npx -y rivet-design@latest install ${downloadType}${downloadType === 'cursor' ? ' --mcp' : ''} --ref ${refsSent().events[0]}\``,
       ]);
       expect(navigator.clipboard.writeText).not.toHaveBeenCalled();
       expect(
@@ -217,7 +215,7 @@ describe.each([
       await activate(codexLabel);
 
       const [text] = deliveredText();
-      expect(text).toMatch(/npx -y rivet-design@latest install codex$/);
+      expect(text).toMatch(/npx -y rivet-design@latest install codex`?$/);
       expect(text).not.toContain('--ref');
       expect(text).not.toContain(refsSent().events[0]);
     });
@@ -230,7 +228,9 @@ describe.each([
       expect(deliveredText()).toEqual([
         expect.stringMatching(
           new RegExp(
-            `npx -y rivet-design@latest install cursor --mcp --ref ${ref}$`,
+            'npx -y rivet-design@latest install cursor --mcp --ref ' +
+              ref +
+              '`?$',
           ),
         ),
       ]);
@@ -308,7 +308,7 @@ describe('PromptInstallButton copy prompt', () => {
     expect(ref).toMatch(REF);
     expect(refsSent().people).toEqual([ref]);
     expect(copiedText()).toEqual([
-      `Please install Rivet for this agent by running: npx -y rivet-design@latest install --ref ${ref}`,
+      `Install Rivet for this agent: \`npx -y rivet-design@latest install --ref ${ref}\``,
     ]);
     expect(downloadClicks()).toEqual([
       { source: 'story_nav', download_type: 'agent' },
@@ -333,7 +333,7 @@ describe('PromptInstallButton copy prompt', () => {
     render(<PromptInstallButton source="landing_hero" />);
     await pickAgent('Copy prompt');
     expect(copiedText()).toEqual([
-      'Please install Rivet for this agent by running: npx -y rivet-design@latest install',
+      'Install Rivet for this agent: `npx -y rivet-design@latest install`',
     ]);
   });
 
