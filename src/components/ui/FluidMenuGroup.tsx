@@ -126,7 +126,7 @@ export function FluidMenuItem({
         onFocus?.(event);
       }}
       className={cn(
-        'relative z-10 flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left font-main text-sm text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/30',
+        'relative z-10 flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left font-main text-sm font-normal text-black data-[highlighted]:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/30',
         className,
       )}
     />
