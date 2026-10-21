@@ -22,6 +22,8 @@ import {
 } from './ui/FluidMenuGroup';
 
 const ICON_PX = 20;
+const MENU_ICON_CLASS_NAME =
+  'flex shrink-0 motion-safe:transition-[transform,filter] motion-safe:duration-200 motion-safe:ease-out motion-safe:group-data-[highlighted]/menu-item:-translate-y-0.5 motion-safe:group-data-[highlighted]/menu-item:drop-shadow-md group-data-[input-mode=keyboard]/menu:transition-none';
 const ToolLogo = ({
   id,
   label,
@@ -288,7 +290,7 @@ const PromptInstallButton = ({
               aria-label={continuationLabel(item)}
               onClick={() => activate(item)}
             >
-              <span aria-hidden>
+              <span aria-hidden className={MENU_ICON_CLASS_NAME}>
                 <ToolLogo id={item.id} label={item.label} />
               </span>
               <span className="flex-1">{item.label}</span>
@@ -311,12 +313,9 @@ const PromptInstallButton = ({
             onClick={() => void copyPrompt()}
             aria-label="Copy prompt"
           >
-            <Copy
-              size={20}
-              strokeWidth={1.7}
-              aria-hidden
-              className="text-[#818181]"
-            />
+            <span aria-hidden className={MENU_ICON_CLASS_NAME}>
+              <Copy size={20} strokeWidth={1.7} className="text-[#818181]" />
+            </span>
             <span>{isCopied ? 'Copied' : 'Copy prompt'}</span>
           </FluidMenuItem>
           <span
