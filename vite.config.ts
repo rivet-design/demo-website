@@ -5,6 +5,7 @@ import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
 import path from 'path';
 import { createPrototypeProxyMiddleware } from './prototypeHostProxy';
+import { staticHtmlPlugin } from './src/staticHtml';
 
 const prototypeProxyMiddleware = createPrototypeProxyMiddleware();
 
@@ -19,6 +20,7 @@ export default defineConfig({
       }),
     },
     react({ include: /\.(js|jsx|ts|tsx|mdx)$/ }),
+    staticHtmlPlugin(),
     {
       name: 'rivet-prototype-proxy',
       configureServer(server) {
