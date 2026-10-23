@@ -13,23 +13,23 @@
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://tryrivet.design/" />
+  <meta property="og:url" content="https://rivet.design/" />
   <meta property="og:title" content="Explore dozens of design directions from your agent" />
   <meta property="og:description"
     content="Rivet is a design agent for your coding agent. It explores dozens of design directions in parallel so you can pick the one that fits." />
   <!-- v2 filename on purpose: social scrapers cache by URL, so replacing the
        old file in place would keep serving the stale card. 1200x675 JPEG. -->
-  <meta property="og:image" content="https://tryrivet.design/images/rivet-social-v2.jpg" />
+  <meta property="og:image" content="https://rivet.design/images/rivet-social-v2.jpg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="675" />
 
   <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image" />
-  <meta property="twitter:url" content="https://tryrivet.design/" />
-  <meta property="twitter:title" content="Explore dozens of design directions from your agent" />
-  <meta property="twitter:description"
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://rivet.design/" />
+  <meta name="twitter:title" content="Explore dozens of design directions from your agent" />
+  <meta name="twitter:description"
     content="Rivet is a design agent for your coding agent. It explores dozens of design directions in parallel so you can pick the one that fits." />
-  <meta property="twitter:image" content="https://tryrivet.design/images/rivet-social-v2.jpg" />
+  <meta name="twitter:image" content="https://rivet.design/images/rivet-social-v2.jpg" />
   <!-- The splash's strobe frames, started with the bundle rather than after it.
        They are only requested once React has mounted SplashScreen, which on a
        real connection is a second or more after the HTML lands — so the splash
@@ -174,6 +174,27 @@
   <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Knewave&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet" />
+  <style>
+    #site-summary {
+      box-sizing: border-box;
+      max-width: 52rem;
+      margin: 0 auto;
+      padding: 4rem 1.5rem;
+      color: #171717;
+      font: 1rem/1.6 system-ui, sans-serif;
+    }
+    #site-summary h1 {
+      margin: 1.5rem 0;
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -0.03em;
+    }
+    #site-summary h2 { margin: 3rem 0 1rem; font-size: 1.5rem; }
+    #site-summary p { margin: 1rem 0; }
+    #site-summary ol { list-style: decimal; padding-left: 1.5rem; }
+    #site-summary li { margin: 1rem 0; }
+    #site-summary a { color: inherit; text-decoration: underline; text-underline-offset: 0.2em; }
+  </style>
 </head>
 
 <body>
@@ -187,7 +208,41 @@
       <span class="shell-tick br"></span>
     </div>
   </div>
-  <div id="app"></div>
+  <!-- Available in the initial HTML and when JavaScript is unavailable.
+       createRoot in src/main.ts replaces this summary when the app mounts. -->
+  <div id="app">
+    <main id="site-summary">
+      <p>Rivet</p>
+      <h1>Explore dozens of design directions from your agent.</h1>
+      <p>
+        Rivet is a design agent for your coding agent. It explores dozens of
+        design directions in parallel so you can pick the one that fits.
+      </p>
+      <p><a href="https://docs.rivet.design/">Install Rivet for your coding agent</a></p>
+      <section aria-labelledby="how-it-works">
+        <h2 id="how-it-works">How it works</h2>
+        <ol>
+          <li>
+            <strong>Start from your agent.</strong> Install Rivet for Codex,
+            Claude, Claude Code, or Cursor, then open it in your project.
+          </li>
+          <li>
+            <strong>Explore design directions.</strong> Tell your agent what you
+            want to make or change. Rivet builds different directions in parallel.
+          </li>
+          <li>
+            <strong>Compare and refine.</strong> Review the directions in Rivet,
+            ask for changes, and bring your chosen design back to your code.
+          </li>
+        </ol>
+      </section>
+      <nav aria-label="Learn more about Rivet">
+        <a href="https://docs.rivet.design/">Documentation</a> ·
+        <a href="/story">Our story</a> ·
+        <a href="/download">Download</a>
+      </nav>
+    </main>
+  </div>
   <script type="module" src="/src/main.ts"></script>
 </body>
 
