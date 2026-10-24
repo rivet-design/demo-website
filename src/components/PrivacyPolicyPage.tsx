@@ -13,7 +13,7 @@ const PrivacyPolicyPage = () => {
           Privacy Policy
         </h1>
         <p className="font-main mb-12 text-sm text-[#555555]">
-          Last updated March 06, 2026
+          Last updated October 23, 2026
         </p>
 
         <div className="font-main flex flex-col gap-10 text-base leading-relaxed text-[#555555]">
@@ -952,6 +952,46 @@ const PrivacyPolicyPage = () => {
                 data subject access request
               </a>
               .
+            </p>
+            <h3 id="request-deletion" className="font-medium text-foreground">
+              Request deletion of your information
+            </h3>
+            <p>
+              You can request deletion of your Rivet account and associated personal information
+              by emailing{' '}
+              <a href="mailto:support@rivet.design" className="text-foreground underline underline-offset-2">
+                support@rivet.design
+              </a>
+              . We may ask you to verify ownership of the account before proceeding. Do not send
+              passwords, access tokens, or your Rivet configuration file.
+            </p>
+            <p>
+              After verification, we will delete your account and associated personal information
+              from Rivet's active systems and initiate deletion with relevant service providers.
+              This includes identifiable analytics profiles, associated product events, and session
+              recordings held in PostHog.
+            </p>
+            <p>
+              We aim to complete requests within 30 calendar days of verification, or sooner where
+              applicable law requires. If a provider's processing time or another limitation delays
+              completion, we will explain what remains and provide an updated timeline. This target
+              is not a guarantee of immediate erasure from provider systems or backups.
+            </p>
+            <p>
+              Our current PostHog log retention is 14 days. If a request involves identifiable
+              information in those logs, we will assess whether earlier deletion is available and
+              explain any limitations. This period does not describe logs held by other providers.
+            </p>
+            <p>
+              Some information may remain temporarily in backups or where retention is necessary
+              for legal obligations, security, fraud prevention, or resolving disputes. Retained
+              information will be restricted to those purposes and removed when the applicable
+              retention requirement ends.
+            </p>
+            <p>
+              We will confirm completion and explain any remaining exceptions. Deleting hosted
+              information does not remove project files stored on your computer. We may retain a
+              minimal record of your request and its outcome without retaining the deleted content.
             </p>
           </section>
         </div>
