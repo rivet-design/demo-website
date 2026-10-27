@@ -38,14 +38,38 @@ deploying this website change. A merge into the CLI's main branch does not make
 that behavior available through `rivet-design@latest`; older packages may
 configure every detected host for bare `install`.
 
-Every desktop activation and copy attempt prepares a fresh ref. Desktop links
+Every desktop activation and copy attempt prepares a fresh ref, except fallback
+copies, which reuse the ref of the click they follow. Desktop links
 record `download_clicked` with `download_type` set to `codex`, `claude`, or
 `cursor`. A successful prompt copy records `agent` after the clipboard write.
 These events record handoff intent, not proof that an app opened or Rivet
 installed. The ref in the decoded prompt matches `install_ref` and the
 person's `last_install_ref`. The embedding flag controls refs in every path.
 
-The dropdown, accordion rows, copy icons, and manual command copies retain the
+Desktop links open in the same tab. Each attempt to open the app (the first
+click and every "Try opening again") records one `download_handoff` with the
+click's `source`, `download_type`, and `install_ref` plus `handoff_result`:
+
+- `left_page`: the visitor left the page, so we assume the app opened and show
+  no panel.
+- `fallback_shown`: the visitor stayed on the page or came back to it, so the
+  "Didn't open?" panel appeared. The panel is held back only if, by then, the
+  visitor had closed it, opened the agent menu, or clicked again; a newer
+  click reports its own result.
+
+The page counts as left when it is hidden or unloaded, or when it loses focus
+within two seconds of the click and does not get it back within 15 seconds.
+Losing focus and getting it back without the page ever being hidden, as when
+someone cancels a browser's own "open this link with the app?" prompt, counts
+as staying. Every platform and browser uses the same check.
+
+The panel offers the agent's install command, a download link for the agent,
+and a retry of the same link. A copy from the panel records `download_clicked`
+with source `handoff_fallback`, the original `install_ref`, and its
+`copy_method`; it does not add a `download_handoff`. The latest
+`handoff_result` for a ref is the outcome.
+
+The dropdown, accordion rows, fallback row, copy icons, and manual command copies retain the
 same ref between telemetry and the command when embedding is enabled. The
 accordion keeps `copy_method` values `row_click`, `icon`, and `manual_select`.
 

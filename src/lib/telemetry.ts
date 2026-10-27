@@ -13,10 +13,20 @@ export type PromptInstallSource =
 type DownloadClickedSource =
   | PromptInstallSource
   | 'landing_accordion'
+  | 'handoff_fallback'
   | 'download_page';
 
-/** How an install command left the accordion; sent as `copy_method`. */
+/** How an install command left a command row; sent as `copy_method`. */
 export type CommandCopyMethod = 'row_click' | 'icon' | 'manual_select';
+
+/**
+ * How a desktop deep link ended; sent as `handoff_result`. `left_page`: the
+ * visitor left the page, so the app is assumed to have opened. `fallback_shown`:
+ * they stayed or came back, so the "Didn't open?" panel appeared. The panel is
+ * held back only if, by then, they had closed it, opened the agent menu, or
+ * clicked again (the newer attempt reports separately).
+ */
+export type HandoffResult = 'left_page' | 'fallback_shown';
 
 /** `pkce` is the current proxy-completed flow; `implicit` is the legacy hash-token relay. */
 export type AuthFlow = 'pkce' | 'implicit';
@@ -90,6 +100,25 @@ class Telemetry {
       install_ref: props.installRef,
       ...(props.version !== undefined && { version: props.version }),
       ...(props.copyMethod && { copy_method: props.copyMethod }),
+    });
+  }
+
+  /**
+   * Follow-up to a desktop `download_clicked`, matched on `install_ref`: one per
+   * attempt to open the app, so each "Try opening again" adds another for the
+   * same ref. The latest `handoff_result` for a ref is the outcome.
+   */
+  trackDownloadHandoff(props: {
+    source: PromptInstallSource;
+    downloadType: InstallTarget;
+    installRef: InstallRef;
+    result: HandoffResult;
+  }): void {
+    this.track('download_handoff', {
+      source: props.source,
+      download_type: props.downloadType,
+      install_ref: props.installRef,
+      handoff_result: props.result,
     });
   }
 

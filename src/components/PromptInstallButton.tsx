@@ -13,7 +13,9 @@ import {
   type DeepLinkAgentId,
   type InstallAgentId as AgentLogo,
 } from '@/lib/install';
-import { generateInstallRef } from '@/lib/installRef';
+import { generateInstallRef, type InstallRef } from '@/lib/installRef';
+import { openDeepLink, watchHandoff } from '@/lib/handoff';
+import HandoffFallback from './HandoffFallback';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
 import {
   FluidMenuGroup,
@@ -57,6 +59,8 @@ type AgentItem = {
   id: DeepLinkAgentId;
   label: string;
 };
+
+type Handoff = { agent: AgentItem; installRef: InstallRef };
 
 // Claude opens its Code view so the agent can run the install command.
 const AGENT_ITEMS: AgentItem[] = [
@@ -125,6 +129,45 @@ const PromptInstallButton = ({
     setHighlight(index);
     setInputMode(mode);
   }, []);
+  // The click whose deep link did not take focus; drives the fallback panel.
+  const [fallback, setFallback] = useState<Handoff | null>(null);
+  // Every attempt reports its own result; only the latest drives the panel.
+  const watchersRef = useRef(new Set<() => void>());
+  const latestAttemptRef = useRef(0);
+  // Refs, not state: Popover keeps its first-render outside-click handler.
+  const fallbackShownRef = useRef(false);
+  // Set when the visitor closes the panel, so a retry still being watched
+  // reports its result without reopening it.
+  const fallbackDismissedRef = useRef(false);
+  // A result that lands while the chooser is open must not cover the menu.
+  const chooserOpenRef = useRef(false);
+  useEffect(() => {
+    chooserOpenRef.current = open;
+  }, [open]);
+
+  const showFallback = (handoff: Handoff | null) => {
+    fallbackShownRef.current = handoff !== null;
+    setFallback(handoff);
+  };
+  const dismissFallback = () => {
+    if (fallbackShownRef.current) fallbackDismissedRef.current = true;
+    showFallback(null);
+  };
+
+  useEffect(() => {
+    const watchers = watchersRef.current;
+    return () => watchers.forEach((stop) => stop());
+  }, []);
+
+  // Focus usually stays on the CTA, outside the portaled panel.
+  useEffect(() => {
+    if (!fallback) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') dismissFallback();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [fallback]);
 
   useEffect(() => {
     if (!open || !dismissOnScroll) return;
@@ -156,8 +199,38 @@ const PromptInstallButton = ({
   const actionLabel = continuationLabel(selected);
   const buttonTone = BUTTON_TONES[tone];
 
+  // Listeners go up before navigating so an immediate blur is not missed.
+  const handOff = ({ agent, installRef }: Handoff) => {
+    const attempt = ++latestAttemptRef.current;
+    fallbackDismissedRef.current = false;
+    const toastId = toast.success(`Opening ${agent.label}…`, {
+      duration: 3000,
+    });
+    const stop = watchHandoff((leftPage) => {
+      watchersRef.current.delete(stop);
+      telemetry.trackDownloadHandoff({
+        source,
+        downloadType: agent.id,
+        installRef,
+        result: leftPage ? 'left_page' : 'fallback_shown',
+      });
+      if (attempt !== latestAttemptRef.current) return;
+      if (leftPage) {
+        showFallback(null);
+        return;
+      }
+      toast.dismiss(toastId);
+      if (!fallbackDismissedRef.current && !chooserOpenRef.current) {
+        showFallback({ agent, installRef });
+      }
+    });
+    watchersRef.current.add(stop);
+    openDeepLink(installDeepLink(agent.id, installRef));
+  };
+
   const activate = (item: AgentItem) => {
     setSelected(item);
+    showFallback(null);
     const installRef = generateInstallRef();
     telemetry.trackDownloadClicked({
       source,
@@ -168,12 +241,7 @@ const PromptInstallButton = ({
     // Keep navigation in the click/keyboard gesture; clipboard permissions
     // must not delay or block the desktop handoff.
     setOpen(false);
-    window.open(
-      installDeepLink(item.id, installRef),
-      '_blank',
-      'noopener,noreferrer',
-    );
-    toast.success(`Opening ${item.label}…`, { duration: 3000 });
+    handOff({ agent: item, installRef });
   };
 
   const copyPrompt = async () => {
@@ -203,6 +271,7 @@ const PromptInstallButton = ({
     if (!open) {
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
+        dismissFallback();
         setOpen(true);
         setHighlight(e.key === 'ArrowDown' ? 0 : AGENT_ITEMS.length);
       }
@@ -225,114 +294,146 @@ const PromptInstallButton = ({
     }
   };
 
+  const wrapperClassName = fullWidth ? 'flex w-full' : 'max-w-full';
+
   return (
     <Popover
-      className={fullWidth ? 'flex w-full' : 'max-w-full'}
-      open={open}
+      className={wrapperClassName}
+      open={fallback !== null}
       onOpenChange={(next) => {
-        setHighlight(-1);
-        setInputMode('pointer');
-        setOpen(next);
+        if (!next) dismissFallback();
       }}
     >
-      <div
-        ref={splitRef}
-        className={`flex min-w-0 overflow-hidden rounded-xl border ${buttonTone.frame} ${fullWidth ? 'w-full' : ''}`}
+      <Popover
+        className={wrapperClassName}
+        open={open}
+        onOpenChange={(next) => {
+          setHighlight(-1);
+          setInputMode('pointer');
+          if (next) dismissFallback();
+          setOpen(next);
+        }}
       >
-        <button
-          type="button"
-          onClick={() => activate(selected)}
-          title={actionLabel}
-          className={`flex min-w-0 flex-1 items-center justify-center gap-2.5 font-normal ${buttonSize} transition-colors duration-150 ${buttonTone.action} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-current motion-reduce:transition-none`}
+        <div
+          ref={splitRef}
+          className={`flex min-w-0 overflow-hidden rounded-xl border ${buttonTone.frame} ${fullWidth ? 'w-full' : ''}`}
         >
-          <span aria-hidden>
-            <ToolLogo id={selected.id} label={selected.label} size={16} />
-          </span>
-          <span className="truncate">{label ?? actionLabel}</span>
-        </button>
-        <PopoverTrigger
-          aria-label="Choose your agent"
-          aria-haspopup="dialog"
-          onKeyDown={handleMenuKeyDown}
-          className={`flex w-10 shrink-0 items-center justify-center border-l ${buttonTone.chevron} transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-current motion-reduce:transition-none`}
-        >
-          <ChevronDown
-            aria-hidden
-            size={18}
-            className={`transition-transform duration-150 ease-out motion-reduce:transition-none ${open ? 'rotate-180' : ''}`}
-          />
-        </PopoverTrigger>
-      </div>
+          <button
+            type="button"
+            onClick={() => activate(selected)}
+            title={actionLabel}
+            className={`flex min-w-0 flex-1 items-center justify-center gap-2.5 font-normal ${buttonSize} transition-colors duration-150 ${buttonTone.action} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-current motion-reduce:transition-none`}
+          >
+            <span aria-hidden>
+              <ToolLogo id={selected.id} label={selected.label} size={16} />
+            </span>
+            <span className="truncate">{label ?? actionLabel}</span>
+          </button>
+          <PopoverTrigger
+            aria-label="Choose your agent"
+            aria-haspopup="dialog"
+            onKeyDown={handleMenuKeyDown}
+            className={`flex w-10 shrink-0 items-center justify-center border-l ${buttonTone.chevron} transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-current motion-reduce:transition-none`}
+          >
+            <ChevronDown
+              aria-hidden
+              size={18}
+              className={`transition-transform duration-150 ease-out motion-reduce:transition-none ${open ? 'rotate-180' : ''}`}
+            />
+          </PopoverTrigger>
+        </div>
 
+        <PopoverContent
+          align={fullWidth ? 'center' : 'start'}
+          sideOffset={6}
+          matchTriggerWidth
+          minWidth={240}
+          anchorRef={splitRef}
+          collisionPadding={12}
+          data-lenis-prevent
+          aria-label="Choose where to install Rivet"
+          className="overflow-y-auto overscroll-contain rounded-2xl border-black/[0.12] bg-white p-2 text-black shadow-[0_12px_32px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)]"
+          onKeyDown={handleMenuKeyDown}
+        >
+          <FluidMenuGroup
+            label="Open in desktop"
+            startIndex={0}
+            activeIndex={highlight}
+            inputMode={inputMode}
+            onHighlight={highlightItem}
+          >
+            {AGENT_ITEMS.map((item, index) => (
+              <FluidMenuItem
+                key={item.id}
+                index={index}
+                aria-label={continuationLabel(item)}
+                onClick={() => activate(item)}
+              >
+                <span aria-hidden className={MENU_ICON_CLASS_NAME}>
+                  <ToolLogo id={item.id} label={item.label} />
+                </span>
+                <span className="flex-1">{item.label}</span>
+                {selected.id === item.id && (
+                  <Check aria-hidden size={15} className="text-[#969696]" />
+                )}
+              </FluidMenuItem>
+            ))}
+          </FluidMenuGroup>
+          <FluidMenuGroup
+            label="Copy prompt to install"
+            startIndex={AGENT_ITEMS.length}
+            activeIndex={highlight}
+            inputMode={inputMode}
+            onHighlight={highlightItem}
+            className="mt-2 border-t border-black/10 pt-2"
+          >
+            <FluidMenuItem
+              index={0}
+              onClick={() => void copyPrompt()}
+              aria-label="Copy prompt"
+            >
+              <span aria-hidden className={MENU_ICON_CLASS_NAME}>
+                <Copy size={20} strokeWidth={1.7} className="text-[#818181]" />
+              </span>
+              <span>{isCopied ? 'Copied' : 'Copy prompt'}</span>
+            </FluidMenuItem>
+            <span
+              role="status"
+              className={
+                copyFailed
+                  ? 'block px-3 pb-2 font-main text-xs text-black'
+                  : 'sr-only'
+              }
+            >
+              {copyFailed
+                ? 'Couldn’t copy. Try again.'
+                : isCopied
+                  ? 'Prompt copied'
+                  : ''}
+            </span>
+          </FluidMenuGroup>
+        </PopoverContent>
+      </Popover>
       <PopoverContent
         align={fullWidth ? 'center' : 'start'}
         sideOffset={6}
         matchTriggerWidth
-        minWidth={240}
+        minWidth={320}
         anchorRef={splitRef}
         collisionPadding={12}
         data-lenis-prevent
-        aria-label="Choose where to install Rivet"
-        className="overflow-y-auto overscroll-contain rounded-2xl border-black/[0.12] bg-white p-2 text-black shadow-[0_12px_32px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)]"
-        onKeyDown={handleMenuKeyDown}
+        aria-label={`Install Rivet in ${fallback?.agent.label ?? ''}`}
+        className="overflow-y-auto overscroll-contain rounded-2xl border-black/[0.12] bg-white text-black shadow-[0_12px_32px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)]"
       >
-        <FluidMenuGroup
-          label="Open in desktop"
-          startIndex={0}
-          activeIndex={highlight}
-          inputMode={inputMode}
-          onHighlight={highlightItem}
-        >
-          {AGENT_ITEMS.map((item, index) => (
-            <FluidMenuItem
-              key={item.id}
-              index={index}
-              aria-label={continuationLabel(item)}
-              onClick={() => activate(item)}
-            >
-              <span aria-hidden className={MENU_ICON_CLASS_NAME}>
-                <ToolLogo id={item.id} label={item.label} />
-              </span>
-              <span className="flex-1">{item.label}</span>
-              {selected.id === item.id && (
-                <Check aria-hidden size={15} className="text-[#969696]" />
-              )}
-            </FluidMenuItem>
-          ))}
-        </FluidMenuGroup>
-        <FluidMenuGroup
-          label="Copy prompt to install"
-          startIndex={AGENT_ITEMS.length}
-          activeIndex={highlight}
-          inputMode={inputMode}
-          onHighlight={highlightItem}
-          className="mt-2 border-t border-black/10 pt-2"
-        >
-          <FluidMenuItem
-            index={0}
-            onClick={() => void copyPrompt()}
-            aria-label="Copy prompt"
-          >
-            <span aria-hidden className={MENU_ICON_CLASS_NAME}>
-              <Copy size={20} strokeWidth={1.7} className="text-[#818181]" />
-            </span>
-            <span>{isCopied ? 'Copied' : 'Copy prompt'}</span>
-          </FluidMenuItem>
-          <span
-            role="status"
-            className={
-              copyFailed
-                ? 'block px-3 pb-2 font-main text-xs text-black'
-                : 'sr-only'
-            }
-          >
-            {copyFailed
-              ? 'Couldn’t copy. Try again.'
-              : isCopied
-                ? 'Prompt copied'
-                : ''}
-          </span>
-        </FluidMenuGroup>
+        {fallback && (
+          <HandoffFallback
+            key={fallback.installRef}
+            agent={fallback.agent}
+            installRef={fallback.installRef}
+            onRetry={() => handOff(fallback)}
+            onClose={dismissFallback}
+          />
+        )}
       </PopoverContent>
     </Popover>
   );
