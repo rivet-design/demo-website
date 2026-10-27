@@ -38,14 +38,28 @@ deploying this website change. A merge into the CLI's main branch does not make
 that behavior available through `rivet-design@latest`; older packages may
 configure every detected host for bare `install`.
 
-Every desktop activation and copy attempt prepares a fresh ref. Desktop links
+Every desktop activation and copy attempt prepares a fresh ref, except fallback
+copies, which reuse the ref of the click they follow. Desktop links
 record `download_clicked` with `download_type` set to `codex`, `claude`, or
 `cursor`. A successful prompt copy records `agent` after the clipboard write.
 These events record handoff intent, not proof that an app opened or Rivet
 installed. The ref in the decoded prompt matches `install_ref` and the
 person's `last_install_ref`. The embedding flag controls refs in every path.
 
-The dropdown, accordion rows, copy icons, and manual command copies retain the
+Desktop links open in the same tab. For about two seconds after the click the
+page listens for `blur`, a hidden `visibilitychange`, or `pagehide`, and then
+records `download_handoff` with the click's `source`, `download_type`, and
+`install_ref` plus `handoff_result`: `blurred` when the page lost focus, or
+`no_blur` when it did not. Every platform and browser uses the same check. On
+`no_blur` the opening toast is replaced by a panel under the CTA that offers
+the agent's install command, a download link for the agent, and a retry of the
+same link. A copy from that panel records `download_clicked` with source
+`handoff_fallback`, the original `install_ref`, and its `copy_method`, plus a
+`download_handoff` with `fallback_copied`. A retry reports another
+`download_handoff` for the same ref. The latest result for a ref is the
+outcome.
+
+The dropdown, accordion rows, fallback row, copy icons, and manual command copies retain the
 same ref between telemetry and the command when embedding is enabled. The
 accordion keeps `copy_method` values `row_click`, `icon`, and `manual_select`.
 

@@ -43,6 +43,13 @@ export const copiedInstallCommand = (
 export const installPrompt = (target: InstallTarget, ref: InstallRef): string =>
   `Install Rivet for this agent: \`${copiedInstallCommand(target, ref)}\``;
 
+/** Official download pages, offered when a deep link does not open the app. */
+export const AGENT_DOWNLOAD_URLS: Record<DeepLinkAgentId, string> = {
+  claude: 'https://claude.ai/download',
+  codex: 'https://openai.com/codex/',
+  cursor: 'https://cursor.com/download',
+};
+
 const INSTALL_DEEP_LINKS: Record<DeepLinkAgentId, string> = {
   claude: 'claude://code/new?q=',
   codex: 'codex://new?prompt=',

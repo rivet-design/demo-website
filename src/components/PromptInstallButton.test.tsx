@@ -3,13 +3,18 @@ import { createRoot, type Root } from 'react-dom/client';
 import type { CaptureResult } from 'posthog-js';
 import { toast } from 'sonner';
 import { posthog } from '../lib/posthog';
+import * as handoff from '../lib/handoff';
 import * as installRef from '../lib/installRef';
 import InstallAccordion from './InstallAccordion';
 import NavBar from './NavBar';
 import PromptInstallButton from './PromptInstallButton';
 
 jest.mock('sonner', () => ({
-  toast: Object.assign(jest.fn(), { success: jest.fn(), error: jest.fn() }),
+  toast: Object.assign(jest.fn(), {
+    success: jest.fn(() => 'opening-toast'),
+    error: jest.fn(),
+    dismiss: jest.fn(),
+  }),
 }));
 
 (
@@ -78,7 +83,7 @@ beforeEach(() => {
   sent = [];
   window.getSelection()?.removeAllRanges();
   jest.clearAllMocks();
-  jest.spyOn(window, 'open').mockReturnValue(null);
+  jest.spyOn(handoff, 'openDeepLink').mockImplementation(() => {});
   Object.defineProperty(window, 'isSecureContext', {
     value: true,
     configurable: true,
@@ -152,7 +157,7 @@ const copiedText = () =>
   );
 
 const openedPrompts = () =>
-  (window.open as jest.Mock).mock.calls.map(([url]) => {
+  (handoff.openDeepLink as jest.Mock).mock.calls.map(([url]) => {
     const params = new URL(url).searchParams;
     return params.get('prompt') ?? params.get('q') ?? params.get('text');
   });
@@ -251,11 +256,9 @@ describe('PromptInstallButton desktop handoff', () => {
       );
       await pickAgent(label);
 
-      const [[url, target, features]] = (window.open as jest.Mock).mock.calls;
+      const [[url]] = (handoff.openDeepLink as jest.Mock).mock.calls;
       const parsed = new URL(url);
       expect(`${parsed.protocol}//${parsed.host}${parsed.pathname}`).toBe(base);
-      expect(target).toBe('_blank');
-      expect(features).toBe('noopener,noreferrer');
       expect(toast.success).toHaveBeenCalledWith(`Opening ${label}…`, {
         duration: 3000,
       });
@@ -279,10 +282,8 @@ describe('PromptInstallButton desktop handoff', () => {
         );
       });
     }
-    expect(window.open).toHaveBeenCalledWith(
+    expect(handoff.openDeepLink).toHaveBeenCalledWith(
       expect.stringMatching(/^claude:\/\/code\/new\?q=/),
-      '_blank',
-      'noopener,noreferrer',
     );
   });
 });
@@ -313,7 +314,7 @@ describe('PromptInstallButton copy prompt', () => {
     expect(downloadClicks()).toEqual([
       { source: 'story_nav', download_type: 'agent' },
     ]);
-    expect(window.open).not.toHaveBeenCalled();
+    expect(handoff.openDeepLink).not.toHaveBeenCalled();
     expect(toast.success).toHaveBeenCalledWith('Prompt copied', {
       description: 'Paste it into your agent to install Rivet.',
       duration: 5000,
@@ -351,7 +352,7 @@ describe('PromptInstallButton copy prompt', () => {
       });
     }
     expect(copiedText()).toHaveLength(1);
-    expect(window.open).not.toHaveBeenCalled();
+    expect(handoff.openDeepLink).not.toHaveBeenCalled();
   });
 
   it('shows a retry message when copying fails, then recovers', async () => {
@@ -389,10 +390,8 @@ it('launches the default app from the main button without opening the menu', asy
   const main = container.querySelector('button')!;
   expect(main.textContent).toBe('Continue in Codex');
   await act(async () => click(main));
-  expect(window.open).toHaveBeenCalledWith(
+  expect(handoff.openDeepLink).toHaveBeenCalledWith(
     expect.stringMatching(/^codex:\/\/new\?prompt=/),
-    '_blank',
-    'noopener,noreferrer',
   );
   expect(
     container.querySelector('[aria-expanded]')?.getAttribute('aria-expanded'),
@@ -405,8 +404,8 @@ it('updates the main action after choosing another agent', async () => {
   const main = container.querySelector('button')!;
   expect(main.textContent).toBe('Continue in Claude');
   await act(async () => click(main));
-  expect(window.open).toHaveBeenCalledTimes(2);
-  expect((window.open as jest.Mock).mock.calls[1][0]).toMatch(
+  expect(handoff.openDeepLink).toHaveBeenCalledTimes(2);
+  expect((handoff.openDeepLink as jest.Mock).mock.calls[1][0]).toMatch(
     /^claude:\/\/code\/new\?q=/,
   );
 });
@@ -474,4 +473,171 @@ it('keeps the chooser readable beside a scaled button and inside a narrow viewpo
   jest.replaceProperty(window, 'innerWidth', 220);
   act(() => window.dispatchEvent(new Event('resize')));
   expect(Number.parseFloat(chooser.style.width)).toBeLessThanOrEqual(196);
+});
+
+describe('PromptInstallButton handoff fallback', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  const handoffResults = () =>
+    sent
+      .filter((e) => e.event === 'download_handoff')
+      .map((e) => ({
+        source: e.properties.source,
+        download_type: e.properties.download_type,
+        install_ref: e.properties.install_ref,
+        handoff_result: e.properties.handoff_result,
+      }));
+
+  const fallbackPanel = () =>
+    document.querySelector<HTMLElement>(
+      '[role="dialog"][aria-label^="Install Rivet in"]',
+    );
+
+  const waitOutHandoff = () =>
+    act(() => {
+      jest.advanceTimersByTime(handoff.HANDOFF_TIMEOUT_MS);
+    });
+
+  it('keeps the opening toast and shows no panel when the page blurs', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Claude');
+    act(() => {
+      jest.advanceTimersByTime(500);
+      window.dispatchEvent(new Event('blur'));
+    });
+    await waitOutHandoff();
+
+    const [ref] = refsSent().events;
+    expect(handoffResults()).toEqual([
+      {
+        source: 'landing_hero',
+        download_type: 'claude',
+        install_ref: ref,
+        handoff_result: 'blurred',
+      },
+    ]);
+    expect(toast.success).toHaveBeenCalledWith('Opening Claude…', {
+      duration: 3000,
+    });
+    expect(toast.dismiss).not.toHaveBeenCalled();
+    expect(fallbackPanel()).toBeNull();
+  });
+
+  it('replaces the toast with the fallback panel when the page keeps focus', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Claude');
+    expect(fallbackPanel()).toBeNull();
+    await waitOutHandoff();
+
+    const [ref] = refsSent().events;
+    expect(handoffResults()).toEqual([
+      {
+        source: 'landing_hero',
+        download_type: 'claude',
+        install_ref: ref,
+        handoff_result: 'no_blur',
+      },
+    ]);
+    expect(toast.dismiss).toHaveBeenCalledWith('opening-toast');
+    const panel = fallbackPanel()!;
+    expect(panel.textContent).toContain(
+      'Didn’t open? Paste this into Claude instead.',
+    );
+    expect(panel.querySelector('code')?.textContent).toBe(
+      'npx -y rivet-design@latest install claude',
+    );
+    const download = [...panel.querySelectorAll('a')].find(
+      (a) => a.textContent === 'Get Claude',
+    );
+    expect(download?.getAttribute('href')).toBe('https://claude.ai/download');
+  });
+
+  it('copies the command with the original ref and tracks the copy', async () => {
+    render(<PromptInstallButton source="landing_nav" />);
+    await pickAgent('Cursor');
+    await waitOutHandoff();
+    const [ref] = refsSent().events;
+
+    await act(async () => {
+      fallbackPanel()!
+        .querySelector('button[aria-label="Copy Cursor install command"]')!
+        .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(copiedText()).toEqual([
+      `npx -y rivet-design@latest install cursor --mcp --ref ${ref}`,
+    ]);
+    const clicks = sent
+      .filter((e) => e.event === 'download_clicked')
+      .map((e) => ({
+        source: e.properties.source,
+        download_type: e.properties.download_type,
+        install_ref: e.properties.install_ref,
+        copy_method: e.properties.copy_method,
+      }));
+    expect(clicks).toEqual([
+      {
+        source: 'landing_nav',
+        download_type: 'cursor',
+        install_ref: ref,
+        copy_method: undefined,
+      },
+      {
+        source: 'handoff_fallback',
+        download_type: 'cursor',
+        install_ref: ref,
+        copy_method: 'icon',
+      },
+    ]);
+    expect(new Set(refsSent().people)).toEqual(new Set([ref]));
+    expect(handoffResults().map((e) => e.handoff_result)).toEqual([
+      'no_blur',
+      'fallback_copied',
+    ]);
+    expect(handoffResults()[1]).toMatchObject({
+      source: 'landing_nav',
+      install_ref: ref,
+    });
+  });
+
+  it('retries the same deep link and closes the panel once the app takes focus', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Codex');
+    await waitOutHandoff();
+    const retry = [...fallbackPanel()!.querySelectorAll('button')].find(
+      (b) => b.textContent === 'Try opening again',
+    )!;
+    click(retry);
+
+    const opened = (handoff.openDeepLink as jest.Mock).mock.calls.map(
+      ([url]) => url,
+    );
+    expect(opened).toHaveLength(2);
+    expect(opened[1]).toBe(opened[0]);
+    expect(refsSent().events).toHaveLength(1);
+
+    act(() => {
+      window.dispatchEvent(new Event('blur'));
+    });
+    expect(fallbackPanel()).toBeNull();
+    expect(handoffResults().map((e) => e.handoff_result)).toEqual([
+      'no_blur',
+      'blurred',
+    ]);
+  });
+
+  it('closes the panel from its dismiss button and on a new click', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Codex');
+    await waitOutHandoff();
+    click(fallbackPanel()!.querySelector('button[aria-label="Dismiss"]')!);
+    expect(fallbackPanel()).toBeNull();
+
+    await act(async () => click(container.querySelector('button')!));
+    await waitOutHandoff();
+    expect(fallbackPanel()).not.toBeNull();
+    await act(async () => click(container.querySelector('button')!));
+    expect(fallbackPanel()).toBeNull();
+  });
 });
