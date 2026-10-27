@@ -1,7 +1,6 @@
 import { posthog } from './posthog';
 import type { InstallTarget } from './install';
 import type { InstallRef } from './installRef';
-import type { HandoffDetection } from './handoff';
 
 /** Where a PromptInstallButton sits; sent as `source` on `download_clicked`. */
 export type PromptInstallSource =
@@ -21,13 +20,13 @@ type DownloadClickedSource =
 export type CommandCopyMethod = 'row_click' | 'icon' | 'manual_select';
 
 /**
- * How a desktop deep link ended; sent as `handoff_result`. `blur_returned` is a
- * blur followed by refocus without the page hiding, such as a cancelled browser
- * "open this app?" prompt; it shows the fallback like `no_blur`.
- * `fallback_copied` follows either when the visitor copies the command from
- * the fallback.
+ * How a desktop deep link ended; sent as `handoff_result`. `left_page`: the
+ * visitor left the page, so the app is assumed to have opened. `fallback_shown`:
+ * they stayed or came back, so the "Didn't open?" panel appeared. The panel is
+ * held back only if, by then, they had closed it, opened the agent menu, or
+ * clicked again (the newer attempt reports separately).
  */
-export type HandoffResult = HandoffDetection | 'fallback_copied';
+export type HandoffResult = 'left_page' | 'fallback_shown';
 
 /** `pkce` is the current proxy-completed flow; `implicit` is the legacy hash-token relay. */
 export type AuthFlow = 'pkce' | 'implicit';
@@ -105,9 +104,9 @@ class Telemetry {
   }
 
   /**
-   * Follow-up to a desktop `download_clicked`, matched on `install_ref`. A click
-   * can report more than once (a retry, then a fallback copy); its latest
-   * `handoff_result` is the outcome.
+   * Follow-up to a desktop `download_clicked`, matched on `install_ref`: one per
+   * attempt to open the app, so each "Try opening again" adds another for the
+   * same ref. The latest `handoff_result` for a ref is the outcome.
    */
   trackDownloadHandoff(props: {
     source: PromptInstallSource;

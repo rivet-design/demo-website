@@ -46,28 +46,28 @@ These events record handoff intent, not proof that an app opened or Rivet
 installed. The ref in the decoded prompt matches `install_ref` and the
 person's `last_install_ref`. The embedding flag controls refs in every path.
 
-Desktop links open in the same tab. The page then records `download_handoff`
-with the click's `source`, `download_type`, and `install_ref` plus
-`handoff_result`:
+Desktop links open in the same tab. Each attempt to open the app (the first
+click and every "Try opening again") records one `download_handoff` with the
+click's `source`, `download_type`, and `install_ref` plus `handoff_result`:
 
-- `no_blur`: the page kept focus for two seconds after the click.
-- `blur_returned`: the page blurred within those two seconds, then regained
-  focus within 15 seconds of the blur without ever being hidden. A browser's
-  own "open this link with the app?" prompt, cancelled or dismissed, ends this
-  way.
-- `blurred`: the page was hidden or unloaded (`visibilitychange` to hidden or
-  `pagehide`), or stayed blurred for 15 seconds.
+- `left_page`: the visitor left the page, so we assume the app opened and show
+  no panel.
+- `fallback_shown`: the visitor stayed on the page or came back to it, so the
+  "Didn't open?" panel appeared. The panel is held back only if, by then, the
+  visitor had closed it, opened the agent menu, or clicked again; a newer
+  click reports its own result.
 
-A blur alone is provisional; only `blurred` counts as the app opening. Every
-platform and browser uses the same check. On `no_blur` or `blur_returned` the
-opening toast is replaced by a panel under the CTA that offers the agent's
-install command, a download link for the agent, and a retry of the same link.
-A copy attempt from that panel records `download_clicked` with source
-`handoff_fallback`, the original `install_ref`, and its `copy_method`. Only a
-copy that put the full command on the clipboard also records a
-`download_handoff` with `fallback_copied`. A retry reports another
-`download_handoff` for the same ref. The latest result for a ref is the
-outcome.
+The page counts as left when it is hidden or unloaded, or when it loses focus
+within two seconds of the click and does not get it back within 15 seconds.
+Losing focus and getting it back without the page ever being hidden, as when
+someone cancels a browser's own "open this link with the app?" prompt, counts
+as staying. Every platform and browser uses the same check.
+
+The panel offers the agent's install command, a download link for the agent,
+and a retry of the same link. A copy from the panel records `download_clicked`
+with source `handoff_fallback`, the original `install_ref`, and its
+`copy_method`; it does not add a `download_handoff`. The latest
+`handoff_result` for a ref is the outcome.
 
 The dropdown, accordion rows, fallback row, copy icons, and manual command copies retain the
 same ref between telemetry and the command when embedding is enabled. The

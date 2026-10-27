@@ -131,12 +131,19 @@ const PromptInstallButton = ({
   }, []);
   // The click whose deep link did not take focus; drives the fallback panel.
   const [fallback, setFallback] = useState<Handoff | null>(null);
-  const stopWatchingRef = useRef<(() => void) | null>(null);
+  // Every attempt reports its own result; only the latest drives the panel.
+  const watchersRef = useRef(new Set<() => void>());
+  const latestAttemptRef = useRef(0);
   // Refs, not state: Popover keeps its first-render outside-click handler.
   const fallbackShownRef = useRef(false);
   // Set when the visitor closes the panel, so a retry still being watched
   // reports its result without reopening it.
   const fallbackDismissedRef = useRef(false);
+  // A result that lands while the chooser is open must not cover the menu.
+  const chooserOpenRef = useRef(false);
+  useEffect(() => {
+    chooserOpenRef.current = open;
+  }, [open]);
 
   const showFallback = (handoff: Handoff | null) => {
     fallbackShownRef.current = handoff !== null;
@@ -147,7 +154,10 @@ const PromptInstallButton = ({
     showFallback(null);
   };
 
-  useEffect(() => () => stopWatchingRef.current?.(), []);
+  useEffect(() => {
+    const watchers = watchersRef.current;
+    return () => watchers.forEach((stop) => stop());
+  }, []);
 
   // Focus usually stays on the CTA, outside the portaled panel.
   useEffect(() => {
@@ -191,36 +201,30 @@ const PromptInstallButton = ({
 
   // Listeners go up before navigating so an immediate blur is not missed.
   const handOff = ({ agent, installRef }: Handoff) => {
-    stopWatchingRef.current?.();
+    const attempt = ++latestAttemptRef.current;
     fallbackDismissedRef.current = false;
     const toastId = toast.success(`Opening ${agent.label}…`, {
       duration: 3000,
     });
-    stopWatchingRef.current = watchHandoff((result) => {
-      stopWatchingRef.current = null;
+    const stop = watchHandoff((leftPage) => {
+      watchersRef.current.delete(stop);
       telemetry.trackDownloadHandoff({
         source,
         downloadType: agent.id,
         installRef,
-        result,
+        result: leftPage ? 'left_page' : 'fallback_shown',
       });
-      switch (result) {
-        case 'blurred':
-          showFallback(null);
-          break;
-        case 'no_blur':
-        case 'blur_returned':
-          toast.dismiss(toastId);
-          if (!fallbackDismissedRef.current) {
-            showFallback({ agent, installRef });
-          }
-          break;
-        default: {
-          const unhandled: never = result;
-          throw new Error(`Unhandled handoff result: ${String(unhandled)}`);
-        }
+      if (attempt !== latestAttemptRef.current) return;
+      if (leftPage) {
+        showFallback(null);
+        return;
+      }
+      toast.dismiss(toastId);
+      if (!fallbackDismissedRef.current && !chooserOpenRef.current) {
+        showFallback({ agent, installRef });
       }
     });
+    watchersRef.current.add(stop);
     openDeepLink(installDeepLink(agent.id, installRef));
   };
 
@@ -426,7 +430,6 @@ const PromptInstallButton = ({
             key={fallback.installRef}
             agent={fallback.agent}
             installRef={fallback.installRef}
-            source={source}
             onRetry={() => handOff(fallback)}
             onClose={dismissFallback}
           />

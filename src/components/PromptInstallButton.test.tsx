@@ -30,6 +30,8 @@ posthog.init('phc_test', {
   disable_session_recording: true,
   advanced_disable_flags: true,
   persistence: 'memory',
+  // The suite captures more than the client's default burst allowance.
+  rate_limiting: { events_per_second: 1000, events_burst_limit: 10000 },
   before_send: (event) => {
     if (event) sent.push(event);
     return null;
@@ -476,7 +478,7 @@ it('keeps the chooser readable beside a scaled button and inside a narrow viewpo
 });
 
 describe('PromptInstallButton handoff fallback', () => {
-  // PostHog drops events once a faked Date jumps back between tests.
+  // PostHog's rate limiter drains when a faked Date jumps back between tests.
   beforeEach(() => jest.useFakeTimers({ doNotFake: ['Date'] }));
   afterEach(() => {
     jest.useRealTimers();
@@ -549,7 +551,7 @@ describe('PromptInstallButton handoff fallback', () => {
           source: 'landing_hero',
           download_type: 'claude',
           install_ref: ref,
-          handoff_result: 'blurred',
+          handoff_result: 'left_page',
         },
       ]);
       expect(toast.success).toHaveBeenCalledWith('Opening Claude…', {
@@ -572,7 +574,7 @@ describe('PromptInstallButton handoff fallback', () => {
         source: 'landing_hero',
         download_type: 'claude',
         install_ref: ref,
-        handoff_result: 'no_blur',
+        handoff_result: 'fallback_shown',
       },
     ]);
     expect(toast.dismiss).toHaveBeenCalledWith('opening-toast');
@@ -627,14 +629,14 @@ describe('PromptInstallButton handoff fallback', () => {
       },
     ]);
     expect(new Set(refsSent().people)).toEqual(new Set([ref]));
-    expect(handoffResults().map((e) => e.handoff_result)).toEqual([
-      'no_blur',
-      'fallback_copied',
+    expect(handoffResults()).toEqual([
+      {
+        source: 'landing_nav',
+        download_type: 'cursor',
+        install_ref: ref,
+        handoff_result: 'fallback_shown',
+      },
     ]);
-    expect(handoffResults()[1]).toMatchObject({
-      source: 'landing_nav',
-      install_ref: ref,
-    });
   });
 
   it('retries the same deep link and closes the panel once the app takes focus', async () => {
@@ -658,8 +660,8 @@ describe('PromptInstallButton handoff fallback', () => {
     hide();
     expect(fallbackPanel()).toBeNull();
     expect(handoffResults().map((e) => e.handoff_result)).toEqual([
-      'no_blur',
-      'blurred',
+      'fallback_shown',
+      'left_page',
     ]);
   });
 
@@ -694,7 +696,7 @@ describe('PromptInstallButton handoff fallback', () => {
         source: 'landing_hero',
         download_type: 'codex',
         install_ref: ref,
-        handoff_result: 'blur_returned',
+        handoff_result: 'fallback_shown',
       },
     ]);
     expect(toast.dismiss).toHaveBeenCalledWith('opening-toast');
@@ -711,12 +713,11 @@ describe('PromptInstallButton handoff fallback', () => {
       `npx -y rivet-design@latest install codex --ref ${ref}`,
     ]);
     expect(handoffResults().map((e) => e.handoff_result)).toEqual([
-      'blur_returned',
-      'fallback_copied',
+      'fallback_shown',
     ]);
   });
 
-  it('records the attempt but not fallback_copied when the copy fails', async () => {
+  it('records a failed panel copy only as a download_clicked attempt', async () => {
     jest.spyOn(console, 'warn').mockImplementation(() => {});
     (navigator.clipboard.writeText as jest.Mock).mockRejectedValueOnce(
       new Error('denied'),
@@ -734,7 +735,9 @@ describe('PromptInstallButton handoff fallback', () => {
       { source: 'landing_hero', download_type: 'codex' },
       { source: 'handoff_fallback', download_type: 'codex' },
     ]);
-    expect(handoffResults().map((e) => e.handoff_result)).toEqual(['no_blur']);
+    expect(handoffResults().map((e) => e.handoff_result)).toEqual([
+      'fallback_shown',
+    ]);
     expect(fallbackPanel()!.textContent).toContain(
       'Command selected. Press ⌘C or Ctrl+C to copy.',
     );
@@ -750,7 +753,7 @@ describe('PromptInstallButton handoff fallback', () => {
     expect(fallbackPanel()).toBeNull();
   });
 
-  it('keeps a dismissed panel closed when a retry later reports no_blur', async () => {
+  it('keeps a dismissed panel closed when a retry later stays on the page', async () => {
     render(<PromptInstallButton source="landing_hero" />);
     await pickAgent('Codex');
     await waitOutHandoff();
@@ -764,8 +767,8 @@ describe('PromptInstallButton handoff fallback', () => {
 
     expect(fallbackPanel()).toBeNull();
     expect(handoffResults().map((e) => e.handoff_result)).toEqual([
-      'no_blur',
-      'no_blur',
+      'fallback_shown',
+      'fallback_shown',
     ]);
   });
 
@@ -790,5 +793,64 @@ describe('PromptInstallButton handoff fallback', () => {
     });
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
     expect(fallbackPanel()).toBeNull();
+  });
+
+  it('keeps the panel off an agent menu opened during the provisional blur', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Codex');
+    blur();
+    await waitOutHandoff();
+    const trigger = container.querySelector(
+      'button[aria-label="Choose your agent"]',
+    )!;
+    click(trigger);
+    refocus();
+
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(fallbackPanel()).toBeNull();
+    expect(handoffResults().map((e) => e.handoff_result)).toEqual([
+      'fallback_shown',
+    ]);
+  });
+
+  it('sends one download_handoff per attempt when a second click supersedes the first', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    const main = container.querySelector('button')!;
+    await act(async () => click(main));
+    blur();
+    refocus();
+    await act(async () => click(main));
+    await waitOutHandoff();
+
+    const refs = refsSent().events;
+    expect(refs).toHaveLength(2);
+    expect(
+      handoffResults().map((e) => [e.install_ref, e.handoff_result]),
+    ).toEqual([
+      [refs[0], 'fallback_shown'],
+      [refs[1], 'fallback_shown'],
+    ]);
+    expect(fallbackPanel()!.querySelector('code')).not.toBeNull();
+  });
+
+  it('reports a superseded attempt without letting it drive the panel', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    const main = container.querySelector('button')!;
+    await act(async () => click(main));
+    blur();
+    await act(async () => click(main));
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+    refocus();
+    await waitOutHandoff();
+
+    const refs = refsSent().events;
+    expect(
+      handoffResults().map((e) => [e.install_ref, e.handoff_result]),
+    ).toEqual([
+      [refs[0], 'fallback_shown'],
+      [refs[1], 'fallback_shown'],
+    ]);
   });
 });

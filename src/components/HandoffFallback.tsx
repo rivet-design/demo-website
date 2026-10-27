@@ -2,11 +2,7 @@
 // focus: the same install, as a command to paste, plus ways to get the app or
 // retry. It keeps the original click's ref so the sign-in still matches.
 import { X } from 'lucide-react';
-import {
-  telemetry,
-  type CommandCopyMethod,
-  type PromptInstallSource,
-} from '@/lib/telemetry';
+import { telemetry, type CommandCopyMethod } from '@/lib/telemetry';
 import {
   AGENT_DOWNLOAD_URLS,
   type DeepLinkAgentId,
@@ -18,7 +14,6 @@ import { InstallCommandRow, useInstallCommandCopy } from './InstallCommandRow';
 type HandoffFallbackProps = {
   agent: { id: DeepLinkAgentId; label: string };
   installRef: InstallRef;
-  source: PromptInstallSource;
   onRetry: () => void;
   onClose: () => void;
 };
@@ -26,7 +21,6 @@ type HandoffFallbackProps = {
 const HandoffFallback = ({
   agent,
   installRef,
-  source,
   onRetry,
   onClose,
 }: HandoffFallbackProps) => {
@@ -39,17 +33,7 @@ const HandoffFallback = ({
     });
     return installRef;
   };
-  const onCopied = (id: InstallAgentId) =>
-    telemetry.trackDownloadHandoff({
-      source,
-      downloadType: id,
-      installRef,
-      result: 'fallback_copied',
-    });
-  const { copiedId, copyFailed, rowProps } = useInstallCommandCopy(
-    track,
-    onCopied,
-  );
+  const { copiedId, copyFailed, rowProps } = useInstallCommandCopy(track);
 
   return (
     <div className="flex flex-col gap-3 p-3">

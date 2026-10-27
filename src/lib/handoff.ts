@@ -6,8 +6,6 @@
 // takes focus, and cancelling or dismissing it hands focus straight back while
 // the page stays visible.
 
-export type HandoffDetection = 'blurred' | 'blur_returned' | 'no_blur';
-
 export const HANDOFF_TIMEOUT_MS = 2000;
 
 /** How long after a blur a refocus still counts as the handoff failing. */
@@ -19,15 +17,14 @@ export const openDeepLink = (url: string): void => {
 };
 
 /**
- * Calls `onResult` once:
- * - `no_blur` if the page keeps focus for `timeoutMs`;
- * - `blur_returned` if it blurs within `timeoutMs` and regains focus within
- *   `returnWindowMs` of the blur without ever being hidden;
- * - `blurred` if it hides or unloads, or stays blurred past `returnWindowMs`.
+ * Calls `onResult` once with whether the visitor left the page. They left if
+ * it hides or unloads, or blurs within `timeoutMs` and stays blurred for
+ * `returnWindowMs`. They stayed if it keeps focus for `timeoutMs`, or blurs
+ * and regains focus within `returnWindowMs` without ever being hidden.
  * Returns a cancel function that drops the pending result.
  */
 export const watchHandoff = (
-  onResult: (result: HandoffDetection) => void,
+  onResult: (leftPage: boolean) => void,
   timeoutMs = HANDOFF_TIMEOUT_MS,
   returnWindowMs = BLUR_RETURN_WINDOW_MS,
 ): (() => void) => {
@@ -36,19 +33,19 @@ export const watchHandoff = (
 
   const onBlur = (event: Event) => {
     if (event.target !== window || returnTimer !== undefined) return;
-    returnTimer = setTimeout(() => finish('blurred'), returnWindowMs);
+    returnTimer = setTimeout(() => finish(true), returnWindowMs);
   };
   const onFocus = (event: Event) => {
     if (event.target === window && returnTimer !== undefined) {
-      finish('blur_returned');
+      finish(false);
     }
   };
-  const onPageHide = () => finish('blurred');
+  const onPageHide = () => finish(true);
   const onVisibilityChange = () => {
-    if (document.visibilityState === 'hidden') finish('blurred');
+    if (document.visibilityState === 'hidden') finish(true);
   };
   const timer = setTimeout(() => {
-    if (returnTimer === undefined) finish('no_blur');
+    if (returnTimer === undefined) finish(false);
   }, timeoutMs);
 
   function stop() {
@@ -61,10 +58,10 @@ export const watchHandoff = (
     document.removeEventListener('visibilitychange', onVisibilityChange);
   }
 
-  function finish(result: HandoffDetection) {
+  function finish(leftPage: boolean) {
     if (done) return;
     stop();
-    onResult(result);
+    onResult(leftPage);
   }
 
   window.addEventListener('blur', onBlur);
