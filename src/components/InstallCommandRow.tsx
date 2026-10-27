@@ -72,7 +72,14 @@ type InstallCommandRowProps = {
   codeRef: (el: HTMLElement | null) => void;
 };
 
-export const useInstallCommandCopy = (track: TrackCommandCopy) => {
+/**
+ * `onCopied` runs only once the full command reached the clipboard, unlike
+ * `track`, which records every attempt.
+ */
+export const useInstallCommandCopy = (
+  track: TrackCommandCopy,
+  onCopied?: (id: InstallAgentId) => void,
+) => {
   const [copyFailed, setCopyFailed] = useState(false);
   // Which agent's command was just copied (drives that row's "Copied" state).
   const [copiedId, setCopiedId] = useState<InstallAgentId | null>(null);
@@ -87,6 +94,7 @@ export const useInstallCommandCopy = (track: TrackCommandCopy) => {
     const installRef = track(id, copyMethod);
     copyToClipboard(copiedInstallCommand(id, installRef)).then(
       () => {
+        onCopied?.(id);
         setCopiedId(id);
         setTimeout(() => setCopiedId((cur) => (cur === id ? null : cur)), 2000);
       },
@@ -104,6 +112,7 @@ export const useInstallCommandCopy = (track: TrackCommandCopy) => {
     if (!selectedText) return;
     const installRef = track(id, 'manual_select');
     if (selectedText !== INSTALL_COMMANDS[id]) return;
+    onCopied?.(id);
     const command = copiedInstallCommand(id, installRef);
     if (command === selectedText) return;
     event.clipboardData.setData('text/plain', command);

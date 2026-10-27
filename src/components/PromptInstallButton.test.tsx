@@ -476,8 +476,35 @@ it('keeps the chooser readable beside a scaled button and inside a narrow viewpo
 });
 
 describe('PromptInstallButton handoff fallback', () => {
-  beforeEach(() => jest.useFakeTimers());
-  afterEach(() => jest.useRealTimers());
+  // PostHog drops events once a faked Date jumps back between tests.
+  beforeEach(() => jest.useFakeTimers({ doNotFake: ['Date'] }));
+  afterEach(() => {
+    jest.useRealTimers();
+    setVisibility('visible');
+  });
+
+  const setVisibility = (state: DocumentVisibilityState) =>
+    Object.defineProperty(document, 'visibilityState', {
+      value: state,
+      configurable: true,
+    });
+  const blur = () => act(() => window.dispatchEvent(new Event('blur')));
+  const refocus = () => act(() => window.dispatchEvent(new Event('focus')));
+  const hide = () =>
+    act(() => {
+      setVisibility('hidden');
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+  const stayAway = () =>
+    act(() => {
+      jest.advanceTimersByTime(handoff.BLUR_RETURN_WINDOW_MS);
+    });
+  const pressEscape = (target: Element) =>
+    act(() => {
+      target.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+      );
+    });
 
   const handoffResults = () =>
     sent
@@ -499,30 +526,39 @@ describe('PromptInstallButton handoff fallback', () => {
       jest.advanceTimersByTime(handoff.HANDOFF_TIMEOUT_MS);
     });
 
-  it('keeps the opening toast and shows no panel when the page blurs', async () => {
-    render(<PromptInstallButton source="landing_hero" />);
-    await pickAgent('Claude');
-    act(() => {
-      jest.advanceTimersByTime(500);
-      window.dispatchEvent(new Event('blur'));
-    });
-    await waitOutHandoff();
+  it.each([
+    ['hides', hide],
+    ['stays blurred', stayAway],
+  ])(
+    'keeps the opening toast and shows no panel when the page blurs and %s',
+    async (_, leave) => {
+      render(<PromptInstallButton source="landing_hero" />);
+      await pickAgent('Claude');
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
+      blur();
+      await waitOutHandoff();
+      expect(handoffResults()).toEqual([]);
+      leave();
+      refocus();
 
-    const [ref] = refsSent().events;
-    expect(handoffResults()).toEqual([
-      {
-        source: 'landing_hero',
-        download_type: 'claude',
-        install_ref: ref,
-        handoff_result: 'blurred',
-      },
-    ]);
-    expect(toast.success).toHaveBeenCalledWith('Opening Claude…', {
-      duration: 3000,
-    });
-    expect(toast.dismiss).not.toHaveBeenCalled();
-    expect(fallbackPanel()).toBeNull();
-  });
+      const [ref] = refsSent().events;
+      expect(handoffResults()).toEqual([
+        {
+          source: 'landing_hero',
+          download_type: 'claude',
+          install_ref: ref,
+          handoff_result: 'blurred',
+        },
+      ]);
+      expect(toast.success).toHaveBeenCalledWith('Opening Claude…', {
+        duration: 3000,
+      });
+      expect(toast.dismiss).not.toHaveBeenCalled();
+      expect(fallbackPanel()).toBeNull();
+    },
+  );
 
   it('replaces the toast with the fallback panel when the page keeps focus', async () => {
     render(<PromptInstallButton source="landing_hero" />);
@@ -617,9 +653,9 @@ describe('PromptInstallButton handoff fallback', () => {
     expect(opened[1]).toBe(opened[0]);
     expect(refsSent().events).toHaveLength(1);
 
-    act(() => {
-      window.dispatchEvent(new Event('blur'));
-    });
+    blur();
+    expect(fallbackPanel()).not.toBeNull();
+    hide();
     expect(fallbackPanel()).toBeNull();
     expect(handoffResults().map((e) => e.handoff_result)).toEqual([
       'no_blur',
@@ -638,6 +674,121 @@ describe('PromptInstallButton handoff fallback', () => {
     await waitOutHandoff();
     expect(fallbackPanel()).not.toBeNull();
     await act(async () => click(container.querySelector('button')!));
+    expect(fallbackPanel()).toBeNull();
+  });
+
+  it('shows the panel when a blur is followed by refocus, as after a cancelled browser prompt', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Codex');
+    blur();
+    await waitOutHandoff();
+    act(() => {
+      jest.advanceTimersByTime(4000);
+    });
+    expect(fallbackPanel()).toBeNull();
+    refocus();
+
+    const [ref] = refsSent().events;
+    expect(handoffResults()).toEqual([
+      {
+        source: 'landing_hero',
+        download_type: 'codex',
+        install_ref: ref,
+        handoff_result: 'blur_returned',
+      },
+    ]);
+    expect(toast.dismiss).toHaveBeenCalledWith('opening-toast');
+    expect(fallbackPanel()!.textContent).toContain(
+      'Didn’t open? Paste this into Codex instead.',
+    );
+
+    await act(async () => {
+      fallbackPanel()!
+        .querySelector('button[aria-label="Copy Codex install command"]')!
+        .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(copiedText()).toEqual([
+      `npx -y rivet-design@latest install codex --ref ${ref}`,
+    ]);
+    expect(handoffResults().map((e) => e.handoff_result)).toEqual([
+      'blur_returned',
+      'fallback_copied',
+    ]);
+  });
+
+  it('records the attempt but not fallback_copied when the copy fails', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    (navigator.clipboard.writeText as jest.Mock).mockRejectedValueOnce(
+      new Error('denied'),
+    );
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Codex');
+    await waitOutHandoff();
+    await act(async () => {
+      fallbackPanel()!
+        .querySelector('button[aria-label="Copy Codex install command"]')!
+        .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(downloadClicks()).toEqual([
+      { source: 'landing_hero', download_type: 'codex' },
+      { source: 'handoff_fallback', download_type: 'codex' },
+    ]);
+    expect(handoffResults().map((e) => e.handoff_result)).toEqual(['no_blur']);
+    expect(fallbackPanel()!.textContent).toContain(
+      'Command selected. Press ⌘C or Ctrl+C to copy.',
+    );
+  });
+
+  it('closes the panel on Escape while focus stays on the CTA', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Codex');
+    await waitOutHandoff();
+    const main = container.querySelector('button')!;
+    main.focus();
+    pressEscape(main);
+    expect(fallbackPanel()).toBeNull();
+  });
+
+  it('keeps a dismissed panel closed when a retry later reports no_blur', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Codex');
+    await waitOutHandoff();
+    click(
+      [...fallbackPanel()!.querySelectorAll('button')].find(
+        (b) => b.textContent === 'Try opening again',
+      )!,
+    );
+    click(fallbackPanel()!.querySelector('button[aria-label="Dismiss"]')!);
+    await waitOutHandoff();
+
+    expect(fallbackPanel()).toBeNull();
+    expect(handoffResults().map((e) => e.handoff_result)).toEqual([
+      'no_blur',
+      'no_blur',
+    ]);
+  });
+
+  it('closes the panel when the chooser opens', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Codex');
+    await waitOutHandoff();
+    const trigger = container.querySelector(
+      'button[aria-label="Choose your agent"]',
+    )!;
+    click(trigger);
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(fallbackPanel()).toBeNull();
+
+    click(trigger);
+    await act(async () => click(container.querySelector('button')!));
+    await waitOutHandoff();
+    act(() => {
+      trigger.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }),
+      );
+    });
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
     expect(fallbackPanel()).toBeNull();
   });
 });

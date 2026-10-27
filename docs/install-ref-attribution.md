@@ -46,15 +46,25 @@ These events record handoff intent, not proof that an app opened or Rivet
 installed. The ref in the decoded prompt matches `install_ref` and the
 person's `last_install_ref`. The embedding flag controls refs in every path.
 
-Desktop links open in the same tab. For about two seconds after the click the
-page listens for `blur`, a hidden `visibilitychange`, or `pagehide`, and then
-records `download_handoff` with the click's `source`, `download_type`, and
-`install_ref` plus `handoff_result`: `blurred` when the page lost focus, or
-`no_blur` when it did not. Every platform and browser uses the same check. On
-`no_blur` the opening toast is replaced by a panel under the CTA that offers
-the agent's install command, a download link for the agent, and a retry of the
-same link. A copy from that panel records `download_clicked` with source
-`handoff_fallback`, the original `install_ref`, and its `copy_method`, plus a
+Desktop links open in the same tab. The page then records `download_handoff`
+with the click's `source`, `download_type`, and `install_ref` plus
+`handoff_result`:
+
+- `no_blur`: the page kept focus for two seconds after the click.
+- `blur_returned`: the page blurred within those two seconds, then regained
+  focus within 15 seconds of the blur without ever being hidden. A browser's
+  own "open this link with the app?" prompt, cancelled or dismissed, ends this
+  way.
+- `blurred`: the page was hidden or unloaded (`visibilitychange` to hidden or
+  `pagehide`), or stayed blurred for 15 seconds.
+
+A blur alone is provisional; only `blurred` counts as the app opening. Every
+platform and browser uses the same check. On `no_blur` or `blur_returned` the
+opening toast is replaced by a panel under the CTA that offers the agent's
+install command, a download link for the agent, and a retry of the same link.
+A copy attempt from that panel records `download_clicked` with source
+`handoff_fallback`, the original `install_ref`, and its `copy_method`. Only a
+copy that put the full command on the clipboard also records a
 `download_handoff` with `fallback_copied`. A retry reports another
 `download_handoff` for the same ref. The latest result for a ref is the
 outcome.

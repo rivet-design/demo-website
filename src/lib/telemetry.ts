@@ -1,6 +1,7 @@
 import { posthog } from './posthog';
 import type { InstallTarget } from './install';
 import type { InstallRef } from './installRef';
+import type { HandoffDetection } from './handoff';
 
 /** Where a PromptInstallButton sits; sent as `source` on `download_clicked`. */
 export type PromptInstallSource =
@@ -20,10 +21,13 @@ type DownloadClickedSource =
 export type CommandCopyMethod = 'row_click' | 'icon' | 'manual_select';
 
 /**
- * How a desktop deep link ended; sent as `handoff_result`. `fallback_copied`
- * follows a `no_blur` when the visitor copies the command from the fallback.
+ * How a desktop deep link ended; sent as `handoff_result`. `blur_returned` is a
+ * blur followed by refocus without the page hiding, such as a cancelled browser
+ * "open this app?" prompt; it shows the fallback like `no_blur`.
+ * `fallback_copied` follows either when the visitor copies the command from
+ * the fallback.
  */
-export type HandoffResult = 'blurred' | 'no_blur' | 'fallback_copied';
+export type HandoffResult = HandoffDetection | 'fallback_copied';
 
 /** `pkce` is the current proxy-completed flow; `implicit` is the legacy hash-token relay. */
 export type AuthFlow = 'pkce' | 'implicit';

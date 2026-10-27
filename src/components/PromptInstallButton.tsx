@@ -132,8 +132,32 @@ const PromptInstallButton = ({
   // The click whose deep link did not take focus; drives the fallback panel.
   const [fallback, setFallback] = useState<Handoff | null>(null);
   const stopWatchingRef = useRef<(() => void) | null>(null);
+  // Refs, not state: Popover keeps its first-render outside-click handler.
+  const fallbackShownRef = useRef(false);
+  // Set when the visitor closes the panel, so a retry still being watched
+  // reports its result without reopening it.
+  const fallbackDismissedRef = useRef(false);
+
+  const showFallback = (handoff: Handoff | null) => {
+    fallbackShownRef.current = handoff !== null;
+    setFallback(handoff);
+  };
+  const dismissFallback = () => {
+    if (fallbackShownRef.current) fallbackDismissedRef.current = true;
+    showFallback(null);
+  };
 
   useEffect(() => () => stopWatchingRef.current?.(), []);
+
+  // Focus usually stays on the CTA, outside the portaled panel.
+  useEffect(() => {
+    if (!fallback) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') dismissFallback();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [fallback]);
 
   useEffect(() => {
     if (!open || !dismissOnScroll) return;
@@ -168,6 +192,7 @@ const PromptInstallButton = ({
   // Listeners go up before navigating so an immediate blur is not missed.
   const handOff = ({ agent, installRef }: Handoff) => {
     stopWatchingRef.current?.();
+    fallbackDismissedRef.current = false;
     const toastId = toast.success(`Opening ${agent.label}…`, {
       duration: 3000,
     });
@@ -179,11 +204,21 @@ const PromptInstallButton = ({
         installRef,
         result,
       });
-      if (result === 'blurred') {
-        setFallback(null);
-      } else {
-        toast.dismiss(toastId);
-        setFallback({ agent, installRef });
+      switch (result) {
+        case 'blurred':
+          showFallback(null);
+          break;
+        case 'no_blur':
+        case 'blur_returned':
+          toast.dismiss(toastId);
+          if (!fallbackDismissedRef.current) {
+            showFallback({ agent, installRef });
+          }
+          break;
+        default: {
+          const unhandled: never = result;
+          throw new Error(`Unhandled handoff result: ${String(unhandled)}`);
+        }
       }
     });
     openDeepLink(installDeepLink(agent.id, installRef));
@@ -191,7 +226,7 @@ const PromptInstallButton = ({
 
   const activate = (item: AgentItem) => {
     setSelected(item);
-    setFallback(null);
+    showFallback(null);
     const installRef = generateInstallRef();
     telemetry.trackDownloadClicked({
       source,
@@ -232,6 +267,7 @@ const PromptInstallButton = ({
     if (!open) {
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
+        dismissFallback();
         setOpen(true);
         setHighlight(e.key === 'ArrowDown' ? 0 : AGENT_ITEMS.length);
       }
@@ -261,7 +297,7 @@ const PromptInstallButton = ({
       className={wrapperClassName}
       open={fallback !== null}
       onOpenChange={(next) => {
-        if (!next) setFallback(null);
+        if (!next) dismissFallback();
       }}
     >
       <Popover
@@ -270,6 +306,7 @@ const PromptInstallButton = ({
         onOpenChange={(next) => {
           setHighlight(-1);
           setInputMode('pointer');
+          if (next) dismissFallback();
           setOpen(next);
         }}
       >
@@ -383,9 +420,6 @@ const PromptInstallButton = ({
         data-lenis-prevent
         aria-label={`Install Rivet in ${fallback?.agent.label ?? ''}`}
         className="overflow-y-auto overscroll-contain rounded-2xl border-black/[0.12] bg-white text-black shadow-[0_12px_32px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)]"
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') setFallback(null);
-        }}
       >
         {fallback && (
           <HandoffFallback
@@ -394,7 +428,7 @@ const PromptInstallButton = ({
             installRef={fallback.installRef}
             source={source}
             onRetry={() => handOff(fallback)}
-            onClose={() => setFallback(null)}
+            onClose={dismissFallback}
           />
         )}
       </PopoverContent>

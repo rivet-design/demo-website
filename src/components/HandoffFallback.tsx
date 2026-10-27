@@ -37,15 +37,19 @@ const HandoffFallback = ({
       copyMethod,
       installRef,
     });
+    return installRef;
+  };
+  const onCopied = (id: InstallAgentId) =>
     telemetry.trackDownloadHandoff({
       source,
       downloadType: id,
       installRef,
       result: 'fallback_copied',
     });
-    return installRef;
-  };
-  const { copiedId, copyFailed, rowProps } = useInstallCommandCopy(track);
+  const { copiedId, copyFailed, rowProps } = useInstallCommandCopy(
+    track,
+    onCopied,
+  );
 
   return (
     <div className="flex flex-col gap-3 p-3">
