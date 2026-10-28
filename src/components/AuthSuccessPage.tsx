@@ -7,13 +7,18 @@ import {
   type SignInFailureReason,
 } from '../lib/telemetry';
 import { parseInstallRef } from '../lib/installRef';
+import {
+  accountIdFromAccessToken,
+  parseAccountId,
+  type AccountId,
+} from '../lib/authAccount';
 
 const PROXY_URL = 'https://rivet-proxy.onrender.com';
 
 type AuthState = 'processing' | 'success' | 'error';
 
 type AuthOutcome =
-  | { kind: 'success'; flow: AuthFlow }
+  | { kind: 'success'; flow: AuthFlow; accountId: AccountId | null }
   | {
       kind: 'error';
       flow: AuthFlow;
@@ -36,12 +41,36 @@ const PKCE_ERROR_MESSAGES: Record<PkceErrorReason, string> = {
 const parsePkceErrorReason = (raw: string | null): PkceErrorReason | null =>
   PKCE_ERROR_REASONS.find((reason) => reason === raw) ?? null;
 
+/**
+ * Drops the token fragment and session id from the address bar once read, so
+ * later captures, replays, and history never see them. The initial pageview
+ * fires before this runs; `redactAuthTokens` covers that one.
+ */
+const scrubAuthSecretsFromUrl = () => {
+  const url = new URL(window.location.href);
+  if (!url.hash && !url.searchParams.has('session')) return;
+  url.hash = '';
+  url.searchParams.delete('session');
+  window.history.replaceState(window.history.state, '', url.toString());
+};
+
 const resolveAuth = async (): Promise<AuthOutcome> => {
   const urlParams = new URLSearchParams(window.location.search);
+  const sessionId = urlParams.get('session');
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  const accessToken = hashParams.get('access_token');
+  const refreshToken = hashParams.get('refresh_token');
+  scrubAuthSecretsFromUrl();
 
   // PKCE flow: the proxy already finished the login; just render it.
   const pkceOutcome = urlParams.get('login');
-  if (pkceOutcome === 'complete') return { kind: 'success', flow: 'pkce' };
+  if (pkceOutcome === 'complete') {
+    return {
+      kind: 'success',
+      flow: 'pkce',
+      accountId: parseAccountId(urlParams.get('account_id')),
+    };
+  }
   if (pkceOutcome === 'error') {
     const reason = parsePkceErrorReason(urlParams.get('reason'));
     return {
@@ -55,7 +84,6 @@ const resolveAuth = async (): Promise<AuthOutcome> => {
   }
 
   // Legacy implicit flow: relay hash tokens to the proxy.
-  const sessionId = urlParams.get('session');
   if (!sessionId) {
     return {
       kind: 'error',
@@ -65,10 +93,6 @@ const resolveAuth = async (): Promise<AuthOutcome> => {
     };
   }
 
-  // Extract tokens from URL hash (Supabase implicit flow)
-  const hashParams = new URLSearchParams(window.location.hash.substring(1));
-  const accessToken = hashParams.get('access_token');
-  const refreshToken = hashParams.get('refresh_token');
   if (!accessToken) {
     return {
       kind: 'error',
@@ -102,7 +126,11 @@ const resolveAuth = async (): Promise<AuthOutcome> => {
       };
     }
 
-    return { kind: 'success', flow: 'implicit' };
+    return {
+      kind: 'success',
+      flow: 'implicit',
+      accountId: accountIdFromAccessToken(accessToken),
+    };
   } catch (err) {
     return {
       kind: 'error',
@@ -118,10 +146,14 @@ const resolveAuth = async (): Promise<AuthOutcome> => {
  *
  * PKCE flow (current): the proxy has already completed the login server-side
  * and redirects here with ?login=complete|error — this page is purely
- * informational and no tokens ever reach the browser.
+ * informational and no tokens ever reach the browser. An `account_id` query
+ * param, when the proxy sends one, identifies the visitor.
  *
  * Implicit flow (legacy desktop/MCP clients): tokens arrive in the URL hash
- * and this page relays them to the proxy's /complete endpoint.
+ * and this page relays them to the proxy's /complete endpoint. Once the proxy
+ * accepts them, the access token's `sub` identifies the visitor.
+ *
+ * Both flows report a `?ref=` install ref when the link carries one.
  */
 const AuthSuccessPage = () => {
   const [authState, setAuthState] = useState<AuthState>('processing');
@@ -138,6 +170,7 @@ const AuthSuccessPage = () => {
     resolveAuth().then((outcome) => {
       switch (outcome.kind) {
         case 'success':
+          if (outcome.accountId) telemetry.identifyAccount(outcome.accountId);
           telemetry.trackEditorSignInCompleted({
             flow: outcome.flow,
             installRef,
