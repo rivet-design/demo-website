@@ -4,7 +4,8 @@ Each install handoff generates an `r_` ref with eight base62 characters. The
 website records it as `install_ref` on `download_clicked` and as
 `last_install_ref` on the person. `/auth-success` validates query-string refs
 and records them on sign-in outcomes. Matching refs connect events across
-browsers without merging PostHog identities. Token fragments remain redacted.
+browsers; a successful sign-in also identifies the browser by account id (see
+[Sign-in](#sign-in)). Token fragments and session ids remain redacted.
 
 ## Handoff paths
 
@@ -77,6 +78,58 @@ A native copy of a complete accordion command appends its ref through the copy
 event's clipboard data. Partial text selections remain unchanged. If an
 automatic clipboard write fails, the command remains selected for a native
 keyboard copy, which generates its own ref.
+
+## Sign-in
+
+`/auth-success` has two entry URLs. `editor_sign_in_completed` and
+`editor_sign_in_failed` record which one as `sign_in_flow`, next to the older
+`auth_flow`:
+
+| URL                                         | `sign_in_flow`   | `auth_flow` |
+| ------------------------------------------- | ---------------- | ----------- |
+| `?login=complete` or `?login=error&reason=` | `login_complete` | `pkce`      |
+| `?session=<id>#access_token=...`            | `session`        | `implicit`  |
+
+Both flows read `ref` from the query string only, never the fragment, and
+send it as `install_ref` when it is a valid ref. A link without a ref sends no
+`install_ref`.
+
+On success the page calls `posthog.identify(<account id>)` before capturing
+the completion, so the downloader's anonymous events merge into the account.
+The account id is the Supabase auth user id, a UUID. Anything that is not a
+UUID is ignored. The id comes from:
+
+- `session`: the `sub` claim of the access token, read only after the proxy
+  accepts the token.
+- `login_complete`: an optional `account_id` query param.
+
+A browser already identified (as the same account or a different one) is not
+identified again, so a shared machine never merges two accounts.
+
+The page removes the fragment and `session` from the address bar as soon as
+it reads them. `before_send` also strips every fragment and the `session`,
+`access_token`, `refresh_token`, `token`, and `code` query params from
+`/auth-success` URLs in every event, since the initial pageview fires before
+the page runs.
+
+### rivet-core contract
+
+The site does not build either sign-in URL. rivet-core does: the proxy's PKCE
+callback redirects to `?login=...`, and the legacy flow passes
+`https://rivet.design/auth-success?session=<id>` to Supabase as `redirectTo`.
+To make every sign-in attributable, rivet-core must:
+
+1. Append `&ref=<install ref>` to the `?session=` `redirectTo` whenever the
+   install recorded a ref, URL-encoded, before the fragment. Supabase must
+   still accept the URL: its redirect allowlist entry has to match
+   `https://rivet.design/auth-success?session=...&ref=...` (for example
+   `https://rivet.design/auth-success**`). Otherwise Supabase falls back to the
+   Site URL and drops the query.
+2. Optionally append `&account_id=<Supabase user id>` to the `?login=complete`
+   redirect so PKCE sign-ins identify too. Send only the UUID, never an email
+   or token.
+3. If the CLI or app identifies PostHog users, use the same Supabase user id
+   as the distinct id so the persons join.
 
 ## Rollout verification
 
