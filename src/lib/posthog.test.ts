@@ -22,7 +22,7 @@ describe('redactAuthTokens', () => {
     expect(result?.timestamp).toBe(timestamp);
     expect(result?.timestamp?.toISOString()).toBe('2026-10-05T04:30:00.000Z');
     expect(result?.properties.$current_url).toBe(
-      'http://localhost/auth-success?session=s1',
+      'http://localhost/auth-success',
     );
     expect(JSON.stringify(result)).not.toMatch(/SECRET_[AR]/);
   });
@@ -40,12 +40,9 @@ describe('redactAuthTokens', () => {
 
     expect(result?.properties).toEqual({
       $set_once: {
-        $initial_current_url: 'http://localhost/auth-success?session=s1',
+        $initial_current_url: 'http://localhost/auth-success',
       },
-      urls: [
-        'http://localhost/auth-success?session=s1',
-        'http://localhost/#demo',
-      ],
+      urls: ['http://localhost/auth-success', 'http://localhost/#demo'],
     });
   });
 
@@ -87,8 +84,27 @@ describe('redactAuthTokens', () => {
     expect(result?.properties).toEqual({
       $current_url:
         'http://localhost/auth-success?login=complete&ref=r_aZ09bY18',
-      $session_entry_url:
-        'http://localhost/auth-success?session=s1&ref=r_aZ09bY18',
+      $session_entry_url: 'http://localhost/auth-success?ref=r_aZ09bY18',
+    });
+  });
+
+  it('drops any fragment and the session id from /auth-success URLs only', () => {
+    const result = redactAuthTokens(
+      eventWith({
+        properties: {
+          $current_url:
+            'https://rivet.design/auth-success?session=sess-9&ref=r_aZ09bY18&account_id=0b9f3c2e-1d4a-4f6b-9e8d-7c6b5a4f3e2d#error=access_denied',
+          $referrer: 'https://rivet.design/download?session=keep#section',
+          $pathname: '/auth-success',
+        },
+      }),
+    );
+
+    expect(result?.properties).toEqual({
+      $current_url:
+        'https://rivet.design/auth-success?ref=r_aZ09bY18&account_id=0b9f3c2e-1d4a-4f6b-9e8d-7c6b5a4f3e2d',
+      $referrer: 'https://rivet.design/download?session=keep#section',
+      $pathname: '/auth-success',
     });
   });
 
