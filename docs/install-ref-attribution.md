@@ -1,7 +1,8 @@
 # Install ref attribution
 
-Each install handoff generates an `r_` ref with eight base62 characters. The
-website records it as `install_ref` on `download_clicked` and as
+Each command install handoff and Mac download generates an `r_` ref with eight
+base62 characters. Plugin directory clicks do not generate refs.
+The website records each ref as `install_ref` on `download_clicked` and as
 `last_install_ref` on the person. `/auth-success` validates query-string refs
 and records them on sign-in outcomes. Matching refs connect events across
 browsers without merging PostHog identities. Token fragments remain redacted.
@@ -41,16 +42,22 @@ deploying this website change. A merge into the CLI's main branch does not make
 that behavior available through `rivet-design@latest`; older packages may
 configure every detected host for bare `install`.
 
-Every activation and copy attempt prepares a fresh ref, except fallback
+Every command activation and copy attempt prepares a fresh ref, except fallback
 copies, which reuse the ref of the click they follow. Agent activations
 record `download_clicked` with `download_type` set to `codex`, `claude`, or
 `cursor`. A successful prompt copy records `agent` after the clipboard write.
 These events record handoff intent, not proof that an app opened or Rivet
 installed. The ref in the decoded prompt matches `install_ref` and the
 person's `last_install_ref`. The embedding flag controls refs in command-based
-paths. Codex clicks keep the same event and person attribution, but the plugin
-URL carries no ref and cannot be joined to CLI sign-in through that ref. Codex
-does not start a desktop handoff watcher or show the command fallback.
+paths.
+
+Codex clicks record `download_clicked` with `download_type: codex` and
+`install_method: plugin_directory`. They omit `install_ref` and leave the
+person's existing `last_install_ref` unchanged. The plugin URL carries no ref,
+so these clicks cannot be joined to CLI sign-in through a ref. Report plugin
+clicks separately from the CLI click-to-sign-in funnel. Plugin activation
+tracking requires instrumentation of the plugin's first authenticated use.
+Codex does not start a desktop handoff watcher or show the command fallback.
 
 Claude and Cursor desktop links open in the same tab. Each attempt to open the
 app (the first click and every "Try opening again") records one

@@ -80,24 +80,38 @@ class Telemetry {
   // ----- Install funnel -----
 
   /**
-   * An install prompt was opened in an agent, a command was copied, or the Mac
-   * app was downloaded. `last_install_ref` goes on the person too, so the visitor
-   * and a sign-in from another browser share it at the person level.
+   * Records install intent. Command and Mac download refs also go on the
+   * person so a later sign-in can be matched across browsers. Plugin directory
+   * clicks do not pass an install ref to sign-in.
    */
-  trackDownloadClicked(props: {
-    source: DownloadClickedSource;
-    downloadType: InstallTarget | 'mac';
-    installRef: InstallRef;
-    version?: string;
-    copyMethod?: CommandCopyMethod;
-  }): void {
-    this.send('$set', () =>
-      posthog.setPersonProperties({ last_install_ref: props.installRef }),
-    );
+  trackDownloadClicked(
+    props: {
+      source: DownloadClickedSource;
+      version?: string;
+      copyMethod?: CommandCopyMethod;
+    } & (
+      | {
+          downloadType: 'codex';
+          installMethod: 'plugin_directory';
+          installRef?: never;
+        }
+      | {
+          downloadType: Exclude<InstallTarget, 'codex'> | 'mac';
+          installRef: InstallRef;
+          installMethod?: never;
+        }
+    ),
+  ): void {
+    if (props.installRef) {
+      this.send('$set', () =>
+        posthog.setPersonProperties({ last_install_ref: props.installRef }),
+      );
+    }
     this.track('download_clicked', {
       source: props.source,
       download_type: props.downloadType,
-      install_ref: props.installRef,
+      ...(props.installRef && { install_ref: props.installRef }),
+      ...(props.installMethod && { install_method: props.installMethod }),
       ...(props.version !== undefined && { version: props.version }),
       ...(props.copyMethod && { copy_method: props.copyMethod }),
     });

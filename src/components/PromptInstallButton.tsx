@@ -235,21 +235,25 @@ const PromptInstallButton = ({
   const activate = (item: AgentItem) => {
     setSelected(item);
     showFallback(null);
+    // Keep navigation in the click/keyboard gesture; clipboard permissions
+    // must not delay or block the desktop handoff.
+    setOpen(false);
+    if (item.id === 'codex') {
+      telemetry.trackDownloadClicked({
+        source,
+        downloadType: 'codex',
+        installMethod: 'plugin_directory',
+      });
+      ++latestAttemptRef.current;
+      window.open(CODEX_PLUGIN_URL, '_blank', 'noopener,noreferrer');
+      return;
+    }
     const installRef = generateInstallRef();
     telemetry.trackDownloadClicked({
       source,
       downloadType: item.id,
       installRef,
     });
-
-    // Keep navigation in the click/keyboard gesture; clipboard permissions
-    // must not delay or block the desktop handoff.
-    setOpen(false);
-    if (item.id === 'codex') {
-      ++latestAttemptRef.current;
-      window.open(CODEX_PLUGIN_URL, '_blank', 'noopener,noreferrer');
-      return;
-    }
     handOff({ agent: { ...item, id: item.id }, installRef });
   };
 

@@ -139,6 +139,35 @@ describe('PromptInstallButton download_clicked', () => {
     },
   );
 
+  it.each([true, false])(
+    'records plugin intent without generating or overwriting a ref when embedding is %s',
+    async (embedRef) => {
+      jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', embedRef);
+      render(<PromptInstallButton source="landing_hero" />);
+      await pickAgent('Claude');
+      const previousRefs = refsSent().people;
+      const generateRef = jest.spyOn(installRef, 'generateInstallRef');
+      const setPerson = jest.spyOn(posthog, 'setPersonProperties');
+
+      await pickAgent('Codex');
+      await act(async () => click(container.querySelector('button')!));
+
+      const clicks = sent.filter((event) => event.event === 'download_clicked');
+      for (const event of clicks.slice(1)) {
+        expect(event.properties).toMatchObject({
+          source: 'landing_hero',
+          download_type: 'codex',
+          install_method: 'plugin_directory',
+        });
+        expect(event.properties).not.toHaveProperty('install_ref');
+      }
+      expect(clicks).toHaveLength(3);
+      expect(generateRef).not.toHaveBeenCalled();
+      expect(setPerson).not.toHaveBeenCalled();
+      expect(refsSent().people).toEqual(previousRefs);
+    },
+  );
+
   it('carries the NavBar placement through to the event', async () => {
     render(<NavBar installSource="story_nav" />);
     await pickAgent('Cursor');
