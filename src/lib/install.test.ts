@@ -1,5 +1,5 @@
 import * as installRef from './installRef';
-import { installDeepLink, installPrompt } from './install';
+import { CODEX_PLUGIN_URL, installDeepLink, installPrompt } from './install';
 
 const REF = 'r_aZ09bY18' as const;
 
@@ -24,7 +24,6 @@ describe('installPrompt', () => {
 
   it.each([
     ['claude', 'claude'],
-    ['codex', 'codex'],
     ['cursor', 'cursor --mcp'],
   ] as const)('targets only the selected %s coding agent', (agent, target) => {
     expect(installPrompt(agent, REF)).toBe(
@@ -34,9 +33,14 @@ describe('installPrompt', () => {
 });
 
 describe('installDeepLink', () => {
+  it('opens the Codex plugin listing without CLI arguments or a composer prompt', () => {
+    expect(installDeepLink('codex', REF)).toBe(CODEX_PLUGIN_URL);
+    jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', false);
+    expect(installDeepLink('codex', REF)).toBe(CODEX_PLUGIN_URL);
+  });
+
   it.each([
     ['claude', 'claude:', 'code', '/new', 'q'],
-    ['codex', 'codex:', 'new', '', 'prompt'],
     ['cursor', 'cursor:', 'anysphere.cursor-deeplink', '/prompt', 'text'],
   ] as const)(
     'prefills the %s coding composer with its attributed prompt',
@@ -56,14 +60,13 @@ describe('installDeepLink', () => {
     },
   );
 
-  it.each(['claude', 'codex', 'cursor'] as const)(
+  it.each(['claude', 'cursor'] as const)(
     'respects the attribution rollout flag in %s deep links',
     (agent) => {
       jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', false);
 
       const url = new URL(installDeepLink(agent, REF));
-      const parameter =
-        agent === 'claude' ? 'q' : agent === 'codex' ? 'prompt' : 'text';
+      const parameter = agent === 'claude' ? 'q' : 'text';
       expect(url.searchParams.get(parameter)).toBe(
         `Install Rivet for this agent: \`npx -y rivet-design@latest install ${agent}${agent === 'cursor' ? ' --mcp' : ''}\``,
       );

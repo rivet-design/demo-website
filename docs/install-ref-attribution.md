@@ -8,23 +8,26 @@ browsers without merging PostHog identities. Token fragments remain redacted.
 
 ## Handoff paths
 
-The split CTA defaults to **Continue in Codex**. Its **Open in desktop**
+The split CTA defaults to **Continue in Codex**. Its **Install in your agent**
 section offers Codex, Claude, and Cursor; **Copy prompt** copies the general
-installer for any coding agent, including terminal CLIs. The desktop links
-prefill a coding session through `codex://new?prompt=`, `claude://code/new?q=`,
-or `cursor://anysphere.cursor-deeplink/prompt?text=`. The user sends the prompt
-in the destination app.
+installer for any coding agent, including terminal CLIs. Codex opens the Rivet
+plugin listing at
+https://chatgpt.com/plugins/plugins_6ad7eb1d359c8191baea949a147fd869
+in a new tab. Claude and Cursor prefill a coding session through
+`claude://code/new?q=` or `cursor://anysphere.cursor-deeplink/prompt?text=`.
+The user sends the prompt in the destination app.
 
-Every path uses the shared `installPrompt` builder:
+Command-based paths use the shared `installPrompt` builder:
 
 ```text
 Install Rivet for this agent: `<command>`
 ```
 
-Targeted commands use `install codex`, `install claude`, or `install cursor
---mcp`. Claude targets Claude Code, including its view in the desktop app;
-it does not also configure Claude Desktop chat. The separate command accordion
-keeps its existing Claude Code alias and command-copy behavior.
+Targeted commands use `install claude` or `install cursor --mcp`. Claude targets
+Claude Code, including its view in the desktop app. It does not also configure
+Claude Desktop chat. The separate command accordion
+keeps its existing Claude Code alias and command-copy behavior; it no longer
+offers the Codex CLI installer.
 
 The general prompt uses bare `install`. With the matching CLI release, Rivet
 returns a proposed agent and asks the host agent to get user confirmation in
@@ -38,16 +41,20 @@ deploying this website change. A merge into the CLI's main branch does not make
 that behavior available through `rivet-design@latest`; older packages may
 configure every detected host for bare `install`.
 
-Every desktop activation and copy attempt prepares a fresh ref, except fallback
-copies, which reuse the ref of the click they follow. Desktop links
+Every activation and copy attempt prepares a fresh ref, except fallback
+copies, which reuse the ref of the click they follow. Agent activations
 record `download_clicked` with `download_type` set to `codex`, `claude`, or
 `cursor`. A successful prompt copy records `agent` after the clipboard write.
 These events record handoff intent, not proof that an app opened or Rivet
 installed. The ref in the decoded prompt matches `install_ref` and the
-person's `last_install_ref`. The embedding flag controls refs in every path.
+person's `last_install_ref`. The embedding flag controls refs in command-based
+paths. Codex clicks keep the same event and person attribution, but the plugin
+URL carries no ref and cannot be joined to CLI sign-in through that ref. Codex
+does not start a desktop handoff watcher or show the command fallback.
 
-Desktop links open in the same tab. Each attempt to open the app (the first
-click and every "Try opening again") records one `download_handoff` with the
+Claude and Cursor desktop links open in the same tab. Each attempt to open the
+app (the first click and every "Try opening again") records one
+`download_handoff` with the
 click's `source`, `download_type`, and `install_ref` plus `handoff_result`:
 
 - `left_page`: the visitor left the page, so we assume the app opened and show

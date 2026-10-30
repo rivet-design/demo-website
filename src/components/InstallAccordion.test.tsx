@@ -103,6 +103,12 @@ afterEach(() => {
 });
 
 describe('InstallAccordion copy', () => {
+  it('does not offer the legacy Codex CLI installer', () => {
+    expect(
+      container.querySelector('[data-testid="install-command-codex"]'),
+    ).toBeNull();
+  });
+
   it('copies the command when the row is clicked', async () => {
     await click(code('claude'));
 
@@ -142,14 +148,14 @@ describe('InstallAccordion copy', () => {
   });
 
   it('counts a manual copy of selected command text', () => {
-    select(code('codex'));
-    copyEvent(code('codex'));
+    select(code('claude'));
+    copyEvent(code('claude'));
 
     expect(writeText).not.toHaveBeenCalled();
     expect(downloadClicks()).toEqual([
       {
         source: 'landing_accordion',
-        download_type: 'codex',
+        download_type: 'claude',
         copy_method: 'manual_select',
       },
     ]);
@@ -157,9 +163,9 @@ describe('InstallAccordion copy', () => {
 
   it('carries a fresh matching ref in each manually copied command when enabled', () => {
     jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', true);
-    select(code('codex'));
-    const first = copyEvent(code('codex'));
-    const second = copyEvent(code('codex'));
+    select(code('claude'));
+    const first = copyEvent(code('claude'));
+    const second = copyEvent(code('claude'));
     const clicks = sent.filter((event) => event.event === 'download_clicked');
 
     expect(clicks).toHaveLength(2);
@@ -168,7 +174,7 @@ describe('InstallAccordion copy', () => {
       expect(ref).toMatch(/^r_[0-9A-Za-z]{8}$/);
       expect(copied.event.defaultPrevented).toBe(true);
       expect(copied.data.get('text/plain')).toBe(
-        `${INSTALL_COMMANDS.codex} --ref ${ref}`,
+        `${INSTALL_COMMANDS.claude} --ref ${ref}`,
       );
       expect(clicks[index].properties.copy_method).toBe('manual_select');
     }
@@ -180,26 +186,26 @@ describe('InstallAccordion copy', () => {
 
   it('leaves a partial manual selection unchanged when attribution is enabled', () => {
     jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', true);
-    const text = code('codex').firstChild!;
+    const text = code('claude').firstChild!;
     const range = document.createRange();
     range.setStart(text, 0);
     range.setEnd(text, 3);
     window.getSelection()?.addRange(range);
-    const copied = copyEvent(code('codex'));
+    const copied = copyEvent(code('claude'));
 
     expect(copied.event.defaultPrevented).toBe(false);
     expect(copied.data.size).toBe(0);
   });
 
   it('ignores a copy event with nothing selected', () => {
-    copyEvent(row('codex'));
+    copyEvent(row('claude'));
 
     expect(downloadClicks()).toEqual([]);
   });
 
   it('does not overwrite the clipboard when a click ends a text selection', async () => {
-    select(code('codex'));
-    await click(code('codex'));
+    select(code('claude'));
+    await click(code('claude'));
 
     expect(writeText).not.toHaveBeenCalled();
     expect(downloadClicks()).toEqual([]);
@@ -209,12 +215,12 @@ describe('InstallAccordion copy', () => {
     jest.spyOn(console, 'warn').mockImplementation(() => {});
     writeText.mockRejectedValue(new Error('denied'));
 
-    await click(code('codex'));
+    await click(code('claude'));
 
-    expect(window.getSelection()?.toString()).toBe(INSTALL_COMMANDS.codex);
-    expect(row('codex').textContent).not.toContain('Copied');
+    expect(window.getSelection()?.toString()).toBe(INSTALL_COMMANDS.claude);
+    expect(row('claude').textContent).not.toContain('Copied');
 
-    copyEvent(code('codex'));
+    copyEvent(code('claude'));
     expect(downloadClicks().map((e) => e.copy_method)).toEqual([
       'row_click',
       'manual_select',
