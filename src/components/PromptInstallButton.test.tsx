@@ -4,6 +4,7 @@ import type { CaptureResult } from 'posthog-js';
 import { toast } from 'sonner';
 import { posthog } from '../lib/posthog';
 import * as handoff from '../lib/handoff';
+import { CODEX_PLUGIN_URL } from '../lib/install';
 import * as installRef from '../lib/installRef';
 import InstallAccordion from './InstallAccordion';
 import NavBar from './NavBar';
@@ -85,6 +86,7 @@ beforeEach(() => {
   sent = [];
   window.getSelection()?.removeAllRanges();
   jest.clearAllMocks();
+  jest.spyOn(window, 'open').mockReturnValue(null);
   jest.spyOn(handoff, 'openDeepLink').mockImplementation(() => {});
   Object.defineProperty(window, 'isSecureContext', {
     value: true,
@@ -117,15 +119,52 @@ describe('PromptInstallButton download_clicked', () => {
       expect(downloadClicks()).toEqual([
         { source, download_type: downloadType },
       ]);
-      expect(openedPrompts()).toEqual([
-        `Install Rivet for this agent: \`npx -y rivet-design@latest install ${downloadType}${downloadType === 'cursor' ? ' --mcp' : ''} --ref ${refsSent().events[0]}\``,
-      ]);
+      if (downloadType === 'codex') {
+        expect(window.open).toHaveBeenCalledWith(
+          CODEX_PLUGIN_URL,
+          '_blank',
+          'noopener,noreferrer',
+        );
+        expect(handoff.openDeepLink).not.toHaveBeenCalled();
+      } else
+        expect(openedPrompts()).toEqual([
+          `Install Rivet for this agent: \`npx -y rivet-design@latest install ${downloadType}${downloadType === 'cursor' ? ' --mcp' : ''} --ref ${refsSent().events[0]}\``,
+        ]);
       expect(navigator.clipboard.writeText).not.toHaveBeenCalled();
       expect(
         container
           .querySelector('[aria-expanded]')
           ?.getAttribute('aria-expanded'),
       ).toBe('false');
+    },
+  );
+
+  it.each([true, false])(
+    'records plugin intent without generating or overwriting a ref when embedding is %s',
+    async (embedRef) => {
+      jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', embedRef);
+      render(<PromptInstallButton source="landing_hero" />);
+      await pickAgent('Claude');
+      const previousRefs = refsSent().people;
+      const generateRef = jest.spyOn(installRef, 'generateInstallRef');
+      const setPerson = jest.spyOn(posthog, 'setPersonProperties');
+
+      await pickAgent('Codex');
+      await act(async () => click(container.querySelector('button')!));
+
+      const clicks = sent.filter((event) => event.event === 'download_clicked');
+      for (const event of clicks.slice(1)) {
+        expect(event.properties).toMatchObject({
+          source: 'landing_hero',
+          download_type: 'codex',
+          install_method: 'plugin_directory',
+        });
+        expect(event.properties).not.toHaveProperty('install_ref');
+      }
+      expect(clicks).toHaveLength(3);
+      expect(generateRef).not.toHaveBeenCalled();
+      expect(setPerson).not.toHaveBeenCalled();
+      expect(refsSent().people).toEqual(previousRefs);
     },
   );
 
@@ -147,7 +186,11 @@ describe('PromptInstallButton download_clicked', () => {
     render(<PromptInstallButton source="landing_hero" label="Install Rivet" />);
     await pickAgent('Codex');
 
-    expect(openedPrompts()).toEqual([expect.stringContaining('install codex')]);
+    expect(window.open).toHaveBeenCalledWith(
+      CODEX_PLUGIN_URL,
+      '_blank',
+      'noopener,noreferrer',
+    );
   });
 });
 
@@ -192,21 +235,21 @@ describe.each([
       ),
     pickAgent,
     openedPrompts,
-    'Codex',
+    'Claude',
   ],
   [
     'InstallAccordion',
     () => render(<InstallAccordion />),
     copyFromAccordion,
     copiedText,
-    'Codex',
+    'Claude',
   ],
 ] as const)(
   '%s install_ref',
-  (_, mount, activate, deliveredText, codexLabel) => {
+  (_, mount, activate, deliveredText, agentLabel) => {
     it('sends a fresh ref on the event and the person for every activation', async () => {
       mount();
-      await activate(codexLabel);
+      await activate(agentLabel);
       await activate('Claude');
 
       const { events, people } = refsSent();
@@ -219,10 +262,10 @@ describe.each([
     it('leaves the ref out of the delivered text while embedding is off', async () => {
       jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', false);
       mount();
-      await activate(codexLabel);
+      await activate(agentLabel);
 
       const [text] = deliveredText();
-      expect(text).toMatch(/npx -y rivet-design@latest install codex`?$/);
+      expect(text).toMatch(/npx -y rivet-design@latest install claude`?$/);
       expect(text).not.toContain('--ref');
       expect(text).not.toContain(refsSent().events[0]);
     });
@@ -247,7 +290,6 @@ describe.each([
 
 describe('PromptInstallButton desktop handoff', () => {
   it.each([
-    ['Codex', 'codex://new', 'prompt'],
     ['Claude', 'claude://code/new', 'q'],
     ['Cursor', 'cursor://anysphere.cursor-deeplink/prompt', 'text'],
   ])(
@@ -387,14 +429,17 @@ it('dismisses the nav chooser on scroll', () => {
   expect(trigger.getAttribute('aria-expanded')).toBe('false');
 });
 
-it('launches the default app from the main button without opening the menu', async () => {
+it('opens the Codex plugin from the main button without opening the menu', async () => {
   render(<PromptInstallButton source="landing_hero" />);
   const main = container.querySelector('button')!;
   expect(main.textContent).toBe('Continue in Codex');
   await act(async () => click(main));
-  expect(handoff.openDeepLink).toHaveBeenCalledWith(
-    expect.stringMatching(/^codex:\/\/new\?prompt=/),
+  expect(window.open).toHaveBeenCalledWith(
+    CODEX_PLUGIN_URL,
+    '_blank',
+    'noopener,noreferrer',
   );
+  expect(handoff.openDeepLink).not.toHaveBeenCalled();
   expect(
     container.querySelector('[aria-expanded]')?.getAttribute('aria-expanded'),
   ).toBe('false');
@@ -528,6 +573,28 @@ describe('PromptInstallButton handoff fallback', () => {
       jest.advanceTimersByTime(handoff.HANDOFF_TIMEOUT_MS);
     });
 
+  it('opens the Codex plugin without a desktop fallback or handoff result', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Codex');
+    await waitOutHandoff();
+    expect(window.open).toHaveBeenCalledWith(
+      CODEX_PLUGIN_URL,
+      '_blank',
+      'noopener,noreferrer',
+    );
+    expect(fallbackPanel()).toBeNull();
+    expect(handoffResults()).toEqual([]);
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it('keeps an earlier desktop attempt from showing a fallback after Codex is selected', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Claude');
+    await pickAgent('Codex');
+    await waitOutHandoff();
+    expect(fallbackPanel()).toBeNull();
+  });
+
   it.each([
     ['hides', hide],
     ['stays blurred', stayAway],
@@ -641,7 +708,7 @@ describe('PromptInstallButton handoff fallback', () => {
 
   it('retries the same deep link and closes the panel once the app takes focus', async () => {
     render(<PromptInstallButton source="landing_hero" />);
-    await pickAgent('Codex');
+    await pickAgent('Claude');
     await waitOutHandoff();
     const retry = [...fallbackPanel()!.querySelectorAll('button')].find(
       (b) => b.textContent === 'Try opening again',
@@ -667,7 +734,7 @@ describe('PromptInstallButton handoff fallback', () => {
 
   it('closes the panel from its dismiss button and on a new click', async () => {
     render(<PromptInstallButton source="landing_hero" />);
-    await pickAgent('Codex');
+    await pickAgent('Claude');
     await waitOutHandoff();
     click(fallbackPanel()!.querySelector('button[aria-label="Dismiss"]')!);
     expect(fallbackPanel()).toBeNull();
@@ -681,7 +748,7 @@ describe('PromptInstallButton handoff fallback', () => {
 
   it('shows the panel when a blur is followed by refocus, as after a cancelled browser prompt', async () => {
     render(<PromptInstallButton source="landing_hero" />);
-    await pickAgent('Codex');
+    await pickAgent('Claude');
     blur();
     await waitOutHandoff();
     act(() => {
@@ -694,23 +761,23 @@ describe('PromptInstallButton handoff fallback', () => {
     expect(handoffResults()).toEqual([
       {
         source: 'landing_hero',
-        download_type: 'codex',
+        download_type: 'claude',
         install_ref: ref,
         handoff_result: 'fallback_shown',
       },
     ]);
     expect(toast.dismiss).toHaveBeenCalledWith('opening-toast');
     expect(fallbackPanel()!.textContent).toContain(
-      'Didn’t open? Paste this into Codex instead.',
+      'Didn’t open? Paste this into Claude instead.',
     );
 
     await act(async () => {
       fallbackPanel()!
-        .querySelector('button[aria-label="Copy Codex install command"]')!
+        .querySelector('button[aria-label="Copy Claude install command"]')!
         .dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
     expect(copiedText()).toEqual([
-      `npx -y rivet-design@latest install codex --ref ${ref}`,
+      `npx -y rivet-design@latest install claude --ref ${ref}`,
     ]);
     expect(handoffResults().map((e) => e.handoff_result)).toEqual([
       'fallback_shown',
@@ -723,17 +790,17 @@ describe('PromptInstallButton handoff fallback', () => {
       new Error('denied'),
     );
     render(<PromptInstallButton source="landing_hero" />);
-    await pickAgent('Codex');
+    await pickAgent('Claude');
     await waitOutHandoff();
     await act(async () => {
       fallbackPanel()!
-        .querySelector('button[aria-label="Copy Codex install command"]')!
+        .querySelector('button[aria-label="Copy Claude install command"]')!
         .dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
     expect(downloadClicks()).toEqual([
-      { source: 'landing_hero', download_type: 'codex' },
-      { source: 'handoff_fallback', download_type: 'codex' },
+      { source: 'landing_hero', download_type: 'claude' },
+      { source: 'handoff_fallback', download_type: 'claude' },
     ]);
     expect(handoffResults().map((e) => e.handoff_result)).toEqual([
       'fallback_shown',
@@ -745,7 +812,7 @@ describe('PromptInstallButton handoff fallback', () => {
 
   it('closes the panel on Escape while focus stays on the CTA', async () => {
     render(<PromptInstallButton source="landing_hero" />);
-    await pickAgent('Codex');
+    await pickAgent('Claude');
     await waitOutHandoff();
     const main = container.querySelector('button')!;
     main.focus();
@@ -755,7 +822,7 @@ describe('PromptInstallButton handoff fallback', () => {
 
   it('keeps a dismissed panel closed when a retry later stays on the page', async () => {
     render(<PromptInstallButton source="landing_hero" />);
-    await pickAgent('Codex');
+    await pickAgent('Claude');
     await waitOutHandoff();
     click(
       [...fallbackPanel()!.querySelectorAll('button')].find(
@@ -774,7 +841,7 @@ describe('PromptInstallButton handoff fallback', () => {
 
   it('closes the panel when the chooser opens', async () => {
     render(<PromptInstallButton source="landing_hero" />);
-    await pickAgent('Codex');
+    await pickAgent('Claude');
     await waitOutHandoff();
     const trigger = container.querySelector(
       'button[aria-label="Choose your agent"]',
@@ -797,7 +864,7 @@ describe('PromptInstallButton handoff fallback', () => {
 
   it('keeps the panel off an agent menu opened during the provisional blur', async () => {
     render(<PromptInstallButton source="landing_hero" />);
-    await pickAgent('Codex');
+    await pickAgent('Claude');
     blur();
     await waitOutHandoff();
     const trigger = container.querySelector(
@@ -816,7 +883,7 @@ describe('PromptInstallButton handoff fallback', () => {
   it('sends one download_handoff per attempt when a second click supersedes the first', async () => {
     render(<PromptInstallButton source="landing_hero" />);
     const main = container.querySelector('button')!;
-    await act(async () => click(main));
+    await pickAgent('Claude');
     blur();
     refocus();
     await act(async () => click(main));
@@ -836,7 +903,7 @@ describe('PromptInstallButton handoff fallback', () => {
   it('reports a superseded attempt without letting it drive the panel', async () => {
     render(<PromptInstallButton source="landing_hero" />);
     const main = container.querySelector('button')!;
-    await act(async () => click(main));
+    await pickAgent('Claude');
     blur();
     await act(async () => click(main));
     act(() => {

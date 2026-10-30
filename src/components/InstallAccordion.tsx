@@ -4,12 +4,11 @@
 // smooth height animation.
 import { useId, useState } from 'react';
 import { telemetry, type CommandCopyMethod } from '@/lib/telemetry';
-import type { InstallAgentId } from '@/lib/install';
+import type { CommandInstallAgentId } from '@/lib/install';
 import { generateInstallRef } from '@/lib/installRef';
 import { InstallCommandRow, useInstallCommandCopy } from './InstallCommandRow';
 
-const AGENT_ROWS: { id: InstallAgentId; label: string }[] = [
-  { id: 'codex', label: 'Codex' },
+const AGENT_ROWS: { id: CommandInstallAgentId; label: string }[] = [
   { id: 'claude', label: 'Claude' },
   { id: 'claude-code', label: 'Claude Code' },
   { id: 'cursor', label: 'Cursor' },
@@ -32,7 +31,7 @@ const ChevronIcon = ({ open }: { open: boolean }) => (
   </svg>
 );
 
-const track = (id: InstallAgentId, copyMethod: CommandCopyMethod) => {
+const track = (id: CommandInstallAgentId, copyMethod: CommandCopyMethod) => {
   const installRef = generateInstallRef();
   telemetry.trackDownloadClicked({
     source: 'landing_accordion',

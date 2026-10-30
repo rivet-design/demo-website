@@ -1,6 +1,6 @@
-// Opens the selected desktop agent with a CLI-first install prompt ready to
-// review and send. Cursor receives a prompt link, not an MCP registration link,
-// so the install still uses the CLI's durable global bootstrap.
+// Opens the Codex plugin listing or the selected desktop agent with an
+// install prompt ready to review and send. Cursor receives a prompt link,
+// not an MCP registration link, so its install uses the durable global bootstrap.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Copy } from 'lucide-react';
 import { toast } from 'sonner';
@@ -8,6 +8,7 @@ import useClipboard from '@/hooks/useClipboard';
 import { telemetry, type PromptInstallSource } from '@/lib/telemetry';
 import {
   AGENT_LOGOS as TOOL_LOGOS,
+  CODEX_PLUGIN_URL,
   installDeepLink,
   installPrompt,
   type DeepLinkAgentId,
@@ -60,7 +61,10 @@ type AgentItem = {
   label: string;
 };
 
-type Handoff = { agent: AgentItem; installRef: InstallRef };
+type Handoff = {
+  agent: AgentItem & { id: Exclude<DeepLinkAgentId, 'codex'> };
+  installRef: InstallRef;
+};
 
 // Claude opens its Code view so the agent can run the install command.
 const AGENT_ITEMS: AgentItem[] = [
@@ -231,17 +235,26 @@ const PromptInstallButton = ({
   const activate = (item: AgentItem) => {
     setSelected(item);
     showFallback(null);
+    // Keep navigation in the click/keyboard gesture; clipboard permissions
+    // must not delay or block the desktop handoff.
+    setOpen(false);
+    if (item.id === 'codex') {
+      telemetry.trackDownloadClicked({
+        source,
+        downloadType: 'codex',
+        installMethod: 'plugin_directory',
+      });
+      ++latestAttemptRef.current;
+      window.open(CODEX_PLUGIN_URL, '_blank', 'noopener,noreferrer');
+      return;
+    }
     const installRef = generateInstallRef();
     telemetry.trackDownloadClicked({
       source,
       downloadType: item.id,
       installRef,
     });
-
-    // Keep navigation in the click/keyboard gesture; clipboard permissions
-    // must not delay or block the desktop handoff.
-    setOpen(false);
-    handOff({ agent: item, installRef });
+    handOff({ agent: { ...item, id: item.id }, installRef });
   };
 
   const copyPrompt = async () => {
@@ -356,7 +369,7 @@ const PromptInstallButton = ({
           onKeyDown={handleMenuKeyDown}
         >
           <FluidMenuGroup
-            label="Open in desktop"
+            label="Install in your agent"
             startIndex={0}
             activeIndex={highlight}
             inputMode={inputMode}

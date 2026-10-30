@@ -62,14 +62,14 @@ describe('copiedInstallCommand', () => {
 
   it('includes the install ref in copied commands by default', () => {
     expect(installRef.EMBED_INSTALL_REF_IN_COPY).toBe(true);
-    expect(copiedInstallCommand('codex', ref)).toBe(
-      `${INSTALL_COMMANDS.codex} --ref ${ref}`,
+    expect(copiedInstallCommand('claude', ref)).toBe(
+      `${INSTALL_COMMANDS.claude} --ref ${ref}`,
     );
   });
 
   it('copies the plain command while the flag is off', () => {
     jest.replaceProperty(installRef, 'EMBED_INSTALL_REF_IN_COPY', false);
-    expect(copiedInstallCommand('codex', ref)).toBe(INSTALL_COMMANDS.codex);
+    expect(copiedInstallCommand('claude', ref)).toBe(INSTALL_COMMANDS.claude);
   });
 
   it('appends --ref once the flag is on', () => {

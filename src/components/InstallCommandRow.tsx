@@ -10,7 +10,7 @@ import {
   AGENT_LOGOS,
   INSTALL_COMMANDS,
   copiedInstallCommand,
-  type InstallAgentId,
+  type CommandInstallAgentId,
 } from '@/lib/install';
 import type { InstallRef } from '@/lib/installRef';
 
@@ -58,12 +58,12 @@ const selectContents = (el: HTMLElement | null) => {
 
 /** Records one copy attempt and returns the ref to put in the copied command. */
 export type TrackCommandCopy = (
-  id: InstallAgentId,
+  id: CommandInstallAgentId,
   copyMethod: CommandCopyMethod,
 ) => InstallRef;
 
 type InstallCommandRowProps = {
-  id: InstallAgentId;
+  id: CommandInstallAgentId;
   label: string;
   copied: boolean;
   onRowClick: () => void;
@@ -75,13 +75,16 @@ type InstallCommandRowProps = {
 export const useInstallCommandCopy = (track: TrackCommandCopy) => {
   const [copyFailed, setCopyFailed] = useState(false);
   // Which agent's command was just copied (drives that row's "Copied" state).
-  const [copiedId, setCopiedId] = useState<InstallAgentId | null>(null);
+  const [copiedId, setCopiedId] = useState<CommandInstallAgentId | null>(null);
   const { copyToClipboard } = useClipboard();
-  const codeRefs = useRef<Partial<Record<InstallAgentId, HTMLElement | null>>>(
-    {},
-  );
+  const codeRefs = useRef<
+    Partial<Record<CommandInstallAgentId, HTMLElement | null>>
+  >({});
 
-  const copy = (id: InstallAgentId, copyMethod: 'row_click' | 'icon') => {
+  const copy = (
+    id: CommandInstallAgentId,
+    copyMethod: 'row_click' | 'icon',
+  ) => {
     setCopyFailed(false);
     setCopiedId(null);
     const installRef = track(id, copyMethod);
@@ -99,7 +102,10 @@ export const useInstallCommandCopy = (track: TrackCommandCopy) => {
     );
   };
 
-  const handleManualCopy = (event: ClipboardEvent, id: InstallAgentId) => {
+  const handleManualCopy = (
+    event: ClipboardEvent,
+    id: CommandInstallAgentId,
+  ) => {
     const selectedText = window.getSelection()?.toString().trim();
     if (!selectedText) return;
     const installRef = track(id, 'manual_select');
@@ -110,7 +116,7 @@ export const useInstallCommandCopy = (track: TrackCommandCopy) => {
     event.preventDefault();
   };
 
-  const handleRowClick = (id: InstallAgentId) => {
+  const handleRowClick = (id: CommandInstallAgentId) => {
     // A drag or double-click selection ends in a click; leave it alone so the
     // visitor can copy the text by hand.
     if (window.getSelection()?.isCollapsed === false) return;
@@ -118,7 +124,7 @@ export const useInstallCommandCopy = (track: TrackCommandCopy) => {
   };
 
   const rowProps = (
-    id: InstallAgentId,
+    id: CommandInstallAgentId,
   ): Omit<InstallCommandRowProps, 'id' | 'label'> => ({
     copied: copiedId === id,
     onRowClick: () => handleRowClick(id),

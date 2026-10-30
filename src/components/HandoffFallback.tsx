@@ -6,13 +6,13 @@ import { telemetry, type CommandCopyMethod } from '@/lib/telemetry';
 import {
   AGENT_DOWNLOAD_URLS,
   type DeepLinkAgentId,
-  type InstallAgentId,
+  type CommandInstallAgentId,
 } from '@/lib/install';
 import type { InstallRef } from '@/lib/installRef';
 import { InstallCommandRow, useInstallCommandCopy } from './InstallCommandRow';
 
 type HandoffFallbackProps = {
-  agent: { id: DeepLinkAgentId; label: string };
+  agent: { id: Exclude<DeepLinkAgentId, 'codex'>; label: string };
   installRef: InstallRef;
   onRetry: () => void;
   onClose: () => void;
@@ -24,7 +24,7 @@ const HandoffFallback = ({
   onRetry,
   onClose,
 }: HandoffFallbackProps) => {
-  const track = (id: InstallAgentId, copyMethod: CommandCopyMethod) => {
+  const track = (id: CommandInstallAgentId, copyMethod: CommandCopyMethod) => {
     telemetry.trackDownloadClicked({
       source: 'handoff_fallback',
       downloadType: id,
