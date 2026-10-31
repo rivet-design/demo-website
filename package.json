@@ -62,7 +62,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^20.4.5",
     "@types/opentype.js": "^1",
-    "@typescript-eslint/eslint-plugin": "^8.44.0",
+    "@typescript-eslint/eslint-plugin": "^8.72.0",
     "@typescript-eslint/parser": "^8.44.0",
     "eslint": "^9.36.0",
     "eslint-config-prettier": "^10.1.8",
