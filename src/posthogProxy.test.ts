@@ -30,6 +30,21 @@ describe('posthog proxy', () => {
       );
     });
 
+    it('never lets the path choose another upstream host', () => {
+      [
+        `${POSTHOG_PROXY_PATH}//example.com/anything`,
+        `${POSTHOG_PROXY_PATH}//127.0.0.1:8443/private`,
+        `${POSTHOG_PROXY_PATH}/\\example.com/x`,
+      ].forEach((rawUrl) => {
+        const target = resolvePostHogProxyTarget(rawUrl);
+        expect(target?.origin).toBe('https://us.i.posthog.com');
+      });
+      expect(
+        resolvePostHogProxyTarget(`${POSTHOG_PROXY_PATH}//example.com/anything`)
+          ?.pathname,
+      ).toBe('//example.com/anything');
+    });
+
     it('sends SDK assets and remote config to the asset host', () => {
       expect(
         resolvePostHogProxyTarget(

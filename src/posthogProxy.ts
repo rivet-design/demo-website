@@ -53,7 +53,11 @@ export const resolvePostHogProxyTarget = (
     pathname.startsWith('/static/') || pathname.startsWith('/array/')
       ? POSTHOG_ASSET_HOST
       : POSTHOG_API_HOST;
-  return new URL(`${pathname}${url.search}`, `https://${host}`);
+  // Assigned separately so a path like //evil.example can't replace the host.
+  const target = new URL(`https://${host}`);
+  target.pathname = pathname;
+  target.search = url.search;
+  return target;
 };
 
 // PostHog geolocates whatever X-Forwarded-For says, so an internal peer
