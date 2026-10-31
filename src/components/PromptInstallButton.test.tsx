@@ -544,7 +544,11 @@ describe('PromptInstallButton handoff fallback', () => {
     });
   const stayAway = () =>
     act(() => {
-      jest.advanceTimersByTime(handoff.BLUR_RETURN_WINDOW_MS);
+      jest.advanceTimersByTime(1);
+    });
+  const wait = (ms: number) =>
+    act(() => {
+      jest.advanceTimersByTime(ms);
     });
   const pressEscape = (target: Element) =>
     act(() => {
@@ -603,11 +607,9 @@ describe('PromptInstallButton handoff fallback', () => {
     async (_, leave) => {
       render(<PromptInstallButton source="landing_hero" />);
       await pickAgent('Claude');
-      act(() => {
-        jest.advanceTimersByTime(500);
-      });
+      wait(500);
       blur();
-      await waitOutHandoff();
+      wait(handoff.BLUR_LEFT_MS - 1);
       expect(handoffResults()).toEqual([]);
       leave();
       refocus();
@@ -646,6 +648,9 @@ describe('PromptInstallButton handoff fallback', () => {
     ]);
     expect(toast.dismiss).toHaveBeenCalledWith('opening-toast');
     const panel = fallbackPanel()!;
+    expect(panel.querySelector('p')?.textContent).toBe(
+      'Claude should be open with the install prompt: press Enter, then approve the command.',
+    );
     expect(panel.textContent).toContain(
       'Didn’t open? Paste this into Claude instead.',
     );
@@ -746,16 +751,43 @@ describe('PromptInstallButton handoff fallback', () => {
     expect(fallbackPanel()).toBeNull();
   });
 
-  it('shows the panel when a blur is followed by refocus, as after a cancelled browser prompt', async () => {
+  it.each([
+    ['comes back from the app', () => wait(7200)],
+    [
+      'accepts the browser prompt and the app takes focus',
+      () => {
+        wait(900);
+        refocus();
+        wait(100);
+        blur();
+        wait(handoff.BLUR_LEFT_MS);
+      },
+    ],
+  ])('shows no panel when the visitor %s', async (_, away) => {
     render(<PromptInstallButton source="landing_hero" />);
     await pickAgent('Claude');
     blur();
-    await waitOutHandoff();
-    act(() => {
-      jest.advanceTimersByTime(4000);
-    });
-    expect(fallbackPanel()).toBeNull();
+    away();
     refocus();
+    await waitOutHandoff();
+
+    expect(handoffResults().map((e) => e.handoff_result)).toEqual([
+      'left_page',
+    ]);
+    expect(toast.dismiss).not.toHaveBeenCalled();
+    expect(fallbackPanel()).toBeNull();
+  });
+
+  it('shows the panel once focus holds after a quick refocus, as after a cancelled browser prompt', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Claude');
+    blur();
+    wait(handoff.BLUR_LEFT_MS - 100);
+    refocus();
+    wait(handoff.HANDOFF_TIMEOUT_MS - 1);
+    expect(fallbackPanel()).toBeNull();
+    expect(handoffResults()).toEqual([]);
+    wait(1);
 
     const [ref] = refsSent().events;
     expect(handoffResults()).toEqual([
@@ -768,7 +800,7 @@ describe('PromptInstallButton handoff fallback', () => {
     ]);
     expect(toast.dismiss).toHaveBeenCalledWith('opening-toast');
     expect(fallbackPanel()!.textContent).toContain(
-      'Didn’t open? Paste this into Claude instead.',
+      'Claude should be open with the install prompt',
     );
 
     await act(async () => {
@@ -862,16 +894,17 @@ describe('PromptInstallButton handoff fallback', () => {
     expect(fallbackPanel()).toBeNull();
   });
 
-  it('keeps the panel off an agent menu opened during the provisional blur', async () => {
+  it('keeps the panel off an agent menu opened during a short blur', async () => {
     render(<PromptInstallButton source="landing_hero" />);
     await pickAgent('Claude');
     blur();
-    await waitOutHandoff();
+    wait(500);
     const trigger = container.querySelector(
       'button[aria-label="Choose your agent"]',
     )!;
     click(trigger);
     refocus();
+    await waitOutHandoff();
 
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
     expect(fallbackPanel()).toBeNull();
@@ -911,13 +944,17 @@ describe('PromptInstallButton handoff fallback', () => {
     });
     refocus();
     await waitOutHandoff();
+    const panel = fallbackPanel();
+    wait(500);
 
     const refs = refsSent().events;
     expect(
       handoffResults().map((e) => [e.install_ref, e.handoff_result]),
     ).toEqual([
-      [refs[0], 'fallback_shown'],
       [refs[1], 'fallback_shown'],
+      [refs[0], 'fallback_shown'],
     ]);
+    expect(panel).not.toBeNull();
+    expect(fallbackPanel()).toBe(panel);
   });
 });

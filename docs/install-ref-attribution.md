@@ -66,21 +66,39 @@ click's `source`, `download_type`, and `install_ref` plus `handoff_result`:
 
 - `left_page`: the visitor left the page, so we assume the app opened and show
   no panel.
-- `fallback_shown`: the visitor stayed on the page or came back to it, so the
-  "Didn't open?" panel appeared. The panel is held back only if, by then, the
-  visitor had closed it, opened the agent menu, or clicked again; a newer
-  click reports its own result.
+- `fallback_shown`: the page kept focus, so the fallback panel appeared. The
+  panel is held back only if, by then, the visitor had closed it, opened the
+  agent menu, or clicked again; a newer click reports its own result.
 
-The page counts as left when it is hidden or unloaded, or when it loses focus
-within two seconds of the click and does not get it back within 15 seconds.
-Losing focus and getting it back without the page ever being hidden, as when
-someone cancels a browser's own "open this link with the app?" prompt, counts
-as staying. Every platform and browser uses the same check.
+The page counts as left when it is hidden or unloaded, or when it goes 1.5
+seconds without focus. It counts as staying when it keeps focus for two
+seconds, counted from the click or from the latest time focus came back.
+Every platform and browser uses the same check.
 
-The panel offers the agent's install command, a download link for the agent,
-and a retry of the same link. A copy from the panel records `download_clicked`
-with source `handoff_fallback`, the original `install_ref`, and its
-`copy_method`; it does not add a `download_handoff`. The latest
+- No app installed, in Chrome on macOS or in Firefox: nothing takes focus, so
+  the panel appears after two seconds.
+- A browser "open this app?" prompt that the visitor accepts: closing the
+  prompt hands focus back to the page for about 100 ms before the app takes
+  it, so that refocus is not final and the attempt counts as left.
+- Visiting the app and coming back: the page was without focus for more than
+  1.5 seconds, so it counts as left and no panel appears on return.
+- A browser prompt cancelled within 1.5 seconds counts as staying. A prompt
+  left up longer counts as left, as does a "can't open this address" alert
+  (Safari without the app, or the Linux `xdg-open` error dialog) that takes
+  longer than 1.5 seconds to dismiss.
+
+Under the original rule from #145, any return of focus within 15 seconds
+counted as `fallback_shown`, including visitors coming back from the app.
+Compare `fallback_shown` rates across that change with this in mind.
+
+The panel leads with the step that finishes the install when the app did open:
+"<Agent> should be open with the install prompt: press Enter, then approve the
+command." Below that, it offers the agent's install command, a download link
+for the agent, and a retry of the same link. Codex never gets the panel: it
+opens the plugin page in a new tab with no ref and starts no watcher. A copy
+from the panel records `download_clicked` with source `handoff_fallback`, the
+original `install_ref`, and its `copy_method`; it does not add a
+`download_handoff`. The latest
 `handoff_result` for a ref is the outcome.
 
 The dropdown, accordion rows, fallback row, copy icons, and manual command copies retain the

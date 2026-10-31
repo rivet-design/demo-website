@@ -22,7 +22,7 @@ export type CommandCopyMethod = 'row_click' | 'icon' | 'manual_select';
 /**
  * How a desktop deep link ended; sent as `handoff_result`. `left_page`: the
  * visitor left the page, so the app is assumed to have opened. `fallback_shown`:
- * they stayed or came back, so the "Didn't open?" panel appeared. The panel is
+ * the page kept focus, so the fallback panel appeared. The panel is
  * held back only if, by then, they had closed it, opened the agent menu, or
  * clicked again (the newer attempt reports separately).
  */
