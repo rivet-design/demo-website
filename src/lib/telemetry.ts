@@ -1,6 +1,7 @@
 import { posthog } from './posthog';
 import type { InstallTarget } from './install';
 import type { InstallRef } from './installRef';
+import type { AccountId } from './authAccount';
 
 /** Where a PromptInstallButton sits; sent as `source` on `download_clicked`. */
 export type PromptInstallSource =
@@ -30,6 +31,25 @@ export type HandoffResult = 'left_page' | 'fallback_shown';
 
 /** `pkce` is the current proxy-completed flow; `implicit` is the legacy hash-token relay. */
 export type AuthFlow = 'pkce' | 'implicit';
+
+/**
+ * Which /auth-success URL a sign-in landed on; sent as `sign_in_flow`.
+ * `login_complete`: `?login=...` from the proxy. `session`: `?session=...`.
+ */
+export type SignInFlow = 'login_complete' | 'session';
+
+const signInFlowFor = (flow: AuthFlow): SignInFlow => {
+  switch (flow) {
+    case 'pkce':
+      return 'login_complete';
+    case 'implicit':
+      return 'session';
+    default: {
+      const unhandled: never = flow;
+      throw new Error(`Unhandled auth flow: ${String(unhandled)}`);
+    }
+  }
+};
 
 export const PKCE_ERROR_REASONS = [
   'session_expired',
@@ -137,6 +157,19 @@ class Telemetry {
   }
 
   /**
+   * Merges this browser's visitor into the signed-in account so the download
+   * and the sign-in join across devices. A browser that is already
+   * identified, as the same account or another one, is left alone so a
+   * shared machine never folds one account into another.
+   */
+  identifyAccount(accountId: AccountId): void {
+    this.send('$identify', () => {
+      if (posthog.get_property('$user_state') === 'identified') return;
+      posthog.identify(accountId);
+    });
+  }
+
+  /**
    * The editor sign-in landed on /auth-success and succeeded. Marks the
    * person as installed so later visits can be split by install state;
    * setPersonProperties also creates the profile for anonymous visitors.
@@ -158,6 +191,7 @@ class Telemetry {
     );
     this.track('editor_sign_in_completed', {
       auth_flow: props.flow,
+      sign_in_flow: signInFlowFor(props.flow),
       ...(props.installRef && { install_ref: props.installRef }),
     });
   }
@@ -169,6 +203,7 @@ class Telemetry {
   }): void {
     this.track('editor_sign_in_failed', {
       auth_flow: props.flow,
+      sign_in_flow: signInFlowFor(props.flow),
       reason: props.reason,
       ...(props.installRef && { install_ref: props.installRef }),
     });

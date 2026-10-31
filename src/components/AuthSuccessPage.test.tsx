@@ -32,6 +32,7 @@ const customEvents = () =>
     .map((e) => ({
       event: e.event,
       auth_flow: e.properties.auth_flow,
+      sign_in_flow: e.properties.sign_in_flow,
       reason: e.properties.reason,
       install_ref: e.properties.install_ref,
       $set: e.properties.$set,
@@ -125,6 +126,7 @@ describe('AuthSuccessPage telemetry', () => {
       {
         event: 'editor_sign_in_failed',
         auth_flow: 'pkce',
+        sign_in_flow: 'login_complete',
         reason: 'internal',
         install_ref: 'r_aZ09bY18',
         $set: undefined,
@@ -136,8 +138,7 @@ describe('AuthSuccessPage telemetry', () => {
   describe('editor sign-in: ?session=&ref= with a token fragment', () => {
     const EDITOR_URL =
       '/auth-success?session=sess-9&ref=r_aZ09bY18#access_token=secret-access&refresh_token=secret-refresh&expires_in=3600&token_type=bearer';
-    const KEPT_URL =
-      'http://localhost/auth-success?session=sess-9&ref=r_aZ09bY18';
+    const KEPT_URL = 'http://localhost/auth-success?ref=r_aZ09bY18';
 
     const mockProxy = (response: unknown) => {
       const fetchMock = jest.fn().mockResolvedValue(response);
@@ -217,6 +218,7 @@ describe('AuthSuccessPage telemetry', () => {
         {
           event: 'editor_sign_in_failed',
           auth_flow: 'implicit',
+          sign_in_flow: 'session',
           reason,
           install_ref: 'r_aZ09bY18',
           $set: undefined,
@@ -264,6 +266,163 @@ describe('AuthSuccessPage telemetry', () => {
     });
   });
 
+  describe('sign_in_flow, install_ref, and identify', () => {
+    const ACCOUNT_ID = '0b9f3c2e-1d4a-4f6b-9e8d-7c6b5a4f3e2d';
+    const OTHER_ACCOUNT_ID = '9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a';
+
+    const base64Url = (value: string) =>
+      btoa(value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const ACCESS_TOKEN = `${base64Url('{"alg":"HS256"}')}.${base64Url(
+      JSON.stringify({ sub: ACCOUNT_ID, email: 'someone@example.com' }),
+    )}.secret-signature`;
+    const sessionUrl = (query: string) =>
+      `/auth-success?session=sess-secret-9${query}#access_token=${ACCESS_TOKEN}&refresh_token=secret-refresh&token_type=bearer`;
+
+    const proxyAccepts = () => {
+      const fetchMock = jest.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ success: true }),
+      });
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+      return fetchMock;
+    };
+
+    const completed = () =>
+      sent.find((e) => e.event === 'editor_sign_in_completed')!;
+    const identifies = () => sent.filter((e) => e.event === '$identify');
+
+    const expectNoSecrets = () => {
+      const payload = JSON.stringify(sent);
+      for (const secret of [
+        ACCESS_TOKEN,
+        'secret-signature',
+        'secret-refresh',
+        'sess-secret-9',
+        'access_token',
+        'refresh_token',
+        'someone@example.com',
+        '#',
+      ]) {
+        expect(payload).not.toContain(secret);
+      }
+    };
+
+    it('reports the ref and session flow, then identifies by the token sub', async () => {
+      const fetchMock = proxyAccepts();
+      // The real init pageview fires before React mounts, with the raw URL.
+      window.history.replaceState(null, '', sessionUrl('&ref=r_aZ09bY18'));
+      posthog.capture('$pageview');
+
+      await renderAt(sessionUrl('&ref=r_aZ09bY18'));
+      posthog.capture('$pageview');
+
+      expect(container.textContent).toContain("You're signed in!");
+      expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({
+        sessionId: 'sess-secret-9',
+        accessToken: ACCESS_TOKEN,
+      });
+      expect(completed().properties).toMatchObject({
+        auth_flow: 'implicit',
+        sign_in_flow: 'session',
+        install_ref: 'r_aZ09bY18',
+        distinct_id: ACCOUNT_ID,
+      });
+      expect(identifies()).toHaveLength(1);
+      expect(identifies()[0].properties.distinct_id).toBe(ACCOUNT_ID);
+      expect(window.location.href).toBe(
+        'http://localhost/auth-success?ref=r_aZ09bY18',
+      );
+      for (const pageview of sent.filter((e) => e.event === '$pageview')) {
+        expect(pageview.properties.$current_url).toBe(
+          'http://localhost/auth-success?ref=r_aZ09bY18',
+        );
+      }
+      expectNoSecrets();
+    });
+
+    it('omits install_ref on the session flow when the link has no ref', async () => {
+      proxyAccepts();
+
+      await renderAt(sessionUrl(''));
+
+      expect(completed().properties.sign_in_flow).toBe('session');
+      expect('install_ref' in completed().properties).toBe(false);
+      expect(identifies()).toHaveLength(1);
+      expect(window.location.href).toBe('http://localhost/auth-success');
+      expectNoSecrets();
+    });
+
+    it('reports login_complete and identifies by the proxy account_id', async () => {
+      await renderAt(
+        `/auth-success?login=complete&ref=r_aZ09bY18&account_id=${ACCOUNT_ID}`,
+      );
+
+      expect(completed().properties).toMatchObject({
+        auth_flow: 'pkce',
+        sign_in_flow: 'login_complete',
+        install_ref: 'r_aZ09bY18',
+        distinct_id: ACCOUNT_ID,
+      });
+      expect(identifies()).toHaveLength(1);
+      expect(identifies()[0].properties.distinct_id).toBe(ACCOUNT_ID);
+    });
+
+    it('does not identify a login_complete without an account id', async () => {
+      await renderAt('/auth-success?login=complete');
+
+      expect(completed().properties.sign_in_flow).toBe('login_complete');
+      expect(identifies()).toHaveLength(0);
+      expect(posthog.get_property('$user_state')).toBe('anonymous');
+    });
+
+    it('never identifies by a non-UUID account_id', async () => {
+      await renderAt(
+        '/auth-success?login=complete&account_id=someone%40example.com',
+      );
+
+      expect(identifies()).toHaveLength(0);
+      expect(completed().properties.distinct_id).not.toContain('@');
+    });
+
+    it('leaves a browser identified as another account alone', async () => {
+      posthog.identify(OTHER_ACCOUNT_ID);
+      sent = [];
+      proxyAccepts();
+
+      await renderAt(sessionUrl('&ref=r_aZ09bY18'));
+
+      expect(identifies()).toHaveLength(0);
+      expect(posthog.get_distinct_id()).toBe(OTHER_ACCOUNT_ID);
+      expect(completed().properties.install_ref).toBe('r_aZ09bY18');
+      expectNoSecrets();
+    });
+
+    it('does not re-identify a browser already identified as this account', async () => {
+      posthog.identify(ACCOUNT_ID);
+      sent = [];
+
+      await renderAt(`/auth-success?login=complete&account_id=${ACCOUNT_ID}`);
+
+      expect(identifies()).toHaveLength(0);
+      expect(completed().properties.distinct_id).toBe(ACCOUNT_ID);
+    });
+
+    it('does not identify when the proxy rejects the session', async () => {
+      globalThis.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        json: async () => ({ success: false }),
+      }) as unknown as typeof fetch;
+
+      await renderAt(sessionUrl('&ref=r_aZ09bY18'));
+
+      expect(identifies()).toHaveLength(0);
+      expect(
+        sent.find((e) => e.event === 'editor_sign_in_failed')!.properties,
+      ).toMatchObject({ sign_in_flow: 'session', install_ref: 'r_aZ09bY18' });
+      expectNoSecrets();
+    });
+  });
+
   it('sends the PKCE reason code on failure and leaves the person alone', async () => {
     await renderAt('/auth-success?login=error&reason=session_expired');
 
@@ -272,6 +431,7 @@ describe('AuthSuccessPage telemetry', () => {
       {
         event: 'editor_sign_in_failed',
         auth_flow: 'pkce',
+        sign_in_flow: 'login_complete',
         reason: 'session_expired',
         $set: undefined,
         $set_once: undefined,
