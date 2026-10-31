@@ -1,6 +1,9 @@
-// Shown under the install CTA when a desktop deep link did not take the page's
-// focus: the same install, as a command to paste, plus ways to get the app or
-// retry. It keeps the original click's ref so the sign-in still matches.
+// Shown under the install CTA when a desktop deep link did not clearly take the
+// page's focus. The app may still have opened, so it leads with the step that
+// finishes the install there, then offers the same install as a command to
+// paste, a way to get the app, and a retry. It keeps the original click's ref
+// so the sign-in still matches. Codex opens its plugin page instead and never
+// gets this panel.
 import { X } from 'lucide-react';
 import { telemetry, type CommandCopyMethod } from '@/lib/telemetry';
 import {
@@ -38,8 +41,9 @@ const HandoffFallback = ({
   return (
     <div className="flex flex-col gap-3 p-3">
       <div className="flex items-start gap-2">
-        <p className="flex-1 font-main text-sm text-black">
-          Didn’t open? Paste this into {agent.label} instead.
+        <p className="flex-1 font-main text-sm font-medium text-black">
+          {agent.label} should be open with the install prompt: press Enter,
+          then approve the command.
         </p>
         <button
           type="button"
@@ -50,7 +54,10 @@ const HandoffFallback = ({
           <X aria-hidden size={16} />
         </button>
       </div>
-      <div className="overflow-hidden rounded-lg border border-border bg-secondary">
+      <p className="font-main text-xs text-[#818181]">
+        Didn’t open? Paste this into {agent.label} instead.
+      </p>
+      <div className="-mt-1 overflow-hidden rounded-lg border border-border bg-secondary">
         <InstallCommandRow
           id={agent.id}
           label={agent.label}
@@ -58,7 +65,7 @@ const HandoffFallback = ({
           {...rowProps(agent.id)}
         />
       </div>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-main text-sm">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-main text-xs">
         <a
           href={AGENT_DOWNLOAD_URLS[agent.id]}
           target="_blank"

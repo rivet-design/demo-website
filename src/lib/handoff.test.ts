@@ -1,8 +1,4 @@
-import {
-  BLUR_RETURN_WINDOW_MS,
-  HANDOFF_TIMEOUT_MS,
-  watchHandoff,
-} from './handoff';
+import { BLUR_LEFT_MS, HANDOFF_TIMEOUT_MS, watchHandoff } from './handoff';
 
 const setVisibility = (state: DocumentVisibilityState) =>
   Object.defineProperty(document, 'visibilityState', {
@@ -17,6 +13,7 @@ const hide = () => {
   document.dispatchEvent(new Event('visibilitychange'));
 };
 const pageHide = () => window.dispatchEvent(new Event('pagehide'));
+const wait = (ms: number) => jest.advanceTimersByTime(ms);
 
 let onResult: jest.Mock;
 
@@ -31,9 +28,9 @@ afterEach(() => {
 });
 
 describe('watchHandoff', () => {
-  it('waits two seconds for a blur and fifteen for a return', () => {
+  it('needs two seconds of focus to stay and a second and a half without it to leave', () => {
     expect(HANDOFF_TIMEOUT_MS).toBe(2000);
-    expect(BLUR_RETURN_WINDOW_MS).toBe(15000);
+    expect(BLUR_LEFT_MS).toBe(1500);
   });
 
   it.each([
@@ -50,41 +47,88 @@ describe('watchHandoff', () => {
     ['a pagehide', pageHide],
   ])('reports leaving the page for a blur followed by %s', (_, leave) => {
     watchHandoff(onResult);
-    jest.advanceTimersByTime(HANDOFF_TIMEOUT_MS - 1);
+    wait(HANDOFF_TIMEOUT_MS - 1);
     blur();
+    wait(BLUR_LEFT_MS - 1);
     expect(onResult).not.toHaveBeenCalled();
     leave();
     refocus();
     expect(onResult.mock.calls).toEqual([[true]]);
   });
 
-  it('treats a blur alone as provisional until the return window passes', () => {
+  it('reports leaving once the page goes without focus long enough', () => {
     watchHandoff(onResult);
     blur();
-    jest.advanceTimersByTime(BLUR_RETURN_WINDOW_MS - 1);
+    wait(BLUR_LEFT_MS - 1);
     expect(onResult).not.toHaveBeenCalled();
-    jest.advanceTimersByTime(1);
+    wait(1);
     expect(onResult.mock.calls).toEqual([[true]]);
     refocus();
+    wait(HANDOFF_TIMEOUT_MS);
     expect(onResult).toHaveBeenCalledTimes(1);
   });
 
-  it.each([
-    ['inside the handoff window', 500],
-    ['after the handoff window', HANDOFF_TIMEOUT_MS + 5000],
-  ])('reports staying when focus comes back %s without hiding', (_, delay) => {
+  it('reports leaving when the visitor comes back from the app', () => {
     watchHandoff(onResult);
     blur();
-    jest.advanceTimersByTime(delay);
+    wait(7200);
+    refocus();
+    expect(onResult.mock.calls).toEqual([[true]]);
+  });
+
+  it('reports staying when a quick refocus then keeps focus, as after a cancelled browser prompt', () => {
+    watchHandoff(onResult);
+    blur();
+    wait(BLUR_LEFT_MS - 100);
+    refocus();
+    wait(HANDOFF_TIMEOUT_MS - 1);
+    expect(onResult).not.toHaveBeenCalled();
+    wait(1);
+    expect(onResult.mock.calls).toEqual([[false]]);
+  });
+
+  it('reports leaving when the page loses focus again right after a refocus, as when an accepted prompt hands off to the app', () => {
+    watchHandoff(onResult);
+    blur();
+    wait(800);
+    refocus();
+    wait(100);
+    blur();
+    wait(BLUR_LEFT_MS - 1);
+    expect(onResult).not.toHaveBeenCalled();
+    wait(1);
+    expect(onResult.mock.calls).toEqual([[true]]);
+  });
+
+  it('times each blur on its own', () => {
+    watchHandoff(onResult);
+    blur();
+    wait(BLUR_LEFT_MS - 100);
+    refocus();
+    wait(100);
+    blur();
+    wait(BLUR_LEFT_MS - 100);
     expect(onResult).not.toHaveBeenCalled();
     refocus();
+    wait(HANDOFF_TIMEOUT_MS);
     expect(onResult.mock.calls).toEqual([[false]]);
+  });
+
+  it('waits for a late blur that starts inside the window', () => {
+    watchHandoff(onResult);
+    wait(HANDOFF_TIMEOUT_MS - 1);
+    blur();
+    wait(BLUR_LEFT_MS - 1);
+    expect(onResult).not.toHaveBeenCalled();
+    wait(1);
+    expect(onResult.mock.calls).toEqual([[true]]);
   });
 
   it('ignores a focus event without a prior blur', () => {
     watchHandoff(onResult);
+    wait(HANDOFF_TIMEOUT_MS - 500);
     refocus();
-    jest.advanceTimersByTime(HANDOFF_TIMEOUT_MS);
+    wait(500);
     expect(onResult.mock.calls).toEqual([[false]]);
   });
 
@@ -93,27 +137,27 @@ describe('watchHandoff', () => {
     const button = document.createElement('button');
     document.body.appendChild(button);
     button.dispatchEvent(new FocusEvent('blur'));
-    jest.advanceTimersByTime(HANDOFF_TIMEOUT_MS);
+    wait(HANDOFF_TIMEOUT_MS);
     expect(onResult.mock.calls).toEqual([[false]]);
     button.remove();
   });
 
   it('reports staying once the window passes without losing focus', () => {
     watchHandoff(onResult);
-    jest.advanceTimersByTime(HANDOFF_TIMEOUT_MS - 1);
+    wait(HANDOFF_TIMEOUT_MS - 1);
     expect(onResult).not.toHaveBeenCalled();
-    jest.advanceTimersByTime(1);
+    wait(1);
     expect(onResult.mock.calls).toEqual([[false]]);
     blur();
-    refocus();
-    jest.advanceTimersByTime(BLUR_RETURN_WINDOW_MS);
+    wait(BLUR_LEFT_MS);
+    hide();
     expect(onResult).toHaveBeenCalledTimes(1);
   });
 
   it('ignores a visible visibilitychange', () => {
     watchHandoff(onResult);
     document.dispatchEvent(new Event('visibilitychange'));
-    jest.advanceTimersByTime(HANDOFF_TIMEOUT_MS);
+    wait(HANDOFF_TIMEOUT_MS);
     expect(onResult.mock.calls).toEqual([[false]]);
   });
 
@@ -123,7 +167,7 @@ describe('watchHandoff', () => {
     cancel();
     refocus();
     hide();
-    jest.advanceTimersByTime(BLUR_RETURN_WINDOW_MS);
+    wait(BLUR_LEFT_MS + HANDOFF_TIMEOUT_MS);
     expect(onResult).not.toHaveBeenCalled();
   });
 });
