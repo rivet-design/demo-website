@@ -51,11 +51,14 @@ export const createPostHogProxyMiddleware = () => {
           }
         });
         res.writeHead(upstreamRes.statusCode ?? BAD_GATEWAY_STATUS, headers);
+        upstreamRes.on('error', () => res.destroy());
         upstreamRes.pipe(res);
       },
     );
 
-    upstreamReq.on('timeout', () => upstreamReq.destroy());
+    upstreamReq.on('timeout', () =>
+      upstreamReq.destroy(new Error('PostHog upstream timed out')),
+    );
     upstreamReq.on('error', () => {
       if (res.headersSent) {
         res.destroy();
