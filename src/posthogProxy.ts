@@ -26,6 +26,29 @@ const STRIPPED_REQUEST_HEADERS = new Set([
 ]);
 const STRIPPED_REQUEST_HEADER_PREFIXES = ['cf-', 'rndr-', 'render-'];
 
+// Blocklists match these PostHog paths on any host (uBlock Origin Privacy:
+// `/e/*^ip=*^compression=`; EasyPrivacy: `/posthog-recorder.js`), so the
+// browser requests the alias and the proxy maps it back.
+const PATH_ALIASES: ReadonlyArray<{ upstream: string; alias: string }> = [
+  { upstream: '/e/', alias: '/k/' },
+  { upstream: '/i/v0/e/', alias: '/i/v0/k/' },
+  { upstream: '/static/posthog-recorder.js', alias: '/static/rr.js' },
+];
+
+/**
+ * Rewrites an SDK endpoint path (query included) to the alias the browser
+ * should request through the proxy.
+ */
+export const toPostHogProxyPath = (path: string): string => {
+  const queryStart = path.indexOf('?');
+  const pathname = queryStart === -1 ? path : path.slice(0, queryStart);
+  const match = PATH_ALIASES.find(({ upstream }) => upstream === pathname);
+  return match ? `${match.alias}${path.slice(pathname.length)}` : path;
+};
+
+const toUpstreamPathname = (pathname: string): string =>
+  PATH_ALIASES.find(({ alias }) => alias === pathname)?.upstream ?? pathname;
+
 type HeaderValue = ProxyHeaderMap[string];
 
 const firstListValue = (value: HeaderValue): string | null => {
@@ -48,7 +71,9 @@ export const resolvePostHogProxyTarget = (
     return null;
   }
 
-  const pathname = url.pathname.slice(POSTHOG_PROXY_PATH.length) || '/';
+  const pathname = toUpstreamPathname(
+    url.pathname.slice(POSTHOG_PROXY_PATH.length) || '/',
+  );
   const host =
     pathname.startsWith('/static/') || pathname.startsWith('/array/')
       ? POSTHOG_ASSET_HOST

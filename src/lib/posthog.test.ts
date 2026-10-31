@@ -17,6 +17,15 @@ describe('initPostHog', () => {
         before_send: redactAuthTokens,
       }),
     );
+    const router = posthog.requestRouter;
+    expect(router.endpointFor('api', '/e/')).toMatch(/\/k\/$/);
+    expect(router.endpointFor('api', '/i/v0/e/')).toMatch(/\/i\/v0\/k\/$/);
+    expect(
+      router.endpointFor('assets', '/static/posthog-recorder.js?v=1'),
+    ).toMatch(/\/static\/rr\.js\?v=1$/);
+    expect(router.endpointFor('flags', '/flags/?v=2')).toMatch(
+      /\/flags\/\?v=2$/,
+    );
     jest.restoreAllMocks();
   });
 });

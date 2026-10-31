@@ -1,5 +1,5 @@
 import posthog, { type CaptureResult } from 'posthog-js';
-import { POSTHOG_PROXY_PATH } from '../posthogProxy';
+import { POSTHOG_PROXY_PATH, toPostHogProxyPath } from '../posthogProxy';
 
 const POSTHOG_PUBLIC_API_KEY = 'phc_Ntj9tXHbS64XgYxlTfhglRmFivFsfm0AERph4ZlnNH';
 const POSTHOG_UI_HOST = 'https://us.posthog.com';
@@ -35,10 +35,20 @@ export const redactAuthTokens = (
   event: CaptureResult | null,
 ): CaptureResult | null => event && (redact(event) as CaptureResult);
 
+// Every SDK request URL, including capture beacons and lazy-loaded scripts,
+// comes from the router, so this is where blocklisted paths become aliases.
+const routeThroughProxyAliases = (): void => {
+  const router = posthog.requestRouter;
+  const endpointFor = router.endpointFor.bind(router);
+  router.endpointFor = (target, path) =>
+    endpointFor(target, path && toPostHogProxyPath(path));
+};
+
 /**
  * Initialize PostHog with autocapture for the landing page
  */
 export const initPostHog = (): void => {
+  routeThroughProxyAliases();
   posthog.init(POSTHOG_PUBLIC_API_KEY, {
     api_host: POSTHOG_PROXY_PATH,
     ui_host: POSTHOG_UI_HOST,
