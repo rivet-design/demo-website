@@ -4,10 +4,12 @@ import mdx from '@mdx-js/rollup';
 import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
 import path from 'path';
+import { createPostHogProxyMiddleware } from './posthogHostProxy';
 import { createPrototypeProxyMiddleware } from './prototypeHostProxy';
 import { staticHtmlPlugin } from './src/staticHtml';
 
 const prototypeProxyMiddleware = createPrototypeProxyMiddleware();
+const posthogProxyMiddleware = createPostHogProxyMiddleware();
 
 export default defineConfig({
   plugins: [
@@ -28,6 +30,15 @@ export default defineConfig({
       },
       configurePreviewServer(server) {
         server.middlewares.use(prototypeProxyMiddleware);
+      },
+    },
+    {
+      name: 'rivet-posthog-proxy',
+      configureServer(server) {
+        server.middlewares.use(posthogProxyMiddleware);
+      },
+      configurePreviewServer(server) {
+        server.middlewares.use(posthogProxyMiddleware);
       },
     },
   ],

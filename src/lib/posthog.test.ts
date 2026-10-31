@@ -1,5 +1,34 @@
 import type { CaptureResult } from 'posthog-js';
-import { redactAuthTokens } from './posthog';
+import { POSTHOG_PROXY_PATH } from '../posthogProxy';
+import { initPostHog, posthog, redactAuthTokens } from './posthog';
+
+describe('initPostHog', () => {
+  it('sends traffic through the first-party proxy and keeps redaction', () => {
+    const init = jest.spyOn(posthog, 'init').mockImplementation(() => posthog);
+    jest.spyOn(posthog, 'register').mockImplementation(() => undefined);
+
+    initPostHog();
+
+    expect(init).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        api_host: POSTHOG_PROXY_PATH,
+        ui_host: 'https://us.posthog.com',
+        before_send: redactAuthTokens,
+      }),
+    );
+    const router = posthog.requestRouter;
+    expect(router.endpointFor('api', '/e/')).toMatch(/\/k\/$/);
+    expect(router.endpointFor('api', '/i/v0/e/')).toMatch(/\/i\/v0\/k\/$/);
+    expect(
+      router.endpointFor('assets', '/static/posthog-recorder.js?v=1'),
+    ).toMatch(/\/static\/rr\.js\?v=1$/);
+    expect(router.endpointFor('flags', '/flags/?v=2')).toMatch(
+      /\/flags\/\?v=2$/,
+    );
+    jest.restoreAllMocks();
+  });
+});
 
 const TOKEN_URL =
   'http://localhost/auth-success?session=s1#access_token=SECRET_A&refresh_token=SECRET_R';
