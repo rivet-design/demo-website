@@ -116,7 +116,12 @@ class Telemetry {
           installRef?: never;
         }
       | {
-          downloadType: Exclude<InstallTarget, 'codex'> | 'mac';
+          downloadType: 'grokbot';
+          installMethod: 'local_mcp';
+          installRef?: never;
+        }
+      | {
+          downloadType: Exclude<InstallTarget, 'codex' | 'grokbot'> | 'mac';
           installRef: InstallRef;
           installMethod?: never;
         }

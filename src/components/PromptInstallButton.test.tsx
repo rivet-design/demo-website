@@ -333,7 +333,7 @@ describe('PromptInstallButton desktop handoff', () => {
 });
 
 describe('PromptInstallButton copy prompt', () => {
-  it('shows exactly three desktop agents and the copy action', () => {
+  it('shows four supported hosts and the copy action', () => {
     render(<PromptInstallButton source="landing_hero" />);
     click(container.querySelector('button[aria-label="Choose your agent"]')!);
     const chooser = document.querySelector(
@@ -343,7 +343,13 @@ describe('PromptInstallButton copy prompt', () => {
       [...chooser.querySelectorAll('button')].map(
         (button) => button.textContent,
       ),
-    ).toEqual(['Codex', 'Claude', 'Cursor', 'Copy prompt']);
+    ).toEqual([
+      'Codex',
+      'Claude',
+      'Cursor',
+      'Grok BotLocal MCP',
+      'Copy prompt',
+    ]);
   });
 
   it('copies a general install prompt with a fresh ref without opening an app', async () => {
@@ -416,6 +422,95 @@ describe('PromptInstallButton copy prompt', () => {
       'Prompt copied',
     );
     expect(downloadClicks()).toHaveLength(1);
+  });
+});
+
+describe('PromptInstallButton Grok Bot setup', () => {
+  it('shows local MCP instructions without starting a desktop or plugin handoff', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Grok Bot');
+
+    const prompt = document.querySelector<HTMLTextAreaElement>(
+      'textarea[aria-label="Grok Bot setup prompt"]',
+    );
+    expect(prompt).not.toBeNull();
+    expect(prompt!.value).toContain('--caller-agent grokbot');
+    expect(prompt!.value).toContain('Computer view');
+    expect(prompt!.value).not.toContain('install grokbot');
+    expect(window.open).not.toHaveBeenCalled();
+    expect(handoff.openDeepLink).not.toHaveBeenCalled();
+    expect(navigator.clipboard.writeText).not.toHaveBeenCalled();
+    const [event] = sent.filter((entry) => entry.event === 'download_clicked');
+    expect(event.properties).toMatchObject({
+      source: 'landing_hero',
+      download_type: 'grokbot',
+      install_method: 'local_mcp',
+    });
+    expect(event.properties).not.toHaveProperty('install_ref');
+    expect(posthog.get_property('last_install_ref')).toBeUndefined();
+  });
+
+  it('copies the setup prompt and records only successful copies without a ref', async () => {
+    render(<PromptInstallButton source="story" />);
+    await pickAgent('Grok Bot');
+    const prompt = document.querySelector<HTMLTextAreaElement>(
+      'textarea[aria-label="Grok Bot setup prompt"]',
+    )!;
+    await act(async () => {
+      click(
+        document.querySelector(
+          'button[aria-label="Copy Grok Bot setup prompt"]',
+        )!,
+      );
+    });
+
+    expect(copiedText()).toEqual([prompt.value]);
+    const events = sent.filter((entry) => entry.event === 'download_clicked');
+    expect(events).toHaveLength(2);
+    expect(events[1].properties).toMatchObject({
+      source: 'story',
+      download_type: 'grokbot',
+      install_method: 'local_mcp',
+      copy_method: 'row_click',
+    });
+    expect(events[1].properties).not.toHaveProperty('install_ref');
+    expect(events[1].properties).not.toHaveProperty('prompt');
+    expect(document.body.textContent).toContain(
+      'Prompt copied. Paste it into Grok Bot.',
+    );
+  });
+
+  it('selects the prompt for manual copy when clipboard access is denied', async () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    (navigator.clipboard.writeText as jest.Mock).mockRejectedValueOnce(
+      new Error('denied'),
+    );
+    render(<PromptInstallButton source="landing_nav" />);
+    await pickAgent('Grok Bot');
+    await act(async () => {
+      click(
+        document.querySelector(
+          'button[aria-label="Copy Grok Bot setup prompt"]',
+        )!,
+      );
+    });
+
+    const prompt = document.querySelector<HTMLTextAreaElement>(
+      'textarea[aria-label="Grok Bot setup prompt"]',
+    )!;
+    expect(document.activeElement).toBe(prompt);
+    expect(prompt.selectionStart).toBe(0);
+    expect(prompt.selectionEnd).toBe(prompt.value.length);
+    expect(document.body.textContent).toContain(
+      'Prompt selected. Press ⌘C or Ctrl+C to copy.',
+    );
+    expect(
+      sent.filter((entry) => entry.event === 'download_clicked'),
+    ).toHaveLength(1);
+    expect(warning).toHaveBeenCalledWith(
+      'Failed to copy text to clipboard:',
+      expect.any(Error),
+    );
   });
 });
 

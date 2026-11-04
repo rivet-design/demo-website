@@ -17,6 +17,7 @@ import {
 import { generateInstallRef, type InstallRef } from '@/lib/installRef';
 import { openDeepLink, watchHandoff } from '@/lib/handoff';
 import HandoffFallback from './HandoffFallback';
+import GrokBotSetup from './GrokBotSetup';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
 import {
   FluidMenuGroup,
@@ -35,29 +36,38 @@ const ToolLogo = ({
   id: AgentLogo;
   label: string;
   size?: number;
-}) => (
-  <span
-    role="img"
-    aria-label={label}
-    className="block shrink-0"
-    style={{
-      width: size,
-      height: size,
-      backgroundColor: 'currentColor',
-      WebkitMaskImage: `url("${TOOL_LOGOS[id]}")`,
-      maskImage: `url("${TOOL_LOGOS[id]}")`,
-      WebkitMaskRepeat: 'no-repeat',
-      maskRepeat: 'no-repeat',
-      WebkitMaskPosition: 'center',
-      maskPosition: 'center',
-      WebkitMaskSize: 'contain',
-      maskSize: 'contain',
-    }}
-  />
-);
+}) =>
+  id === 'grokbot' ? (
+    <img
+      src={TOOL_LOGOS[id]}
+      alt={label}
+      width={size}
+      height={size}
+      className="block shrink-0"
+    />
+  ) : (
+    <span
+      role="img"
+      aria-label={label}
+      className="block shrink-0"
+      style={{
+        width: size,
+        height: size,
+        backgroundColor: 'currentColor',
+        WebkitMaskImage: `url("${TOOL_LOGOS[id]}")`,
+        maskImage: `url("${TOOL_LOGOS[id]}")`,
+        WebkitMaskRepeat: 'no-repeat',
+        maskRepeat: 'no-repeat',
+        WebkitMaskPosition: 'center',
+        maskPosition: 'center',
+        WebkitMaskSize: 'contain',
+        maskSize: 'contain',
+      }}
+    />
+  );
 
 type AgentItem = {
-  id: DeepLinkAgentId;
+  id: DeepLinkAgentId | 'grokbot';
   label: string;
 };
 
@@ -79,6 +89,10 @@ const AGENT_ITEMS: AgentItem[] = [
   {
     id: 'cursor',
     label: 'Cursor',
+  },
+  {
+    id: 'grokbot',
+    label: 'Grok Bot',
   },
 ];
 
@@ -135,6 +149,7 @@ const PromptInstallButton = ({
   }, []);
   // The click whose deep link did not take focus; drives the fallback panel.
   const [fallback, setFallback] = useState<Handoff | null>(null);
+  const [isGrokBotSetupOpen, setIsGrokBotSetupOpen] = useState(false);
   // Every attempt reports its own result; only the latest drives the panel.
   const watchersRef = useRef(new Set<() => void>());
   const latestAttemptRef = useRef(0);
@@ -153,9 +168,10 @@ const PromptInstallButton = ({
     fallbackShownRef.current = handoff !== null;
     setFallback(handoff);
   };
-  const dismissFallback = () => {
+  const dismissSetup = () => {
     if (fallbackShownRef.current) fallbackDismissedRef.current = true;
     showFallback(null);
+    setIsGrokBotSetupOpen(false);
   };
 
   useEffect(() => {
@@ -167,7 +183,7 @@ const PromptInstallButton = ({
   useEffect(() => {
     if (!fallback) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') dismissFallback();
+      if (event.key === 'Escape') dismissSetup();
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
@@ -234,7 +250,7 @@ const PromptInstallButton = ({
 
   const activate = (item: AgentItem) => {
     setSelected(item);
-    showFallback(null);
+    dismissSetup();
     // Keep navigation in the click/keyboard gesture; clipboard permissions
     // must not delay or block the desktop handoff.
     setOpen(false);
@@ -246,6 +262,16 @@ const PromptInstallButton = ({
       });
       ++latestAttemptRef.current;
       window.open(CODEX_PLUGIN_URL, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    if (item.id === 'grokbot') {
+      ++latestAttemptRef.current;
+      telemetry.trackDownloadClicked({
+        source,
+        downloadType: 'grokbot',
+        installMethod: 'local_mcp',
+      });
+      setIsGrokBotSetupOpen(true);
       return;
     }
     const installRef = generateInstallRef();
@@ -284,7 +310,7 @@ const PromptInstallButton = ({
     if (!open) {
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
-        dismissFallback();
+        dismissSetup();
         setOpen(true);
         setHighlight(e.key === 'ArrowDown' ? 0 : AGENT_ITEMS.length);
       }
@@ -312,9 +338,9 @@ const PromptInstallButton = ({
   return (
     <Popover
       className={wrapperClassName}
-      open={fallback !== null}
+      open={fallback !== null || isGrokBotSetupOpen}
       onOpenChange={(next) => {
-        if (!next) dismissFallback();
+        if (!next) dismissSetup();
       }}
     >
       <Popover
@@ -323,7 +349,7 @@ const PromptInstallButton = ({
         onOpenChange={(next) => {
           setHighlight(-1);
           setInputMode('pointer');
-          if (next) dismissFallback();
+          if (next) dismissSetup();
           setOpen(next);
         }}
       >
@@ -386,6 +412,11 @@ const PromptInstallButton = ({
                   <ToolLogo id={item.id} label={item.label} />
                 </span>
                 <span className="flex-1">{item.label}</span>
+                {item.id === 'grokbot' ? (
+                  <span className="font-main text-xs text-[#818181]">
+                    Local MCP
+                  </span>
+                ) : null}
                 {selected.id === item.id && (
                   <Check aria-hidden size={15} className="text-[#969696]" />
                 )}
@@ -435,16 +466,29 @@ const PromptInstallButton = ({
         anchorRef={splitRef}
         collisionPadding={12}
         data-lenis-prevent
-        aria-label={`Install Rivet in ${fallback?.agent.label ?? ''}`}
+        aria-label={
+          isGrokBotSetupOpen
+            ? 'Install Rivet in Grok Bot'
+            : `Install Rivet in ${fallback?.agent.label ?? ''}`
+        }
         className="overflow-y-auto overscroll-contain rounded-2xl border-black/[0.12] bg-white text-black shadow-[0_12px_32px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)]"
       >
+        {isGrokBotSetupOpen ? (
+          <GrokBotSetup
+            source={source}
+            onClose={() => {
+              dismissSetup();
+              splitRef.current?.querySelector('button')?.focus();
+            }}
+          />
+        ) : null}
         {fallback && (
           <HandoffFallback
             key={fallback.installRef}
             agent={fallback.agent}
             installRef={fallback.installRef}
             onRetry={() => handOff(fallback)}
-            onClose={dismissFallback}
+            onClose={dismissSetup}
           />
         )}
       </PopoverContent>
