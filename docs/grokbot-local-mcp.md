@@ -117,6 +117,10 @@ In another terminal, run:
 node scripts/verify-grokbot-setup.mjs http://127.0.0.1:4183
 ```
 
-Repeat browser verification for the final prompt and SVG. A passing local
-artifact check does not validate the canonical production URL or a real
-Grok Bot connector installation.
+The final revision passes all 215 tests across 13 suites on Node 24.18.0,
+lint, and the production build. Browser verification confirms the supplied
+SVG loads, the short prompt copies exactly by button and keyboard, and Escape
+restores focus. At 320 pixels, the panel is 296 pixels wide with 12-pixel
+margins and no page overflow. The built guide and SVG pass exact-content and
+MIME checks. A passing local artifact check does not validate the canonical
+production URL or a real Grok Bot connector installation.
