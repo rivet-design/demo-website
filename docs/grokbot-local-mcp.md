@@ -39,6 +39,22 @@ The website checks establish its chooser and copy flow only.
 - [x] Use a clean checkout from main with Sam's approval.
 - [x] Reproduce the missing Grok Bot chooser and setup flow with failing tests.
 - [x] Add the entry, setup prompt, and existing-event attribution.
-- [ ] Verify copy success, copy failure, keyboard navigation, and host switching.
-- [ ] Verify desktop and mobile layouts in a real browser.
-- [ ] Publish a ready PR and settle checks and review feedback.
+- [x] Verify copy success, copy failure, keyboard navigation, and host switching.
+- [x] Verify desktop and mobile layouts in a real browser.
+- [x] Publish a ready PR.
+- [ ] Settle checks and review feedback on the final commit.
+
+## Verification evidence
+
+The full suite passes 198 tests. Browser checks cover the desktop layout and
+390- and 320-pixel mobile widths. At 320 pixels, the setup panel fits inside
+12-pixel margins and the selected host label renders in full. Explicit
+content width on the nested chooser containers prevents intrinsic flex
+shrinkage from clipping that label; full-width placements retain their
+existing layout.
+
+The browser clipboard exactly matches the visible prompt. Keyboard navigation
+opens setup, Escape closes it and restores focus to the primary action, and
+the unit regression keeps an older desktop handoff from replacing the Grok
+Bot panel. Clipboard denial selects the prompt and records no successful
+copy event.

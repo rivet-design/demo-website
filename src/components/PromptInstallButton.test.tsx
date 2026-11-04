@@ -63,6 +63,8 @@ const click = (el: Element) =>
   });
 
 const pickAgent = async (label: string) => {
+  const agentLabel =
+    label === 'Grok Bot' ? 'Use Grok Bot' : `Continue in ${label}`;
   const trigger = container.querySelector(
     'button[aria-label="Choose your agent"]',
   );
@@ -74,7 +76,7 @@ const pickAgent = async (label: string) => {
   const row = [...popup.querySelectorAll('button')].find(
     (button) =>
       button.getAttribute('aria-label') ===
-      (label === 'Copy prompt' ? label : `Continue in ${label}`),
+      (label === 'Copy prompt' ? label : agentLabel),
   );
   if (!row) throw new Error(`${label} row not rendered`);
   await act(async () => {
@@ -426,6 +428,35 @@ describe('PromptInstallButton copy prompt', () => {
 });
 
 describe('PromptInstallButton Grok Bot setup', () => {
+  it('opens setup with the keyboard and uses a concise setup action label', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    const trigger = container.querySelector(
+      'button[aria-label="Choose your agent"]',
+    )!;
+    for (const key of ['ArrowUp', 'ArrowUp', 'Enter']) {
+      act(() =>
+        trigger.dispatchEvent(
+          new KeyboardEvent('keydown', { key, bubbles: true }),
+        ),
+      );
+    }
+    const primary = container.querySelector('button')!;
+    expect(primary.textContent).toBe('Use Grok Bot');
+    const copy = document.querySelector(
+      'button[aria-label="Copy Grok Bot setup prompt"]',
+    )!;
+    expect(document.activeElement).toBe(copy);
+    act(() =>
+      copy.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+      ),
+    );
+    expect(
+      document.querySelector('textarea[aria-label="Grok Bot setup prompt"]'),
+    ).toBeNull();
+    expect(document.activeElement).toBe(primary);
+  });
+
   it('shows local MCP instructions without starting a desktop or plugin handoff', async () => {
     render(<PromptInstallButton source="landing_hero" />);
     await pickAgent('Grok Bot');
@@ -691,6 +722,24 @@ describe('PromptInstallButton handoff fallback', () => {
     await pickAgent('Claude');
     await pickAgent('Codex');
     await waitOutHandoff();
+    expect(fallbackPanel()).toBeNull();
+  });
+
+  it('keeps an earlier desktop attempt from replacing Grok Bot setup', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Claude');
+    await pickAgent('Grok Bot');
+    await waitOutHandoff();
+    expect(fallbackPanel()?.getAttribute('aria-label')).toBe(
+      'Install Rivet in Grok Bot',
+    );
+    expect(
+      document.querySelector('textarea[aria-label="Grok Bot setup prompt"]'),
+    ).not.toBeNull();
+    expect(
+      handoffResults().every((result) => result.download_type === 'claude'),
+    ).toBe(true);
+    await pickAgent('Codex');
     expect(fallbackPanel()).toBeNull();
   });
 

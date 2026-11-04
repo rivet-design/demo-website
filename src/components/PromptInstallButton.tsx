@@ -1,6 +1,3 @@
-// Opens the Codex plugin listing or the selected desktop agent with an
-// install prompt ready to review and send. Cursor receives a prompt link,
-// not an MCP registration link, so its install uses the durable global bootstrap.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Copy } from 'lucide-react';
 import { toast } from 'sonner';
@@ -96,7 +93,8 @@ const AGENT_ITEMS: AgentItem[] = [
   },
 ];
 
-const continuationLabel = (item: AgentItem) => `Continue in ${item.label}`;
+const agentActionLabel = (item: AgentItem) =>
+  item.id === 'grokbot' ? 'Use Grok Bot' : `Continue in ${item.label}`;
 
 const BUTTON_TONES = {
   orange: {
@@ -216,7 +214,7 @@ const PromptInstallButton = ({
       : size === 'hero'
         ? 'px-5 py-[10px] font-aileron text-base leading-[1.164] tracking-[-0.16px]'
         : 'px-4 py-2 font-main text-sm';
-  const actionLabel = continuationLabel(selected);
+  const actionLabel = agentActionLabel(selected);
   const buttonTone = BUTTON_TONES[tone];
 
   // Listeners go up before navigating so an immediate blur is not missed.
@@ -333,7 +331,7 @@ const PromptInstallButton = ({
     }
   };
 
-  const wrapperClassName = fullWidth ? 'flex w-full' : 'max-w-full';
+  const wrapperClassName = fullWidth ? 'flex w-full' : 'w-max max-w-full';
 
   return (
     <Popover
@@ -405,7 +403,7 @@ const PromptInstallButton = ({
               <FluidMenuItem
                 key={item.id}
                 index={index}
-                aria-label={continuationLabel(item)}
+                aria-label={agentActionLabel(item)}
                 onClick={() => activate(item)}
               >
                 <span aria-hidden className={MENU_ICON_CLASS_NAME}>

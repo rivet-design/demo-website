@@ -1,11 +1,3 @@
-// Per-agent Rivet install data shared by the CTA dropdown (PromptInstallButton)
-// and the CLI-command accordion (InstallAccordion), so the commands the site
-// shows and the commands embedded in copy prompts can never drift apart.
-//
-// Command shape: `-y` keeps npx non-interactive (agents run these headlessly,
-// where npx's "Ok to proceed?" prompt would stall) and `@latest` forces a
-// registry resolve so a stale npx cache or old global install never serves an
-// outdated version. The agent ids mirror rivet core's harness registry.
 import { EMBED_INSTALL_REF_IN_COPY, type InstallRef } from './installRef';
 
 export type InstallAgentId =
