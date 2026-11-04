@@ -19,8 +19,9 @@ in a new tab. Claude and Cursor prefill a coding session through
 `claude://code/new?q=` or `cursor://anysphere.cursor-deeplink/prompt?text=`.
 The user sends the prompt in the destination app.
 
-Grok Bot opens a local MCP setup panel with a copyable prompt. The visitor
-pastes it into Grok Bot, which registers Rivet on its own computer and shows
+Grok Bot opens a local MCP setup panel with a short copyable request linking to
+`https://rivet.design/grokbot-setup.md`. The visitor pastes it into Grok Bot,
+which reads the public guide, registers Rivet on its own computer, and shows
 previews through Computer view. This path has no global installer target,
 marketplace listing, or prompt-prefill deep link. Its command accordion stays
 limited to agents with supported CLI installers.
@@ -33,7 +34,9 @@ and connector configuration are not captured. Clipboard failures select the
 visible prompt for manual copy and do not record a successful copy.
 
 Deploy the Grok Bot entry only after publishing a Rivet release that preserves
-the `grokbot` caller identity. See [Grok Bot setup](grokbot-local-mcp.md) for
+the `grokbot` caller identity and validating the deployed guide and SVG with
+`node scripts/verify-grokbot-setup.mjs https://rivet.design`.
+See [Grok Bot setup](grokbot-local-mcp.md) for
 the acceptance and release prerequisites.
 
 Command-based paths use the shared `installPrompt` builder:

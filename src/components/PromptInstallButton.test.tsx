@@ -23,6 +23,8 @@ jest.mock('sonner', () => ({
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
 let sent: CaptureResult[] = [];
+const GROKBOT_SETUP_REQUEST =
+  "Set up Rivet's local MCP connector in Grok Bot using https://rivet.design/grokbot-setup.md. Keep my existing permissions and use Computer view for previews. Stop if the link does not contain setup instructions.";
 
 posthog.init('phc_test', {
   api_host: 'http://posthog.invalid',
@@ -481,9 +483,10 @@ describe('PromptInstallButton Grok Bot setup', () => {
       'textarea[aria-label="Grok Bot setup prompt"]',
     );
     expect(prompt).not.toBeNull();
-    expect(prompt!.value).toContain('--caller-agent grokbot');
-    expect(prompt!.value).toContain('Computer view');
-    expect(prompt!.value).not.toContain('install grokbot');
+    expect(prompt!.value).toBe(GROKBOT_SETUP_REQUEST);
+    expect(container.querySelector('img')?.getAttribute('src')).toBe(
+      '/images/grokbot.svg',
+    );
     expect(window.open).not.toHaveBeenCalled();
     expect(handoff.openDeepLink).not.toHaveBeenCalled();
     expect(navigator.clipboard.writeText).not.toHaveBeenCalled();
@@ -511,7 +514,8 @@ describe('PromptInstallButton Grok Bot setup', () => {
       );
     });
 
-    expect(copiedText()).toEqual([prompt.value]);
+    expect(prompt.value).toBe(GROKBOT_SETUP_REQUEST);
+    expect(copiedText()).toEqual([GROKBOT_SETUP_REQUEST]);
     const events = sent.filter((entry) => entry.event === 'download_clicked');
     expect(events).toHaveLength(2);
     expect(events[1].properties).toMatchObject({
