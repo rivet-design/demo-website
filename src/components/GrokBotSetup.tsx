@@ -35,15 +35,7 @@ const GrokBotSetup = ({ source, onClose }: GrokBotSetupProps) => {
   else if (isPromptCopied) status = 'Prompt copied. Paste it into Grok Bot.';
 
   return (
-    <div
-      className="flex flex-col gap-3 p-4"
-      onKeyDown={(event) => {
-        if (event.key === 'Escape') {
-          event.preventDefault();
-          onClose();
-        }
-      }}
-    >
+    <div className="flex flex-col gap-3 p-4">
       <div className="flex items-start gap-2">
         <h3 className="flex-1 font-main text-sm font-medium text-black">
           Set up Rivet in Grok Bot

@@ -428,6 +428,22 @@ describe('PromptInstallButton copy prompt', () => {
 });
 
 describe('PromptInstallButton Grok Bot setup', () => {
+  it('closes setup on Escape when focus has returned to the main action', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Grok Bot');
+    const primary = container.querySelector('button')!;
+    act(() => (primary as HTMLButtonElement).focus());
+    act(() =>
+      primary.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+      ),
+    );
+    expect(
+      document.querySelector('textarea[aria-label="Grok Bot setup prompt"]'),
+    ).toBeNull();
+    expect(document.activeElement).toBe(primary);
+  });
+
   it('opens setup with the keyboard and uses a concise setup action label', async () => {
     render(<PromptInstallButton source="landing_hero" />);
     const trigger = container.querySelector(

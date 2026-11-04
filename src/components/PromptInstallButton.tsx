@@ -162,15 +162,15 @@ const PromptInstallButton = ({
     chooserOpenRef.current = open;
   }, [open]);
 
-  const showFallback = (handoff: Handoff | null) => {
+  const showFallback = useCallback((handoff: Handoff | null) => {
     fallbackShownRef.current = handoff !== null;
     setFallback(handoff);
-  };
-  const dismissSetup = () => {
+  }, []);
+  const dismissSetup = useCallback(() => {
     if (fallbackShownRef.current) fallbackDismissedRef.current = true;
     showFallback(null);
     setIsGrokBotSetupOpen(false);
-  };
+  }, [showFallback]);
 
   useEffect(() => {
     const watchers = watchersRef.current;
@@ -179,13 +179,16 @@ const PromptInstallButton = ({
 
   // Focus usually stays on the CTA, outside the portaled panel.
   useEffect(() => {
-    if (!fallback) return;
+    if (!fallback && !isGrokBotSetupOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') dismissSetup();
+      if (event.key !== 'Escape') return;
+      dismissSetup();
+      if (isGrokBotSetupOpen)
+        splitRef.current?.querySelector('button')?.focus();
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [fallback]);
+  }, [fallback, isGrokBotSetupOpen, dismissSetup]);
 
   useEffect(() => {
     if (!open || !dismissOnScroll) return;

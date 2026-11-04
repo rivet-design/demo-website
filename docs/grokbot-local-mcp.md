@@ -46,7 +46,7 @@ The website checks establish its chooser and copy flow only.
 
 ## Verification evidence
 
-The full suite passes 198 tests. Browser checks cover the desktop layout and
+The full suite passes 199 tests. Browser checks cover the desktop layout and
 390- and 320-pixel mobile widths. At 320 pixels, the setup panel fits inside
 12-pixel margins and the selected host label renders in full. Explicit
 content width on the nested chooser containers prevents intrinsic flex
@@ -54,7 +54,13 @@ shrinkage from clipping that label; full-width placements retain their
 existing layout.
 
 The browser clipboard exactly matches the visible prompt. Keyboard navigation
-opens setup, Escape closes it and restores focus to the primary action, and
+opens setup, Escape closes it and restores focus to the primary action even
+when focus has left the setup panel, and
 the unit regression keeps an older desktop handoff from replacing the Grok
 Bot panel. Clipboard denial selects the prompt and records no successful
 copy event.
+
+Review found that the original Escape listener only watched desktop fallback
+state. A failing DOM regression reproduced Escape on the main CTA leaving
+Grok Bot setup open. The shared document listener now watches both setup
+states, and the redundant in-panel listener is removed.
