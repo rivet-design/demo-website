@@ -163,6 +163,38 @@ To make every sign-in attributable, rivet-core must:
 3. If the CLI or app identifies PostHog users, use the same Supabase user id
    as the distinct id so the persons join.
 
+### PostHog distinct id in install copy
+
+The site does not send the visitor's PostHog distinct id (`ph_anon`) to
+rivet-core. It builds no sign-in URL, so the only possible carrier is the
+copied install command, as `--ph-anon <id>` next to `--ref`. That carrier
+would reach these paths: the Claude and Cursor deep-link prompts, **Copy
+prompt**, the accordion rows and icons, native copies of a full accordion
+command, and the handoff fallback row. The site does not ship it, for three
+reasons:
+
+- `rivet-design@0.27.0` rejects the flag. `install` stops with
+  `Unknown flag --ph-anon` and exit code 2, so every copied install would fail.
+- Visitors share and paste install commands. A server-side `$identify` from
+  that id merges the visitor's anonymous history into the account of whoever
+  signs in first with the command. Refs only match events for this reason, and
+  `identifyAccount` skips identified browsers for the same reason.
+- Codex clicks open the plugin listing, which carries nothing from the site. The
+  id would not reach a Codex sign-in.
+
+Sign-ins in the browser that copied the command already merge through
+`identifyAccount` on `/auth-success`. Only cross-browser sign-ins stay
+unmerged.
+
+To revisit this, rivet-core must first publish a CLI that accepts
+`--ph-anon <id>` and `--ph-anon=<id>`, ignores a malformed value instead of
+failing, and accepts 1 to 200 characters from `[A-Za-z0-9._:-]`. The proxy
+must also limit the merge to one sign-in per ref, within a short window of the
+`download_clicked` for that ref. The site would then add the flag behind an
+embedding flag, off by default, in the shared `copiedInstallCommand` builder.
+The flag would apply only when PostHog is loaded and `$user_state` is not
+`identified`.
+
 ## Rollout verification
 
 `EMBED_INSTALL_REF_IN_COPY` in `src/lib/installRef.ts` is enabled. On October 6,
