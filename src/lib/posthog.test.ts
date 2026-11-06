@@ -137,6 +137,22 @@ describe('redactAuthTokens', () => {
     });
   });
 
+  it('drops the one-time link code from /auth-success URLs', () => {
+    const result = redactAuthTokens(
+      eventWith({
+        properties: {
+          $current_url:
+            'http://localhost/auth-success?login=complete&ref=r_aZ09bY18&link=one-time-code',
+        },
+      }),
+    );
+
+    expect(result?.properties.$current_url).toBe(
+      'http://localhost/auth-success?login=complete&ref=r_aZ09bY18',
+    );
+    expect(JSON.stringify(result)).not.toContain('one-time-code');
+  });
+
   it('passes a dropped event through as null', () => {
     expect(redactAuthTokens(null)).toBeNull();
   });
