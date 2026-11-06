@@ -39,11 +39,14 @@ export const staticHtmlPlugin = (): Plugin => ({
     // Run after Vite serves assets and resolves its SPA fallback, before it
     // sends index.html. originalUrl preserves the visitor's actual route.
     return () => {
-      server.middlewares.use((req, _res, next) => {
-        if (
-          req.url === '/index.html' &&
-          !isHomeDocument(req.originalUrl ?? '/')
-        ) {
+      server.middlewares.use((req, res, next) => {
+        const originalUrl = req.originalUrl ?? '/';
+        // The link code is in this URL until script runs. no-referrer stops
+        // the browser from sending that URL on the requests this page makes.
+        if (originalUrl.split('?')[0] === '/auth-success') {
+          res.setHeader('Referrer-Policy', 'no-referrer');
+        }
+        if (req.url === '/index.html' && !isHomeDocument(originalUrl)) {
           req.url = '/app.html';
         }
         next();
