@@ -44,7 +44,7 @@
     "motion": "^14.0.0",
     "pdfjs-dist": "^6.4.299",
     "postcss": "^8.4.32",
-    "posthog-js": "^1.304.0",
+    "posthog-js": "^1.444.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "rehype-slug": "^6.0.0",
