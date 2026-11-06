@@ -8,9 +8,13 @@ import PrivacyPolicyPage from './components/PrivacyPolicyPage';
 import TermsPage from './components/TermsPage';
 import VariantsDemoPage from './components/VariantsDemoPage';
 import AboutPage from './blog/AboutPage';
+import { linkVisitor, takeLinkCode } from './lib/linkVisitor';
 import { initPostHog } from './lib/posthog';
 
+// Take `link` off the URL before init. The first pageview reads it there.
+const linkCode = takeLinkCode();
 initPostHog();
+if (linkCode) linkVisitor(linkCode);
 
 const container = document.getElementById('app')!;
 const root = createRoot(container);

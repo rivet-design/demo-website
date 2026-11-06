@@ -12,8 +12,7 @@ import {
   parseAccountId,
   type AccountId,
 } from '../lib/authAccount';
-
-const PROXY_URL = 'https://rivet-proxy.onrender.com';
+import { AUTH_PROXY_URL } from '../lib/linkVisitor';
 
 type AuthState = 'processing' | 'success' | 'error';
 
@@ -103,7 +102,7 @@ const resolveAuth = async (): Promise<AuthOutcome> => {
   }
 
   try {
-    const response = await fetch(`${PROXY_URL}/api/auth/google/complete`, {
+    const response = await fetch(`${AUTH_PROXY_URL}/api/auth/google/complete`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

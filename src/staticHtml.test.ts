@@ -108,4 +108,41 @@ describe('HTML available without JavaScript', () => {
       expect(next).toHaveBeenCalledTimes(1);
     }
   });
+
+  it('sends Referrer-Policy no-referrer only for /auth-success', () => {
+    const use = jest.fn();
+    const server = { middlewares: { use } } as unknown as PreviewServer;
+    const configure = staticHtmlPlugin().configurePreviewServer;
+    if (typeof configure !== 'function')
+      throw new Error('Missing preview hook');
+    const install = configure(server);
+    if (typeof install !== 'function') throw new Error('Missing post hook');
+    install();
+    const middleware = use.mock.calls[0][0] as Connect.NextHandleFunction;
+
+    for (const [originalUrl, policy] of [
+      ['/auth-success?login=complete&link=x', 'no-referrer'],
+      ['/download', undefined],
+    ] as const) {
+      const req = {
+        url: '/index.html',
+        originalUrl,
+      } as Connect.IncomingMessage;
+      const setHeader = jest.fn();
+      const next = jest.fn();
+      middleware(
+        req,
+        { setHeader } as unknown as Parameters<Connect.NextHandleFunction>[1],
+        next,
+      );
+      expect(req.url).toBe('/app.html');
+      expect(next).toHaveBeenCalledTimes(1);
+      if (policy) {
+        expect(setHeader).toHaveBeenCalledTimes(1);
+        expect(setHeader).toHaveBeenCalledWith('Referrer-Policy', policy);
+      } else {
+        expect(setHeader).not.toHaveBeenCalled();
+      }
+    }
+  });
 });

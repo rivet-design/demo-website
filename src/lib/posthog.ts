@@ -18,6 +18,7 @@ const AUTH_PAGE_SECRET_PARAMS = [
   'refresh_token',
   'token',
   'code',
+  'link',
 ];
 
 // /auth-success URLs lose their whole fragment and secret query params; the
