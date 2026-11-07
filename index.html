@@ -10,6 +10,36 @@
   <title>Rivet - Explore dozens of design directions from your agent</title>
   <meta name="description"
     content="Rivet is a design agent for your coding agent. It explores dozens of design directions in parallel so you can pick the one that fits." />
+  <link rel="canonical" href="https://rivet.design/" />
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://rivet.design/#organization",
+          "name": "Rivet",
+          "url": "https://rivet.design",
+          "sameAs": [
+            "https://x.com/designrivet",
+            "https://www.linkedin.com/company/rivetdesign",
+            "https://www.instagram.com/rivet.design",
+            "https://docs.rivet.design",
+            "https://github.com/rivet-design"
+          ]
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "Rivet",
+          "url": "https://rivet.design",
+          "description": "Rivet is a design agent for your coding agent. It explores dozens of design directions in parallel so you can pick the one that fits.",
+          "applicationCategory": "DesignApplication",
+          "operatingSystem": "macOS",
+          "publisher": { "@id": "https://rivet.design/#organization" }
+        }
+      ]
+    }
+  </script>
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
@@ -140,7 +170,7 @@
       try {
         // This document serves EVERY route, but only the home page mounts
         // SplashScreen — the only thing that can take the shell down before
-        // its 10s CSS timeout. Painting the shell on /story, /download,
+        // its 10s CSS timeout. Painting the shell on /about, /download,
         // /privacy, /terms or /variants left those pages covered and
         // unclickable for the full timeout. main.ts removes the attribute
         // defensively for non-splash routes too, in case these gates drift.
@@ -238,7 +268,7 @@
       </section>
       <nav aria-label="Learn more about Rivet">
         <a href="https://docs.rivet.design/">Documentation</a> ·
-        <a href="/story">Our story</a> ·
+        <a href="/about">Our story</a> ·
         <a href="/download">Download</a>
       </nav>
     </main>

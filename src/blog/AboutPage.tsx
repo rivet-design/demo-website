@@ -9,7 +9,7 @@ import TitleShapes from '../components/TitleShapes';
 import { mdxComponents } from './mdx-components';
 import { getBlogPost } from './posts';
 
-const aboutPost = getBlogPost('story-of-rivet');
+const storyPost = getBlogPost('story-of-rivet');
 
 /**
  * The display title breaks before this word. Where a headline turns is a
@@ -24,9 +24,11 @@ const titleLines = (title: string): string[] => {
   return at > 0 ? [title.slice(0, at).trim(), title.slice(at)] : [title];
 };
 
-if (!aboutPost) {
+if (!storyPost) {
   throw new Error('The About page requires the "story-of-rivet" MDX post.');
 }
+
+export const aboutPost = storyPost;
 
 const AboutPage = () => {
   const { Content, meta } = aboutPost;

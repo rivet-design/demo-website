@@ -2,12 +2,7 @@ import './styles/index.css';
 import { createRoot } from 'react-dom/client';
 import { createElement } from 'react';
 import App from './App';
-import DownloadPage from './components/DownloadPage';
-import AuthSuccessPage from './components/AuthSuccessPage';
-import PrivacyPolicyPage from './components/PrivacyPolicyPage';
-import TermsPage from './components/TermsPage';
-import VariantsDemoPage from './components/VariantsDemoPage';
-import AboutPage from './blog/AboutPage';
+import { PAGES } from './pages';
 import { linkVisitor, takeLinkCode } from './lib/linkVisitor';
 import { initPostHog } from './lib/posthog';
 
@@ -19,27 +14,18 @@ if (linkCode) linkVisitor(linkCode);
 const container = document.getElementById('app')!;
 const root = createRoot(container);
 
-// Simple routing based on pathname
+// Production answers these with a 301 (see src/staticHtml.ts); this covers
+// the dev server, which does not.
 const requestedPath = window.location.pathname;
-const isLegacyStoryPath =
-  requestedPath === '/about' ||
+const isLegacyAboutPath =
+  requestedPath === '/story' ||
   requestedPath === '/blog' ||
   requestedPath.startsWith('/blog/');
-const path = isLegacyStoryPath ? '/story' : requestedPath;
+const path = isLegacyAboutPath ? '/about' : requestedPath;
 
-if (isLegacyStoryPath) window.history.replaceState(null, '', '/story');
+if (isLegacyAboutPath) window.history.replaceState(null, '', '/about');
 
-const getComponent = () => {
-  if (path === '/download') return DownloadPage;
-  if (path === '/auth-success') return AuthSuccessPage;
-  if (path === '/privacy') return PrivacyPolicyPage;
-  if (path === '/terms') return TermsPage;
-  if (path === '/variants') return VariantsDemoPage;
-  if (path === '/story') return AboutPage;
-  return App;
-};
-
-const Page = getComponent();
+const Page = PAGES[path]?.Component ?? App;
 
 // Only App mounts SplashScreen, the one component that dismisses the inline
 // splash shell painted by index.html. The shell's own gate is path-based and

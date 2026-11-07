@@ -1,6 +1,14 @@
-import { readFileSync, existsSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { htmlForRoute, staticHtmlPlugin } from './staticHtml';
+import { readFileSync, existsSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import {
+  htmlForRoute,
+  redirectTarget,
+  renderPageHtml,
+  sitemapXml,
+  staticHtmlPlugin,
+  type PrerenderedPage,
+} from './staticHtml';
 import type { Connect, PreviewServer } from 'vite';
 
 const projectRoot = resolve(__dirname, '..');
@@ -80,69 +88,220 @@ describe('HTML available without JavaScript', () => {
     expect(page.querySelector('script[type="module"]')).not.toBeNull();
   });
 
-  it('selects the built app shell only after Vite resolves a non-home fallback', () => {
+  it('links the About page at /about', () => {
+    expect(parseHtml().querySelector('a[href="/about"]')).not.toBeNull();
+    expect(html).not.toContain('href="/story"');
+  });
+
+  it('describes Rivet in home JSON-LD without ratings or prices', () => {
+    const block = parseHtml().querySelector(
+      'script[type="application/ld+json"]',
+    )!.textContent!;
+    const graph = JSON.parse(block)['@graph'];
+    expect(graph.map((node: { '@type': string }) => node['@type'])).toEqual([
+      'Organization',
+      'SoftwareApplication',
+    ]);
+    expect(graph[0].sameAs).toEqual(
+      expect.arrayContaining([
+        'https://docs.rivet.design',
+        'https://github.com/rivet-design',
+      ]),
+    );
+    expect(block).not.toMatch(/aggregateRating|review|offers|price/i);
+  });
+});
+
+const page = (overrides: Partial<PrerenderedPage> = {}): PrerenderedPage => ({
+  path: '/terms',
+  title: 'Terms of Use — Rivet',
+  description: 'The "legal" terms & conditions.',
+  indexed: true,
+  body: '<div><h1>Terms of Use</h1><p>Costs $5.</p></div>',
+  ...overrides,
+});
+
+const parseRendered = (rendered: PrerenderedPage) =>
+  new DOMParser().parseFromString(renderPageHtml(html, rendered), 'text/html');
+
+describe('prerendered route HTML', () => {
+  it('gives the route its own title, description, canonical, and social URLs', () => {
+    const doc = parseRendered(page());
+    const meta = (key: string) =>
+      doc
+        .querySelector(`meta[name="${key}"], meta[property="${key}"]`)
+        ?.getAttribute('content');
+    expect(doc.title).toBe('Terms of Use — Rivet');
+    for (const key of [
+      'description',
+      'og:description',
+      'twitter:description',
+    ]) {
+      expect(meta(key)).toBe('The "legal" terms & conditions.');
+    }
+    for (const key of ['og:title', 'twitter:title']) {
+      expect(meta(key)).toBe('Terms of Use — Rivet');
+    }
+    for (const key of ['og:url', 'twitter:url']) {
+      expect(meta(key)).toBe('https://rivet.design/terms');
+    }
+    expect(
+      doc.querySelector('link[rel="canonical"]')?.getAttribute('href'),
+    ).toBe('https://rivet.design/terms');
+    expect(doc.querySelector('meta[name="robots"]')).toBeNull();
+  });
+
+  it('replaces the home summary and JSON-LD with the route body', () => {
+    const doc = parseRendered(page());
+    expect(doc.querySelectorAll('h1')).toHaveLength(1);
+    expect(doc.querySelector('#app')?.textContent?.trim()).toBe(
+      'Terms of UseCosts $5.',
+    );
+    expect(doc.querySelector('#site-summary')).toBeNull();
+    expect(doc.querySelector('script[type="application/ld+json"]')).toBeNull();
+    expect(doc.querySelector('script[type="module"]')).not.toBeNull();
+  });
+
+  it('marks unlisted routes noindex', () => {
+    expect(
+      parseRendered(page({ indexed: false }))
+        .querySelector('meta[name="robots"]')
+        ?.getAttribute('content'),
+    ).toBe('noindex');
+  });
+
+  it('keeps index.html as the home document and fails when it drifts', () => {
+    const home = page({
+      path: '/',
+      title: 'Rivet - Explore dozens of design directions from your agent',
+      description:
+        'Rivet is a design agent for your coding agent. It explores dozens of design directions in parallel so you can pick the one that fits.',
+      body: null,
+    });
+    expect(renderPageHtml(html, home)).toBe(html);
+    expect(() => renderPageHtml(html, { ...home, title: 'Other' })).toThrow();
+  });
+});
+
+describe('sitemapXml', () => {
+  it('lists indexed routes with lastmod', () => {
+    const xml = sitemapXml(
+      [page({ path: '/' }), page({ path: '/about' }), page({ indexed: false })],
+      '2026-11-07',
+    );
+    const doc = new DOMParser().parseFromString(xml, 'application/xml');
+    expect(doc.querySelector('parsererror')).toBeNull();
+    expect(
+      [...doc.querySelectorAll('loc')].map((loc) => loc.textContent),
+    ).toEqual(['https://rivet.design/', 'https://rivet.design/about']);
+    expect(doc.querySelector('lastmod')?.textContent).toBe('2026-11-07');
+  });
+});
+
+describe('redirectTarget', () => {
+  it.each([
+    ['/story', '/about'],
+    ['/story/', '/about'],
+    ['/blog', '/about'],
+    ['/blog/old-post', '/about'],
+    ['/about/', '/about'],
+    ['/privacy//', '/privacy'],
+    ['/', null],
+    ['/about', null],
+    ['/unknown', null],
+  ])('%s -> %s', (from, to) => {
+    expect(redirectTarget(from)).toBe(to);
+  });
+});
+
+describe('preview server', () => {
+  const outDir = mkdtempSync(join(tmpdir(), 'rivet-dist-'));
+  writeFileSync(join(outDir, '404.html'), '<h1>Page not found</h1>');
+  writeFileSync(join(outDir, 'sitemap.xml'), '<urlset/>');
+
+  const install = () => {
     const use = jest.fn();
-    const server = { middlewares: { use } } as unknown as PreviewServer;
+    const server = {
+      middlewares: { use },
+      config: { root: outDir, build: { outDir: '.' } },
+    } as unknown as PreviewServer;
     const configure = staticHtmlPlugin().configurePreviewServer;
     if (typeof configure !== 'function')
       throw new Error('Missing preview hook');
-    const install = configure(server);
-    expect(use).not.toHaveBeenCalled();
-    if (typeof install !== 'function') throw new Error('Missing post hook');
-    install();
-    const middleware = use.mock.calls[0][0] as Connect.NextHandleFunction;
-    for (const [url, originalUrl, expected] of [
-      ['/index.html', '/', '/index.html'],
-      ['/index.html', '/?ref=launch', '/index.html'],
-      ['/index.html', '/index.html', '/index.html'],
-      ['/index.html', '/story', '/app.html'],
-      ['/index.html', '/download?ref=launch', '/app.html'],
-      ['/index.html', '/blog/old-post', '/app.html'],
-      ['/assets/app.js', '/assets/app.js', '/assets/app.js'],
-      ['/other.html', '/other.html', '/other.html'],
+    const post = configure(server);
+    if (typeof post !== 'function') throw new Error('Missing post hook');
+    const pre = use.mock.calls[0][0] as Connect.NextHandleFunction;
+    post();
+    return { pre, post: use.mock.calls[1][0] as Connect.NextHandleFunction };
+  };
+
+  const run = (
+    middleware: Connect.NextHandleFunction,
+    url: string,
+    originalUrl = url,
+  ) => {
+    const req = { url, originalUrl } as Connect.IncomingMessage;
+    const headers: Record<string, string> = {};
+    const res = {
+      statusCode: 200,
+      setHeader: (key: string, value: string) => (headers[key] = value),
+      end: jest.fn(),
+    };
+    const next = jest.fn();
+    middleware(
+      req,
+      res as unknown as Parameters<Connect.NextHandleFunction>[1],
+      next,
+    );
+    return { req, res, headers, next };
+  };
+
+  it('301s legacy About URLs and trailing slashes, keeping the query', () => {
+    const { pre } = install();
+    expect(run(pre, '/story?ref=launch')).toMatchObject({
+      res: { statusCode: 301 },
+      headers: { Location: '/about?ref=launch' },
+    });
+    expect(run(pre, '/download/').headers.Location).toBe('/download');
+    expect(run(pre, '/about').next).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends the sitemap as application/xml and 404.html as a 404', () => {
+    const { pre } = install();
+    expect(run(pre, '/sitemap.xml').headers['Content-Type']).toBe(
+      'application/xml; charset=utf-8',
+    );
+    expect(run(pre, '/404.html').res.statusCode).toBe(404);
+  });
+
+  it('answers 404 when the fallback lands a non-home URL on index.html', () => {
+    const { post } = install();
+    const unknown = run(post, '/index.html', '/this-does-not-exist');
+    expect(unknown.res.statusCode).toBe(404);
+    expect(String(unknown.res.end.mock.calls[0][0])).toContain(
+      'Page not found',
+    );
+    for (const [url, originalUrl] of [
+      ['/index.html', '/'],
+      ['/index.html', '/?ref=launch'],
+      ['/about.html', '/about'],
+      ['/assets/app.js', '/assets/app.js'],
     ]) {
-      const req = { url, originalUrl } as Connect.IncomingMessage;
-      const next = jest.fn();
-      middleware(req, {} as Parameters<Connect.NextHandleFunction>[1], next);
-      expect(req.url).toBe(expected);
-      expect(next).toHaveBeenCalledTimes(1);
+      const known = run(post, url, originalUrl);
+      expect(known.next).toHaveBeenCalledTimes(1);
+      expect(known.req.url).toBe(url);
     }
   });
 
   it('sends Referrer-Policy no-referrer only for /auth-success', () => {
-    const use = jest.fn();
-    const server = { middlewares: { use } } as unknown as PreviewServer;
-    const configure = staticHtmlPlugin().configurePreviewServer;
-    if (typeof configure !== 'function')
-      throw new Error('Missing preview hook');
-    const install = configure(server);
-    if (typeof install !== 'function') throw new Error('Missing post hook');
-    install();
-    const middleware = use.mock.calls[0][0] as Connect.NextHandleFunction;
-
-    for (const [originalUrl, policy] of [
-      ['/auth-success?login=complete&link=x', 'no-referrer'],
-      ['/download', undefined],
-    ] as const) {
-      const req = {
-        url: '/index.html',
-        originalUrl,
-      } as Connect.IncomingMessage;
-      const setHeader = jest.fn();
-      const next = jest.fn();
-      middleware(
-        req,
-        { setHeader } as unknown as Parameters<Connect.NextHandleFunction>[1],
-        next,
-      );
-      expect(req.url).toBe('/app.html');
-      expect(next).toHaveBeenCalledTimes(1);
-      if (policy) {
-        expect(setHeader).toHaveBeenCalledTimes(1);
-        expect(setHeader).toHaveBeenCalledWith('Referrer-Policy', policy);
-      } else {
-        expect(setHeader).not.toHaveBeenCalled();
-      }
-    }
+    const { post } = install();
+    expect(
+      run(post, '/auth-success.html', '/auth-success?link=x').headers[
+        'Referrer-Policy'
+      ],
+    ).toBe('no-referrer');
+    expect(
+      run(post, '/download.html', '/download').headers['Referrer-Policy'],
+    ).toBeUndefined();
   });
 });

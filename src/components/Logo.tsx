@@ -88,7 +88,7 @@ const Logo = () => {
         />
       </motion.a>
 
-      {createPortal(
+      {typeof document !== 'undefined' && createPortal(
         <AnimatePresence>
           {menuPos && (
             <motion.div
