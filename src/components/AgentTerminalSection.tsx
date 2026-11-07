@@ -78,7 +78,7 @@ const CARDS = [
     // Hand-broken into two balanced lines: the copy column is fixed to the
     // closed card's width, and left to auto-wrap the break point drifted with
     // the viewport — at ~1300px it orphaned "and Cursor" on its own line.
-    detail: ['Use Rivet with your Claude Code,', 'Codex, and Cursor coding agents.'],
+    detail: ['Use Rivet with Claude Code,', 'Codex, Cursor, and Grok Bot.'],
     // Drifts on the left, behind the terminal window, rather than sitting
     // centred — the terminal is the subject here and the icons are set dressing.
     // Spread around the centred window rather than clustered beside it — the

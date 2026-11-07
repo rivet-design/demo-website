@@ -11,13 +11,33 @@ browsers; a successful sign-in also identifies the browser by account id (see
 ## Handoff paths
 
 The split CTA defaults to **Continue in Codex**. Its **Install in your agent**
-section offers Codex, Claude, and Cursor; **Copy prompt** copies the general
+section offers Codex, Claude, Cursor, and Grok Bot; **Copy prompt** copies the general
 installer for any coding agent, including terminal CLIs. Codex opens the Rivet
 plugin listing at
 https://chatgpt.com/plugins/plugins_6ad7eb1d359c8191baea949a147fd869
 in a new tab. Claude and Cursor prefill a coding session through
 `claude://code/new?q=` or `cursor://anysphere.cursor-deeplink/prompt?text=`.
 The user sends the prompt in the destination app.
+
+Grok Bot opens a local MCP setup panel with a short copyable request linking to
+`https://rivet.design/grokbot-setup.md`. The visitor pastes it into Grok Bot,
+which reads the public guide, registers Rivet on its own computer, and shows
+previews through Computer view. This path has no global installer target,
+marketplace listing, or prompt-prefill deep link. Its command accordion stays
+limited to agents with supported CLI installers.
+
+Grok Bot panel opens and successful prompt copies record `download_clicked`
+with `download_type: grokbot` and `install_method: local_mcp`. Successful copies
+also record `copy_method: row_click`. These actions omit `install_ref`, leave
+`last_install_ref` unchanged, and start no desktop handoff watcher. Prompt text
+and connector configuration are not captured. Clipboard failures select the
+visible prompt for manual copy and do not record a successful copy.
+
+Deploy the Grok Bot entry only after publishing a Rivet release that preserves
+the `grokbot` caller identity and validating the deployed guide and SVG with
+`node scripts/verify-grokbot-setup.mjs https://rivet.design`.
+See [Grok Bot setup](grokbot-local-mcp.md) for
+the acceptance and release prerequisites.
 
 Command-based paths use the shared `installPrompt` builder:
 

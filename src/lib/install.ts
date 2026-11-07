@@ -1,25 +1,30 @@
-// Per-agent Rivet install data shared by the CTA dropdown (PromptInstallButton)
-// and the CLI-command accordion (InstallAccordion), so the commands the site
-// shows and the commands embedded in copy prompts can never drift apart.
-//
-// Command shape: `-y` keeps npx non-interactive (agents run these headlessly,
-// where npx's "Ok to proceed?" prompt would stall) and `@latest` forces a
-// registry resolve so a stale npx cache or old global install never serves an
-// outdated version. The agent ids mirror rivet core's harness registry.
 import { EMBED_INSTALL_REF_IN_COPY, type InstallRef } from './installRef';
 
-export type InstallAgentId = 'claude' | 'claude-code' | 'cursor' | 'codex';
-export type CommandInstallAgentId = Exclude<InstallAgentId, 'codex'>;
+export type InstallAgentId =
+  'claude' | 'claude-code' | 'cursor' | 'codex' | 'grokbot';
+export type CommandInstallAgentId = Exclude<
+  InstallAgentId,
+  'codex' | 'grokbot'
+>;
 export type InstallTarget = InstallAgentId | 'agent';
 type CommandInstallTarget = CommandInstallAgentId | 'agent';
-export type DeepLinkAgentId = Exclude<InstallAgentId, 'claude-code'>;
+export type DeepLinkAgentId = Exclude<
+  InstallAgentId,
+  'claude-code' | 'grokbot'
+>;
 
 export const AGENT_LOGOS: Record<InstallAgentId, string> = {
   claude: '/images/claude.svg',
   'claude-code': '/images/claude.svg',
   cursor: '/images/cursor.svg',
   codex: '/images/codex.svg',
+  grokbot: '/images/grokbot.svg',
 };
+
+export const GROKBOT_DOWNLOAD_URL = 'https://x.ai/bot';
+
+export const GROKBOT_SETUP_PROMPT =
+  "Set up Rivet's local MCP connector in Grok Bot using https://rivet.design/grokbot-setup.md. Keep my existing permissions and use Computer view for previews. Stop if the link does not contain setup instructions.";
 
 export const CODEX_PLUGIN_URL =
   'https://chatgpt.com/plugins/plugins_6ad7eb1d359c8191baea949a147fd869';

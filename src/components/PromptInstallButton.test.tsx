@@ -23,6 +23,8 @@ jest.mock('sonner', () => ({
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
 let sent: CaptureResult[] = [];
+const GROKBOT_SETUP_REQUEST =
+  "Set up Rivet's local MCP connector in Grok Bot using https://rivet.design/grokbot-setup.md. Keep my existing permissions and use Computer view for previews. Stop if the link does not contain setup instructions.";
 
 posthog.init('phc_test', {
   api_host: 'http://posthog.invalid',
@@ -63,6 +65,8 @@ const click = (el: Element) =>
   });
 
 const pickAgent = async (label: string) => {
+  const agentLabel =
+    label === 'Grok Bot' ? 'Use Grok Bot' : `Continue in ${label}`;
   const trigger = container.querySelector(
     'button[aria-label="Choose your agent"]',
   );
@@ -74,7 +78,7 @@ const pickAgent = async (label: string) => {
   const row = [...popup.querySelectorAll('button')].find(
     (button) =>
       button.getAttribute('aria-label') ===
-      (label === 'Copy prompt' ? label : `Continue in ${label}`),
+      (label === 'Copy prompt' ? label : agentLabel),
   );
   if (!row) throw new Error(`${label} row not rendered`);
   await act(async () => {
@@ -333,7 +337,7 @@ describe('PromptInstallButton desktop handoff', () => {
 });
 
 describe('PromptInstallButton copy prompt', () => {
-  it('shows exactly three desktop agents and the copy action', () => {
+  it('shows four supported hosts and the copy action', () => {
     render(<PromptInstallButton source="landing_hero" />);
     click(container.querySelector('button[aria-label="Choose your agent"]')!);
     const chooser = document.querySelector(
@@ -343,7 +347,13 @@ describe('PromptInstallButton copy prompt', () => {
       [...chooser.querySelectorAll('button')].map(
         (button) => button.textContent,
       ),
-    ).toEqual(['Codex', 'Claude', 'Cursor', 'Copy prompt']);
+    ).toEqual([
+      'Codex',
+      'Claude',
+      'Cursor',
+      'Grok BotLocal MCP',
+      'Copy prompt',
+    ]);
   });
 
   it('copies a general install prompt with a fresh ref without opening an app', async () => {
@@ -416,6 +426,142 @@ describe('PromptInstallButton copy prompt', () => {
       'Prompt copied',
     );
     expect(downloadClicks()).toHaveLength(1);
+  });
+});
+
+describe('PromptInstallButton Grok Bot setup', () => {
+  it('closes setup on Escape when focus has returned to the main action', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Grok Bot');
+    const primary = container.querySelector('button')!;
+    act(() => (primary as HTMLButtonElement).focus());
+    act(() =>
+      primary.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+      ),
+    );
+    expect(
+      document.querySelector('textarea[aria-label="Grok Bot setup prompt"]'),
+    ).toBeNull();
+    expect(document.activeElement).toBe(primary);
+  });
+
+  it('opens setup with the keyboard and uses a concise setup action label', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    const trigger = container.querySelector(
+      'button[aria-label="Choose your agent"]',
+    )!;
+    for (const key of ['ArrowUp', 'ArrowUp', 'Enter']) {
+      act(() =>
+        trigger.dispatchEvent(
+          new KeyboardEvent('keydown', { key, bubbles: true }),
+        ),
+      );
+    }
+    const primary = container.querySelector('button')!;
+    expect(primary.textContent).toBe('Use Grok Bot');
+    const copy = document.querySelector(
+      'button[aria-label="Copy Grok Bot setup prompt"]',
+    )!;
+    expect(document.activeElement).toBe(copy);
+    act(() =>
+      copy.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+      ),
+    );
+    expect(
+      document.querySelector('textarea[aria-label="Grok Bot setup prompt"]'),
+    ).toBeNull();
+    expect(document.activeElement).toBe(primary);
+  });
+
+  it('shows local MCP instructions without starting a desktop or plugin handoff', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Grok Bot');
+
+    const prompt = document.querySelector<HTMLTextAreaElement>(
+      'textarea[aria-label="Grok Bot setup prompt"]',
+    );
+    expect(prompt).not.toBeNull();
+    expect(prompt!.value).toBe(GROKBOT_SETUP_REQUEST);
+    expect(container.querySelector('img')?.getAttribute('src')).toBe(
+      '/images/grokbot.svg',
+    );
+    expect(window.open).not.toHaveBeenCalled();
+    expect(handoff.openDeepLink).not.toHaveBeenCalled();
+    expect(navigator.clipboard.writeText).not.toHaveBeenCalled();
+    const [event] = sent.filter((entry) => entry.event === 'download_clicked');
+    expect(event.properties).toMatchObject({
+      source: 'landing_hero',
+      download_type: 'grokbot',
+      install_method: 'local_mcp',
+    });
+    expect(event.properties).not.toHaveProperty('install_ref');
+    expect(posthog.get_property('last_install_ref')).toBeUndefined();
+  });
+
+  it('copies the setup prompt and records only successful copies without a ref', async () => {
+    render(<PromptInstallButton source="story" />);
+    await pickAgent('Grok Bot');
+    const prompt = document.querySelector<HTMLTextAreaElement>(
+      'textarea[aria-label="Grok Bot setup prompt"]',
+    )!;
+    await act(async () => {
+      click(
+        document.querySelector(
+          'button[aria-label="Copy Grok Bot setup prompt"]',
+        )!,
+      );
+    });
+
+    expect(prompt.value).toBe(GROKBOT_SETUP_REQUEST);
+    expect(copiedText()).toEqual([GROKBOT_SETUP_REQUEST]);
+    const events = sent.filter((entry) => entry.event === 'download_clicked');
+    expect(events).toHaveLength(2);
+    expect(events[1].properties).toMatchObject({
+      source: 'story',
+      download_type: 'grokbot',
+      install_method: 'local_mcp',
+      copy_method: 'row_click',
+    });
+    expect(events[1].properties).not.toHaveProperty('install_ref');
+    expect(events[1].properties).not.toHaveProperty('prompt');
+    expect(document.body.textContent).toContain(
+      'Prompt copied. Paste it into Grok Bot.',
+    );
+  });
+
+  it('selects the prompt for manual copy when clipboard access is denied', async () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    (navigator.clipboard.writeText as jest.Mock).mockRejectedValueOnce(
+      new Error('denied'),
+    );
+    render(<PromptInstallButton source="landing_nav" />);
+    await pickAgent('Grok Bot');
+    await act(async () => {
+      click(
+        document.querySelector(
+          'button[aria-label="Copy Grok Bot setup prompt"]',
+        )!,
+      );
+    });
+
+    const prompt = document.querySelector<HTMLTextAreaElement>(
+      'textarea[aria-label="Grok Bot setup prompt"]',
+    )!;
+    expect(document.activeElement).toBe(prompt);
+    expect(prompt.selectionStart).toBe(0);
+    expect(prompt.selectionEnd).toBe(prompt.value.length);
+    expect(document.body.textContent).toContain(
+      'Prompt selected. Press ⌘C or Ctrl+C to copy.',
+    );
+    expect(
+      sent.filter((entry) => entry.event === 'download_clicked'),
+    ).toHaveLength(1);
+    expect(warning).toHaveBeenCalledWith(
+      'Failed to copy text to clipboard:',
+      expect.any(Error),
+    );
   });
 });
 
@@ -596,6 +742,24 @@ describe('PromptInstallButton handoff fallback', () => {
     await pickAgent('Claude');
     await pickAgent('Codex');
     await waitOutHandoff();
+    expect(fallbackPanel()).toBeNull();
+  });
+
+  it('keeps an earlier desktop attempt from replacing Grok Bot setup', async () => {
+    render(<PromptInstallButton source="landing_hero" />);
+    await pickAgent('Claude');
+    await pickAgent('Grok Bot');
+    await waitOutHandoff();
+    expect(fallbackPanel()?.getAttribute('aria-label')).toBe(
+      'Install Rivet in Grok Bot',
+    );
+    expect(
+      document.querySelector('textarea[aria-label="Grok Bot setup prompt"]'),
+    ).not.toBeNull();
+    expect(
+      handoffResults().every((result) => result.download_type === 'claude'),
+    ).toBe(true);
+    await pickAgent('Codex');
     expect(fallbackPanel()).toBeNull();
   });
 
