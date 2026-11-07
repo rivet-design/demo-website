@@ -7,6 +7,7 @@ import path from 'path';
 import { createPostHogProxyMiddleware } from './posthogHostProxy';
 import { createPrototypeProxyMiddleware } from './prototypeHostProxy';
 import { staticHtmlPlugin } from './src/staticHtml';
+import { prerenderPlugin } from './src/prerenderPlugin';
 
 const prototypeProxyMiddleware = createPrototypeProxyMiddleware();
 const posthogProxyMiddleware = createPostHogProxyMiddleware();
@@ -23,6 +24,7 @@ export default defineConfig({
     },
     react({ include: /\.(js|jsx|ts|tsx|mdx)$/ }),
     staticHtmlPlugin(),
+    prerenderPlugin(),
     {
       name: 'rivet-prototype-proxy',
       configureServer(server) {
