@@ -151,14 +151,7 @@ export const staticHtmlPlugin = (): Plugin => ({
     // Ahead of Vite's static file handler, which would send sitemap.xml as
     // text/xml and 404.html with a 200.
     server.middlewares.use((req, res, next) => {
-      const [pathname, query] = (req.url ?? '/').split('?');
-      const target = redirectTarget(pathname);
-      if (target) {
-        res.statusCode = 301;
-        res.setHeader('Location', query ? `${target}?${query}` : target);
-        res.end();
-        return;
-      }
+      const pathname = (req.url ?? '/').split('?')[0];
       if (pathname === '/sitemap.xml') {
         return sendFile(
           res,
@@ -173,16 +166,24 @@ export const staticHtmlPlugin = (): Plugin => ({
     // Run after Vite serves assets and resolves its SPA fallback, before it
     // sends index.html. Vite rewrites known routes to their prerendered
     // file, so a non-home request still pointing at index.html is unknown.
+    // Redirects live here too: only GET/HEAD page requests reach the
+    // fallback, so the proxies' endpoints (POSTs, trailing slashes) never do.
     return () => {
       server.middlewares.use((req, res, next) => {
         const originalUrl = req.originalUrl ?? '/';
+        const [pathname, query] = originalUrl.split('?');
         // The link code is in this URL until script runs. no-referrer stops
         // the browser from sending that URL on the requests this page makes.
-        if (originalUrl.split('?')[0] === '/auth-success') {
+        if (pathname === '/auth-success') {
           res.setHeader('Referrer-Policy', 'no-referrer');
         }
         if (req.url === '/index.html' && !isHomeDocument(originalUrl)) {
-          return sendNotFound(res);
+          const target = redirectTarget(pathname);
+          if (!target) return sendNotFound(res);
+          res.statusCode = 301;
+          res.setHeader('Location', query ? `${target}?${query}` : target);
+          res.end();
+          return;
         }
         next();
       });

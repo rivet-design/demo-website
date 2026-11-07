@@ -256,14 +256,32 @@ describe('preview server', () => {
     return { req, res, headers, next };
   };
 
-  it('301s legacy About URLs and trailing slashes, keeping the query', () => {
-    const { pre } = install();
-    expect(run(pre, '/story?ref=launch')).toMatchObject({
+  it('301s legacy About URLs and trailing slashes once the fallback resolves them, keeping the query', () => {
+    const { post } = install();
+    expect(run(post, '/index.html', '/story?ref=launch')).toMatchObject({
       res: { statusCode: 301 },
       headers: { Location: '/about?ref=launch' },
     });
-    expect(run(pre, '/download/').headers.Location).toBe('/download');
-    expect(run(pre, '/about').next).toHaveBeenCalledTimes(1);
+    expect(run(post, '/index.html', '/download/').headers.Location).toBe(
+      '/download',
+    );
+    expect(run(post, '/about.html', '/about').next).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    '/r8t/k/',
+    '/r8t/i/v0/k/',
+    '/r8t/flags/?v=2',
+    '/p/demo/',
+    '/share/abc/',
+  ])('leaves proxy request %s for the proxies', (url) => {
+    const { pre, post } = install();
+    const before = run(pre, url);
+    expect(before.next).toHaveBeenCalledTimes(1);
+    expect(before.res.statusCode).toBe(200);
+    const after = run(post, url);
+    expect(after.next).toHaveBeenCalledTimes(1);
+    expect(after.headers.Location).toBeUndefined();
   });
 
   it('sends the sitemap as application/xml and 404.html as a 404', () => {
