@@ -60,7 +60,7 @@ export const PAGES: Readonly<Record<string, Page>> = {
     Component: VariantsDemoPage,
     title: 'Variants demo — Rivet',
     description: `Explore directions, live. ${SESSION_PROMPT}`,
-    indexed: true,
+    indexed: false,
   },
   '/auth-success': {
     Component: AuthSuccessPage,
