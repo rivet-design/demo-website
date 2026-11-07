@@ -82,7 +82,8 @@ const routeThroughProxyAliases = (): void => {
  * Initialize PostHog with autocapture for the landing page
  */
 export const initPostHog = (): void => {
-  // First $pageview and initial person info read the address bar during init.
+  // The first capture after init, the scheduled $pageview, reads campaign
+  // params and initial person info from the address bar.
   expandCampaignRef();
   routeThroughProxyAliases();
   posthog.init(POSTHOG_PUBLIC_API_KEY, {
