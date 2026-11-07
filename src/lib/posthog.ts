@@ -1,5 +1,6 @@
 import posthog, { type CaptureResult } from 'posthog-js';
 import { POSTHOG_PROXY_PATH, toPostHogProxyPath } from '../posthogProxy';
+import { expandCampaignRef } from './campaignRefs';
 
 const POSTHOG_PUBLIC_API_KEY = 'phc_Ntj9tXHbS64XgYxlTfhglRmFivFsfm0AERph4ZlnNH';
 const POSTHOG_UI_HOST = 'https://us.posthog.com';
@@ -81,6 +82,8 @@ const routeThroughProxyAliases = (): void => {
  * Initialize PostHog with autocapture for the landing page
  */
 export const initPostHog = (): void => {
+  // First $pageview and initial person info read the address bar during init.
+  expandCampaignRef();
   routeThroughProxyAliases();
   posthog.init(POSTHOG_PUBLIC_API_KEY, {
     api_host: POSTHOG_PROXY_PATH,

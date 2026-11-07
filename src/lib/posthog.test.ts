@@ -2,6 +2,24 @@ import type { CaptureResult } from 'posthog-js';
 import { POSTHOG_PROXY_PATH } from '../posthogProxy';
 import { initPostHog, posthog, redactAuthTokens } from './posthog';
 
+jest.mock('./campaignRefs', () => {
+  const actual =
+    jest.requireActual<typeof import('./campaignRefs')>('./campaignRefs');
+  const fixtureTable = {
+    'fixture-newsletter': {
+      source: 'fixture-source',
+      medium: 'email' as const,
+      campaign: 'fixture-campaign',
+    },
+  };
+  return {
+    ...actual,
+    CAMPAIGN_REFS: fixtureTable,
+    expandCampaignRef: (table?: typeof fixtureTable) =>
+      actual.expandCampaignRef(table ?? fixtureTable),
+  };
+});
+
 describe('initPostHog', () => {
   it('sends traffic through the first-party proxy and keeps redaction', () => {
     const init = jest.spyOn(posthog, 'init').mockImplementation(() => posthog);
@@ -26,6 +44,23 @@ describe('initPostHog', () => {
     expect(router.endpointFor('flags', '/flags/?v=2')).toMatch(
       /\/flags\/\?v=2$/,
     );
+    jest.restoreAllMocks();
+  });
+
+  it('expands a campaign ref before posthog.init reads the address bar', () => {
+    window.history.replaceState(null, '', '/?ref=fixture-newsletter');
+    let search = '';
+    const init = jest.spyOn(posthog, 'init').mockImplementation(() => {
+      search = window.location.search;
+      return posthog;
+    });
+    jest.spyOn(posthog, 'register').mockImplementation(() => undefined);
+
+    initPostHog();
+
+    expect(search).toContain('utm_content=fixture-newsletter');
+    expect(search).not.toContain('ref=');
+    expect(init).toHaveBeenCalled();
     jest.restoreAllMocks();
   });
 });
