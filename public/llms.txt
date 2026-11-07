@@ -1,0 +1,17 @@
+# Rivet
+
+> Rivet is a design agent for your coding agent. It explores dozens of design directions in parallel so you can pick the one that fits.
+
+## Docs
+
+- [Documentation](https://docs.rivet.design/)
+- [Docs index for LLMs](https://docs.rivet.design/llms.txt)
+- [Full docs for LLMs](https://docs.rivet.design/llms-full.txt)
+
+## Pages
+
+- [Home](https://rivet.design/)
+- [About](https://rivet.design/about)
+- [Download](https://rivet.design/download)
+- [Privacy Policy](https://rivet.design/privacy)
+- [Terms of Use](https://rivet.design/terms)
