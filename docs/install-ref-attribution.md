@@ -8,6 +8,9 @@ and records them on sign-in outcomes. Matching refs connect events across
 browsers; a successful sign-in also identifies the browser by account id (see
 [Sign-in](#sign-in)). Token fragments and session ids remain redacted.
 
+Named campaign refs, which also use `?ref=` on pages other than
+`/auth-success`, are described in [Add a campaign ref](campaign-refs.md).
+
 ## Handoff paths
 
 The split CTA defaults to **Continue in Codex**. Its **Install in your agent**
